@@ -216,4 +216,3 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
     *service_status=PORT_V37_SYSQIO_BEGIN_OK;
     return PORT_V37_SYSQIO_BEGIN_OK;
 }
-
