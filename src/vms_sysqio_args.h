@@ -71,7 +71,21 @@ struct port_v37_sysqio_process {
     uint32_t local_event_flags[2];
     int16_t buffered_io_count,direct_io_count;
     int16_t ast_count;
+    uint8_t *source_pcb;
+    size_t source_pcb_bytes;
 };
+enum { PORT_V37_SYSQIO_PCB_OK=1u,PORT_V37_SYSQIO_PCB_BAD=2u,
+       PORT_V37_SYSQIO_PCB_DIRECT=0u,PORT_V37_SYSQIO_PCB_BUFFERED=1u };
+uint32_t port_v37_sysqio_process_bind_pcb(uint8_t *,size_t,uint8_t,
+    struct port_v37_sysqio_process *);
+int16_t port_v37_sysqio_process_io_count(
+    const struct port_v37_sysqio_process *,uint8_t);
+void port_v37_sysqio_process_set_io_count(
+    struct port_v37_sysqio_process *,uint8_t,int16_t);
+int16_t port_v37_sysqio_process_ast_count(
+    const struct port_v37_sysqio_process *);
+void port_v37_sysqio_process_set_ast_count(
+    struct port_v37_sysqio_process *,int16_t);
 typedef int (*port_v37_sysqio_single_quota_fn)(void *,uint32_t,uint8_t);
 struct port_v37_sysqio_begin_ops {
     void *context;
@@ -165,3 +179,4 @@ uint32_t port_v37_sysqio_prepare_irp(const void *,size_t,
     const struct port_v37_irp_pool_sync *,struct port_v37_sysqio_prepared *,
     uint8_t **,uint32_t *,uint32_t *service_status);
 #endif
+
