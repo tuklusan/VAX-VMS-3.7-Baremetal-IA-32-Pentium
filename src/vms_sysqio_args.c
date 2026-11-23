@@ -126,7 +126,11 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
             check==PORT_V37_SYSQIO_PRECHECK_OFFLINE?
                 PORT_V37_SYSQIO_BEGIN_OFFLINE:PORT_V37_SYSQIO_BEGIN_BAD;
         const uint32_t status=check==PORT_V37_SYSQIO_PRECHECK_NOPRIV?
-            PORT_SYS85_NOPRIV:result;
+            PORT_SYS85_NOPRIV:
+            check==PORT_V37_SYSQIO_PRECHECK_ILLFUNC?
+                PORT_SYS85_ILLIOFUNC:
+            check==PORT_V37_SYSQIO_PRECHECK_OFFLINE?
+                PORT_SYS85_DEVOFFLINE:PORT_SYS85_BADPARAM;
         return begin_failure(result,status,&args,process,ops,service_status);
     }
     const uint32_t iosb=port_v37_sysqio_clear_iosb(args.iosb,

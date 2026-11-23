@@ -21154,7 +21154,7 @@
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_preflight",
           "pc_line": 36,
-          "function": "Native CCB access-mode comparison, DQ FDT function legality and offline exceptions; maps NOPRIV but exact ILLIOFUNC/DEVOFFLINE statuses and full device semantics remain unimplemented"
+          "function": "Native CCB access-mode comparison, DQ FDT function legality and offline exceptions with VMS NOPRIV/ILLIOFUNC/DEVOFFLINE status mapping; full device semantics remain unimplemented"
         },
         {
           "original_lines": [
@@ -21241,7 +21241,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ACCVIO and EXQUOTA status values but ILLIOFUNC and DEVOFFLINE status values remain unresolved. It is host-tested but not connected to a user service entry, real CCB lookup or driver dispatch. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; source IPL/deletion protection, exact VMS failure epilogue, device access/protection, IRP allocation and process AST completion remain absent."
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO and EXQUOTA values from VMSLIB/SRC/SSMSG.MSG V03-003. It is host-tested but not connected to a user service entry, real CCB lookup or driver dispatch. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; source IPL/deletion protection, exact VMS failure epilogue, device access/protection, IRP allocation and process AST completion remain absent."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

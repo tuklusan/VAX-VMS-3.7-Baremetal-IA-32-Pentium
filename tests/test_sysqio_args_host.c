@@ -180,6 +180,20 @@ int main(void){
        begin_status!=PORT_SYS85_NOPRIV||rig.posts!=1u||
        rig.posted_status!=PORT_SYS85_NOPRIV||proc.direct_io_count!=0)
         return 23;
+    rig.posts=0u;rig.ccb_access_limit=4u;
+    put32(ap+12u,63u);
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_ILLFUNC||
+       begin_status!=PORT_SYS85_ILLIOFUNC||rig.posts!=1u||
+       rig.posted_status!=PORT_SYS85_ILLIOFUNC||proc.direct_io_count!=0)
+        return 24;
+    rig.posts=0u;device.online=0u;put32(ap+12u,PORT_DQ_READLBLK);
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_OFFLINE||
+       begin_status!=PORT_SYS85_DEVOFFLINE||rig.posts!=1u||
+       rig.posted_status!=PORT_SYS85_DEVOFFLINE||proc.direct_io_count!=0)
+        return 25;
+    device.online=1u;put32(ap+12u,values[2]);
     rig.ccb_access_limit=4u;rig.posts=0u;rig.quota_calls=0u;rig.grant_quota=0;
     memset(mem.bytes,0xa5,sizeof mem.bytes);mem.probes=mem.clears=0u;
     if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
@@ -188,14 +202,14 @@ int main(void){
        rig.quota_buffered||rig.posts!=1u||rig.posted_status!=PORT_SS_EXQUOTA||
        proc.direct_io_count!=0||mem.probes!=1u||mem.clears!=1u||
        mem.bytes[0]!=0u||memcmp(&prepared,&untouched,sizeof prepared)){
-        return 24;
+        return 26;
     }
     rig.grant_quota=1;rig.posts=0u;
     if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
          &begin_status)!=PORT_V37_SYSQIO_BEGIN_OK||
        begin_status!=PORT_V37_SYSQIO_BEGIN_OK||rig.quota_calls!=2u||
        proc.direct_io_count!=-1||prepared.dispatch.function_code!=49u)
-        return 25;
+        return 27;
     puts("SYS$QIO argument, EFN, channel, FDT and IOSB begin path PASS");
     return 0;
 }
