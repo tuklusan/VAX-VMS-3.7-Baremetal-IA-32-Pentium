@@ -42,11 +42,28 @@ int main(void){
         return fail("initial user IRET frame");
 
     const struct port_v37_ia32_context_seed ring1={
-        .cr3=0x00200000u,.entry_pc=0x00401000u,.eflags=0x202u,
-        .code_selector=0x09u,.data_selector=0x11u,.access_mode=1u};
+        .cr3=0x00200000u,.entry_pc=0x00401000u,
+        .initial_stack=0x007ff000u,.eflags=0x202u,
+        .code_selector=0x19u,.data_selector=0x21u,.access_mode=1u};
     if(port_v37_ia32_context_init(stack,sizeof stack,&ring1,&frame)!=
+       PORT_V37_IA32_CONTEXT_OK||frame->registers.cs!=0x19u||
+       frame->registers.user_ss!=0x21u||
+       frame->registers.user_esp!=0x007ff000u)
+        return fail("VMS executive mode maps to CPL1");
+    struct port_v37_ia32_context_seed invalid_ring=ring1;
+    invalid_ring.code_selector=0x09u;
+    if(port_v37_ia32_context_init(stack,sizeof stack,&invalid_ring,&frame)!=
        PORT_V37_IA32_CONTEXT_PRIVILEGE)
-        return fail("unsupported VMS executive mode not silently mapped");
+        return fail("CPL1 selector must name the CPL1 descriptor");
+    const struct port_v37_ia32_context_seed supervisor={
+        .cr3=0x00300000u,.entry_pc=0x00402000u,
+        .initial_stack=0x007fe000u,.eflags=0x202u,
+        .code_selector=0x2au,.data_selector=0x32u,.access_mode=2u};
+    if(port_v37_ia32_context_init(stack,sizeof stack,&supervisor,&frame)!=
+       PORT_V37_IA32_CONTEXT_OK||frame->registers.cs!=0x2au||
+       frame->registers.user_ss!=0x32u||
+       frame->registers.user_esp!=0x007fe000u)
+        return fail("VMS supervisor mode maps to CPL2");
     struct port_v37_ia32_context_seed invalid=user;
     invalid.eflags|=0x3000u;
     if(port_v37_ia32_context_init(stack,sizeof stack,&invalid,&frame)!=
@@ -60,6 +77,6 @@ int main(void){
     if(port_v37_ia32_context_init(stack,sizeof stack,&invalid,&frame)!=
        PORT_V37_IA32_CONTEXT_BAD)
         return fail("unaligned CR3 rejected");
-    puts("IA-32 kernel/user initial IRET context ABI PASS");
+    puts("IA-32 VMS access-mode 0-3 initial IRET context ABI PASS");
     return 0;
 }

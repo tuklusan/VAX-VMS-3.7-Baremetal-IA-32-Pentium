@@ -13,7 +13,7 @@ enum {
 };
 
 /* Stack image consumed by arch_isr_common's segment pops, POPAL and IRET.
- * For CPL0 IRET uses EIP/CS/EFLAGS; for CPL3 it also consumes user ESP/SS. */
+ * For CPL0 IRET uses EIP/CS/EFLAGS; for CPL1-3 it also consumes ESP/SS. */
 struct port_v37_ia32_restore_frame {
     uint32_t gs,fs,es,ds;
     struct port_trap_frame registers;
@@ -27,7 +27,9 @@ struct port_v37_ia32_context_seed {
 };
 
 /* Construct the initial native saved frame at the top of a process-owned
- * kernel stack. The returned pointer names registers, as arch_trap expects. */
+ * kernel stack. VMS access modes map to matching IA-32 CPL0-CPL3. Nonzero
+ * modes require caller-mapped stack and page tables. The returned pointer
+ * names registers, as arch_trap expects. */
 uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
     const struct port_v37_ia32_context_seed *,
     struct port_v37_ia32_restore_frame **restore_frame);
