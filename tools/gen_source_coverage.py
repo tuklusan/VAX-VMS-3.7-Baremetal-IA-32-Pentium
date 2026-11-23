@@ -2330,7 +2330,7 @@ qio_rows=[
  (157,238,None,None,'Original spooled-device selection, channel lookup, local/global event handling and remaining service prologue unresolved','unresolved'),
  (239,243,None,None,'EXE$QIO entry declaration and service prologue unresolved','unresolved'),
  (244,247,'src/vms_sysqio_args.c','port_v37_sysqio_begin','Clear EFN before channel lookup and post failure status to the requested event flag','partial'),
- (248,252,None,None,'Original channel-number validation and CCB lookup unresolved','unresolved'),
+ (248,252,'src/vms_v37_ccb.c','port_v37_ccb_resolve','Validate the source channel token, index CTL$GL_CCBBASE backward by the 16-byte CCB offset, check AMOD and return UCB/WIND/IOC fields; per-process channel table is not yet bound','partial'),
  (253,283,'src/vms_sysqio_args.c','port_v37_sysqio_preflight','Native CCB access-mode comparison, DQ FDT function legality and offline exceptions with VMS status mapping; access/deaccess pending CCB waits are represented by a required callback but not bound to live SCH$WAIT','partial'),
  (284,285,None,None,'Original IOSB branch prologue unresolved','unresolved'),
  (286,292,'src/vms_sysqio_iosb.c','port_v37_sysqio_clear_iosb','Nullable IOSB, full 8-byte write probe before atomic two-longword clear; caller memory copy wiring remains unresolved','partial'),
