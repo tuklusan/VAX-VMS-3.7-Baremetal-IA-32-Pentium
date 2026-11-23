@@ -11,10 +11,11 @@ static int mock_read(void *ctx,uint32_t lbn,uint16_t dst[256]){
 }
 int main(void){
     enum {BASE=0x00370000u,START=0x00324120u,RET=0x00324104u};
+    const uint32_t action=(uint32_t)(uintptr_t)port_dqddt_bootread;
     struct port_dq_fdt fdt={0};
     CHECK(port_dq_fdt_build(&fdt,sizeof fdt)==PORT_DQ_FDT_OK);
     struct port_dqddt_stage d={0};
-    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,RET)==PORT_DQDDT_OK);
+    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,RET,action)==PORT_DQDDT_OK);
     CHECK(d.table_base==BASE&&d.native_start_pc==START&&d.ioc_return_pc==RET);
     CHECK(port_dqddt_validate(&d,&fdt)==PORT_DQDDT_OK);
     CHECK(port_v37_read32(d.image)==(uint32_t)(START-BASE));
@@ -27,7 +28,9 @@ int main(void){
     CHECK(port_dqddt_entry_offset(12u)==UINT32_MAX);
     CHECK(port_v37_read32(d.image+port_dqddt_entry_offset(2u))==(uint32_t)fdt.mask[2u]);
     CHECK(port_v37_read32(d.image+port_dqddt_entry_offset(2u)+4u)==(uint32_t)(fdt.mask[2u]>>32u));
-    CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_READPBLK)==PORT_DQDDT_UNBOUND);
+    CHECK(port_v37_read32(d.image+port_dqddt_entry_offset(2u)+8u)==
+          (action|UINT32_C(0x80000000)));
+    CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_READPBLK)==PORT_DQDDT_NATIVE);
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_WRITELBLK)==PORT_DQDDT_UNBOUND);
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_READVBLK)==PORT_DQDDT_UNBOUND);
     CHECK(port_dqddt_function(&d,&fdt,63u)==PORT_DQDDT_BAD);
@@ -89,11 +92,11 @@ int main(void){
         PORT_DQ_BOOTREAD_BAD);
     CHECK(calls==1u);
     struct port_dqddt_stage before=d;
-    CHECK(port_dqddt_stage_init(&d,&fdt,BASE+1u,START,RET)==PORT_DQDDT_BAD);
+    CHECK(port_dqddt_stage_init(&d,&fdt,BASE+1u,START,RET,action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,BASE+4u,RET)==PORT_DQDDT_BAD);
+    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,BASE+4u,RET,action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u)==PORT_DQDDT_BAD);
+    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u,action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
     puts("DQ DDT staged privileged READPBLK dispatch PASS; general DDT and public QIO remain unbound");
     return 0;

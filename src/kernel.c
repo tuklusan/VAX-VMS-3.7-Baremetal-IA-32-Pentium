@@ -3522,7 +3522,7 @@ void kmain(void) {
             (uint8_t)PORT_DQDDT_FDT_BYTES ||
         dq_ddt_result.dq_ddt_stage->image[37u]!=0u)||
        dq_ddt_result.dq_ddt_function(dq_ddt_result.dq_ddt_stage,
-          dq_result.dq_source_fdt,PORT_DQ_READPBLK)!=PORT_DQDDT_UNBOUND||
+          dq_result.dq_source_fdt,PORT_DQ_READPBLK)!=PORT_DQDDT_NATIVE||
        dq_ddt_result.dq_ddt_function(dq_ddt_result.dq_ddt_stage,
           dq_result.dq_source_fdt,PORT_DQ_WRITELBLK)!=PORT_DQDDT_UNBOUND||
        (devicedb_result.device_db_bytes[PORT_V37_DDB_BOOT_OFF+12u]!=0u||

@@ -21160,7 +21160,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 337,
+          "pc_line": 340,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -21397,7 +21397,7 @@
           "status": "partial",
           "pc_file": "src/vms_dqddt_bootread.c",
           "pc_symbol": "port_dqddt_bootread",
-          "pc_line": 3,
+          "pc_line": 22,
           "function": "Validated staged DDT dispatches the resident private READPBLK IRP; the native DQ IOC FIFO now completes its sector through the attached CRB IRQ14 path, while public process QIO and ACP remain unavailable"
         },
         {

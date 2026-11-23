@@ -279,7 +279,7 @@ static struct port_dq_bootread_result executive_dqddt_io;
 static struct port_relocdrv_dq executive_relocdrv_dq;
 static uint32_t executive_relocdrv_dq_ready;
 /* IOC$RELOC_DDT runs only on this resident scratch copy. Source DQ's
- * zero action slots remain unavailable; no one can dispatch through it. */
+ * the single marked READPBLK slot remains a private native boot action. */
 static union {uint32_t align; uint8_t bytes[PORT_DQDDT_IMAGE_BYTES];}
     executive_relocated_private;
 static uint32_t executive_relocated_private_ready;
@@ -293,8 +293,11 @@ static uint32_t executive_private_reloc_check(const uint8_t *b,size_t n,uint32_t
         return PORT_DDTRELOC_BAD;
     for(unsigned i=0;i<PORT_DQDDT_ACTIONS;i++){
         const unsigned offset=PORT_DQDDT_HEADER_BYTES+24u+12u*i;
-        if(port_ddtreloc_read32(executive_dqddt.image+offset)!=0u||
-           port_ddtreloc_read32(b+offset)!=base+offset-8u)
+        const uint32_t native_read=i+2u==PORT_DQ_FDT_READ?
+            (executive_dqddt.native_read_action_pc|UINT32_C(0x80000000)):0u;
+        const uint32_t expected=i+2u==PORT_DQ_FDT_READ?native_read:base+offset-8u;
+        if(port_ddtreloc_read32(executive_dqddt.image+offset)!=native_read||
+           port_ddtreloc_read32(b+offset)!=expected)
             return PORT_DDTRELOC_BAD;
     }
     return PORT_DDTRELOC_OK;
@@ -1568,12 +1571,13 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         const uint32_t base=(uint32_t)(uintptr_t)executive_dqddt.image;
         const uint32_t start=(uint32_t)(uintptr_t)port_dq_bootread_execute;
         const uint32_t ret=(uint32_t)(uintptr_t)port_v37_nl_ioc_return;
+        const uint32_t read_action=(uint32_t)(uintptr_t)port_dqddt_bootread;
         if(port_dqddt_stage_init(&executive_dqddt,&executive_dq_fdt,
-               base,start,ret)!=PORT_DQDDT_OK||
+               base,start,ret,read_action)!=PORT_DQDDT_OK||
            port_dqddt_validate(&executive_dqddt,&executive_dq_fdt)!=
                PORT_DQDDT_OK||
            port_dqddt_function(&executive_dqddt,&executive_dq_fdt,
-               PORT_DQ_READPBLK)!=PORT_DQDDT_UNBOUND||
+               PORT_DQ_READPBLK)!=PORT_DQDDT_NATIVE||
            port_dqddt_function(&executive_dqddt,&executive_dq_fdt,
                PORT_DQ_WRITELBLK)!=PORT_DQDDT_UNBOUND||
            port_dqddt_function(&executive_dqddt,&executive_dq_fdt,
@@ -1630,7 +1634,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             .boot_unit=p->dq_boot_io->boot_unit,
             .read_sector=executive_dq_ioc_read_sector,
             .read_context=(void *)p->dq_boot_io};
-        if(port_dqddt_bootread(&executive_dqddt,&executive_dq_fdt,&read,
+        if(port_dqddt_dispatch_bootread(&executive_dqddt,&executive_dq_fdt,&read,
                &executive_dqddt_io,0u)!=PORT_DQ_BOOTREAD_OK||
            executive_dqddt_io.lbn!=0u||
            executive_dqddt_io.bytes!=PORT_DQ_BOOTREAD_BYTES||
