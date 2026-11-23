@@ -17,7 +17,8 @@ enum {
     PORT_V37_CCB_OK=1u,
     PORT_V37_CCB_BAD=2u,
     PORT_V37_CCB_IVCHAN=4u,
-    PORT_V37_CCB_NOPRIV=6u
+    PORT_V37_CCB_NOPRIV=6u,
+    PORT_V37_CCB_NOCHANNEL=8u
 };
 
 struct port_v37_ccb_view {
@@ -30,5 +31,7 @@ struct port_v37_ccb_view {
 uint32_t port_v37_ccb_resolve(uint8_t *ccb_base,size_t preceding_bytes,
     uint32_t channel,uint16_t maximum_channel_offset,uint8_t caller_mode,
     struct port_v37_ccb_view *);
+uint32_t port_v37_ccb_find_free(uint8_t *ccb_base,size_t preceding_bytes,
+    uint16_t channel_count,uint16_t *high_water_channel,
+    uint16_t *channel,uint8_t **ccb);
 #endif
-
