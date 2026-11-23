@@ -9,6 +9,9 @@ static uint32_t load32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
            ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
+static int privilege_enabled(const uint8_t *mask,unsigned bit){
+    return (mask[bit>>3]&(uint8_t)(1u<<(bit&7u)))!=0;
+}
 static void store16(uint8_t *p,int16_t value){
     const uint16_t v=(uint16_t)value;
     p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);
@@ -30,6 +33,11 @@ uint32_t port_v37_sysqio_process_bind_pcb(uint8_t *pcb,size_t bytes,
     const struct port_v37_sysqio_process out={
         .pid=load32(pcb+PORT_V37_PCB_PID),
         .arb_va=load32(pcb+PORT_V37_PCB_ARB),.access_mode=access_mode,
+        .has_phy_io=(uint8_t)privilege_enabled(
+            pcb+PORT_V37_PCB_PRIV,PORT_V37_PRIV_PHY_IO),
+        .has_log_io=(uint8_t)(privilege_enabled(
+            pcb+PORT_V37_PCB_PRIV,PORT_V37_PRIV_LOG_IO)||
+            privilege_enabled(pcb+PORT_V37_PCB_PRIV,PORT_V37_PRIV_PHY_IO)),
         .buffered_io_count=signed16(load16(pcb+PORT_V37_PCB_BIOCNT)),
         .direct_io_count=signed16(load16(pcb+PORT_V37_PCB_DIOCNT)),
         .ast_count=signed16(load16(pcb+PORT_V37_PCB_ASTCNT)),
