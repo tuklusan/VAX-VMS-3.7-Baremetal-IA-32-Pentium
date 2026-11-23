@@ -2515,4 +2515,3 @@ assert len({f['original_file'] for f in result['files']})==len(result['files'])
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')
 print('Source ranges:',sum(len(x.get('sections',[])) for x in result['files']),'; missing mapped functions:',missing)
 raise SystemExit(1 if missing else 0)
-
