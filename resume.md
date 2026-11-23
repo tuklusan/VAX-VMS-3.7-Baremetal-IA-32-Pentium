@@ -574,4 +574,4 @@ Verification: `make -j2 all` PASS; full `make test sourcerangecheck sysexecentry
 
 No original coverage status totals changed; SCHED.MAR initial-context lines remain partial because runtime VMS scheduler dispatch, current-context save, VMS PHD/page-table setup and live PCB activation are still unimplemented. Public SYS$QIO, process-aware DQA0 completion/AST delivery, ACP, native INIT completion, login/DCL and DECnet/SET HOST 0 remain incomplete.
 
-M248 implementation commit (local): `37c40e2b7675c10bf50ff1074bc4621ba229d4b5`.
+M248 implementation commit (local): `37c40e2b7675c10bf50ff1074bc4621ba229d4b5`; published `main`: `33efcf0eafe36c2c81c4c3acfcfe20a9cc305674`.
