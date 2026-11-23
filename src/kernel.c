@@ -3901,7 +3901,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     if(ata_write_probe>0)
-        bootstrap_message("INIT: SYS.EXE private DQ DDT WRITEPBLK action completed through ATA IRQ14, verified and restored.");
+        bootstrap_message("INIT: SYS.EXE DQ IOC FIFO WRITEPBLK completed through staged DDT and ATA IRQ14, verified and restored.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

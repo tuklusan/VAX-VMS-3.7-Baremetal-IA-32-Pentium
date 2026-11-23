@@ -226,7 +226,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck
+test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 	python3 tests/test_guest_layout.py
@@ -938,6 +938,10 @@ $(M168_IOC_OBJS): build/%.o: src/%.c src/vms_dq_ioc.h | build
 dqprivateioccheck: $(M168_IOC_OBJS) | build
 	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc -Itests $(M168_IOC_SRCS) $(wildcard tests/test_ioc_*_[0123].c) tests/test_ioc_main.c -o build/dqprivateioccheck
 	./build/dqprivateioccheck
+.PHONY: dqwriteioccheck
+dqwriteioccheck: | build
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_dq_ioc_write.c tests/test_dq_ioc_write_host.c -o build/dqwriteioccheck
+	./build/dqwriteioccheck
 # M153-M160: eight source FIL$READVBN cursor functions on verified FH2
 # extent chains, read-only privileged boot stage (not an ACP or channel).
 M160_CURSOR_SRCS=$(wildcard src/vms_f11_cursor_*.c)
@@ -991,7 +995,7 @@ build/iniloa.exe: build/vms_iniloa_iomap.o build/vms_iniloa_entry.o iniloa_nativ
 	$(LD) -m elf_i386 -T iniloa_native.ld -o $@ build/vms_iniloa_entry.o build/vms_iniloa_iomap.o
 build/install_iniloa_image: tools/install_iniloa_image.c src/vms_boot_files11.c src/vms_bootio.c src/vms_f11_home.c | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $^ -o $@
-.PHONY: dqcrbcheck sysexecentrycheck qemu-sysboot-m197 qemu-sysboot-m198 qemu-sysboot-m199 qemu-sysboot-m201 qemu-sysboot-m202
+.PHONY: dqcrbcheck sysexecentrycheck qemu-sysboot-m197 qemu-sysboot-m198 qemu-sysboot-m199 qemu-sysboot-m201 qemu-sysboot-m202 qemu-sysboot-m203
 dqcrbcheck: $(M197_DQ_CRB_OBJS) | build
 	$(CC) -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_dq_crb.c tests/test_dq_crb_host.c -o build/dqcrbcheck
 	ASAN_OPTIONS=detect_leaks=1 ./build/dqcrbcheck
@@ -1388,7 +1392,7 @@ $(M130_DQDDT_OBJS): build/%.o: src/%.c src/vms_dqddt.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: dqddtcheck
 dqddtcheck: $(M130_DQDDT_OBJS) | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M130_DQDDT_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) src/vms_qio_irp_prepare.c src/vms_ini_devicedb.c $(filter-out src/vms_ini_devicedb.c,$(M118_DB_SRCS)) tests/test_dqddt_host.c -o build/dqddtcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M130_DQDDT_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c src/vms_ini_devicedb.c $(filter-out src/vms_ini_devicedb.c,$(M118_DB_SRCS)) tests/test_dqddt_host.c -o build/dqddtcheck
 	./build/dqddtcheck
 
 # M131: original RELOCDRV IOC$INITDRV DPT STORE operations, no DDT bind.
@@ -1396,7 +1400,7 @@ $(M131_RELOC_OBJS): build/%.o: src/%.c src/vms_relocdrv.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: relocdrvcheck
 relocdrvcheck: $(M131_RELOC_OBJS) | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M131_RELOC_SRCS) $(M130_DQDDT_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M118_DB_SRCS) tests/test_relocdrv_host.c -o build/relocdrvcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M131_RELOC_SRCS) $(M130_DQDDT_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) src/vms_dq_ioc_write.c $(M118_DB_SRCS) tests/test_relocdrv_host.c -o build/relocdrvcheck
 	./build/relocdrvcheck
 
 # M134: original IOC$RELOC_DDT private-table relocation, never active DQA0.
@@ -1438,3 +1442,6 @@ qemu-sysboot-m201: vms37lab.ima portdisk.img
 
 qemu-sysboot-m202: vms37lab.ima portdisk.img
 	python3 tools/qemu_sysboot_m202.py
+
+qemu-sysboot-m203: vms37lab.ima portdisk.img
+	python3 tools/qemu_sysboot_m203.py
