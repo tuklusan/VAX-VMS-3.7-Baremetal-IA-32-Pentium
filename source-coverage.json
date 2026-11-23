@@ -10559,7 +10559,7 @@
           "reason": "Legacy 386 port requires original driver controller setup and INIT teardown / scheduler / pool integration"
         }
       ],
-      "unresolved_integration": "Source FIN_DATABASE names are staged only after a verified real ATA Files-11 read, but LOG$TRANSLATE/IOC disk DDT and ACP are not live. Other INIT operations, SYSTEM login, DCL and DECnet remain missing."
+      "unresolved_integration": "Source FIN_DATABASE names are staged only after a verified real ATA Files-11 read. SYS$DISK/SYS$SYSDEVICE translation is still confined to the bootstrap path; the later native DQA DDT binds only physical PBLK actions, with public channels and ACP absent. Other INIT operations, SYSTEM login, DCL and DECnet remain missing."
     },
     {
       "original_file": "SYS/SRC/PDAT.MAR",
@@ -20880,7 +20880,7 @@
           "pc_file": "src/vms_ini_ucb_boot.c",
           "pc_symbol": "port_v37_ucb_boot",
           "pc_line": 4,
-          "function": "Boot disk UCB fields, 30 original extension longwords; real disk DDT and CRB unresolved"
+          "function": "Boot disk UCB fields and 30 original extension longwords; DQA DDT/CRB are bound later for physical PBLK only, while full driver behavior and ACP remain unresolved"
         },
         {
           "original_lines": [
@@ -21972,7 +21972,7 @@
           "pc_file": "src/vms_dq_ioc_run.c",
           "pc_symbol": "port_dq_ioc_run",
           "pc_line": 4,
-          "function": "Resident DQ IOC FIFO now services one private READPBLK through native ATA IRQ14 and the attached CRB; source RB730 ISR/recovery, active DQA DDT dispatch and process-aware/public completion remain unresolved"
+          "function": "Resident DQ IOC FIFO services private READPBLK through native ATA IRQ14 and attached CRB; published DQA DDT routes physical PBLK actions into bounded FIFOs. Source RB730 ISR/recovery and process-aware/public completion remain unresolved"
         },
         {
           "original_lines": [
@@ -22013,7 +22013,7 @@
           "reason": "RB730 CSR/interrupts, retry, init, controller/port resource and remaining disk source unresolved"
         }
       ],
-      "unresolved_integration": "Native primary ATA IRQ14 is routed through a SYSDEF.MDL-shaped CRB attached to the DQA UCB; resident SYS.EXE validates staged DQ DDT/FDT and completes one private READPBLK through the native DQ IOC FIFO. DQA DDB DDT/action slots, original RB730 behavior, public process IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented."
+      "unresolved_integration": "Native primary ATA IRQ14 is routed through a SYSDEF.MDL-shaped CRB attached to the DQA UCB. Resident SYS.EXE relocates and publishes a native DQA DDT/FDT into DDB/UCB; IOC$SEARCHDEV selects it for physical READPBLK/WRITEPBLK through bounded private IOC FIFOs and actual IRQ14. Other DQ FDT actions, original RB730 controller behavior, public process IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented."
     },
     {
       "original_file": "SYS/SRC/RELOCDRV.MAR",
@@ -22209,7 +22209,7 @@
           "reason": "Original LOG$UNLOCK, measurement and native return convention remain unresolved"
         }
       ],
-      "unresolved_integration": "Private bounded two-entry resident SYSTEM bootstrap table can resolve SYS$DISK/SYS$SYSDEVICE. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic create/delete, access control, and disk DDT/ACP are absent."
+      "unresolved_integration": "Private bounded two-entry resident SYSTEM bootstrap table can resolve SYS$DISK/SYS$SYSDEVICE. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic create/delete, access control, public channel I/O and Files-11 ACP are absent; published DQA DDT supports physical PBLK only."
     },
     {
       "original_file": "SYS/SRC/MEMORYALC.MAR",
