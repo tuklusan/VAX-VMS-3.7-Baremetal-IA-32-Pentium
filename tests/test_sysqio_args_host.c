@@ -142,7 +142,8 @@ int main(void){
        PORT_V37_SYSQIO_ARGS_BAD)return 5;
     struct port_dq_fdt fdt;
     if(port_dq_fdt_build(&fdt,sizeof fdt)!=PORT_DQ_FDT_OK)return 6;
-    struct port_v37_sysqio_device device={&fdt,sizeof fdt,1u};
+    struct port_v37_sysqio_device device={.fdt=&fdt,
+        .fdt_bytes=sizeof fdt,.online=1u};
     uint8_t access_limit=4u;
     struct port_v37_sysqio_dispatch action={0};
     struct port_v37_sysqio_args request={.function=0x80ccu};
@@ -205,6 +206,7 @@ int main(void){
     struct begin_rig rig={.device=&device,.ucb=(void *)(uintptr_t)0x2000u,
         .expected_pid=7u,.expected_channel=0x12340002u};
     struct port_v37_sysqio_process proc={.pid=7u,.access_mode=3u,
+        .has_phy_io=1u,
         .local_event_flags={UINT32_MAX,UINT32_MAX}};
     const struct port_v37_sysqio_begin_ops begin_ops={
         .context=&rig,.lookup_channel=lookup_channel,.post_event=post_event,
@@ -408,6 +410,32 @@ int main(void){
     if(port_v37_irp_pool_free(&pool,prepared_irp,prepared_va,
           PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
         return 51;
+    /* SYSQIOREQ ACCESS follows packet and AST reservation. A failed
+     * physical-I/O privilege check must return that packet and both charges. */
+    put32(ap+12u,PORT_DQ_READPBLK);
+    proc.direct_io_count=1;proc.ast_count=1;proc.has_phy_io=0u;
+    rig.posts=0u;prepared_irp=0;prepared_va=0u;integrated=untouched;
+    if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&proc,&begin_ops,
+          &reserve_spec,&pool,&pool_sync,&integrated,&prepared_irp,
+          &prepared_va,&ast_status)!=PORT_V37_SYSQIO_PREPARE_ACCESS||
+       ast_status!=PORT_SYS85_NOPRIV||proc.direct_io_count!=1||
+       proc.ast_count!=1||pool.free_count!=2u||rig.posts!=1u||
+       rig.posted_status!=PORT_SYS85_NOPRIV||prepared_irp||prepared_va||
+       memcmp(&integrated,&untouched,sizeof integrated))
+        return 64;
+    proc.has_phy_io=1u;rig.posts=0u;
+    if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&proc,&begin_ops,
+          &reserve_spec,&pool,&pool_sync,&integrated,&prepared_irp,
+          &prepared_va,&ast_status)!=PORT_V37_SYSQIO_PREPARE_OK||
+       !prepared_irp||integrated.dispatch.physical_io!=1u||
+       !(get16(prepared_irp+42u)&0x0100u)||proc.direct_io_count!=0||
+       proc.ast_count!=0||rig.posts)
+        return 65;
+    if(port_v37_irp_pool_free(&pool,prepared_irp,prepared_va,
+          PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
+        return 66;
+    put32(ap+12u,PORT_DQ_READVBLK);
+    proc.direct_io_count=1;proc.ast_count=1;
     _Alignas(4) uint8_t source_pcb[PORT_V37_PCB_BYTES]={0};
     put16(source_pcb+PORT_V37_PCB_SIZE,PORT_V37_PCB_BYTES);
     source_pcb[PORT_V37_PCB_BTYPE]=PORT_V37_DYN_PCB;
