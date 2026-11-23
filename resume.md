@@ -397,3 +397,11 @@ Verification: header-triggered `make -j2 all` PASS; subsequent full `make test` 
 
 M228 implementation commit: `a8faddf181e73e7e3ffae15cf8956256c0d6ed12`.
 M229 implementation commit: `9009e3302dbd13e05c8251bc10ad564b30e5458b`.
+
+## M230 — SYS$QIO WRITEVBLK device-state normalization, 23 November 2026
+
+Ported SYSQIOREQ.MAR ACCESS lines 450-479 for the source boot-time WRITEVBLK cases. The host-tested helper decodes the original DEV characteristics bits, preserves function modifiers, converts non-FOD and mounted-foreign no-window writes to WRITELBLK, rejects an unmounted FOD write with SS$_NOPRIV, preserves mounted structured/windowed requests, and reports the source AST-quota branch predicate. The helper is not wired to live UCB/PCB state; ASTCNT enforcement, device privileges/protection, FDT dispatch, public service entry and completion remain unresolved. SYSQIOREQ coverage for 450-479 is partial.
+
+Verification: `make sysqioargscheck` PASS with modifier preservation, FOD/MNT/FOR/window states, NOPRIV and AST predicate cases; full `make test` PASS (exit 0, through M49); `python3 tools/validate_source_ranges.py` PASS (1,972 ranges, zero missing mapped functions; 441/4,566 originals indexed; 28,887 partial, 50,363 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: helper is host-only and not linked into the guest. No original DEC source or binary image was staged.
+
+M230 implementation commit: `75cbb7e938f715643e2b0d2dda448a041875ef94`.
