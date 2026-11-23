@@ -632,4 +632,5 @@ Remaining: allocate and bind source CCBs through genuine SYS/channel state, invo
 M253 implementation commit (local): 5a25c233b1aec0df2a293d70ae4278ec8187603c.
 
 M253 GitHub main contents publication commits: 75109616da9e57e495b3ea3ae8f1bac467e4a044, b7a298e28edfc0879611211121e590370920596, 9046fbae8fc04e3c4c4e87af74f4eb8c6deb5060, 84202f7846945be1e8b0e2776deb7addeaaf293, 817b209f6d632db330d2f152567c2fac6886359d, 70dcdf30a9a181b7ab4bd9ccc8743ff0cd34e94f, dffcc5fc017bdde1c307014ceeb1ecc65b2f4fc, 939154e4c9cfbf3f79d84c1759c695f1f3db3e1, coverage 2b19ef9ff189b175ad6e35a5e5edcee27fd122a; resume publication follows.
+M253 resume publication commit: 2da903d83d0542a0769f39eaa0495f77ba8ba44d.
 
