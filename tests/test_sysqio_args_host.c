@@ -30,6 +30,25 @@ static int clear_iosb(void *opaque,uint32_t address,size_t size){
        address-m->base>sizeof m->bytes-size)return 1;
     memset(m->bytes+(address-m->base),0,size);return 0;
 }
+struct begin_rig {
+    const struct port_v37_sysqio_device *device;
+    void *ucb;
+    uint32_t expected_pid,expected_channel,lookups,posts,posted_pid,posted_status;
+    uint8_t posted_efn;
+    int deny_channel;
+};
+static int lookup_channel(void *opaque,uint32_t pid,uint32_t channel,
+    struct port_v37_sysqio_resolved_channel *out){
+    struct begin_rig *r=opaque;r->lookups++;
+    if(r->deny_channel||pid!=r->expected_pid||channel!=r->expected_channel)
+        return -1;
+    out->device=r->device;out->ucb=r->ucb;out->ccb_access_limit=4u;
+    return 0;
+}
+static void post_event(void *opaque,uint32_t pid,uint8_t efn,uint32_t status){
+    struct begin_rig *r=opaque;r->posts++;r->posted_pid=pid;
+    r->posted_efn=efn;r->posted_status=status;
+}
 
 int main(void){
     _Alignas(4) uint8_t ap[PORT_V37_SYSQIO_LIST_BYTES+4u]={0};
@@ -57,27 +76,28 @@ int main(void){
        PORT_V37_SYSQIO_ARGS_BAD)return 5;
     struct port_dq_fdt fdt;
     if(port_dq_fdt_build(&fdt,sizeof fdt)!=PORT_DQ_FDT_OK)return 6;
-    struct port_v37_sysqio_device device={&fdt,sizeof fdt,4u,1u};
+    struct port_v37_sysqio_device device={&fdt,sizeof fdt,1u};
+    uint8_t access_limit=4u;
     struct port_v37_sysqio_dispatch action={0};
     struct port_v37_sysqio_args request={.function=0x80ccu};
-    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+    if(port_v37_sysqio_preflight(&request,3u,access_limit,&device,&action)!=
        PORT_V37_SYSQIO_PRECHECK_OK||action.full_function!=0x80ccu||
        action.function_code!=PORT_DQ_READPBLK)return 7;
     request.function=PORT_DQ_READLBLK;
-    device.ccb_access_limit=3u;
+    access_limit=3u;
     memset(&action,0x5a,sizeof action);
     struct port_v37_sysqio_dispatch saved=action;
-    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+    if(port_v37_sysqio_preflight(&request,3u,access_limit,&device,&action)!=
        PORT_V37_SYSQIO_PRECHECK_NOPRIV||memcmp(&action,&saved,sizeof action))
         return 8;
-    device.ccb_access_limit=4u;device.online=0u;
-    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+    access_limit=4u;device.online=0u;
+    if(port_v37_sysqio_preflight(&request,3u,access_limit,&device,&action)!=
        PORT_V37_SYSQIO_PRECHECK_OFFLINE)return 9;
     request.function=PORT_DQ_DEACCESS;
-    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+    if(port_v37_sysqio_preflight(&request,3u,access_limit,&device,&action)!=
        PORT_V37_SYSQIO_PRECHECK_OK)return 10;
     request.function=63u;
-    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+    if(port_v37_sysqio_preflight(&request,3u,access_limit,&device,&action)!=
        PORT_V37_SYSQIO_PRECHECK_ILLFUNC)return 11;
     uint32_t local[2]={UINT32_MAX,UINT32_MAX};uint32_t service_status=0u;
     if(port_v37_sysqio_clear_efn(0x1003u,local,clear_global,0,
@@ -115,6 +135,34 @@ int main(void){
     mem.deny_probe=0;mem.probes=mem.clears=0u;
     if(port_v37_sysqio_clear_iosb(0u,&memops)!=
        PORT_V37_SYSQIO_IOSB_OK||mem.probes||mem.clears)return 20;
-    puts("SYS$QIO AP/EFN/channel/FDT/IOSB preflight cases PASS");
+    device.online=1u;
+    struct begin_rig rig={.device=&device,.ucb=(void *)(uintptr_t)0x2000u,
+        .expected_pid=7u,.expected_channel=0x12340002u};
+    struct port_v37_sysqio_process proc={.pid=7u,.access_mode=3u,
+        .local_event_flags={UINT32_MAX,UINT32_MAX}};
+    const struct port_v37_sysqio_begin_ops begin_ops={
+        .context=&rig,.lookup_channel=lookup_channel,.post_event=post_event,
+        .user_memory=memops};
+    struct port_v37_sysqio_prepared prepared={0};
+    uint32_t begin_status=0u;
+    memset(mem.bytes,0xa5,sizeof mem.bytes);mem.probes=mem.clears=0u;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_OK||
+       begin_status!=PORT_V37_SYSQIO_BEGIN_OK||rig.lookups!=1u||rig.posts||
+       proc.local_event_flags[0]!=(UINT32_MAX&~(1u<<3))||
+       proc.local_event_flags[1]!=UINT32_MAX||
+       prepared.channel.ucb!=rig.ucb||prepared.dispatch.function_code!=49u||
+       mem.probes!=1u||mem.clears!=1u)return 21;
+    rig.deny_channel=1;rig.posts=0u;rig.lookups=0u;
+    memset(mem.bytes,0xa5,sizeof mem.bytes);mem.probes=mem.clears=0u;
+    struct port_v37_sysqio_prepared untouched;
+    memset(&untouched,0x5a,sizeof untouched);prepared=untouched;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_IVCHAN||
+       begin_status!=PORT_V37_SYSQIO_BEGIN_IVCHAN||rig.lookups!=1u||
+       rig.posts!=1u||rig.posted_pid!=7u||rig.posted_efn!=3u||
+       mem.probes||mem.clears||memcmp(&prepared,&untouched,sizeof prepared))
+        return 22;
+    puts("SYS$QIO argument, EFN, channel, FDT and IOSB begin path PASS");
     return 0;
 }

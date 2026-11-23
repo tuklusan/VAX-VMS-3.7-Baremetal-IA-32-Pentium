@@ -32,14 +32,15 @@ uint32_t port_v37_sysqio_decode_args(const void *argument_list,
  * the strict comparison therefore admits a request from the assigning mode
  * while rejecting access from a less privileged mode. */
 uint32_t port_v37_sysqio_preflight(const struct port_v37_sysqio_args *args,
-    uint8_t caller_mode,const struct port_v37_sysqio_device *device,
+    uint8_t caller_mode,uint8_t ccb_access_limit,
+    const struct port_v37_sysqio_device *device,
     struct port_v37_sysqio_dispatch *dispatch){
     if(!args||!device||!dispatch||caller_mode>3u||
        !device->fdt||!device->fdt_bytes||
-       device->ccb_access_limit==0u||device->ccb_access_limit>4u||
+       ccb_access_limit==0u||ccb_access_limit>4u||
        device->online>1u)
         return PORT_V37_SYSQIO_PRECHECK_BAD;
-    if(caller_mode>=device->ccb_access_limit)
+    if(caller_mode>=ccb_access_limit)
         return PORT_V37_SYSQIO_PRECHECK_NOPRIV;
     struct port_dq_fdt_decision fdt={0};
     if(port_dq_fdt_classify(device->fdt,device->fdt_bytes,args->function,
@@ -53,4 +54,67 @@ uint32_t port_v37_sysqio_preflight(const struct port_v37_sysqio_args *args,
         .buffered=fdt.buffered,.action_class=fdt.action_class};
     *dispatch=out;
     return PORT_V37_SYSQIO_PRECHECK_OK;
+}
+
+static uint32_t begin_failure(uint32_t result,uint32_t status,
+    const struct port_v37_sysqio_args *args,
+    const struct port_v37_sysqio_process *process,
+    const struct port_v37_sysqio_begin_ops *ops,uint32_t *out_status){
+    *out_status=status;
+    if(ops->post_event)
+        ops->post_event(ops->context,process->pid,
+                        (uint8_t)args->event_flag,status);
+    return result;
+}
+
+/* SYSQIOREQ.MAR 239-292. This is the actual source-ordered service front end
+ * through IOSB initialization. Driver FDT invocation and IRP submission are
+ * returned to the caller as the next, still-unported stage. */
+uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
+    struct port_v37_sysqio_process *process,
+    const struct port_v37_sysqio_begin_ops *ops,
+    struct port_v37_sysqio_prepared *prepared,uint32_t *service_status){
+    if(!process||!process->pid||process->access_mode>3u||!ops||
+       !ops->lookup_channel||!ops->post_event||!prepared||!service_status)
+        return PORT_V37_SYSQIO_BEGIN_BAD;
+    struct port_v37_sysqio_args args={0};
+    if(port_v37_sysqio_decode_args(ap,ap_bytes,&args)!=PORT_V37_SYSQIO_ARGS_OK){
+        *service_status=PORT_V37_SYSQIO_BEGIN_BAD;
+        return PORT_V37_SYSQIO_BEGIN_BAD;
+    }
+    uint32_t efn_status=0u;
+    const uint32_t efn=port_v37_sysqio_clear_efn(args.event_flag,
+        process->local_event_flags,ops->clear_global_efn,ops->context,
+        &efn_status);
+    if(efn!=PORT_V37_SYSQIO_EF_OK)
+        return begin_failure(PORT_V37_SYSQIO_BEGIN_EFERR,efn_status,
+                             &args,process,ops,service_status);
+    struct port_v37_sysqio_resolved_channel channel={0};
+    if(ops->lookup_channel(ops->context,process->pid,args.channel,&channel)!=0||
+       !channel.device||!channel.ucb)
+        return begin_failure(PORT_V37_SYSQIO_BEGIN_IVCHAN,
+            PORT_V37_SYSQIO_BEGIN_IVCHAN,&args,process,ops,service_status);
+    struct port_v37_sysqio_dispatch dispatch={0};
+    const uint32_t check=port_v37_sysqio_preflight(&args,
+        process->access_mode,channel.ccb_access_limit,channel.device,&dispatch);
+    if(check!=PORT_V37_SYSQIO_PRECHECK_OK){
+        const uint32_t result=check==PORT_V37_SYSQIO_PRECHECK_NOPRIV?
+            PORT_V37_SYSQIO_BEGIN_NOPRIV:
+            check==PORT_V37_SYSQIO_PRECHECK_ILLFUNC?
+                PORT_V37_SYSQIO_BEGIN_ILLFUNC:
+            check==PORT_V37_SYSQIO_PRECHECK_OFFLINE?
+                PORT_V37_SYSQIO_BEGIN_OFFLINE:PORT_V37_SYSQIO_BEGIN_BAD;
+        return begin_failure(result,result,&args,process,ops,service_status);
+    }
+    const uint32_t iosb=port_v37_sysqio_clear_iosb(args.iosb,
+                                                   &ops->user_memory);
+    if(iosb!=PORT_V37_SYSQIO_IOSB_OK){
+        const uint32_t result=iosb==PORT_V37_SYSQIO_IOSB_ACCVIO?
+            PORT_V37_SYSQIO_BEGIN_ACCVIO:PORT_V37_SYSQIO_BEGIN_BAD;
+        return begin_failure(result,result,&args,process,ops,service_status);
+    }
+    const struct port_v37_sysqio_prepared out={args,dispatch,channel};
+    *prepared=out;
+    *service_status=PORT_V37_SYSQIO_BEGIN_OK;
+    return PORT_V37_SYSQIO_BEGIN_OK;
 }

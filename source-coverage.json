@@ -21121,13 +21121,21 @@
         {
           "original_lines": [
             239,
+            243
+          ],
+          "status": "unresolved",
+          "reason": "EXE$QIO entry declaration and service prologue unresolved"
+        },
+        {
+          "original_lines": [
+            244,
             247
           ],
           "status": "partial",
-          "pc_file": "src/vms_sysqio_ef.c",
-          "pc_symbol": "port_v37_sysqio_clear_efn",
-          "pc_line": 6,
-          "function": "Local EFN clear through 63 and global SCH$CLREF callback selected by the source EFN boundary"
+          "pc_file": "src/vms_sysqio_args.c",
+          "pc_symbol": "port_v37_sysqio_begin",
+          "pc_line": 73,
+          "function": "Clear EFN before channel lookup and post failure status to the requested event flag"
         },
         {
           "original_lines": [
@@ -21214,7 +21222,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; helpers model local/global EFN clearing and nullable IOSB probing/clearing; a preflight helper checks resolved-channel access threshold, DQ FDT legality and offline exceptions. They are not connected to a user service entry. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; process channel lookup, live EFN/IOSB integration, quotas, device access/protection, IRP allocation and process AST completion remain absent."
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB and posts pre-dispatch failures. It is host-tested but not connected to a user service entry, real CCB lookup or driver dispatch. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; quotas, device access/protection, IRP allocation and process AST completion remain absent."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

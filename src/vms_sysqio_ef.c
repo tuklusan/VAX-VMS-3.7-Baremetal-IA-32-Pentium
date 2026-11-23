@@ -1,7 +1,7 @@
 #include "vms_sysqio_ef.h"
 #include "vms_sys85.h"
 
-/* SYSQIOREQ.MAR 239-247: MOVZBL EFN, clear local bits inline through 63,
+/* SYSQIOREQ.MAR 244-247: MOVZBL EFN, clear local bits inline through 63,
  * and call SCH$CLREF for a global event flag. */
 uint32_t port_v37_sysqio_clear_efn(uint32_t event_flag,uint32_t local_flags[2],
     port_v37_sysqio_clref_fn clear_global,void *context,
