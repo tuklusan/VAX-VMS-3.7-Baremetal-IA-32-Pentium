@@ -1,6 +1,6 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M218
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M220
 
-INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218/M219 add a host-tested SYS$QIO AP decoder and partial resolved-channel/FDT/offline preflight only; the public service remains unimplemented. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
+INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M220 add host-tested SYS$QIO argument decoding, local/global EFN clearing, and resolved-channel/FDT/offline preflight; the public service remains unimplemented. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
 
 Active repository: tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium main
@@ -294,3 +294,14 @@ Extended the SYSQIOREQ helper to apply the source channel-access threshold (`CCB
 Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (1,961 ranges, zero unmapped; 441/4,566 originals indexed; 28,740 partial, 50,461 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `git diff --check` PASS. No QEMU run: the host-tested preflight is not linked into the guest image.
 
 M219 implementation commit: `2d7a360b014886af8273c1cf853be097a38b71a7`. Public SYS$QIO and all remaining process/device integration remain incomplete.
+
+
+## M220 — SYS$QIO event-flag prelude, 23 November 2026
+
+Implemented the SYSQIOREQ.MAR EFN boundary: the low byte of EFN is used; local EFNs 0-63 atomically clear the corresponding bit in the two-longword process-local flag cluster, while global EFNs call the executive clear callback and preserve its VMS condition status. Failed global clears are propagated. This helper is not yet wired into the public service entry or a live process PCB.
+
+Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (1,963 ranges, zero unmapped; 441/4,566 originals indexed; 28,749 partial, 50,452 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `git diff --check` PASS. No QEMU run: the host-tested EFN helper is not linked into the guest image. No DEC source or binary image was staged.
+
+SYSQIOREQ.MAR lines 239-247 are recorded as partial coverage; live event flag clearing through a public SYS$QIO call, user service entry, channel lookup, IOSB/quota handling, driver dispatch and AST completion remain unimplemented.
+
+M220 implementation commit: `e6e03d8b4db2f70418a0f6a27f3e09039f55fb06`.
