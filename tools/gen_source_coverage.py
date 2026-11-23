@@ -2287,12 +2287,14 @@ result['files'].append({'original_file':'SHRLIB/TTYDEF.MAR','original_lines':781
     'sections':sec,'unresolved_integration':'Only source UCB extension offsets and tank flags are mapped; no complete terminal-driver class or port runtime.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
-# M120: read-only physical IOC$SEARCHDEV/GEN/ALC source-path translation.
+# M120/M255: source IOC$SEARCHDEV/GEN/ALC plus IOC$FFCHAN free CCB scan.
 # This resolves real source-format DEVICEDAT DDB and UCB pointers in SYS.EXE,
 # NOT a $QIO service. LOG$TRANSLATE, mailbox allocation, device mutex, actual
 # DDTs and process ownership are still unresolved and fail closed.
 ioc_rows=[
- (1,295,None,None,'Original VAX queues, channel allocation, IOC interfaces and source comments unresolved','unresolved'),
+ (1,215,None,None,'Original IOC queues, channel tables and declarations unresolved','unresolved'),
+ (216,248,'src/vms_v37_ccb.c','port_v37_ccb_find_free','IOC$FFCHAN source scan of CCB$B_AMOD from CTL$GL_CCBBASE, first free 16-byte channel token and CHINDX high-water update','partial'),
+ (249,295,None,None,'Original IOC lock and device search entry context unresolved','unresolved'),
  (296,298,'src/vms_ioc_searchgen.c','port_v37_ioc_searchgen','IOC$SEARCHGEN generic mode; real device availability waits for full ownership and mount privileges','partial'),
  (299,301,'src/vms_ioc_searchalc.c','port_v37_ioc_searchalc','IOC$SEARCHALC generic allocation mode; no process ownership or ACL checks','partial'),
  (302,325,'src/vms_ioc_searchdev.c','port_v37_ioc_searchdev','IOC$SEARCHDEV original physical entry, bounded read-only native source record lookup','partial'),
