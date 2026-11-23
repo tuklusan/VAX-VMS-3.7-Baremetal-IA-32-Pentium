@@ -1,6 +1,6 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M221
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M222
 
-INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M221 add host-tested SYS$QIO AP decoding, local/global EFN clearing, resolved-channel/FDT/offline preflight and nullable IOSB probe/clear helpers; they are not connected to a public service entry. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
+INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M222 add host-tested SYS$QIO AP decoding, EFN clearing, channel/FDT/offline checks, IOSB probe/clear, and a source-ordered pre-dispatch sequence. This sequence still has mock channel/memory callbacks and is not wired to the live user service or DQA driver dispatcher. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
 
 Active repository: tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium main
@@ -316,3 +316,14 @@ Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, suite 
 SYSQIOREQ.MAR lines 286-292 are partial coverage only. Public SYS$QIO, process page-table callback wiring, quotas, full device-access checks, IRP allocation, dispatch, IOSB completion and AST delivery remain unfinished.
 
 M221 implementation commit: `aab2a16cfd3a8b3d7baaab5e829e55d877c1a3d2`.
+
+
+## M222 — Source-ordered SYS$QIO pre-dispatch, 23 November 2026
+
+Added a source-ordered `EXE$QIO` begin routine: decode the AP list; clear the local/global EFN; resolve the caller's channel; check CCB access mode, DQ FDT legality and offline exceptions; then probe and clear the optional eight-byte IOSB. Failures after EFN handling post the error status to the requested event flag, and the prepared request output remains unchanged on failure. A follow-up correction moved `CCB$B_AMOD` out of device state and into the resolved channel, matching its source per-channel meaning. This routine prepares a request but does not invoke a driver FDT action, allocate an IRP, or enter public SYS$QIO from a live process.
+
+Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (1,966 ranges, zero unmapped; 441/4,566 original files indexed; 28,751 partial, 50,450 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `git diff --check` PASS. No QEMU run: the source-ordered service front end is host-tested and not linked into the guest.
+
+SYSQIOREQ.MAR coverage now maps the EFN entry ordering, channel-mode/FDT preflight and IOSB initialization as partial. Real CCB lookup, process page-table callbacks, event/IOSB wiring, quotas, IRP allocation, DDT action dispatch, asynchronous completion and AST delivery remain unimplemented.
+
+M222 implementation commit: `86a6be8f5c70f2f041c0bedc1725073f6310cca8`.
