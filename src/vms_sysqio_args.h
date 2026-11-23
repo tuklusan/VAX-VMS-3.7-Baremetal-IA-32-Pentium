@@ -99,6 +99,17 @@ uint32_t port_v37_sysqio_build_irp(const struct port_v37_sysqio_prepared *,
     const struct port_v37_sysqio_process *,const struct port_v37_sysqio_irp_spec *,
     uint8_t *packet,size_t packet_bytes);
 
+/* SYSQIOREQ ACCESS: normalize WRITEVBLK for the boot-time device states. */
+enum { PORT_V37_SYSQIO_ACCESS_OK=1u,PORT_V37_SYSQIO_ACCESS_BAD=2u,
+       PORT_V37_SYSQIO_ACCESS_NOPRIV=4u };
+enum { PORT_V37_DEVCHAR_SPL=1u<<6,PORT_V37_DEVCHAR_FOD=1u<<14,
+       PORT_V37_DEVCHAR_SHR=1u<<16,PORT_V37_DEVCHAR_MNT=1u<<19,
+       PORT_V37_DEVCHAR_FOR=1u<<24 };
+uint32_t port_v37_sysqio_normalize_write(uint16_t function,
+    uint32_t device_characteristics,uint32_t window_address,
+    uint16_t *normalized_function,uint8_t *ast_quota_check,
+    uint32_t *service_status);
+
 /* Source-ordered EXE$QIO path through IOSB and I/O quota reservation. It
  * prepares a request for a later driver dispatcher; no IRP is allocated and
  * no hardware I/O is initiated here. */

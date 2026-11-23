@@ -244,6 +244,35 @@ int main(void){
     if(port_v37_sysqio_build_irp(&prepared,&proc,&bad_spec,irp,sizeof irp)!=
          PORT_V37_SYSQIO_IRP_BUILD_BAD||irp[0]!=0x5au||irp[sizeof irp-1u]!=0x5au)
         return 29;
-    puts("SYS$QIO argument, begin and source-layout IRP construction PASS");
+    uint16_t normalized=0xaaaau;uint8_t check_ast=0xaau;
+    uint32_t access_status=0xfeedu;
+    if(port_v37_sysqio_normalize_write(0x0fb0u,0u,0u,&normalized,
+          &check_ast,&access_status)!=PORT_V37_SYSQIO_ACCESS_OK||
+       normalized!=0x0fa0u||check_ast!=1u||access_status!=PORT_SYS85_NORMAL)
+        return 30;
+    if(port_v37_sysqio_normalize_write(PORT_DQ_WRITEVBLK,
+          PORT_V37_DEVCHAR_FOD,0u,&normalized,&check_ast,&access_status)!=
+          PORT_V37_SYSQIO_ACCESS_NOPRIV||access_status!=PORT_SYS85_NOPRIV||
+       normalized!=0x0fa0u||check_ast!=1u)
+        return 31;
+    if(port_v37_sysqio_normalize_write(PORT_DQ_WRITEVBLK,
+          PORT_V37_DEVCHAR_FOD|PORT_V37_DEVCHAR_MNT,0u,&normalized,
+          &check_ast,&access_status)!=PORT_V37_SYSQIO_ACCESS_OK||
+       normalized!=PORT_DQ_WRITEVBLK||check_ast!=0u)
+        return 32;
+    if(port_v37_sysqio_normalize_write(PORT_DQ_WRITEVBLK,
+          PORT_V37_DEVCHAR_FOD|PORT_V37_DEVCHAR_MNT|PORT_V37_DEVCHAR_FOR,
+          0u,&normalized,&check_ast,&access_status)!=PORT_V37_SYSQIO_ACCESS_OK||
+       normalized!=PORT_DQ_WRITELBLK||check_ast!=0u)
+        return 33;
+    if(port_v37_sysqio_normalize_write(PORT_DQ_WRITEVBLK,
+          PORT_V37_DEVCHAR_SPL,0u,&normalized,&check_ast,&access_status)!=
+          PORT_V37_SYSQIO_ACCESS_OK||normalized!=PORT_DQ_WRITELBLK||check_ast)
+        return 34;
+    if(port_v37_sysqio_normalize_write(PORT_DQ_READVBLK,0u,0u,
+          &normalized,&check_ast,&access_status)!=PORT_V37_SYSQIO_ACCESS_OK||
+       normalized!=PORT_DQ_READVBLK||check_ast)
+        return 35;
+    puts("SYS$QIO begin, source IRP layout and virtual-write normalization PASS");
     return 0;
 }
