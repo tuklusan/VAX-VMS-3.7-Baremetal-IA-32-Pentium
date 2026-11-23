@@ -552,4 +552,3 @@ int main(void){
     puts("SYS$QIO IRP, AST, device-state and VMS privilege checks PASS");
     return 0;
 }
-
