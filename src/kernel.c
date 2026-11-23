@@ -2520,11 +2520,20 @@ struct m202_dq_write_context {
     uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
        const struct port_v37_device_result *,const char *,size_t,
        struct port_v37_ioc_result *);
+    uint32_t read_lbn[2];
+    uint32_t read_calls;
+    uint32_t write_lbn[2];
+    uint16_t write_first_word[2];
+    uint32_t write_calls;
 };
 static uint32_t m202_dq_queued_write(void *opaque,uint32_t lbn,
                                       const uint8_t payload[512]){
     struct m202_dq_write_context *ctx=opaque;
-    if(!ctx||!payload)return PORT_DQ_IOCW_BAD;
+    if(!ctx||!payload||ctx->write_calls>=2u)return PORT_DQ_IOCW_BAD;
+    const unsigned call=ctx->write_calls++;
+    ctx->write_lbn[call]=lbn;
+    ctx->write_first_word[call]=(uint16_t)payload[0]|
+        ((uint16_t)payload[1]<<8u);
     uint16_t words[256];
     for(unsigned i=0;i<256u;i++)
         words[i]=(uint16_t)payload[i*2u]|((uint16_t)payload[i*2u+1u]<<8u);
@@ -2539,30 +2548,48 @@ static int m202_submit_queued_write(const struct port_dqddt_stage *stage,
     uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
        const struct port_v37_device_result *,const char *,size_t,
        struct port_v37_ioc_result *)){
-    struct m202_dq_write_context context={stage,fdt,device_db,device_info,
-                                          native,ioc_search};
+    struct m202_dq_write_context context={
+        .stage=stage,.fdt=fdt,.device_db=device_db,.device_info=device_info,
+        .native=native,.ioc_search=ioc_search};
     struct port_dq_ioc_write_queue queue;
     struct port_dq_ioc_write_iosb iosb={0};
-    uint8_t payload[512];
+    uint8_t first_payload[512],final_payload[512];
     for(unsigned i=0;i<256u;i++){
-        payload[i*2u]=(uint8_t)data[i];
-        payload[i*2u+1u]=(uint8_t)(data[i]>>8u);
+        const uint16_t first=(uint16_t)~data[i];
+        first_payload[i*2u]=(uint8_t)first;
+        first_payload[i*2u+1u]=(uint8_t)(first>>8u);
+        final_payload[i*2u]=(uint8_t)data[i];
+        final_payload[i*2u+1u]=(uint8_t)(data[i]>>8u);
     }
     if(port_dq_ioc_write_init(&queue,m202_dq_queued_write,&context)!=
          PORT_DQ_IOCW_OK||
-       port_dq_ioc_write_prepare(&queue,1u,lbn,payload,sizeof payload)!=
+       port_dq_ioc_write_prepare(&queue,1u,lbn,first_payload,
+                                 sizeof first_payload)!=
+         PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_prepare(&queue,2u,lbn,final_payload,
+                                 sizeof final_payload)!=
          PORT_DQ_IOCW_OK||
        port_dq_ioc_write_enqueue(&queue,1u)!=PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_enqueue(&queue,2u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_service(&queue,&iosb)!=PORT_DQ_IOCW_OK||
        iosb.tag!=1u||iosb.status!=PORT_DQ_IOCW_OK||iosb.bytes!=512u||
-       queue.submitted!=1u||queue.completed!=1u||queue.failed!=0u)
+       port_dq_ioc_write_service(&queue,&iosb)!=PORT_DQ_IOCW_OK||
+       iosb.tag!=2u||iosb.status!=PORT_DQ_IOCW_OK||iosb.bytes!=512u||
+       queue.submitted!=2u||queue.completed!=2u||queue.failed!=0u||
+       context.write_calls!=2u||context.write_lbn[0]!=lbn||
+       context.write_lbn[1]!=lbn||
+       context.write_first_word[0]!=(uint16_t)((uint16_t)first_payload[0]|
+          ((uint16_t)first_payload[1]<<8u))||
+       context.write_first_word[1]!=(uint16_t)((uint16_t)final_payload[0]|
+          ((uint16_t)final_payload[1]<<8u)))
         return -1;
     return 0;
 }
 static uint32_t m202_dq_queued_read(void *opaque,uint32_t lbn,
                                     uint8_t destination[512]){
     struct m202_dq_write_context *ctx=opaque;
-    if(!ctx||!destination)return 0u;
+    if(!ctx||!destination||ctx->read_calls>=2u)return 0u;
+    ctx->read_lbn[ctx->read_calls++]=lbn;
     uint16_t words[256];
     if(m202_dispatch_io(ctx->stage,ctx->fdt,ctx->device_db,
         ctx->device_info,lbn,words,PORT_DQ_READPBLK,ctx->native,
@@ -2581,8 +2608,9 @@ static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
     uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
        const struct port_v37_device_result *,const char *,size_t,
        struct port_v37_ioc_result *)){
-    struct m202_dq_write_context context={stage,fdt,device_db,device_info,
-                                          native,ioc_search};
+    struct m202_dq_write_context context={
+        .stage=stage,.fdt=fdt,.device_db=device_db,.device_info=device_info,
+        .native=native,.ioc_search=ioc_search};
     struct port_dq_ioc_queue queue;
     struct port_dq_ioc_report report={0};
     uint8_t second[512];
@@ -2599,6 +2627,8 @@ static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
        report.reads!=2u||queue.completed!=2u||queue.posted!=2u||
        queue.active!=PORT_DQ_IOC_DEPTH||queue.reads!=2u)
         return -1;
+    if(context.read_calls!=2u||context.read_lbn[0]!=lbn||
+       context.read_lbn[1]!=0u)return -1;
     if(!expected_boot)return -1;
     for(unsigned i=0;i<256u;i++)
         if(expected_boot[i]!=(uint16_t)((uint16_t)second[i*2u]|
@@ -4099,7 +4129,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     if(ata_write_probe>0)
-        bootstrap_message("INIT: SYS.EXE DQ FIFO dispatched IOC-selected DQA0 DDT WRITEPBLK; read FIFO posted READPBLK via ATA IRQ14, readback and restore verified.");
+        bootstrap_message("INIT: SYS.EXE DQA0 write FIFO completed two ordered DDT WRITEPBLK IRPs; read FIFO posted two READPBLK IRPs via IRQ14, readback and restore verified.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

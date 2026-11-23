@@ -10250,7 +10250,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2716,
+          "pc_line": 2746,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10288,7 +10288,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2716,
+          "pc_line": 2746,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
