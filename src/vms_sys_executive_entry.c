@@ -321,6 +321,68 @@ static uint32_t executive_bootdev_scan_ready;
 static union { uint32_t align; uint8_t data[PORT_V37_DEVICE_BYTES]; } executive_devicedb_bytes;
 static struct port_v37_device_result executive_devicedb_result;
 static uint32_t executive_devicedb_ready;
+
+struct executive_postpub_f11_context {
+    const struct port_sys_exec_dq_boot_settings *settings;
+    uint32_t reads;
+};
+static uint32_t executive_postpub_f11_sector(void *opaque,uint32_t lbn,
+                                              uint8_t output[512]){
+    struct executive_postpub_f11_context *ctx=opaque;
+    if(!ctx||!ctx->settings||!ctx->settings->read_sector||!output||
+       ctx->settings->boot_unit!=0u||ctx->settings->reserved||
+       !ctx->settings->irq_handler)return PORT_DQ_DIR_MAP;
+    struct port_v37_ioc_result selected={0};
+    if(port_v37_ioc_searchdev(executive_devicedb_bytes.data,
+         sizeof executive_devicedb_bytes.data,
+         (uint32_t)(uintptr_t)executive_devicedb_bytes.data,
+         &executive_devicedb_result,"DQA0",4u,&selected)!=PORT_V37_IOC_OK||
+       selected.ddb!=executive_devicedb_result.ddb[0]||
+       selected.ucb!=executive_devicedb_result.ucb[0]||
+       selected.unit!=0u||!selected.driver_bound)
+        return PORT_DQ_DIR_MAP;
+    const uint8_t *ddb=executive_devicedb_bytes.data+
+        PORT_V37_DDB_BOOT_OFF;
+    const uint32_t ddt=port_v37_read32(ddb+12u);
+    if(ddt!=executive_native_dqddt.base||
+       port_v37_read32((const uint8_t *)(uintptr_t)ddt)!=
+           (uint32_t)(uintptr_t)port_dqddt_startio)
+        return PORT_DQ_DIR_MAP;
+    typedef uint32_t (*dq_startio_fn)(const struct port_dqddt_stage *,
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,struct port_dq_bootread_result *);
+    dq_startio_fn startio=(dq_startio_fn)(uintptr_t)
+        port_v37_read32((const uint8_t *)(uintptr_t)ddt);
+    uint8_t *irp=executive_dqddt_irp.bytes;
+    if(port_v37_irp_prepare(irp,PORT_V37_IRP_SIZE,
+         (uint32_t)(uintptr_t)irp,selected.ucb,PORT_DQ_READPBLK)!=
+             PORT_V37_QIO_OK)
+        return PORT_DQ_DIR_MAP;
+    port_v37_write16(irp+42u,PORT_DQ_PHYSIO);
+    port_v37_write16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
+    port_v37_write32(irp+PORT_V37_IRP_MEDIA,lbn);
+    const struct port_dq_bootread_request request={
+        .fdt=&executive_dq_fdt,
+        .device_db=executive_devicedb_bytes.data,
+        .device_info=&executive_devicedb_result,
+        .irp=irp,.irp_bytes=PORT_V37_IRP_SIZE,
+        .sector=executive_dqddt_sector.words,
+        .sector_bytes=PORT_DQ_BOOTREAD_BYTES,.boot_unit=0u,
+        .read_sector=ctx->settings->read_sector,
+        .read_context=ctx->settings->context};
+    if(startio(&executive_dqddt,&executive_native_dqddt,
+         &executive_dq_fdt,&request,&executive_dqddt_io)!=
+             PORT_DQ_BOOTREAD_OK||
+       executive_dqddt_io.io_function!=PORT_DQ_READPBLK||
+       executive_dqddt_io.lbn!=lbn||
+       executive_dqddt_io.irp_status!=PORT_SYS85_NORMAL||
+       executive_dqddt_io.bytes!=PORT_DQ_BOOTREAD_BYTES)
+        return PORT_DQ_DIR_MAP;
+    for(unsigned i=0u;i<512u;i++)
+        output[i]=((const uint8_t *)executive_dqddt_sector.words)[i];
+    ctx->reads++;
+    return PORT_DQ_DIR_OK;
+}
 /* Full native NL read/write DDT/FDT bytes; class/port drivers still absent. */
 static union {uint32_t align;uint8_t bytes[PORT_V37_NL_IMAGE_BYTES];} executive_nl_ddt;
 static uint32_t executive_nl_ddt_ready;
@@ -1701,10 +1763,35 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             p->result->dqa_ioc_ucb=found.ucb;
             return PORT_SYS_EXEC_NORMAL;
         }
+        if(!p->dq_boot_io||!p->dq_boot_io->read_sector||
+           !p->dq_boot_io->irq_handler||!executive_dq_image_ready||
+           !executive_f11_chain.headers)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        struct executive_postpub_f11_context f11ctx={p->dq_boot_io,0u};
+        const struct port_f11_boot_volume f11volume={
+            (const uint8_t *)executive_dq_boot_sector.words,
+            (const uint8_t *)executive_dq_index_sector.words,
+            (const uint8_t *)executive_dq_mfd_sector.words,
+            executive_postpub_f11_sector,&f11ctx,1u};
+        uint8_t chain_sample[64];
+        uint32_t chain_done=0u;
+        const uint32_t sample_offset=
+            executive_dq_image_probe.text_file_offset+321u;
+        if(sample_offset<executive_dq_image_probe.text_file_offset||
+           port_f11_chain_read(&f11volume,&executive_f11_chain,
+               sample_offset,sizeof chain_sample,chain_sample,
+               sizeof chain_sample,&chain_done)!=PORT_F11_CHAIN_OK||
+           chain_done!=sizeof chain_sample||f11ctx.reads==0u)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        for(unsigned i=0u;i<sizeof chain_sample;i++)
+            if(chain_sample[i]!=executive_f11_chain_text[i])
+                return PORT_SYS_EXEC_BAD_PARAMETERS;
         p->result->dq_ddt_published=1u;
         p->result->dqa_ioc_status=PORT_V37_IOC_OK;
         p->result->dqa_ioc_ddb=found.ddb;
         p->result->dqa_ioc_ucb=found.ucb;
+        p->result->dq_published_f11_read_bytes=chain_done;
+        p->result->dq_published_f11_read_irps=f11ctx.reads;
         p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }

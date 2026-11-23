@@ -4093,7 +4093,7 @@ void kmain(void) {
     const struct port_sys_exec_start dq_publish_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&dq_publish_result,
-        .phase=PORT_SYS_EXEC_INIT_DQ_DDT_PUBLISH};
+        .phase=PORT_SYS_EXEC_INIT_DQ_DDT_PUBLISH,.dq_boot_io=&dq_boot_io};
     if(loaded_sys(&dq_publish_request)!=PORT_SYS_EXEC_NORMAL||
        dq_publish_result.signature!=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG){
         bootstrap_message("INIT: DQA0 DDT publication phase rejected its source prerequisites.");
@@ -4110,6 +4110,8 @@ void kmain(void) {
     if(dq_publish_result.dq_ddt_published!=1u||
        !dq_publish_result.device_db||!dq_publish_result.dq_native_ddt||
        !dq_publish_result.ioc_search||
+       dq_publish_result.dq_published_f11_read_bytes!=64u||
+       dq_publish_result.dq_published_f11_read_irps==0u||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
        dq_publish_result.device_db->incomplete_driver_mask!=6u||
@@ -4119,6 +4121,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).");
+    bootstrap_message("INIT: Files-11 FH2 chain reread SYS.EXE bytes through IOC-selected DQA0 DDT and IRQ14.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,
