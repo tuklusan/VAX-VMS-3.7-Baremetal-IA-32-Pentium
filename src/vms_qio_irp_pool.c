@@ -14,6 +14,7 @@ static void wr32(uint8_t *p,uint32_t x){
     p[2]=(uint8_t)(x>>16);p[3]=(uint8_t)(x>>24);
 }
 static void wr16(uint8_t *p,uint16_t x){p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);}
+static uint32_t round16(uint32_t n){return (n+15u)&~15u;}
 
 static uint8_t *packet_at(const struct port_ini_packet_list *q,uint32_t va){
     if(!q||!q->memory||va<q->split_address||!q->packet_bytes||
@@ -31,7 +32,8 @@ static uint32_t queue_check(const struct port_ini_packet_list *q){
     uint32_t prior=q->sentinel_address,at=q->next;
     for(uint32_t i=0;i<q->free_count;i++){
         uint8_t *p=packet_at(q,at);
-        if(!p||rd32(p+4u)!=prior||rd16(p+8u)!=q->packet_bytes)
+        uint32_t bytes=p?rd16(p+8u):0u;
+        if(!p||rd32(p+4u)!=prior||!bytes||round16(bytes)!=q->packet_bytes)
             return PORT_V37_IRP_POOL_CORRUPT;
         uint32_t next=rd32(p);
         if(i+1u==q->free_count){
@@ -82,7 +84,7 @@ uint32_t port_v37_irp_pool_alloc(struct port_ini_packet_list *q,
 
 uint32_t port_v37_irp_pool_free(struct port_ini_packet_list *q,uint8_t *p,
     uint32_t va,uint32_t bytes,const struct port_v37_irp_pool_sync *sync){
-    if(!q||!p||!valid_sync(sync)||bytes!=q->packet_bytes||
+    if(!q||!p||!valid_sync(sync)||!bytes||round16(bytes)!=q->packet_bytes||
        packet_at(q,va)!=p||rd16(p+8u)!=bytes||
        p[10u]!=PORT_V37_DYN_IRP)return PORT_V37_IRP_POOL_BAD;
     uint32_t old_ipl=sync->raise_sync(sync->context);

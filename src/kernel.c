@@ -3935,6 +3935,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.");
+    bootstrap_message("INIT: SYS.EXE allocated, completed and returned DQA0 IRP through resident source lookaside.");
 
     /* Source NLDRIVER.MAR DDT/FDT through SYSQIOREQ.MAR 741-749: two original
      * IRP$L_MEDIA statuses and an IOC$GL_PSBL append in actual loaded

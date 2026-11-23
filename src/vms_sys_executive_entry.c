@@ -29,6 +29,7 @@
 #include "vms_f11_ioc.h"
 #include "vms_f11_channel.h"
 #include "vms_qio_post.h"
+#include "vms_qio_irp_pool.h"
 #include "vms_nl_ddt.h"
 #include "vms_iopost_end.h"
 #include "vms_sysboot_elf.h"
@@ -52,6 +53,43 @@ static uint32_t executive_packet_ready;
 /* INIT's later nonpaged records occupy only the free low end of the
  * actual SYS.EXE supervisor RAM; no boot monitor array stands in for it. */
 static uint32_t executive_free_npages;
+
+/* The single-CPU IA-32 executive maps source DSBINT/ENBINT synchronization
+ * to preserving and restoring the caller's interrupt-enable state. */
+#if !defined(__i386__)
+static uint32_t executive_qio_host_sync_depth;
+#endif
+static uint32_t executive_qio_raise_sync(void *unused){
+    (void)unused;
+#if defined(__i386__)
+    uint32_t flags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
+    return flags;
+#else
+    uint32_t old=executive_qio_host_sync_depth;
+    ++executive_qio_host_sync_depth;
+    return old;
+#endif
+}
+static void executive_qio_restore_ipl(void *unused,uint32_t flags){
+    (void)unused;
+#if defined(__i386__)
+    if(flags&(1u<<9))__asm__ volatile("sti":::"memory");
+#else
+    executive_qio_host_sync_depth=flags;
+#endif
+}
+static const struct port_v37_irp_pool_sync executive_qio_pool_sync={
+    0,executive_qio_raise_sync,executive_qio_restore_ipl};
+static uint32_t executive_qio_alloc_irp(uint8_t **packet,uint32_t *va){
+    return port_v37_irp_pool_alloc(&executive_irps,PORT_V37_IRP_SIZE,
+        &executive_qio_pool_sync,packet,va);
+}
+static uint32_t executive_qio_free_irp(uint8_t *packet,uint32_t va){
+    if(!packet)return PORT_V37_IRP_POOL_BAD;
+    return port_v37_irp_pool_free(&executive_irps,packet,va,
+        port_v37_read16(packet+8u),&executive_qio_pool_sync);
+}
 static struct port_ini_lockdb executive_lockdb;
 static uint32_t executive_lockdb_ready;
 static struct port_ini_procvec executive_procvec;
@@ -270,8 +308,6 @@ static int executive_dq_ioc_read_sector(void *opaque,uint32_t lbn,
 /* Exercise the staged READPBLK bridge with a resident IRP. The actual
  * private DQ IOC FIFO reaches ATA through the attached native CRB. DDB DDT
  * actions and public process QIO remain unavailable. */
-static union {uint32_t align;uint8_t bytes[PORT_V37_IRP_SIZE];}
-    executive_dqddt_irp;
 static union {uint32_t align;uint16_t words[256];} executive_dqddt_sector;
 static struct port_dq_bootread_result executive_dqddt_io;
 /* Source RELOCDRV.MAR INITDRV DQ DPT STORE runs only on private boot
@@ -353,11 +389,15 @@ static uint32_t executive_postpub_f11_sector(void *opaque,uint32_t lbn,
         const struct port_dq_bootread_request *,struct port_dq_bootread_result *);
     dq_startio_fn startio=(dq_startio_fn)(uintptr_t)
         port_v37_read32((const uint8_t *)(uintptr_t)ddt);
-    uint8_t *irp=executive_dqddt_irp.bytes;
-    if(port_v37_irp_prepare(irp,PORT_V37_IRP_SIZE,
-         (uint32_t)(uintptr_t)irp,selected.ucb,PORT_DQ_READPBLK)!=
-             PORT_V37_QIO_OK)
+    const uint32_t irp_free_before=executive_irps.free_count;
+    uint8_t *irp=0;uint32_t irp_va=0u;
+    if(executive_qio_alloc_irp(&irp,&irp_va)!=PORT_V37_IRP_POOL_OK)
         return PORT_DQ_DIR_MAP;
+    if(port_v37_irp_prepare(irp,PORT_V37_IRP_SIZE,irp_va,selected.ucb,
+            PORT_DQ_READPBLK)!=PORT_V37_QIO_OK){
+        (void)executive_qio_free_irp(irp,irp_va);
+        return PORT_DQ_DIR_MAP;
+    }
     port_v37_write16(irp+42u,PORT_DQ_PHYSIO);
     port_v37_write16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
     port_v37_write32(irp+PORT_V37_IRP_MEDIA,lbn);
@@ -370,9 +410,13 @@ static uint32_t executive_postpub_f11_sector(void *opaque,uint32_t lbn,
         .sector_bytes=PORT_DQ_BOOTREAD_BYTES,.boot_unit=0u,
         .read_sector=ctx->settings->read_sector,
         .read_context=ctx->settings->context};
-    if(startio(&executive_dqddt,&executive_native_dqddt,
-         &executive_dq_fdt,&request,&executive_dqddt_io)!=
-             PORT_DQ_BOOTREAD_OK||
+    const uint32_t read_status=startio(&executive_dqddt,
+         &executive_native_dqddt,&executive_dq_fdt,&request,
+         &executive_dqddt_io);
+    const uint32_t free_status=executive_qio_free_irp(irp,irp_va);
+    if(read_status!=PORT_DQ_BOOTREAD_OK||
+       free_status!=PORT_V37_IRP_POOL_OK||
+       executive_irps.free_count!=irp_free_before||
        executive_dqddt_io.io_function!=PORT_DQ_READPBLK||
        executive_dqddt_io.lbn!=lbn||
        executive_dqddt_io.irp_status!=PORT_SYS85_NORMAL||
@@ -1689,19 +1733,26 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         if(port_v37_devices_check(executive_devicedb_bytes.data,
               sizeof executive_devicedb_bytes.data,
               (uint32_t)(uintptr_t)executive_devicedb_bytes.data,
-              &executive_devicedb_result)!=PORT_V37_DEV_OK||
-           port_v37_irp_prepare(executive_dqddt_irp.bytes,PORT_V37_IRP_SIZE,
-               (uint32_t)(uintptr_t)executive_dqddt_irp.bytes,
-               executive_devicedb_result.ucb[0],PORT_DQ_READPBLK)!=
-                   PORT_V37_QIO_OK)
+              &executive_devicedb_result)!=PORT_V37_DEV_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        port_v37_write16(executive_dqddt_irp.bytes+42u,PORT_DQ_PHYSIO);
-        port_v37_write16(executive_dqddt_irp.bytes+50u,PORT_DQ_BOOTREAD_BYTES);
-        port_v37_write32(executive_dqddt_irp.bytes+PORT_V37_IRP_MEDIA,0u);
+        const uint32_t irp_free_before=executive_irps.free_count;
+        uint8_t *allocated_irp=0;uint32_t allocated_irp_va=0u;
+        if(executive_qio_alloc_irp(&allocated_irp,&allocated_irp_va)!=
+               PORT_V37_IRP_POOL_OK||
+           port_v37_irp_prepare(allocated_irp,PORT_V37_IRP_SIZE,
+               allocated_irp_va,executive_devicedb_result.ucb[0],
+               PORT_DQ_READPBLK)!=PORT_V37_QIO_OK){
+            if(allocated_irp)(void)executive_qio_free_irp(allocated_irp,
+                                                          allocated_irp_va);
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        }
+        port_v37_write16(allocated_irp+42u,PORT_DQ_PHYSIO);
+        port_v37_write16(allocated_irp+50u,PORT_DQ_BOOTREAD_BYTES);
+        port_v37_write32(allocated_irp+PORT_V37_IRP_MEDIA,0u);
         const struct port_dq_bootread_request read={
             .fdt=&executive_dq_fdt,.device_db=executive_devicedb_bytes.data,
             .device_info=&executive_devicedb_result,
-            .irp=executive_dqddt_irp.bytes,.irp_bytes=PORT_V37_IRP_SIZE,
+            .irp=allocated_irp,.irp_bytes=PORT_V37_IRP_SIZE,
             .sector=executive_dqddt_sector.words,
             .sector_bytes=PORT_DQ_BOOTREAD_BYTES,
             .boot_unit=p->dq_boot_io->boot_unit,
@@ -1712,12 +1763,19 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             const struct port_dq_bootread_request *,
             struct port_dq_bootread_result *);
         const uint32_t start_pc=port_v37_read32(executive_native_dqddt.image);
-        if(start_pc!=(uint32_t)(uintptr_t)port_dqddt_startio)
+        if(start_pc!=(uint32_t)(uintptr_t)port_dqddt_startio){
+            (void)executive_qio_free_irp(allocated_irp,allocated_irp_va);
             return PORT_SYS_EXEC_BAD_PARAMETERS;
+        }
         dq_startio_fn startio=(dq_startio_fn)(uintptr_t)start_pc;
-        if(startio(&executive_dqddt,&executive_native_dqddt,
-               &executive_dq_fdt,&read,&executive_dqddt_io)!=
-                   PORT_DQ_BOOTREAD_OK||
+        const uint32_t read_status=startio(&executive_dqddt,
+               &executive_native_dqddt,&executive_dq_fdt,&read,
+               &executive_dqddt_io);
+        const uint32_t free_status=executive_qio_free_irp(allocated_irp,
+                                                           allocated_irp_va);
+        if(read_status!=PORT_DQ_BOOTREAD_OK||
+           free_status!=PORT_V37_IRP_POOL_OK||
+           executive_irps.free_count!=irp_free_before||
            executive_dqddt_io.lbn!=0u||
            executive_dqddt_io.bytes!=PORT_DQ_BOOTREAD_BYTES||
            executive_dqddt_io.irp_status!=PORT_SYS85_NORMAL||

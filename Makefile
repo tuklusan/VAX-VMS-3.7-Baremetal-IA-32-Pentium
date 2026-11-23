@@ -772,7 +772,7 @@ files1187check: portdisk.img build/files11-acp-partial.o | build
 	./build/files1187check portdisk.img
 
 # M88: genuine, independently linked native SYS.EXE and Files-11 installation.
-build/vms_sys_executive_entry.o: src/vms_sys_executive_entry.c src/vms_sys_executive_entry.h src/vms_sysloavec.h src/vms_sysloa386.h src/vms_exe_gettim.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_ini_lockdb.h src/vms_ini_procvec.h src/vms_ini_phv_swap.h src/vms_ini_mpw.h src/vms_ini_pflvec.h src/vms_ini_syswcb.h src/vms_ini_log_templates.h src/vms_v37_dyn_tags.h src/vms_ini_syslog.h src/vms_ini_bootdev_scan.h src/vms_ini_dpt_templates.h src/vms_sys85.h src/vms_qio_post.h src/vms_dq_bootread.h src/vms_dqddt.h src/vms_dq_crb.h src/vms_ini_devicedb.h src/vms_ioc_phys.h | build
+build/vms_sys_executive_entry.o: src/vms_sys_executive_entry.c src/vms_sys_executive_entry.h src/vms_sysloavec.h src/vms_sysloa386.h src/vms_exe_gettim.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_ini_lockdb.h src/vms_ini_procvec.h src/vms_ini_phv_swap.h src/vms_ini_mpw.h src/vms_ini_pflvec.h src/vms_ini_syswcb.h src/vms_ini_log_templates.h src/vms_v37_dyn_tags.h src/vms_ini_syslog.h src/vms_ini_bootdev_scan.h src/vms_ini_dpt_templates.h src/vms_sys85.h src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_dq_bootread.h src/vms_dqddt.h src/vms_dq_crb.h src/vms_ini_devicedb.h src/vms_ioc_phys.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/vms_sysboot_pktmem.o: src/vms_sysboot_pktmem.c src/vms_sysboot_pktmem.h src/vms_booparam.h | build
 	$(CC) $(CFLAGS) -c $< -o $@

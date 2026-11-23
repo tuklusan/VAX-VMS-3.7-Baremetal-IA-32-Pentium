@@ -21372,7 +21372,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 407,
+          "pc_line": 451,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -21940,7 +21940,7 @@
           "status": "partial",
           "pc_file": "src/vms_qio_irp_pool.c",
           "pc_symbol": "port_v37_irp_pool_alloc",
-          "pc_line": 49,
+          "pc_line": 51,
           "function": "IRP-sized requests dequeue a validated source INIT lookaside packet, write requested size/type, and restore synchronization IPL; nonpaged variable allocation, pool extension, resource waiting and AST-delivery return semantics remain unported"
         },
         {
@@ -21959,8 +21959,8 @@
           "status": "partial",
           "pc_file": "src/vms_qio_irp_pool.c",
           "pc_symbol": "port_v37_irp_pool_alloc",
-          "pc_line": 49,
-          "function": "ALONONPAGED source IRP lookaside dequeue path with FIFO ordering and synchronized queue mutation; SRP/LRP selection and variable nonpaged allocator/extension remain unresolved"
+          "pc_line": 51,
+          "function": "ALONONPAGED source IRP lookaside dequeue path with FIFO ordering and synchronized mutation, exercised by resident SYS.EXE DQA0 DDT boot reads; SRP/LRP selection and variable nonpaged allocator/extension remain unresolved"
         },
         {
           "original_lines": [
@@ -21978,8 +21978,8 @@
           "status": "partial",
           "pc_file": "src/vms_qio_irp_pool.c",
           "pc_symbol": "port_v37_irp_pool_free",
-          "pc_line": 83,
-          "function": "Return an allocated source DYN$C_IRP block to the tail of its original lookaside queue with duplicate/corruption guards and synchronization; SRP/LRP/general pool return paths unresolved"
+          "pc_line": 85,
+          "function": "Return an allocated source DYN$C_IRP block to the tail of its original lookaside queue with duplicate/corruption guards and synchronization, exercised after resident SYS.EXE DQA0 DDT boot reads; SRP/LRP/general pool return paths unresolved"
         },
         {
           "original_lines": [
@@ -21990,7 +21990,7 @@
           "reason": "Paged deallocation, allocator coalescing, shared-pool return, queue synchronization and pool extension unresolved"
         }
       ],
-      "unresolved_integration": "The native SYS.EXE source IRP lookaside queue now allocates/releases its preallocated IRP slots under a caller-provided IPL synchronization contract. It has no fallback nonpaged allocator, pool extension, resource wait, runtime user SYS$QIO integration, or source-wide SRP/LRP/allocation behavior."
+      "unresolved_integration": "The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. It has no fallback nonpaged allocator, pool extension, resource wait, public user SYS$QIO integration, or source-wide SRP/LRP/allocation behavior."
     }
   ]
 }

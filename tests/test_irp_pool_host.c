@@ -9,6 +9,7 @@ struct sync_state {uint32_t current,enters,exits;};
 static uint32_t raise_sync(void *arg){
     struct sync_state *s=arg;uint32_t old=s->current;s->current=4u;++s->enters;return old;
 }
+static void put16(uint8_t *p,uint16_t v){p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);}
 static void restore_ipl(void *arg,uint32_t old){
     struct sync_state *s=arg;if(s->current!=4u)s->current=UINT32_MAX;
     s->current=old;++s->exits;
@@ -36,14 +37,18 @@ int main(void){
     CHECK(port_v37_irp_pool_alloc(&list,PORT_V37_IRP_SIZE,&sync,
           &none,&no_va)==PORT_V37_IRP_POOL_EMPTY);
     CHECK(!none&&!no_va&&state.current==1u&&state.enters==4u&&state.exits==4u);
-    CHECK(port_v37_irp_pool_free(&list,p[1],va[1],STRIDE,&sync)==PORT_V37_IRP_POOL_OK);
+    put16(p[1]+8u,PORT_V37_IRP_SIZE);
+    CHECK(port_v37_irp_pool_free(&list,p[1],va[1],PORT_V37_IRP_SIZE,&sync)==PORT_V37_IRP_POOL_OK);
     CHECK(list.free_count==1u&&list.next==va[1]&&list.previous==va[1]);
-    CHECK(port_v37_irp_pool_free(&list,p[1],va[1],STRIDE,&sync)==PORT_V37_IRP_POOL_DUP);
+    CHECK(port_v37_irp_pool_free(&list,p[1],va[1],PORT_V37_IRP_SIZE,&sync)==PORT_V37_IRP_POOL_DUP);
     CHECK(port_v37_irp_pool_alloc(&list,PORT_V37_IRP_SIZE,&sync,
           &none,&no_va)==PORT_V37_IRP_POOL_OK&&none==p[1]&&no_va==va[1]);
-    CHECK(port_v37_irp_pool_free(&list,p[0],va[0],STRIDE,&sync)==PORT_V37_IRP_POOL_OK);
-    CHECK(port_v37_irp_pool_free(&list,p[2],va[2],STRIDE,&sync)==PORT_V37_IRP_POOL_OK);
-    CHECK(port_v37_irp_pool_free(&list,p[1],va[1],STRIDE,&sync)==PORT_V37_IRP_POOL_OK);
+    put16(p[0]+8u,PORT_V37_IRP_SIZE);
+    put16(p[2]+8u,PORT_V37_IRP_SIZE);
+    put16(p[1]+8u,PORT_V37_IRP_SIZE);
+    CHECK(port_v37_irp_pool_free(&list,p[0],va[0],PORT_V37_IRP_SIZE,&sync)==PORT_V37_IRP_POOL_OK);
+    CHECK(port_v37_irp_pool_free(&list,p[2],va[2],PORT_V37_IRP_SIZE,&sync)==PORT_V37_IRP_POOL_OK);
+    CHECK(port_v37_irp_pool_free(&list,p[1],va[1],PORT_V37_IRP_SIZE,&sync)==PORT_V37_IRP_POOL_OK);
     CHECK(list.free_count==3u&&list.next==va[0]&&list.previous==va[1]);
     CHECK(state.current==1u&&state.enters==state.exits);
     uint32_t saved=memory[4u];memory[4u]^=1u;
