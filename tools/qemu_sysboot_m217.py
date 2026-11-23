@@ -38,6 +38,7 @@ def main():
                        stderr=subprocess.PIPE,bufsize=0)
     observed=bytearray()
     expected=[
+        b'IA-32 VMS executive/supervisor CPL1/CPL2 interrupt-return transitions passed.',
         b'SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.',
         b'SYSBOOT: Files-11 SYS.EXE native image loaded.',
         b'INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.',
