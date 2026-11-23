@@ -405,3 +405,11 @@ Ported SYSQIOREQ.MAR ACCESS lines 450-479 for the source boot-time WRITEVBLK cas
 Verification: `make sysqioargscheck` PASS with modifier preservation, FOD/MNT/FOR/window states, NOPRIV and AST predicate cases; full `make test` PASS (exit 0, through M49); `python3 tools/validate_source_ranges.py` PASS (1,972 ranges, zero missing mapped functions; 441/4,566 originals indexed; 28,887 partial, 50,363 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: helper is host-only and not linked into the guest. No original DEC source or binary image was staged.
 
 M230 implementation commit: `75cbb7e938f715643e2b0d2dda448a041875ef94`.
+
+## M231 — SYS$QIO AST quota charge and check, 23 November 2026
+
+Extended source SYSQIOREQ IRP construction to set the ACB quota bit and decrement the process AST count only when an AST routine is specified. Added the ACCESS quota check: a negative count is SS$_EXQUOTA only for AST requests; no-AST requests continue despite a negative AST count. Host tests cover successful build charge, AST quota failure, and the no-AST exception. This remains a supplied process-record model: it is not the live PCB, does not return the allocated IRP or channel IOC count through EXE$ABORTIO, and does not post the event/AST.
+
+Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, through M49); source range generation/validation PASS (1,973 ranges, 0 missing mapped functions; 441/4,566 originals indexed; counts unchanged from M230 because these lines were already partial); `git diff --check` PASS. No QEMU run: host-only helper, not linked into the guest. No original DEC source or binary image was staged.
+
+M231 implementation commit: `181350020fde46e2c10a879efb443bc7ffa8cfee`.
