@@ -7,6 +7,7 @@
 #include "vms_v37_dyn_tags.h"
 #include "vms_qio_irp_pool.h"
 #include "vms_ini_packet_queues.h"
+#include "vms_v37_pcb.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -14,6 +15,7 @@ static void put32(uint8_t *p,uint32_t v){
     p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);
     p[2]=(uint8_t)(v>>16);p[3]=(uint8_t)(v>>24);
 }
+static void put16(uint8_t *p,uint16_t v){p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);}
 static uint16_t get16(const uint8_t *p){
     return (uint16_t)((uint16_t)p[0]|((uint16_t)p[1]<<8));
 }
@@ -341,6 +343,39 @@ int main(void){
     if(port_v37_irp_pool_free(&pool,prepared_irp,prepared_va,
           PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
         return 51;
+    _Alignas(4) uint8_t source_pcb[PORT_V37_PCB_BYTES]={0};
+    put16(source_pcb+PORT_V37_PCB_SIZE,PORT_V37_PCB_BYTES);
+    source_pcb[PORT_V37_PCB_BTYPE]=PORT_V37_DYN_PCB;
+    put16(source_pcb+PORT_V37_PCB_ASTCNT,1u);
+    put16(source_pcb+PORT_V37_PCB_BIOCNT,2u);
+    put16(source_pcb+PORT_V37_PCB_DIOCNT,1u);
+    put32(source_pcb+PORT_V37_PCB_EFCS,UINT32_MAX);
+    put32(source_pcb+PORT_V37_PCB_EFCU,UINT32_MAX);
+    put32(source_pcb+PORT_V37_PCB_PID,7u);
+    struct port_v37_sysqio_process pcb_process={0};
+    if(port_v37_sysqio_process_bind_pcb(source_pcb,sizeof source_pcb,3u,
+          &pcb_process)!=PORT_V37_SYSQIO_PCB_OK||pcb_process.pid!=7u||
+       port_v37_sysqio_process_io_count(&pcb_process,
+          PORT_V37_SYSQIO_PCB_DIRECT)!=1||
+       port_v37_sysqio_process_io_count(&pcb_process,
+          PORT_V37_SYSQIO_PCB_BUFFERED)!=2)
+        return 60;
+    rig.window=0u;rig.posts=0u;proc.direct_io_count=1;proc.ast_count=1;
+    if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&pcb_process,&begin_ops,
+          &reserve_spec,&pool,&pool_sync,&integrated,&prepared_irp,
+          &prepared_va,&ast_status)!=PORT_V37_SYSQIO_PREPARE_OK||
+       pcb_process.pid!=7u||
+       port_v37_sysqio_process_io_count(&pcb_process,
+          PORT_V37_SYSQIO_PCB_DIRECT)!=0||
+       port_v37_sysqio_process_ast_count(&pcb_process)!=0||
+       get16(source_pcb+PORT_V37_PCB_DIOCNT)!=0u||
+       get16(source_pcb+PORT_V37_PCB_ASTCNT)!=0u||
+       get32(source_pcb+PORT_V37_PCB_EFCS)!=(UINT32_MAX&~(1u<<3))||
+       get32(source_pcb+PORT_V37_PCB_EFCU)!=UINT32_MAX)
+        return 61;
+    if(port_v37_irp_pool_free(&pool,prepared_irp,prepared_va,
+          PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
+        return 62;
     proc.direct_io_count=1;proc.ast_count=1;rig.posts=0u;
     reserve_spec.ucb_va=0u;
     if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&proc,&begin_ops,
@@ -452,3 +487,4 @@ int main(void){
     puts("SYS$QIO IRP, AST, device-state and VMS privilege checks PASS");
     return 0;
 }
+
