@@ -421,3 +421,13 @@ Ported the SYSQIOREQ.MAR ACCESS decision subset for virtual, logical and physica
 Verification: `make sysqioargscheck` PASS across privilege bypasses, physical/logical checker selection, denied ACL, spooled, unmounted/structured FOD, virtual I/O, and physical flag; full `make test` PASS (exit 0, through M49); coverage generation/validation PASS (1,979 ranges, zero missing mapped functions; 441/4,566 originals indexed; 28,923 partial, 50,327 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: host-only code is not linked to the guest. No original DEC source or binary image was staged.
 
 M232 implementation commit: `0c864cbd7df22e2abf6347a623208396bae2dc3a`.
+
+## M233 — SYS$QIO ABORTIO IOSB and AST-quota return, 23 November 2026
+
+Ported SYSQIOREQ.MAR EXE$ABORTIO lines 736-740 into a bounded native completion routine. It validates an allocated standard IRP and IOC post queue, clears IRP$L_IOSB, clears ACB$V_QUOTA and restores the AST count exactly once when that reservation bit was set, appends the IRP to the IOC post FIFO, and requests IPL$_IOPOST. Host cases cover the quota-bit and no-quota paths, signed 16-bit AST-count wrap, IOSB clearing, queue insertion, and software-interrupt request. It still accepts an AST-count pointer rather than resolving the live PCB, and is not wired to public SYS$QIO, source abort/error status posting, IRP return, or process AST delivery.
+
+Verification at implementation commit `cca296792e53e826fd302c6765a7081c12901f88`: `make -j2 all` PASS; `make qiopostcheck` PASS; full `make test` PASS (exit 0, suite reached M49); coverage generation and `python3 tools/validate_source_ranges.py` PASS (1,979 ranges, zero mapped-function misses; 441/4,566 original files indexed; 28,928 partial, 50,322 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: this host-tested abort path is not connected to a live SYS$QIO or DQA process path. No original DEC source or binary image was staged.
+
+SYSQIOREQ.MAR lines 736-740 are now partial. Public service entry, live PCB/CCB lookup, source event and IOSB postprocessing, IRP allocation/return, driver/ACP completion, process AST delivery and channel accounting remain incomplete. The existing real QEMU boot still stops at incomplete INIT; DECnet, SYSTEM login, DCL, SET HOST 0, second login and logout remain unverified.
+
+M233 implementation commit: `cca296792e53e826fd302c6765a7081c12901f88`.
