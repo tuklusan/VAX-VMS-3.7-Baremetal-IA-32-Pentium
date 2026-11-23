@@ -21,6 +21,8 @@ enum {
     PORT_V37_PCB_EFCU=84u,
     PORT_V37_PCB_PID=96u,PORT_V37_PCB_PHD=100u,
     PORT_V37_PCB_LNAME=104u,PORT_V37_PCB_PRIV=124u,
+    /* PRVDEF bit positions used by SYSQIOREQ IFPRIV checks. */
+    PORT_V37_PRIV_LOG_IO=7u,PORT_V37_PRIV_PHY_IO=22u,
     PORT_V37_PCB_ARB=132u,PORT_V37_PCB_UIC=136u,
     PORT_V37_PCB_LOCKQFL=140u,PORT_V37_PCB_DLCKPRI=148u,
     PORT_V37_PCB_IPAST=152u,
@@ -52,4 +54,3 @@ uint32_t port_v37_pcb_bind_context(uint8_t *,size_t,uint32_t phd_address,
 uint32_t port_v37_pcb_finish_syspcb(uint8_t *,size_t,uint16_t,
     uint32_t,uint32_t);
 #endif
-
