@@ -55,5 +55,5 @@ Verification: clean GCC 11.4 make clean && make -j2 all PASS; full make test PAS
 
 Original source coverage: DQDRIVER.MAR 634-639 now maps partial to the staged READPBLK dispatch. All remaining DQA0 DDT/CRB, RB730 semantics, public IOC/$QIO, ACP, and process completion remain unresolved. Totals remain 28,697 partial, 50,504 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped; 441/4,566 original files indexed.
 
-M195 commit: pending.
+M195 implementation commit: `33802ac` (`33802aca2b8d2c17456319544463354dd1b3a01a`).
 
