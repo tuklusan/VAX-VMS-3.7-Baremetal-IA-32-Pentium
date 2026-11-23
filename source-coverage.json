@@ -5891,7 +5891,7 @@
           "pc_file": "src/vms_exe_nullproc.c",
           "pc_symbol": "port_exe_nullproc",
           "pc_line": 2,
-          "function": "native interruptible idle loop"
+          "function": "native unconditional idle branch matching source BRB loop"
         },
         {
           "original_lines": [
