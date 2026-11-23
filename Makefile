@@ -258,6 +258,7 @@ test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck boot
 	python3 tests/test_m9_layout.py
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ata.c tests/test_ata_host.c -o build/ata_hosttest
 	./build/ata_hosttest
+	python3 tests/test_ata_irq_layout.py
 	python3 tests/test_disk_image.py
 	python3 tests/test_m10_layout.py
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ne2k.c tests/test_ne2k_host.c -o build/ne2k_hosttest

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "vms_ata.h"
-struct mock { unsigned command,words,delay,drive,alt; uint8_t regs[8]; int broken; int selected; };
+struct mock { unsigned command,words,delay,drive,alt; uint8_t regs[8]; int broken; int selected; int use_irq,armed,waited; };
 static uint8_t in8(void *p,uint16_t addr) {
     struct mock *m=p;
     if (addr==0x3f6) {++m->alt; return 0x50;}
@@ -16,8 +16,21 @@ static uint8_t in8(void *p,uint16_t addr) {
 }
 static uint16_t in16(void *p,uint16_t addr) {
     struct mock *m=p;
-    assert(addr==0x1f0 && m->command==0x20 && m->words<256);
+    assert(addr==0x1f0 && m->command==0x20 && m->words<256 &&
+           (!m->use_irq || m->waited));
     return (uint16_t)(m->words++ ^ 0xabcd);
+}
+static int begin_read(void *p) {
+    struct mock *m=p;
+    assert(m->command==0 && !m->armed);
+    m->armed=1;
+    return 0;
+}
+static int wait_read(void *p) {
+    struct mock *m=p;
+    assert(m->armed && m->command==0x20);
+    m->waited=1;
+    return 0;
 }
 static void out8(void *p,uint16_t addr,uint8_t value) {
     struct mock *m=p;
@@ -27,7 +40,7 @@ static void out8(void *p,uint16_t addr,uint8_t value) {
 }
 int main(void) {
     struct mock m={0};
-    struct port_ata_bus bus={in8,in16,out8,&m};
+    struct port_ata_bus bus={in8,in16,out8,&m,0,0};
     uint16_t buf[256]={0};
     assert(port_ata_read28(&bus,0x01020304,buf)==0);
     assert(m.command==0x20 && m.words==256 && m.alt==4 && m.selected);
@@ -42,6 +55,12 @@ int main(void) {
     assert(port_ata_read28(&bus,1,buf)==PORT_ATA_TIMEOUT);
     m.broken=3;
     assert(port_ata_read28(&bus,1,buf)==PORT_ATA_DEVICE_ERROR);
+    m=(struct mock){.selected=1,.use_irq=1};
+    bus=(struct port_ata_bus){in8,in16,out8,&m,begin_read,wait_read};
+    assert(port_ata_read28(&bus,7,buf)==PORT_ATA_OK);
+    assert(m.armed&&m.waited&&m.command==0x20&&m.words==256);
+    struct port_ata_bus unpaired={in8,in16,out8,&m,begin_read,0};
+    assert(port_ata_read28(&unpaired,7,buf)==PORT_ATA_BAD_ARG);
     puts("M10 ATA host PASS: LBA28 port sequence, 256 words, error/timeout");
     return 0;
 }

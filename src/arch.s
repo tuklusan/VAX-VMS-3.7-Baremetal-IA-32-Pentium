@@ -92,6 +92,7 @@ vector_no_error 30
 vector_no_error 31
 vector_no_error 32     /* PIC IRQ0: PIT */
 vector_no_error 33     /* PIC IRQ1: keyboard, masked */
+vector_no_error 46     /* PIC IRQ14: primary ATA channel */
 vector_no_error 128    /* user->kernel syscall gate */
 vector_no_error 144    /* VMS 3.7 software IPL4, native CPL0 only */
 arch_isr_common:
@@ -767,7 +768,7 @@ arch_probe_ud2:
 .section .rodata,"a"
 .align 4
 arch_isr_table:
-.irp v,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,128,144
+.irp v,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,128,144,46
     .long arch_isr_\v
 .endr
 .section .note.GNU-stack,"",@progbits

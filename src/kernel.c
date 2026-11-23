@@ -118,6 +118,7 @@ extern uint32_t arch_mutex_wakes(void);
 extern uint32_t arch_mutex_remaining(void);
 extern uint32_t arch_mutex_held(void);
 extern int port_ata_x86_read28(uint32_t lba,uint16_t dst[256]);
+extern uint32_t port_ata_x86_irq_count(void);
 extern int port_ne2k_x86_probe(struct port_ne2k *nic);
 extern int port_ne2k_x86_pending(struct port_ne2k *nic);
 extern int port_ne2k_x86_send(struct port_ne2k *nic,const uint8_t *frame,unsigned len);
@@ -3299,6 +3300,11 @@ void kmain(void) {
     bootstrap_message("INIT: SYS.EXE RETRYERR/IOCIOPOST posted three source FIFO ATA IOSBs after live resident reads (no DQA0 DDT or IRQ).");
     bootstrap_message("INIT: SYS.EXE FIL$READVBN used IOC private FIFO for two real ATA reads and matched 700 bytes (ACP/IRQ unbound).");
     bootstrap_message("INIT: SYS.EXE private owner-scoped channel assigned, read 600 live ATA bytes and deassigned (ACP/$QIO unbound).");
+    if(!port_ata_x86_irq_count()){
+        bootstrap_message("INIT: primary ATA IRQ14 did not complete a sector read.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: SYS.EXE ATA sector reads completed through live primary IRQ14.");
 
     /* Original INIT.MAR FIX_DRV_NAME/FIN_DATABASE (1500-1559): after
      * the actual Files-11 boot home read, populate source-compatible DQA

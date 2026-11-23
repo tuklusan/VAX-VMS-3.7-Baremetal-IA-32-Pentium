@@ -21,7 +21,7 @@
 #include "vms_iopost_swi.h"
 #include "vms_sysboot_elf.h"
 
-extern const uint32_t arch_isr_table[36];
+extern const uint32_t arch_isr_table[37];
 extern uint32_t port_gdt[];
 extern void arch_load_tr(void);
 extern void arch_enter_ring3(void (*entry)(void), void *stack_top, uint32_t parameter);
@@ -34,6 +34,7 @@ extern void arch_user_qio_teardown_probe(void);
 extern void arch_user_copyin_probe(void);
 extern void arch_user_qio_desc_probe(void);
 extern int port_ata_x86_read28(uint32_t lba,uint16_t dst[256]);
+extern int port_ata_x86_init(void);
 extern void arch_user_fault(void);
 extern void arch_user_ast(void);
 extern void arch_user_code_begin(void);
@@ -97,6 +98,12 @@ const struct port_exe_systime *arch_exe_systime(void) {
 /* Source SCBVECTOR.MAR + IOCIOPOST.MAR: a real IA-32 CPL0 software
  * interrupt, not a pretend VAX PSL or PIC hardware IRQ. */
 static struct port_iopost_swi resident_iopost_irq;
+static void (*disk_irq_handler)(void);
+int arch_disk_irq_bind(void (*handler)(void)) {
+    if(!handler||(disk_irq_handler&&disk_irq_handler!=handler))return 0;
+    disk_irq_handler=handler;
+    return 1;
+}
 uint32_t arch_iopost_bind(uint32_t (*callback)(void)){
     uintptr_t address=(uintptr_t)callback;
     if(address>UINT32_MAX)return PORT_IOPOST_SW_BAD;
@@ -796,6 +803,7 @@ void arch_init(void) {
     for (unsigned i = 0; i < 34; ++i) gate_set(i, arch_isr_table[i],0);
     gate_set(128, arch_isr_table[34],3);
     gate_set(144, arch_isr_table[35],0);
+    gate_set(46, arch_isr_table[36],0); /* primary ATA channel IRQ14 */
     port_iopost_swi_init(&resident_iopost_irq);
     struct descriptor_ptr idtr = {(uint16_t)(sizeof(idt) - 1), (uint32_t)idt};
     __asm__ volatile("lidt %0" : : "m"(idtr));
@@ -811,6 +819,8 @@ void arch_init(void) {
     outb(0xA1, 0x02); io_wait();
     outb(0x21, 0x01); io_wait();
     outb(0xA1, 0x01); io_wait();
+    outb(0x21,0xff);outb(0xA1,0xff);
+    if(!port_ata_x86_init())return;
     uint64_t start_time;
     exe_clock_valid=0;
     resident_exe_clock=0;
@@ -819,9 +829,9 @@ void arch_init(void) {
         port_exe_systime_store(&exe_system_clock,start_time);
         exe_clock_valid=1;
     }
-    /* Unmask PIT IRQ0 only; poll keyboard (IRQ1 remains masked). */
-    outb(0x21, 0xFE);
-    outb(0xA1, 0xFF);
+    /* Unmask PIT, cascade, and primary ATA IRQ14; keep other IRQs masked. */
+    outb(0x21,0xfa);
+    outb(0xA1,0xbf);
     /* Programmable Interval Timer: 1,193,182 Hz / 11,932 ~= 100 Hz */
     outb(0x43, 0x36);
     outb(0x40, (uint8_t)(11932 & 0xFF));
@@ -1250,6 +1260,12 @@ int arch_trap(struct port_trap_frame *f) {
     } else if (f->vector == 33) {
         /* IRQ1 is masked. Ack a stray IRQ if received. */
         outb(0x20, 0x20);
+        return 0;
+    } else if (f->vector == 46) {
+        /* Primary ATA channel completion: drain device status before EOI. */
+        if(disk_irq_handler)disk_irq_handler();
+        outb(0xa0,0x20);
+        outb(0x20,0x20);
         return 0;
     } else {
         /* Real i386 CPU exceptions enter here. Only two explicitly armed

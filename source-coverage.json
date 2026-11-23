@@ -10250,7 +10250,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2465,
+          "pc_line": 2466,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10288,7 +10288,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2465,
+          "pc_line": 2466,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -21458,15 +21458,18 @@
           "pc_file": "src/vms_dq_ioc_transfer.c",
           "pc_symbol": "port_dq_ioc_transfer",
           "pc_line": 4,
-          "function": "Source DQ_READPBLK transfer state mapped to read-only IA-32 ATA PIO callback and single outstanding private request; original seek/IRQ/ERR remain unresolved"
+          "function": "Source DQ_READPBLK transfer state uses read-only IA-32 ATA LBA28 PIO with IRQ14 completion and a single outstanding private request; original seek/ERR paths remain unresolved"
         },
         {
           "original_lines": [
             772,
             840
           ],
-          "status": "unresolved",
-          "reason": "Original RB730 asynchronous transfer, ECC correction and controller ISR remain unresolved"
+          "status": "partial",
+          "pc_file": "src/vms_ata_x86.c",
+          "pc_symbol": "port_ata_x86_irq",
+          "pc_line": 46,
+          "function": "Native primary ATA IRQ14 acknowledges device status and completes the bounded sector read; RB730 command/ECC semantics, DQA0 DDT/CRB and process-aware IOC completion remain unresolved"
         },
         {
           "original_lines": [
@@ -21507,7 +21510,7 @@
           "reason": "RB730 CSR/interrupts, retry, init, controller/port resource and remaining disk source unresolved"
         }
       ],
-      "unresolved_integration": "Resident SYS.EXE stages source DPTAB and 38-byte DDTAB plus exact 136-byte FUNCTAB masks; all native disk action slots remain inactive and DQA0 DDT is zero. One privileged physical READPBLK of ATA Files-11 LBN1 is separate; RB730/ATA controller translation, IOC, CRB, ACP and general I/O remain unported."
+      "unresolved_integration": "Native primary ATA IRQ14 completes bounded one-sector PIO transfers used by the private boot IOC. Resident SYS.EXE still stages source DPTAB/DDTAB/FUNCTAB only; DQA0 DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented."
     },
     {
       "original_file": "SYS/SRC/RELOCDRV.MAR",

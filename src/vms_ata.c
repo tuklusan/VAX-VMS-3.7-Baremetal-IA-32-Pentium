@@ -17,7 +17,8 @@ static int wait_status(const struct port_ata_bus *b, int require_drq) {
 }
 int port_ata_read28(const struct port_ata_bus *b,uint32_t lba,
                     uint16_t dst[256]) {
-    if (!b || !b->in8 || !b->in16 || !b->out8 || !dst || lba>0x0fffffffu)
+    if (!b || !b->in8 || !b->in16 || !b->out8 || !dst || lba>0x0fffffffu ||
+        (!!b->begin_read != !!b->wait_read))
         return PORT_ATA_BAD_ARG;
     /* BIOS disk enumeration may leave the *absent slave* selected.  Its
      * status reads as 0/0xff even when primary master exists.  Select the
@@ -31,8 +32,9 @@ int port_ata_read28(const struct port_ata_bus *b,uint32_t lba,
     b->out8(b->ctx,ATA_LBA_LO,(uint8_t)lba);
     b->out8(b->ctx,ATA_LBA_MID,(uint8_t)(lba>>8));
     b->out8(b->ctx,ATA_LBA_HI,(uint8_t)(lba>>16));
+    if(b->begin_read && b->begin_read(b->ctx))return PORT_ATA_DEVICE_ERROR;
     b->out8(b->ctx,ATA_COMMAND,ATA_READ);
-    rc=wait_status(b,1);
+    rc=b->wait_read ? b->wait_read(b->ctx) : wait_status(b,1);
     if (rc) return rc;
     for (unsigned i=0;i<256;i++) dst[i]=b->in16(b->ctx,ATA_DATA);
     return PORT_ATA_OK;
