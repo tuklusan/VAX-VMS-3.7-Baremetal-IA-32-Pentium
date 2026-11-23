@@ -1427,7 +1427,7 @@ for original,length,ranges,note in [
        (107,108,None,None,'assembler end')],
        'The two-task diagnostic adapter is linked in the kernel; resident VMS PCB layout, executive wait/wake queues and normal reschedule-interrupt entry remain unbound.'),
     ('NULLPROC.MAR',103,[(1,97,None,None,'copyright and idle process description'),
-       (98,101,'vms_exe_nullproc','port_exe_nullproc','native interruptible idle loop'),
+       (98,101,'vms_exe_nullproc','port_exe_nullproc','native unconditional idle branch matching source BRB loop'),
        (102,103,None,None,'assembler end')],
        'Idle task must be selected by the live process scheduler.')
 ]:
