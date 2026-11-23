@@ -1,6 +1,6 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M205
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M207
 
-INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205 publishes a partial native DQA0 DDT and CRB pointer graph and verifies physical IOC search; public process $ASSIGN/$QIO, full driver/IRQ completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
+INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, and verify real ATA IRQ14 readback/restore; public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
 
 Active repository: tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium main
@@ -169,3 +169,14 @@ The resident SYS.EXE DQ CRB-read phase now calls the START function pointer from
 Verification: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `make qemu-sysboot-m206` PASS (actual DDT STARTIO READPBLK through CRB IRQ14, followed by M205 DQA0 DDT publication and IOC search); `python3 tools/validate_source_ranges.py` PASS (1,957 ranges; no missing mapped functions; inventory totals unchanged); `python3 tools/checkpoint_serial_logs.py verify` PASS (60 raw transcripts); `git diff --check` PASS. Latest raw COM1 log: `logs/serial/qemu-m206-run-local-20261123T065837305021Z.log`, 5,020 bytes, SHA-256 `a572600c1f03990b44e4432c812a82f7fd7a66c0f434ce5a8911f06ccab39e2d`. The guest still halts at incomplete INIT; no login, DCL or DECnet was observed. QEMU was terminated and no runner remains.
 
 M206 implementation commit: 62191a4007ec435e6a8efc3310a5f3fce9377201.
+
+
+## M207 — IOC-selected DQA0 DDT WRITEPBLK, 23 November 2026
+
+Resident SYS.EXE now uses its actual `IOC$SEARCHDEV` callback to find DQA0 after DDT publication, validates the selected DDB/UCB/unit and published DDT START address, and invokes the STARTIO pointer from that DDT for the guarded physical WRITEPBLK test. The DDT adapter marks the request as active only after native DDT validation; preflight checks that DDB and UCB still point to that published DDT and the CRB remains present. The disposable scratch sector is written through ATA IRQ14, read back, restored and reread. Host tests check that an unselected/missing active DDT request is rejected and the selected request dispatches. This remains a SYS.EXE privileged physical-I/O regression; public SYS$QIO, process I/O, Files-11 ACP, AST completion, scheduler/process activation and general DQ/RB730 behavior are not implemented.
+
+Coverage remains partial: DQDRIVER.MAR lines 634-639 are indexed to `port_dqddt_startio`; no source file status was promoted. `python3 tools/validate_source_ranges.py` PASS: 1,957 ranges, zero unmapped functions, 441/4,566 original repository files indexed; statuses partial 28,697, unresolved 50,504, missing 7,799, mapped 17,065, excluded 26,217, hardware-excluded 917. These inventory numbers are not functional completion claims.
+
+Verification at implementation commit `80912fedd5b6e10b6a90caacaf9ef7d239f8ba44`: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `make qemu-sysboot-m207` PASS with real DQA0 IOC-selected DDT STARTIO WRITEPBLK over ATA IRQ14, verified readback and restore, then the explicit incomplete-INIT stop. `python3 tools/checkpoint_serial_logs.py verify` PASS (66 raw transcripts); `git diff --check` PASS. Final COM1 transcript `logs/serial/qemu-m207-run-local-20261123T071545580409Z.log`, 5,029 bytes, SHA-256 `c0ab5120ca6423aaafbe894e35101503f8a229a4ea0367ca58143ab8449a1f32`. Two failed runs are retained: `...T071040833647Z.log` stopped on stale SYS object/header dependency; `...T071148975653Z.log` failed the DQA write path with root cause undetermined. Three further raw transcripts, including the final identical-hash pass, record passing runs. Runner terminates QEMU; no QEMU process remains. No login, DCL, or DECnet was observed.
+
+Candidate audit found no original DEC source files, binary images, recognized credentials/private keys or new dependencies staged. Original source checkout remains pinned at `2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752`. M207 implementation commit: `80912fedd5b6e10b6a90caacaf9ef7d239f8ba44`.
