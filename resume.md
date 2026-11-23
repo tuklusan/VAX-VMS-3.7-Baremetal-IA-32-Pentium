@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M238
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M239
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. The INI_PSTATE vector currently points at scheduler-model records, not source-layout VMS PCBs, and cannot activate VMS processes. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -483,3 +483,13 @@ PDAT.MAR source ranges now map the GENPCB record and static system PCB template 
 M238 implementation commit: `f70f15502ed02a9e9f03f6945eace60c723cb4da`.
 
 Next: implement the native PHD/page-table prerequisites and connect a genuine VMS PCB to the process vector; keep the scheduler-model vector explicitly diagnostic until ABI-compatible activation is verified. Public SYS$QIO, process-aware DQA0 completion, Files-11 ACP, AST scheduling, native INIT, login/DCL and DECnet remain incomplete. All end-to-end acceptance conditions remain incomplete.
+
+## M239 — Source-layout process-header initialization, 23 November 2026
+
+Added a native initializer for the fixed 376-byte `SYSDEFMP.MDL` PHD format and the `PDAT.MAR GENPHD` fields. Layout offsets follow the original PHD structure through its embedded hardware-context slots, process page-table descriptors, privilege masks and the dynamic WSL boundary. Callers supply aligned native stack and page-table addresses; the helper does not synthesize VAX address-bias values. Tests cover the initialized fields, zeroed untouched bytes and transactional rejection of malformed alignment/capacity. This helper is host-tested only and is not linked into SYS.EXE or connected to PHD allocation, IA-32 page mapping, PCB vectors or process activation.
+
+Verification: `make v37phdcheck sourcerangecheck` PASS; `make -j2 all` PASS (no guest relink required); full `make test` PASS (exit 0, suite reached M49); source-range validation PASS (1,997 ranges, zero mapped-function misses; 443/4,566 original files indexed; 29,179 partial, 51,297 unresolved, 7,799 missing, 26,218 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: new helper is host-only. No DEC source, binary image, or recognized secret was staged.
+
+PDAT.MAR lines 171-220 now map partially to `port_v37_phd_init_genphd`; the PHD byte layout and GENPHD field stores are covered, but the IA-32 page-table representation, process header allocation, null/swapper records and activation remain missing.
+
+M239 implementation commit: `fa949a95f830c5507bf132231447183147219147`.
