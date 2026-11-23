@@ -56,6 +56,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #include "vms_qio.h"
 #include "vms_channels.h"
 #include "vms_dq_crb.h"
+#include "vms_dq_ioc.h"
 #include "vms_dq_ioc_write.h"
 #include "vms_ioc_phys.h"
 
@@ -2558,6 +2559,45 @@ static int m202_submit_queued_write(const struct port_dqddt_stage *stage,
         return -1;
     return 0;
 }
+static uint32_t m202_dq_queued_read(void *opaque,uint32_t lbn,
+                                    uint8_t destination[512]){
+    struct m202_dq_write_context *ctx=opaque;
+    if(!ctx||!destination)return 0u;
+    uint16_t words[256];
+    if(m202_dispatch_io(ctx->stage,ctx->fdt,ctx->device_db,
+        ctx->device_info,lbn,words,PORT_DQ_READPBLK,ctx->native,
+        ctx->ioc_search)!=0)return 0u;
+    for(unsigned i=0;i<256u;i++){
+        destination[i*2u]=(uint8_t)words[i];
+        destination[i*2u+1u]=(uint8_t)(words[i]>>8u);
+    }
+    return 1u;
+}
+static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
+    const struct port_dq_fdt *fdt,const uint8_t *device_db,
+    const struct port_v37_device_result *device_info,uint32_t lbn,
+    uint8_t destination[512],const struct port_dqddt_native *native,
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+       const struct port_v37_device_result *,const char *,size_t,
+       struct port_v37_ioc_result *)){
+    struct m202_dq_write_context context={stage,fdt,device_db,device_info,
+                                          native,ioc_search};
+    struct port_dq_ioc_queue queue;
+    struct port_dq_ioc_report report={0};
+    if(!destination||port_dq_ioc_init(&queue,m202_dq_queued_read,&context)!=
+         PORT_DQ_IOC_OK||
+       port_dq_ioc_prepare(&queue,2u,lbn,destination,512u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_set_retry(&queue,2u,2u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_enqueue(&queue,2u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_run(&queue,&report)!=PORT_DQ_IOC_OK||
+       report.processed!=1u||report.succeeded!=1u||report.failed!=0u||
+       report.reads!=1u||queue.completed!=1u||queue.posted!=1u||
+       queue.active!=PORT_DQ_IOC_DEPTH||queue.reads!=1u)
+        return -1;
+    for(unsigned i=0;i<PORT_DQ_IOC_DEPTH;i++)
+        if(queue.packets[i].state!=PORT_DQ_IOC_EMPTY)return -1;
+    return 0;
+}
 static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,
@@ -2598,16 +2638,15 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     if(restore_matches)for(unsigned i=0;i<256u;i++)if(observed[i]!=saved[i]){
         restore_matches=0;break;
     }
-    uint16_t through_ddt[256];
-    int ddt_matches=0;
-    if(!wrote&&!restored&&!reread&&restore_matches&&
-       !m202_dispatch_io(stage,fdt,device_db,device_info,SCRATCH_LBN,
-          through_ddt,PORT_DQ_READPBLK,native,ioc_search)){
-        ddt_matches=1;
-        for(unsigned i=0;i<256u;i++)if(saved[i]!=through_ddt[i]){
+    uint8_t through_ddt[512];
+    int ddt_matches=!wrote&&!restored&&!reread&&restore_matches&&
+       !m202_read_queued_sector(stage,fdt,device_db,device_info,SCRATCH_LBN,
+          through_ddt,native,ioc_search);
+    if(ddt_matches)for(unsigned i=0;i<256u;i++)
+        if(saved[i]!=(uint16_t)((uint16_t)through_ddt[i*2u]|
+             ((uint16_t)through_ddt[i*2u+1u]<<8u))){
             ddt_matches=0;break;
         }
-    }
     if(!wrote&&!restored&&!reread&&restore_matches&&!ddt_matches){
         bootstrap_message("INIT: published DQA0 DDT READPBLK restore verification failed.");
         return -1;
@@ -4049,7 +4088,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     if(ata_write_probe>0)
-        bootstrap_message("INIT: SYS.EXE DQ FIFO dispatched IOC-selected DQA0 DDT WRITEPBLK and READPBLK through ATA IRQ14; readback and restore verified.");
+        bootstrap_message("INIT: SYS.EXE DQ FIFO dispatched IOC-selected DQA0 DDT WRITEPBLK; read FIFO posted READPBLK via ATA IRQ14, readback and restore verified.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */
