@@ -187,4 +187,3 @@ uint32_t port_v37_sysqio_prepare_irp(const void *,size_t,
     const struct port_v37_irp_pool_sync *,struct port_v37_sysqio_prepared *,
     uint8_t **,uint32_t *,uint32_t *service_status);
 #endif
-
