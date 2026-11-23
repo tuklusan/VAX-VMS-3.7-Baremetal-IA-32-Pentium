@@ -1,9 +1,10 @@
-# Native VAX/VMS 3.7 IA-32 M192 checkpoint
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M205
 
-INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. Public process $ASSIGN/$QIO, DQA0 DDT/IRQ, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
+INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205 publishes a partial native DQA0 DDT and CRB pointer graph and verifies physical IOC search; public process $ASSIGN/$QIO, full driver/IRQ completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
 
-Branch: tuklusan/OpticOS vms37-x86-qemu-m45-ci
+Active repository: tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium main
+Recovery reference branch: tuklusan/OpticOS vms37-x86-qemu-m45-ci (read-only)
 Native tree: vms37-native-x86-m89 (all patches M90-M143, M146 (M144-M146 combined), M149 (M147-M149 combined), M152 (M150-M152 combined), M160 (M153-M160 combined), M168 (M161-M168 combined), M176 (M169-M176 combined), M184 (M177-M184 combined), M192 (M185-M192 combined) applied)
 Rebuild: make -j2 all && make relocdrvcheck
 Guest regression: python3 tools/qemu_sysboot_m192.py
@@ -150,3 +151,13 @@ Coverage: DQDRIVER.MAR lines 634-639 now map partial to src/vms_dqddt_bootread.c
 Verification: make -j2 all dqddtcheck PASS; make relocdrvcheck sysexecentrycheck PASS; full make test PASS (exit 0); python3 tools/validate_source_ranges.py PASS (1,957 ranges, zero unmapped; 441/4,566 original files indexed; inventory counts unchanged); python3 tools/checkpoint_serial_logs.py verify PASS (53 raw transcripts); git diff --check PASS. make qemu-sysboot-m204 PASS on disposable media: real ATA IRQ14 WRITEPBLK, readback, restore and reread completed through DQ_STARTIO. Runner terminated QEMU and removed scratch media; no QEMU process remained. Final COM1 log logs/serial/qemu-m204-run-local-20261123T063030854847Z.log, 4,853 bytes, SHA-256 d4424f82e90fe120d841daf38fb574f38910e643c4f8fcd85bb2179da759a296. Candidate commit audit found no DEC source text, restricted source files, disk images, recognized credentials or private keys. Original source checkout remained pinned at 2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752; no build dependencies were added.
 
 M204 implementation commit: f86096995207d9b955f590f9494fbe1b526a6cc0.
+
+## M205 — Native DQA0 DDT/FDT activation and IOC graph publication, 23 November 2026
+
+Resident SYS.EXE now materializes the source DQ DDT/FDT at its actual IA-32 address, relocates the header and action slots to native pointers, and uses fail-closed native stubs for unsupported actions. It publishes the active DDT address into the DQA0 DDB and UCB, retaining the already attached IRQ14 CRB in the UCB. The existing physical READPBLK/WRITEPBLK FDT actions execute through the active table. SYS.EXE then calls the existing physical `IOC$SEARCHDEV` path and validates the DQA0 DDB/UCB/unit and bound-driver result. This remains a partial device driver: no public SYS$QIO or process channels, buffered/virtual/ACP services, full RB730 controller/error behavior, or process AST delivery. The private test path still does not constitute complete IOC request scheduling.
+
+Coverage: `DRIVER/SRC/DQDRIVER.MAR` lines 438-471 now map partial to `port_dqddt_activate`; lines 634-639 map partial to `port_dqddt_startio` and note the published DQA0 graph and remaining public I/O/ACP gaps. No original file is marked complete; inventory status totals remain unchanged. The native guest still halts at the original incomplete INIT boundary before login; no SYSTEM login, DCL or DECnet activity was observed.
+
+Verification: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `python3 tools/validate_source_ranges.py` PASS (1,957 ranges, zero unmapped functions; 441/4,566 original files indexed; counts unchanged); `python3 tools/checkpoint_serial_logs.py verify` PASS (57 raw logs); `git diff --check` PASS for source/doc changes. `make qemu-sysboot-m205` PASS twice on disposable QEMU media: resident DDT/FDT action dispatch performed actual ATA IRQ14 WRITEPBLK, readback and restore, then SYS.EXE published the native DQA0 DDT pointers and `IOC$SEARCHDEV` found DQA0. One intervening QEMU run failed during native DDT/CRB publication validation; the real failure log is retained. Latest COM1 log `logs/serial/qemu-m205-run-local-20261123T065319671972Z.log`, 5,042 bytes, SHA-256 `13c70ec84d6a903867651246ea53f726c5d2133571d2ca799a28ff3507ac6a64`. QEMU was terminated by the runner; no QEMU process remains. Original source checkout remains at `2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752`. Candidate audit found no restricted DEC source, credentials, private keys, disk images or new build dependencies.
+
+M205 implementation commit: 974a9a31273bcc887f396231f75569cb03620646.
