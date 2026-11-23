@@ -5810,33 +5810,33 @@
             58,
             74
           ],
-          "status": "mapped",
+          "status": "partial",
           "pc_file": "src/vms_exe_sched.c",
           "pc_symbol": "port_exe_sched_resched",
           "pc_line": 26,
-          "function": "save current process state, enqueue and request next"
+          "function": "save current process state, enqueue and request next; native IA-32 adapter is exercised only by the two-task diagnostic scheduler"
         },
         {
           "original_lines": [
             75,
             99
           ],
-          "status": "mapped",
+          "status": "partial",
           "pc_file": "src/vms_exe_sched.c",
           "pc_symbol": "port_exe_sched_select",
           "pc_line": 35,
-          "function": "highest ready queue, base-priority float and context load"
+          "function": "highest ready queue, base-priority float and context load; native IA-32 adapter is exercised only by the two-task diagnostic scheduler"
         },
         {
           "original_lines": [
             100,
             106
           ],
-          "status": "mapped",
+          "status": "partial",
           "pc_file": "src/vms_exe_sched.c",
           "pc_symbol": "port_exe_sched_select",
           "pc_line": 35,
-          "function": "wait for interrupt when idle and fatal queue error"
+          "function": "wait for interrupt when idle and fatal queue error; native IA-32 adapter is exercised only by the two-task diagnostic scheduler"
         },
         {
           "original_lines": [
@@ -5847,7 +5847,7 @@
           "reason": "assembler end"
         }
       ],
-      "unresolved_integration": "Real IA-32 context switch and PCB type mapping require guest binding."
+      "unresolved_integration": "The two-task diagnostic adapter is linked in the kernel; resident VMS PCB layout, executive wait/wake queues and normal reschedule-interrupt entry remain unbound."
     },
     {
       "original_file": "SYS/SRC/NULLPROC.MAR",

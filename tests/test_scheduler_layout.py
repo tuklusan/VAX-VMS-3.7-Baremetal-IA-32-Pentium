@@ -14,7 +14,10 @@ assert sym['task_b_stack'] % 4096==0
 assert sym['task_b_stack'] != sym['user_stack']
 assert sym['arch_user_code_end'] <= sym['arch_user_code_begin']+4096
 src=(root/'src/arch.c').read_text()
-assert 'copy_frame(f,&new->frame)' in src
+assert 'port_exe_sched_resched(&arch_scheduler,&arch_sched_ops)' in src
+assert 'copy_frame(arch_sched_trap_frame,&pcb->frame)' in src
+assert 'port_exe_sched_enqueue(&arch_scheduler,&arch_sched_process[1])' in src
+assert 'port_exe_sched_suspend(&arch_scheduler,&arch_sched_ops)' in src
 assert 'schedule_next(f,1)' in src and 'schedule_next(f,0)' in src
 assert 'map_user_pages((uintptr_t)task_b_stack' in src
 print('M4 scheduler layout PASS: CPL3 task text, two stacks, saved frames, yield/exit hooks')

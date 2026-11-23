@@ -33,7 +33,7 @@ assert 'arch_user_auto_ast:' in asm and 'movl $6,%eax' in asm
 assert 'int $0x80' in asm
 assert 'arch_user_iso_fault_site:' in asm and 'task_b_stack' in asm
 assert 'if (sched_active && sched_preempt && (f->cs&3u)==3u)' in c
-assert 'switch_directory(task_page_directory[next])' in c
+assert 'switch_directory(task_page_directory[i])' in c
 assert 'switch_directory(page_directory)' in c
 assert 'copy_frame(&pcb->ast_resume,f)' in c
 assert 'copy_frame(f,&task_pcb[cur].ast_resume)' in c

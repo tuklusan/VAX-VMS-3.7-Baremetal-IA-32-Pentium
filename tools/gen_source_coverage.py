@@ -1422,7 +1422,7 @@ for original,length,ranges,note in [
        (75,99,'vms_exe_sched','port_exe_sched_select','highest ready queue, base-priority float and context load'),
        (100,106,'vms_exe_sched','port_exe_sched_select','wait for interrupt when idle and fatal queue error'),
        (107,108,None,None,'assembler end')],
-       'Real IA-32 context switch and PCB type mapping require guest binding.'),
+       'The two-task diagnostic adapter is linked in the kernel; resident VMS PCB layout, executive wait/wake queues and normal reschedule-interrupt entry remain unbound.'),
     ('NULLPROC.MAR',103,[(1,97,None,None,'copyright and idle process description'),
        (98,101,'vms_exe_nullproc','port_exe_nullproc','native interruptible idle loop'),
        (102,103,None,None,'assembler end')],
@@ -1436,9 +1436,10 @@ for original,length,ranges,note in [
             path='src/'+basename+'.c'
             line=line_for_symbol(path,symbol)
             mapped.append({'original_lines':[first,last],
-                           'status':'mapped' if line else 'missing',
+                           'status':('partial' if original=='SCHED.MAR' and line else
+                                     'mapped' if line else 'missing'),
                            'pc_file':path,'pc_symbol':symbol,'pc_line':line,
-                           'function':reason})
+                           'function':(reason+'; native IA-32 adapter is exercised only by the two-task diagnostic scheduler' if original=='SCHED.MAR' else reason)})
             if line is None:missing+=1
     result['files'].append({'original_file':'SYS/SRC/'+original,
                             'original_lines':length,'sections':mapped,

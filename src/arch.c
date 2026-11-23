@@ -17,6 +17,7 @@
 #include "vms_userio.h"
 #include "vms_channels.h"
 #include "vms_exe_gettim.h"
+#include "vms_exe_sched.h"
 #include "vms_logintime.h"
 #include "vms_iopost_swi.h"
 #include "vms_sysboot_elf.h"
@@ -445,6 +446,10 @@ static struct idt_gate idt[256];
 /* The PCB owns register/IRET context, CR3, state, ASTs, and accounting.
  * The memory manager owns physical page frames, never the PCB itself. */
 static struct port_pcb task_pcb[2];
+static struct port_exe_sched_process arch_sched_process[2];
+static struct port_exe_scheduler arch_scheduler;
+static struct port_trap_frame *arch_sched_trap_frame;
+static volatile uint32_t arch_sched_bad_queue;
 static struct vms_ast_request sched_ast_req;
 static void ast_test_token(void *context, uint32_t parameter) {
     (void)context; (void)parameter;
@@ -456,46 +461,107 @@ static void copy_frame(struct port_trap_frame *dst,const struct port_trap_frame 
     uint32_t *q=(uint32_t *)dst;
     for (unsigned i=0;i<sizeof(*dst)/sizeof(uint32_t);i++) q[i]=p[i];
 }
+static unsigned sched_process_index(const struct port_exe_sched_process *p) {
+    for(unsigned i=0;i<2u;i++)if(p==&arch_sched_process[i])return i;
+    return 2u;
+}
+static void arch_sched_save_context(void *context,
+                                    struct port_exe_sched_process *p) {
+    (void)context;
+    unsigned i=sched_process_index(p);
+    if(i>=2u||!arch_sched_trap_frame){arch_sched_bad_queue=1u;return;}
+    copy_frame(&task_pcb[i].frame,arch_sched_trap_frame);
+}
+static void arch_sched_load_context(void *context,
+                                    struct port_exe_sched_process *p) {
+    (void)context;
+    unsigned i=sched_process_index(p);
+    if(i>=2u||!arch_sched_trap_frame||
+       (task_pcb[i].state!=PORT_PCB_READY&&task_pcb[i].state!=PORT_PCB_RUNNING)){
+        arch_sched_bad_queue=1u;return;
+    }
+    struct port_pcb *pcb=&task_pcb[i];
+    if(!pcb->started){
+        copy_frame(&pcb->frame,arch_sched_trap_frame);
+        pcb->frame.eip=pcb->user_entry;
+        pcb->frame.user_esp=pcb->user_stack_top;
+        pcb->frame.eax=pcb->frame.ebx=pcb->frame.ecx=0;
+        pcb->frame.edx=pcb->frame.esi=pcb->frame.edi=0;
+        pcb->started=1u;
+    }
+    if(pcb->state==PORT_PCB_READY&&port_pcb_activate(pcb)){
+        arch_sched_bad_queue=1u;return;
+    }
+    copy_frame(arch_sched_trap_frame,&pcb->frame);
+    sched_current=i;
+    select_kernel_stack(i);
+    if(sched_preempt||sched_vm_test||sched_demand_test||sched_event_test||sched_mutex_test)
+        switch_directory(task_page_directory[i]);
+    ++sched_switches;
+}
+static void arch_sched_idle(void *context) {
+    (void)context;
+    arch_sched_bad_queue=1u;
+    for(;;)__asm__ volatile("cli; hlt");
+}
+static void arch_sched_fatal(void *context) {
+    (void)context;
+    arch_sched_bad_queue=1u;
+}
+static const struct port_exe_sched_ops arch_sched_ops={
+    0,arch_sched_save_context,arch_sched_load_context,
+    arch_sched_idle,arch_sched_fatal
+};
+static void arch_sched_queue_runnable(void) {
+    for(unsigned i=0;i<2u;i++){
+        if(task_pcb[i].state==PORT_PCB_READY&&
+           arch_sched_process[i].state==PORT_EXE_STATE_OTHER){
+            if(port_exe_sched_enqueue(&arch_scheduler,&arch_sched_process[i])!=PORT_SS_NORMAL)
+                arch_sched_bad_queue=1u;
+        }
+    }
+}
 static void schedule_next(struct port_trap_frame *f, int is_exit) {
-    unsigned cur=sched_current, next=cur^1u;
-    struct port_pcb *old=&task_pcb[cur], *new=&task_pcb[next];
+    unsigned cur=sched_current;
+    struct port_pcb *old=&task_pcb[cur];
+    struct port_exe_sched_process *current=&arch_sched_process[cur];
+    arch_sched_trap_frame=f;
     if (is_exit) {
         if (port_pcb_exit(old)) return;
         ++sched_done;
     } else {
-        copy_frame(&old->frame,f);
         if (old->state==PORT_PCB_RUNNING && port_pcb_deschedule(old)) return;
         if (old->state!=PORT_PCB_READY && old->state!=PORT_PCB_WAIT_EF &&
             old->state!=PORT_PCB_WAIT_RES)
             return;
     }
-    if (new->state!=PORT_PCB_READY && new->state!=PORT_PCB_RUNNING) {
-        if (old->state==PORT_PCB_READY) {
-            (void)port_pcb_activate(old); /* only runnable task */
-            return;
-        }
-        /* No runnable process: refuse to resume a WAIT/EXIT task. */
+    arch_sched_queue_runnable();
+    if(old->state==PORT_PCB_READY){
+        if(current->state!=PORT_EXE_STATE_CURRENT)return;
+        if(port_exe_sched_resched(&arch_scheduler,&arch_sched_ops)==PORT_SS_NORMAL&&
+           !arch_sched_bad_queue)return;
+    }else if(old->state==PORT_PCB_WAIT_EF||old->state==PORT_PCB_WAIT_RES||
+             old->state==PORT_PCB_EXITED){
+        if(current->state!=PORT_EXE_STATE_CURRENT)return;
+        if(!arch_scheduler.ready_mask){
+            copy_frame(&old->frame,f);
+            current->state=PORT_EXE_STATE_OTHER;
+            arch_scheduler.current=0;
+        }else if(port_exe_sched_suspend(&arch_scheduler,&arch_sched_ops)==PORT_SS_NORMAL&&
+                 !arch_sched_bad_queue)return;
+    }
+    if(arch_sched_bad_queue){
+        arch_report_fault(f->vector,f->error,f->eip);
+        for(;;)__asm__ volatile("cli; hlt");
+    }
+    if(old->state!=PORT_PCB_READY){
+        /* The diagnostic runner has no idle PCB; return to its supervisor
+         * after the final runnable test process blocks or exits. */
         sched_active=0;
         monitor_kernel_stack();
         if (sched_preempt || sched_vm_test || sched_demand_test || sched_event_test || sched_mutex_test) switch_directory(page_directory);
         return;
     }
-    if (!new->started) {
-        /* Inherit the caller's validated CPL3 return frame, replacing
-         * only the executable entry, private stack and general registers. */
-        copy_frame(&new->frame,f);
-        new->frame.eip=new->user_entry;
-        new->frame.user_esp=new->user_stack_top;
-        new->frame.eax=new->frame.ebx=new->frame.ecx=0;
-        new->frame.edx=new->frame.esi=new->frame.edi=0;
-        new->started=1;
-    }
-    if (port_pcb_activate(new)) return;
-    copy_frame(f,&new->frame);
-    ++sched_switches;
-    sched_current=next;
-    select_kernel_stack(next);
-    if (sched_preempt || sched_vm_test || sched_demand_test || sched_event_test || sched_mutex_test) switch_directory(task_page_directory[next]);
 }
 /* Asynchronous user ASTs are owned by the PCB, including their suspended
  * preemption context; switching CR3 never switches another task's AST. */
@@ -547,7 +613,18 @@ static void sched_reset(void) {
     sched_preemptions=sched_auto_ast_reports=sched_auto_ast_completed=0;
     sched_current=0;
     task_pcb[0].started=1;
-    (void)port_pcb_activate(&task_pcb[0]);
+    arch_sched_bad_queue=0;
+    arch_sched_trap_frame=0;
+    port_exe_sched_init(&arch_scheduler,0x31u);
+    for(unsigned i=0;i<2u;i++){
+        arch_sched_process[i]=(struct port_exe_sched_process){
+            .pid=task_pcb[i].pid,.type=0x31u,.base_priority=16u,
+            .current_priority=16u,.state=PORT_EXE_STATE_OTHER};
+    }
+    arch_sched_process[0].state=PORT_EXE_STATE_CURRENT;
+    arch_scheduler.current=&arch_sched_process[0];
+    if(port_exe_sched_enqueue(&arch_scheduler,&arch_sched_process[1])!=PORT_SS_NORMAL||
+       port_pcb_activate(&task_pcb[0]))arch_sched_bad_queue=1u;
     sched_active=1;
     select_kernel_stack(0);
     user_test_active=1;
@@ -1145,6 +1222,7 @@ int arch_trap(struct port_trap_frame *f) {
         if (sched_active && sched_mutex_test && f->eax==36u) {
             f->eax=(uint32_t)port_mutex_unlock(&sched_mutex,
                 task_pcb[sched_current].pid,&sched_test_lock);
+            arch_sched_queue_runnable();
             return 0;
         }
         if (sched_active && sched_mutex_test && f->eax==37u) {
@@ -1174,6 +1252,7 @@ int arch_trap(struct port_trap_frame *f) {
             int rc=port_postef_post_mask(&sched_postef,
                 task_pcb[sched_current].pid,2,f->ebx,0,&woken);
             event_wakes+=woken;
+            arch_sched_queue_runnable();
             f->eax=rc>0 ? 0u : (uint32_t)-1;
             return 0;
         }
