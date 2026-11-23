@@ -53,6 +53,8 @@ Added port_dqddt_bootread, which validates the staged source-shaped DDT and its 
 
 Verification: clean GCC 11.4 make clean && make -j2 all PASS; full make test PASS (process exit 0); make dqddtcheck relocdrvcheck f11channelcheck f11ioccheck sysexecentrycheck sourcerangecheck PASS; source range validation PASS (1,957 ranges, 0 unmapped functions; inventory counts unchanged). Real python3 tools/qemu_sysboot_m193.py PASS for the existing M193 IRQ14 boot regression; guest still stops at the known partial INIT boundary, with no login/DCL. Runner terminated. Raw COM1 transcript logs/serial/qemu-m193-run-local-20261123T042427302970Z.log, 4,600 bytes, SHA-256 b83ec2a164adef10221c110aba147dc906b7174b69c6ba0886e5d700589c2984; manifest verification PASS. Public diff audit found no DEC source, image, archive, or recognized secret material.
 
+An additional harness run recorded byte-identical M193 serial evidence at logs/serial/qemu-m193-run-local-20261123T042841960367Z.log; serial manifest validation passes with six raw transcripts.
+
 Original source coverage: DQDRIVER.MAR 634-639 now maps partial to the staged READPBLK dispatch. All remaining DQA0 DDT/CRB, RB730 semantics, public IOC/$QIO, ACP, and process completion remain unresolved. Totals remain 28,697 partial, 50,504 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped; 441/4,566 original files indexed.
 
 M195 implementation commit: `33802ac` (`33802aca2b8d2c17456319544463354dd1b3a01a`).
