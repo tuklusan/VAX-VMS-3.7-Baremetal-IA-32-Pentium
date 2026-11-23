@@ -35,7 +35,7 @@ struct begin_rig {
     const struct port_v37_sysqio_device *device;
     void *ucb;
     uint32_t expected_pid,expected_channel,lookups,posts,posted_pid,posted_status;
-    uint8_t posted_efn;
+    uint8_t posted_efn,ccb_access_limit;
     uint32_t quota_calls;uint8_t quota_buffered;int deny_channel,grant_quota;
 };
 static int lookup_channel(void *opaque,uint32_t pid,uint32_t channel,
@@ -43,7 +43,8 @@ static int lookup_channel(void *opaque,uint32_t pid,uint32_t channel,
     struct begin_rig *r=opaque;r->lookups++;
     if(r->deny_channel||pid!=r->expected_pid||channel!=r->expected_channel)
         return -1;
-    out->device=r->device;out->ucb=r->ucb;out->ccb_access_limit=4u;
+    out->device=r->device;out->ucb=r->ucb;
+    out->ccb_access_limit=r->ccb_access_limit?r->ccb_access_limit:4u;
     return 0;
 }
 static int single_quota(void *opaque,uint32_t pid,uint8_t buffered){
@@ -168,11 +169,18 @@ int main(void){
     memset(&untouched,0x5a,sizeof untouched);prepared=untouched;
     if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
          &begin_status)!=PORT_V37_SYSQIO_BEGIN_IVCHAN||
-       begin_status!=PORT_V37_SYSQIO_BEGIN_IVCHAN||rig.lookups!=1u||
+       begin_status!=PORT_SYS85_IVCHAN||rig.lookups!=1u||
        rig.posts!=1u||rig.posted_pid!=7u||rig.posted_efn!=3u||
+       rig.posted_status!=PORT_SYS85_IVCHAN||
        mem.probes||mem.clears||memcmp(&prepared,&untouched,sizeof prepared))
         return 22;
-    rig.deny_channel=0;rig.posts=0u;rig.quota_calls=0u;rig.grant_quota=0;
+    rig.deny_channel=0;rig.posts=0u;rig.ccb_access_limit=3u;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_NOPRIV||
+       begin_status!=PORT_SYS85_NOPRIV||rig.posts!=1u||
+       rig.posted_status!=PORT_SYS85_NOPRIV||proc.direct_io_count!=0)
+        return 23;
+    rig.ccb_access_limit=4u;rig.posts=0u;rig.quota_calls=0u;rig.grant_quota=0;
     memset(mem.bytes,0xa5,sizeof mem.bytes);mem.probes=mem.clears=0u;
     if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
          &begin_status)!=PORT_V37_SYSQIO_BEGIN_EXQUOTA||
@@ -180,14 +188,14 @@ int main(void){
        rig.quota_buffered||rig.posts!=1u||rig.posted_status!=PORT_SS_EXQUOTA||
        proc.direct_io_count!=0||mem.probes!=1u||mem.clears!=1u||
        mem.bytes[0]!=0u||memcmp(&prepared,&untouched,sizeof prepared)){
-        return 23;
+        return 24;
     }
     rig.grant_quota=1;rig.posts=0u;
     if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
          &begin_status)!=PORT_V37_SYSQIO_BEGIN_OK||
        begin_status!=PORT_V37_SYSQIO_BEGIN_OK||rig.quota_calls!=2u||
        proc.direct_io_count!=-1||prepared.dispatch.function_code!=49u)
-        return 24;
+        return 25;
     puts("SYS$QIO argument, EFN, channel, FDT and IOSB begin path PASS");
     return 0;
 }

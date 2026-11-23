@@ -2269,7 +2269,7 @@ qio_rows=[
  (239,243,None,None,'EXE$QIO entry declaration and service prologue unresolved','unresolved'),
  (244,247,'src/vms_sysqio_args.c','port_v37_sysqio_begin','Clear EFN before channel lookup and post failure status to the requested event flag','partial'),
  (248,252,None,None,'Original channel-number validation and CCB lookup unresolved','unresolved'),
- (253,283,'src/vms_sysqio_args.c','port_v37_sysqio_preflight','Native CCB access-mode comparison, DQ FDT function legality and offline exceptions; channel lookup and full device semantics remain unimplemented','partial'),
+ (253,283,'src/vms_sysqio_args.c','port_v37_sysqio_preflight','Native CCB access-mode comparison, DQ FDT function legality and offline exceptions; maps NOPRIV but exact ILLIOFUNC/DEVOFFLINE statuses and full device semantics remain unimplemented','partial'),
  (284,285,None,None,'Original IOSB branch prologue unresolved','unresolved'),
  (286,292,'src/vms_sysqio_iosb.c','port_v37_sysqio_clear_iosb','Nullable IOSB, full 8-byte write probe before atomic two-longword clear; caller memory copy wiring remains unresolved','partial'),
  (293,299,None,None,'EXE$QIO resource-charge setup and AST-deletion IPL transition unresolved','unresolved'),
@@ -2289,7 +2289,7 @@ for lo,hi,pc,sym,description,status in qio_rows:
     else:qio_sec.append({'original_lines':[lo,hi],'status':status,'reason':description})
 result['files'].append({'original_file':'SYS/SRC/SYSQIOREQ.MAR',
     'original_lines':908,'sections':qio_sec,
-    'unresolved_integration':'The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. It is host-tested but not connected to a user service entry, real CCB lookup or driver dispatch. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; source IPL/deletion protection, exact VMS failure epilogue, device access/protection, IRP allocation and process AST completion remain absent.'})
+    'unresolved_integration':'The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ACCVIO and EXQUOTA status values but ILLIOFUNC and DEVOFFLINE status values remain unresolved. It is host-tested but not connected to a user service entry, real CCB lookup or driver dispatch. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; source IPL/deletion protection, exact VMS failure epilogue, device access/protection, IRP allocation and process AST completion remain absent.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M123: IOCIOPOST kernel-end-action subset executed in real SYS.EXE.

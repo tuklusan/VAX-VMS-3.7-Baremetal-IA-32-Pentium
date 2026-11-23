@@ -1,5 +1,6 @@
 #include "vms_sysqio_args.h"
 #include "vms_exe_schevt.h"
+#include "vms_sys85.h"
 
 static uint32_t load32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
@@ -99,7 +100,7 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
         return PORT_V37_SYSQIO_BEGIN_BAD;
     struct port_v37_sysqio_args args={0};
     if(port_v37_sysqio_decode_args(ap,ap_bytes,&args)!=PORT_V37_SYSQIO_ARGS_OK){
-        *service_status=PORT_V37_SYSQIO_BEGIN_BAD;
+        *service_status=PORT_SYS85_BADPARAM;
         return PORT_V37_SYSQIO_BEGIN_BAD;
     }
     uint32_t efn_status=0u;
@@ -113,7 +114,7 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
     if(ops->lookup_channel(ops->context,process->pid,args.channel,&channel)!=0||
        !channel.device||!channel.ucb)
         return begin_failure(PORT_V37_SYSQIO_BEGIN_IVCHAN,
-            PORT_V37_SYSQIO_BEGIN_IVCHAN,&args,process,ops,service_status);
+            PORT_SYS85_IVCHAN,&args,process,ops,service_status);
     struct port_v37_sysqio_dispatch dispatch={0};
     const uint32_t check=port_v37_sysqio_preflight(&args,
         process->access_mode,channel.ccb_access_limit,channel.device,&dispatch);
@@ -124,14 +125,18 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
                 PORT_V37_SYSQIO_BEGIN_ILLFUNC:
             check==PORT_V37_SYSQIO_PRECHECK_OFFLINE?
                 PORT_V37_SYSQIO_BEGIN_OFFLINE:PORT_V37_SYSQIO_BEGIN_BAD;
-        return begin_failure(result,result,&args,process,ops,service_status);
+        const uint32_t status=check==PORT_V37_SYSQIO_PRECHECK_NOPRIV?
+            PORT_SYS85_NOPRIV:result;
+        return begin_failure(result,status,&args,process,ops,service_status);
     }
     const uint32_t iosb=port_v37_sysqio_clear_iosb(args.iosb,
                                                    &ops->user_memory);
     if(iosb!=PORT_V37_SYSQIO_IOSB_OK){
         const uint32_t result=iosb==PORT_V37_SYSQIO_IOSB_ACCVIO?
             PORT_V37_SYSQIO_BEGIN_ACCVIO:PORT_V37_SYSQIO_BEGIN_BAD;
-        return begin_failure(result,result,&args,process,ops,service_status);
+        const uint32_t status=iosb==PORT_V37_SYSQIO_IOSB_ACCVIO?
+            PORT_SYS85_ACCVIO:PORT_SYS85_BADPARAM;
+        return begin_failure(result,status,&args,process,ops,service_status);
     }
     if(!charge_io_quota(process,ops,dispatch.buffered))
         return begin_failure(PORT_V37_SYSQIO_BEGIN_EXQUOTA,
