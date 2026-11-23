@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M217
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M218
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216 rereads 64 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -274,3 +274,14 @@ Verification: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test`
 Coverage keeps FILEREAD.MAR partial and explicitly excludes ACP/public QIO from this guest path. Public SYS$QIO, Files-11 ACP, process-aware AST/scheduling, native INIT completion, process activation, DECnet runtime, SYSTEM login/DCL and genuine SET HOST 0 remain unfinished.
 
 M217 implementation commit: `ab95489ad29dec563044e5e363cf80d84001152d`.
+
+
+## M218 — Native SYS$QIO argument-list decoder, 23 November 2026
+
+Added a bounded decoder for the original SYS$QIO AP layout: argument count plus the twelve fixed longword slots for EFN, channel, function, IOSB, AST address/parameter and P1-P6. It preserves the channel value and zero-extends the word-sized function as EXE$QIO does. Invalid alignment, short buffers and insufficient argument counts fail atomically. This helper assumes its input bytes have already been safely copied or validated by the caller; it does not implement user SYS$QIO, event-flag handling, channel authorization, device FDT dispatch, IRP allocation, IOSB completion or process AST delivery.
+
+Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (1,959 ranges, zero unmapped; 441/4,566 original files indexed; 28,709 partial, 50,492 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `git diff --check` PASS. No QEMU run was needed: this host-tested helper is not linked into the guest image. No DEC source or binary image was staged.
+
+SYSQIOREQ.MAR lines 112-123 now map as partial coverage to the decoder only; the complete service remains unimplemented. Public SYS$QIO, Files-11 ACP integration, process-aware AST/scheduling and image activation, genuine SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 remain unfinished.
+
+M218 implementation commit: `d2f8fab4ee10d8c25a28a492aca3cda40c0fec9b`.
