@@ -80,7 +80,7 @@ uint32_t port_exe_schdwk(struct port_exe_timer_queue *queue,
             if(repeat<PORT_EXE_TICK_100NS)repeat=PORT_EXE_TICK_100NS;
         }
     }
-    uint64_t raw,when;
+    uint64_t raw=0,when=0;
     uint8_t absolute;
     uint32_t status=fetch_quad(ops,request->day_time,&raw);
     if(!(status&1u))return status;
@@ -113,7 +113,7 @@ uint32_t port_exe_setimr(struct port_exe_timer_queue *queue,
     uint32_t efn=request->efn&255u;
     uint32_t status=port_exe_clref(caller->events,efn);
     if(!(status&1u))return status;
-    uint64_t raw,when;
+    uint64_t raw=0,when=0;
     uint8_t absolute;
     status=fetch_quad(ops,request->day_time,&raw);
     if(!(status&1u))return status;

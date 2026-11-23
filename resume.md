@@ -36,3 +36,13 @@ Coverage audit change: DQDRIVER lines 772-840 now map as partial to `src/vms_ata
 
 M193 commit: `7c252354af3518af3c781a59bd1ae1905d8a08d7`. Resume from source-matched DQA0 DDT/CRB publication and connect the interrupt completion to native IOC ownership and completion semantics before enabling public process I/O.
 
+
+## M194 — GCC 11 strict build compatibility, 22 November 2026
+
+Initialized the `when` outputs in the two scheduler timer request paths before calling the status-returning expiration helper. This preserves request behavior while allowing GCC 11.4 to prove the outputs initialized under `-Werror=maybe-uninitialized`.
+
+Verification from a clean tree: `make clean && make -j2 all` PASS with default GCC 11.4; full `make test` PASS (`MAKE_EXIT:0`, suite reached M49); `make relocdrvcheck f11channelcheck f11ioccheck sysexecentrycheck sourcerangecheck` PASS; source-range validation PASS (1,957 ranges, 0 unmapped functions). One QEMU M193 regression under the GCC 11 build PASS, confirming the live IRQ14 read and incomplete-INIT stop; runner terminated. Raw COM1 transcript: `logs/serial/qemu-m193-run-local-20261123T041538684129Z.log`, 4,597 bytes, SHA-256 `9a9ecd9667d9cad8af00099d46edafc9ed23f09087478140b85a399c6a84c593`. Serial manifest verification PASS.
+
+No VMS source coverage status changed. DQA0 DDT/CRB publication, public process `$QIO`, Files-11 ACP/AST integration, INIT, process activation, LOGINOUT/DCL, DECnet and SET HOST 0 remain incomplete.
+
+M194 commit: pending.
