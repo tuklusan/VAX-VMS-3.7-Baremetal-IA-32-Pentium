@@ -474,6 +474,7 @@ static void executive_post_mark_softint(void *unused,uint8_t ipl){
  * substitute for actually scheduling SYSTEM or running LOGINOUT. */
 static struct port_exe_sched_process executive_system_pcb;
 static struct port_exe_sched_process executive_null_pcb;
+_Alignas(8) static uint8_t executive_vms_system_pcb[PORT_V37_PCB_BYTES];
 
 
 
@@ -589,6 +590,11 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
                  executive_free_npages-used,&settings,
                  &executive_procvec)!=PORT_INI_PROC_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
+        if((uintptr_t)executive_vms_system_pcb>UINT32_MAX||
+           port_v37_pcb_init_syspcb_template(executive_vms_system_pcb,
+              sizeof executive_vms_system_pcb,
+              (uint32_t)(uintptr_t)executive_vms_system_pcb)!=PORT_V37_PCB_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
         executive_null_pcb=(struct port_exe_sched_process){0};
         executive_null_pcb.type=PORT_SYS_EXEC_PCB_KIND;
         executive_null_pcb.state=PORT_EXE_STATE_OTHER;
@@ -598,8 +604,9 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         executive_system_pcb.state=PORT_EXE_STATE_OTHER;
         executive_procvec_ready=1u;
         p->result->process_vector=&executive_procvec;
-        p->result->system_pcb=&executive_system_pcb;
-        p->result->null_pcb=&executive_null_pcb;
+        p->result->system_sched_process=&executive_system_pcb;
+        p->result->null_sched_process=&executive_null_pcb;
+        p->result->system_vms_pcb=executive_vms_system_pcb;
         p->result->signature=PORT_SYS_EXEC_PV_RESULT_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }

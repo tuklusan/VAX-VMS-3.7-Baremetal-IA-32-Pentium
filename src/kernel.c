@@ -3062,17 +3062,24 @@ void kmain(void) {
        proc_result.process_vector->allocated_slots!=33u ||
        proc_result.process_vector->system_pix!=32u ||
        proc_result.process_vector->max_pix!=31u ||
-       !proc_result.system_pcb || !proc_result.null_pcb ||
-       proc_result.system_pcb->pid!=32u ||
-       proc_result.system_pcb->state!=PORT_EXE_STATE_OTHER ||
+       !proc_result.system_sched_process || !proc_result.null_sched_process ||
+       proc_result.system_sched_process->pid!=32u ||
+       proc_result.system_sched_process->state!=PORT_EXE_STATE_OTHER ||
+       !proc_result.system_vms_pcb||
+       ((uintptr_t)proc_result.system_vms_pcb&7u)!=0u||
+       proc_result.system_vms_pcb[PORT_V37_PCB_SIZE]!=PORT_V37_PCB_BYTES||
+       proc_result.system_vms_pcb[PORT_V37_PCB_SIZE+1u]!=0u||
+       proc_result.system_vms_pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
+       m202_get32(proc_result.system_vms_pcb+PORT_V37_PCB_PID)!=0x00010000u||
+       m202_get32(proc_result.system_vms_pcb+PORT_V37_PCB_PHD)!=0u||
        *(const uint32_t *)(const void *)(proc_result.process_vector->pcb_vector+128u)!=
-                (uint32_t)(uintptr_t)proc_result.system_pcb ||
+                (uint32_t)(uintptr_t)proc_result.system_sched_process ||
        *(const uint32_t *)(const void *)(proc_result.process_vector->pcb_vector)!=
-                (uint32_t)(uintptr_t)proc_result.null_pcb){
+                (uint32_t)(uintptr_t)proc_result.null_sched_process){
         bootstrap_message("INIT: resident SYS.EXE PCB sequence vectors failed.");
         bootstrap_halt();
     }
-    bootstrap_message("INIT: loaded SYS.EXE initialized SYSTEM and NULL PCB/sequence vectors.");
+    bootstrap_message("INIT: SYS.EXE staged a source-layout SYSTEM PCB template; PHD/process activation pending.");
 
     /* Original INIT.MAR INI_PHV and INI_SWAP reserve the process header
      * slots and the swapper P0 page-table map. This is *not* a running

@@ -1733,7 +1733,7 @@ init_parts=[
     (1090,1141,'src/vms_ini_pflvec.c','port_ini_pflvec_init','Source-derived global page-file count and null PFL shell VBN/window arithmetic; host-only, no operational shell WCB yet','partial'),
     (1142,1165,'src/vms_ini_pflvec.c','port_ini_pflvec_init','Page and swap-file PTR record in loaded SYS.EXE, anchored to resident uninitialized NULLPFL storage; guest-checked, no actual pagefile service, SYSGEN values or shell WCB','partial'),
     (1166,1183,'src/vms_ini_pflvec.c','port_ini_interrupt_stack_limits','Source-defined 512-byte interrupt-stack bounds and bounded lock resource depth executed in loaded guest SYS.EXE using live IA-32 TSS.esp0; native IPL stack and lock manager remain incomplete','partial'),
-    (1184,1188,'src/vms_ini_procvec.c','port_ini_procvec_init','SYSTEM PCB physical process header and process-index setup remains partial','partial'),
+    (1184,1188,'src/vms_v37_pcb.c','port_v37_pcb_finish_syspcb','INIT_SYSPCB low-word PID update preserving the GENPCB sequence and native PHD/PHYPCB fields; boot currently has no system PHD and cannot activate it','partial'),
     (1189,1212,'src/vms_ini_syswcb.c','port_ini_syswcb_from_boot_map','Actual guest-executed 8-to-6 byte extent compaction in resident SYS.EXE from real Files-11 BOO$L_SYS_MAP, with resident partial native WCB header; original WCB constants and ACP consumers still unresolved','partial'),
     (1213,1231,None,None,'Original VAX PR$_NICR/ICCS/ICR clock-counter timing loop needs real IA-32 hardware equivalent','hardware-excluded'),
     (1232,1239,'src/vms_ini_dptlist.c','port_ini_dpt_attach_three','Source-verified DPTAB metadata bytes are staged in loaded SYS.EXE; actual linked driver images and IOC$GL_DPTLIST remain unresolved','partial'),
@@ -1760,6 +1760,29 @@ for first,last,path,symbol,purpose,status in init_parts:
 result['files'].append({'original_file':'SYS/SRC/INIT.MAR',
     'original_lines':1906,'sections':parts,
     'unresolved_integration':'Source FIN_DATABASE names are staged only after a verified real ATA Files-11 read, but LOG$TRANSLATE/IOC disk DDT and ACP are not live. Other INIT operations, SYSTEM login, DCL and DECnet remain missing.'})
+
+# M238: PDAT.MAR GENPCB source layout and the static system PCB template.
+pdat_rows=[
+ (1,90,None,None,'Original PCB/PHD declarations and VAX PHD generation dependencies unresolved','unresolved'),
+ (91,170,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb',"Emit SYSDEF.MDL's 156-byte PCB layout and source GENPCB queue heads, DYN type, state, privileges, PID/PHD and lock queue fields; native PHD creation and process activation remain missing",'partial'),
+ (171,220,None,None,'Original PHD template generation, hardware context and page-table setup unresolved','unresolved'),
+ (221,278,None,None,'Null/swapper PHDs, stacks and scheduler PCB source instances unresolved','unresolved'),
+ (279,281,'src/vms_v37_pcb.c','port_v37_pcb_init_syspcb_template','Construct the unactivated MMG$AL_SYSPCB data template; SYS PHD and native PHYPCB have not been attached','partial'),
+ (282,307,None,None,'Original PCB/sequence vector and swapper/null process activation unresolved','unresolved'),
+ (308,308,None,None,'Terminal MACRO END directive','excluded')]
+pdat_sections=[]
+for first,last,path,symbol,description,status in pdat_rows:
+    if path:
+        ln=line_for_symbol(path,symbol)
+        if ln is None:missing+=1
+        pdat_sections.append({'original_lines':[first,last],
+            'status':status if ln else 'missing','pc_file':path,
+            'pc_symbol':symbol,'pc_line':ln,'function':description})
+    else:pdat_sections.append({'original_lines':[first,last],
+        'status':status,'reason':description})
+result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
+    'original_lines':308,'sections':pdat_sections,
+    'unresolved_integration':'Native SYS.EXE now carries the exact source-layout static system PCB template, with verified SYSDEF offsets. Its PHD and native hardware PCB pointer remain absent; the diagnostic process vector still points at scheduler records and cannot activate any VMS process.'})
 
 # M107: per-source native assembly-free RTL routines, each saved as its own
 # source file with one callable symbol. These are host-tested and built into

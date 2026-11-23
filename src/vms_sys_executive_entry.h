@@ -36,6 +36,7 @@
 #include "vms_ddtreloc.h"
 #include "vms_sys85.h"
 #include "vms_dqddt_ioc_bind.h"
+#include "vms_v37_pcb.h"
 /* The resident SYS.EXE entry carries INIT.MAR's CPU-code vector binding
  * and subsequent source-ordered initialization as separate phases. */
 enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=32u,
@@ -226,7 +227,9 @@ struct port_sys_exec_result {
     /* Diagnostic INI_PSTATE vector: entries currently name scheduler-model
      * records, not source-layout VMS PCBs; never use for process activation. */
     const struct port_ini_procvec *process_vector;
-    const struct port_exe_sched_process *system_pcb,*null_pcb;
+    const struct port_exe_sched_process *system_sched_process,*null_sched_process;
+    /* PDAT.MAR MMG$AL_SYSPCB source-layout record; PHD remains uninitialized. */
+    const uint8_t *system_vms_pcb;
 };
 struct port_sys_exec_start {
     uint32_t signature,version;

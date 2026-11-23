@@ -10382,10 +10382,10 @@
             1188
           ],
           "status": "partial",
-          "pc_file": "src/vms_ini_procvec.c",
-          "pc_symbol": "port_ini_procvec_init",
-          "pc_line": 14,
-          "function": "SYSTEM PCB physical process header and process-index setup remains partial"
+          "pc_file": "src/vms_v37_pcb.c",
+          "pc_symbol": "port_v37_pcb_finish_syspcb",
+          "pc_line": 76,
+          "function": "INIT_SYSPCB low-word PID update preserving the GENPCB sequence and native PHD/PHYPCB fields; boot currently has no system PHD and cannot activate it"
         },
         {
           "original_lines": [
@@ -10517,6 +10517,75 @@
         }
       ],
       "unresolved_integration": "Source FIN_DATABASE names are staged only after a verified real ATA Files-11 read, but LOG$TRANSLATE/IOC disk DDT and ACP are not live. Other INIT operations, SYSTEM login, DCL and DECnet remain missing."
+    },
+    {
+      "original_file": "SYS/SRC/PDAT.MAR",
+      "original_lines": 308,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            90
+          ],
+          "status": "unresolved",
+          "reason": "Original PCB/PHD declarations and VAX PHD generation dependencies unresolved"
+        },
+        {
+          "original_lines": [
+            91,
+            170
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_pcb.c",
+          "pc_symbol": "port_v37_pcb_init_genpcb",
+          "pc_line": 30,
+          "function": "Emit SYSDEF.MDL's 156-byte PCB layout and source GENPCB queue heads, DYN type, state, privileges, PID/PHD and lock queue fields; native PHD creation and process activation remain missing"
+        },
+        {
+          "original_lines": [
+            171,
+            220
+          ],
+          "status": "unresolved",
+          "reason": "Original PHD template generation, hardware context and page-table setup unresolved"
+        },
+        {
+          "original_lines": [
+            221,
+            278
+          ],
+          "status": "unresolved",
+          "reason": "Null/swapper PHDs, stacks and scheduler PCB source instances unresolved"
+        },
+        {
+          "original_lines": [
+            279,
+            281
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_pcb.c",
+          "pc_symbol": "port_v37_pcb_init_syspcb_template",
+          "pc_line": 69,
+          "function": "Construct the unactivated MMG$AL_SYSPCB data template; SYS PHD and native PHYPCB have not been attached"
+        },
+        {
+          "original_lines": [
+            282,
+            307
+          ],
+          "status": "unresolved",
+          "reason": "Original PCB/sequence vector and swapper/null process activation unresolved"
+        },
+        {
+          "original_lines": [
+            308,
+            308
+          ],
+          "status": "excluded",
+          "reason": "Terminal MACRO END directive"
+        }
+      ],
+      "unresolved_integration": "Native SYS.EXE now carries the exact source-layout static system PCB template, with verified SYSDEF offsets. Its PHD and native hardware PCB pointer remain absent; the diagnostic process vector still points at scheduler records and cannot activate any VMS process."
     },
     {
       "original_file": "RTL/SRC/MTHIIDNNT.MAR",

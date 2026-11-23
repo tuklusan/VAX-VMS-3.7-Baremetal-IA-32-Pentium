@@ -46,7 +46,7 @@ def main():
         b'SYSBOOT: Files-11 INILOA.EXE native image loaded.',
         b'INIT: INILOA IOMAP executed on real IA-32 boot adapter.',
         b'INIT: loaded SYS.EXE built lock ID, resource hash and deadlock bitmap tables.',
-        b'INIT: loaded SYS.EXE initialized SYSTEM and NULL PCB/sequence vectors.',
+        b'INIT: SYS.EXE staged a source-layout SYSTEM PCB template; PHD/process activation pending.',
         b'INIT: loaded SYS.EXE initialized process header vector and swapper PTE records.',
         b'INIT: loaded SYS.EXE initialized modified-page writer PTE/index map.',
         b'INIT: loaded SYS.EXE allocated unbound pagefile pointer vector.',
