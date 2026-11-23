@@ -21313,8 +21313,11 @@
             736,
             740
           ],
-          "status": "unresolved",
-          "reason": "EXE$ABORTIO AST quota adjustments and IOSB clearing unported"
+          "status": "partial",
+          "pc_file": "src/vms_qio_abortio.c",
+          "pc_symbol": "port_v37_qio_abortio",
+          "pc_line": 7,
+          "function": "Clear IRP IOSB pointer, return AST quota reservation once, append IOC post queue and request IPL4; live PCB lookup and process post delivery remain unbound"
         },
         {
           "original_lines": [

@@ -14,6 +14,7 @@ enum { PORT_V37_IRP_SIZE=136u, PORT_V37_IRP_POOL_STRIDE=144u,
        PORT_V37_IRP_PREFIX_SIZE=64u,
        PORT_V37_IRP_ARB=88u, PORT_V37_IRP_FUNC=32u,
        PORT_V37_IRP_UCB=28u, PORT_V37_IRP_MEDIA=56u,
+       PORT_V37_QIO_IRP_IOSB=36u, PORT_V37_IRP_RMOD=11u,
        PORT_V37_IRP_IOST2=60u, PORT_V37_UCB_OPCNT=96u,
        PORT_V37_IOPOST_IPL=4u, PORT_V37_QIO_OK=1u,
        PORT_V37_QIO_BAD=2u, PORT_V37_QIO_FULL=4u,
@@ -38,5 +39,6 @@ uint32_t port_v37_post_append(struct port_v37_iopost_queue *,uint32_t);
 uint32_t port_v37_irp_prepare(uint8_t *,size_t,uint32_t,uint32_t,uint16_t);
 uint32_t port_v37_qio_finishio(struct port_v37_qio_request *,uint32_t,uint32_t);
 uint32_t port_v37_qio_finishioc(void *,uint32_t);
+uint32_t port_v37_qio_abortio(struct port_v37_qio_request *,int16_t *);
 uint32_t port_v37_nl_fdt_post(struct port_v37_qio_request *);
 #endif

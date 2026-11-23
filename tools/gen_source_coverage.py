@@ -2287,7 +2287,7 @@ qio_rows=[
  (548,569,None,None,'DIAGNOSE privilege validation, driver diagnostic-buffer allocation and IRP diagnostic-buffer fields unresolved','unresolved'),
  (570,581,'src/vms_sysqio_device_access.c','port_v37_sysqio_device_access','Source LOG_IO bypass and SPL/FOD/MNT/FOR/SHR gates before logical volume access callback','partial'),
  (582,735,None,None,'Remaining device FDT action dispatch, physical/diagnostic behavior and request queue/completion unresolved','unresolved'),
- (736,740,None,None,'EXE$ABORTIO AST quota adjustments and IOSB clearing unported','unresolved'),
+ (736,740,'src/vms_qio_abortio.c','port_v37_qio_abortio','Clear IRP IOSB pointer, return AST quota reservation once, append IOC post queue and request IPL4; live PCB lookup and process post delivery remain unbound','partial'),
  (741,742,'src/vms_qio_finishioc.c','port_v37_qio_finishioc','EXE$FINISHIOC clears R1 before common finish path','partial'),
  (743,749,'src/vms_qio_finishio.c','port_v37_qio_finishio','UCB OPCNT, IRP media status, append IOC post FIFO and defer IPL4','partial'),
  (750,908,None,None,'Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved','unresolved')]

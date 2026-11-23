@@ -8,12 +8,12 @@ static void softint(void *arg,uint8_t level){
     struct irq_counter *irq=arg;irq->events++;irq->last=level;
 }
 int main(void){
-    enum {BASE=0x00342000u,PKT=0x00343000u,HEAD=0x00343200u};
+    enum {BASE=0x00342000u,PKT=0x00343000u,HEAD=0x00344000u};
     uint32_t storage[PORT_V37_DEVICE_BYTES/4]={0};
     struct port_v37_device_result d={0};
     REQUIRE(port_v37_devices_prelink((uint8_t*)storage,sizeof storage,BASE,&d)==PORT_V37_DEV_OK);
     uint8_t *nl=((uint8_t*)storage)+PORT_V37_UCB_NL_OFF;
-    uint32_t irpwords[2][PORT_V37_IRP_POOL_STRIDE/4u]={{0}};
+    uint32_t irpwords[4][PORT_V37_IRP_POOL_STRIDE/4u]={{0}};
     uint8_t *irp=(uint8_t *)irpwords;
     struct port_v37_iopost_queue queue={0};
     struct irq_counter irq={0};
@@ -60,13 +60,35 @@ int main(void){
     r2.nl_ddb_va=d.ddb[1];
     REQUIRE(port_v37_nl_fdt_post(&r2)==PORT_V37_QIO_BAD);
     r2.nl_ddb_va=d.ddb[3];
+    uint8_t *irp3=irp+2u*PORT_V37_IRP_POOL_STRIDE;
+    REQUIRE(port_v37_irp_prepare(irp3,PORT_V37_IRP_SIZE,
+        PKT+2u*PORT_V37_IRP_POOL_STRIDE,d.ucb[4],PORT_SYS85_READVBLK)==PORT_V37_QIO_OK);
+    struct port_v37_qio_request r3=r;r3.irp=irp3;
+    r3.irp_va=PKT+2u*PORT_V37_IRP_POOL_STRIDE;
+    port_v37_write32(irp3+PORT_V37_QIO_IRP_IOSB,0x12345678u);
+    irp3[PORT_V37_IRP_RMOD]|=0x40u;
+    int16_t ast_count=INT16_MAX;
+    REQUIRE(port_v37_qio_abortio(&r3,&ast_count)==PORT_SYS85_NORMAL);
+    REQUIRE(port_v37_read32(irp3+PORT_V37_QIO_IRP_IOSB)==0u);
+    REQUIRE(!(irp3[PORT_V37_IRP_RMOD]&0x40u)&&ast_count==INT16_MIN);
+    REQUIRE(queue.queued==3&&irq.events==3&&irq.last==PORT_V37_IOPOST_IPL);
+    uint8_t *irp4=irp+3u*PORT_V37_IRP_POOL_STRIDE;
+    REQUIRE(port_v37_irp_prepare(irp4,PORT_V37_IRP_SIZE,
+        PKT+3u*PORT_V37_IRP_POOL_STRIDE,d.ucb[4],PORT_SYS85_READVBLK)==PORT_V37_QIO_OK);
+    struct port_v37_qio_request r4=r;r4.irp=irp4;
+    r4.irp_va=PKT+3u*PORT_V37_IRP_POOL_STRIDE;
+    port_v37_write32(irp4+PORT_V37_QIO_IRP_IOSB,0xaabbccddu);
+    ast_count=7;
+    REQUIRE(port_v37_qio_abortio(&r4,&ast_count)==PORT_SYS85_NORMAL);
+    REQUIRE(port_v37_read32(irp4+PORT_V37_QIO_IRP_IOSB)==0u&&ast_count==7);
+    REQUIRE(queue.queued==4&&irq.events==4&&port_v37_post_validate(&queue)==PORT_V37_QIO_OK);
     REQUIRE(port_v37_post_init(0,irp,sizeof irpwords,PKT,64,HEAD)==PORT_V37_QIO_BAD);
     REQUIRE(port_v37_post_init(&queue,irp,sizeof irpwords,PKT,32,HEAD)==PORT_V37_QIO_BAD);
     REQUIRE(port_v37_post_init(&queue,irp,sizeof irpwords,PKT,64,PKT+4)==PORT_V37_QIO_BAD);
     REQUIRE(port_v37_post_validate(&queue)==PORT_V37_QIO_OK);
     REQUIRE(port_v37_irp_prepare(irp2,PORT_V37_IRP_SIZE,PKT+PORT_V37_IRP_POOL_STRIDE,d.ucb[4],0u)==PORT_V37_QIO_OK);
     REQUIRE(port_v37_nl_fdt_post(&r2)==PORT_SYS85_BADFUNC);
-    REQUIRE(irq.events==2&&queue.queued==2);
-    puts("NLDRIVER.MAR to EXE$FINISHIOC real IRP status, IOC post FIFO and IPL4 PASS");
+    REQUIRE(irq.events==4&&queue.queued==4);
+    puts("SYSQIOREQ.MAR ABORTIO IOSB/quota and FINISHIOC IRP post FIFO/IPL4 PASS");
     return 0;
 }
