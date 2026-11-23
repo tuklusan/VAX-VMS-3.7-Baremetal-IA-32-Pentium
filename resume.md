@@ -59,3 +59,13 @@ Original source coverage: DQDRIVER.MAR 634-639 now maps partial to the staged RE
 
 M195 implementation commit: `33802ac` (`33802aca2b8d2c17456319544463354dd1b3a01a`).
 
+## M196 — Resident DQ staged read through ATA IRQ14, 22 November 2026
+
+Resident SYS.EXE now accepts the registered native ATA read callback at its DQ DDT-stage INIT phase, builds a separate resident physical READPBLK IRP for LBN0, validates the staged DQ DDT/FDT and invokes the guarded private read bridge. Kernel handoff verifies a new IRQ14 completion and the returned IRP/media/sector result. This is a real guest read through the staged gate; the DDT image has no callable action slot and DQA0 DDB DDT/UCB CRB are still unpublished. Public SYS$QIO, IOC process ownership, ACP and AST delivery remain absent.
+
+Verification: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `make dqddtcheck relocdrvcheck f11channelcheck f11ioccheck sysexecentrycheck sourcerangecheck` PASS; source-range validation PASS (1,957 ranges, 0 unmapped functions; inventory counts unchanged). Real `python3 tools/qemu_sysboot_m196.py` PASS; expected source-order messages include the new SYS.EXE DQ READPBLK/IRQ14 stage and the guest's honest incomplete-INIT stop. No login or DCL observed; QEMU runner terminated. The initial harness attempt recorded a false harness failure because its expected serial string had not been updated; actual guest output reached the incomplete-INIT stop. After updating the expected string, M196 QEMU passed. Both transcripts are retained in the manifest. Final successful COM1 transcript `logs/serial/qemu-m196-run-local-20261123T043848030722Z.log`, 4,624 bytes, SHA-256 `d5bbb1bec480938886b7a2acfb938af07738ed07e424eb1797a8ec971eab9e35`; manifest validation reports 11 raw logs.
+
+Coverage: DQDRIVER.MAR 634-639 remains partial and now reaches the staged DDT/FDT-gated physical read in QEMU. DQA0 DDT action slots, DDB/UCB publication, CRB/IRQ ownership, RB730 command/error semantics, public SYS$QIO, Files-11 ACP and process AST completion are unresolved. Counts remain 28,697 partial, 50,504 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped; 441/4,566 original files indexed.
+
+M196 implementation commit: `fb6e7ee` (`fb6e7eecc4e90bc2804ba6762d5b71789e34c93b`).
+
