@@ -459,3 +459,5 @@ Added a source-ordered SYS$QIO reservation helper that removes a real IRP-sized 
 Verification: `make sysqioargscheck irpalloccheck` PASS; full `make test sourcerangecheck sysexecentrycheck qiopostcheck nlddtcheck` PASS (exit 0); `make -j2 all` PASS. Source-range validation reports 1,990 ranges, zero mapped-function misses, 442/4,566 original files indexed, 29,046 partial lines, 51,123 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded and 17,016 mapped. No QEMU test was run for M236 because the isolated reservation helper is not linked into the resident SYS.EXE/QEMU path. No restricted DEC source or disk image was added.
 
 SYSQIOREQ.MAR lines 336-345 and 537-540 now map partially to the tested reservation helper. The service entry, source IPL/deletion exclusion, failure rollback and event completion, CCB IOC accounting, buffered window, device FDT invocation, public SYS$QIO dispatch and process AST completion remain unresolved. No end-to-end acceptance condition is complete.
+
+M236 implementation commit: `dded7a52dfead635df3244d945fef333b123c4ab`.
