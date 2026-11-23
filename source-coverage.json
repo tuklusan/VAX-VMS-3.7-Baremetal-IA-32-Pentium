@@ -21395,10 +21395,10 @@
             639
           ],
           "status": "partial",
-          "pc_file": "src/vms_dq_bootread_execute.c",
-          "pc_symbol": "port_dq_bootread_execute",
-          "pc_line": 21,
-          "function": "Native privileged physical READPBLK across bounded ATA LBA28: second real LBN0 IRP; no public DDT, async IOC or ACP"
+          "pc_file": "src/vms_dqddt_bootread.c",
+          "pc_symbol": "port_dqddt_bootread",
+          "pc_line": 3,
+          "function": "Validated staged DDT dispatches only the existing privileged physical READPBLK path across bounded ATA LBA28; DQA0 DDT remains unpublished, with no public QIO, async IOC or ACP"
         },
         {
           "original_lines": [
@@ -21510,7 +21510,7 @@
           "reason": "RB730 CSR/interrupts, retry, init, controller/port resource and remaining disk source unresolved"
         }
       ],
-      "unresolved_integration": "Native primary ATA IRQ14 completes bounded one-sector PIO transfers used by the private boot IOC. Resident SYS.EXE still stages source DPTAB/DDTAB/FUNCTAB only; DQA0 DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented."
+      "unresolved_integration": "Native primary ATA IRQ14 completes bounded one-sector PIO transfers used by the private boot IOC. A validated DDT stage dispatches one privileged physical READPBLK path, but resident SYS.EXE still stages source DPTAB/DDTAB/FUNCTAB only; DQA0 DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented."
     },
     {
       "original_file": "SYS/SRC/RELOCDRV.MAR",

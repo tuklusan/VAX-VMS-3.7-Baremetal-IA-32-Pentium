@@ -2326,7 +2326,7 @@ dq_fdt_rows=[
  (585,588,'src/vms_dq_fdt_sense.c','port_dq_fdt_sense','Source EXE$SENSEMODE characteristics mask'),
  (589,592,'src/vms_dq_fdt_set.c','port_dq_fdt_set','Source EXE$SETCHAR disk set-mode mask'),
  (593,633,None,None,'Original RB730 driver setup and controller dispatch entry unresolved'),
- (634,639,'src/vms_dq_bootread_execute.c','port_dq_bootread_execute','Native privileged physical READPBLK across bounded ATA LBA28: second real LBN0 IRP; no public DDT, async IOC or ACP'),
+ (634,639,'src/vms_dqddt_bootread.c','port_dqddt_bootread','Validated staged DDT dispatches only the existing privileged physical READPBLK path across bounded ATA LBA28; DQA0 DDT remains unpublished, with no public QIO, async IOC or ACP'),
  (640,654,'src/vms_dq_bootread_decode.c','port_dq_bootread_decode','IRP MEDIA physical LBN extraction for bounded ATA LBA28; resident early INIT verifies LBN1 and LBN0 independently'),
  (655,671,'src/vms_dq_bootread_commit.c','port_dq_bootread_commit','UCB retry count, BCNT, FEX and media field update, partial DQ PREPROCESS'),
  (672,677,None,None,'Unimplemented RB730 branch/diagnostic bits and controller hardware'),
@@ -2350,7 +2350,7 @@ for first,last,path,symbol,detail in dq_fdt_rows:
              'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':detail})
 result['files'].append({'original_file':'DRIVER/SRC/DQDRIVER.MAR',
     'original_lines':2189,'sections':dq_fdt_sections,
-    'unresolved_integration':'Native primary ATA IRQ14 completes bounded one-sector PIO transfers used by the private boot IOC. Resident SYS.EXE still stages source DPTAB/DDTAB/FUNCTAB only; DQA0 DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented.'})
+    'unresolved_integration':'Native primary ATA IRQ14 completes bounded one-sector PIO transfers used by the private boot IOC. A validated DDT stage dispatches one privileged physical READPBLK path, but resident SYS.EXE still stages source DPTAB/DDTAB/FUNCTAB only; DQA0 DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented.'})
 # M131: original RELOCDRV.MAR LOCATE/EXECUTE and IOC$INITDRV,
 # limited to bounded source DQ DPT_STORE on isolated DDB/UCB copies.
 # Real CRB/IDB/port/relocation of DQ action pointers remain unresolved.

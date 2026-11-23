@@ -37,6 +37,15 @@
       "path": "logs/serial/qemu-m193-run-local-20261123T041538684129Z.log",
       "bytes": 4597,
       "sha256": "9a9ecd9667d9cad8af00099d46edafc9ed23f09087478140b85a399c6a84c593"
+    },
+    {
+      "milestone": "M193",
+      "run_id": "local-20261123T042427302970Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m193-run-local-20261123T042427302970Z.log",
+      "bytes": 4600,
+      "sha256": "b83ec2a164adef10221c110aba147dc906b7174b69c6ba0886e5d700589c2984"
     }
   ]
 }

@@ -4,6 +4,11 @@
 #include "vms_dqddt.h"
 #include "vms_ini_devicedb.h"
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"DQ DDT failed line %u: %s\n",(unsigned)__LINE__,#x);return 1;}}while(0)
+static int mock_read(void *ctx,uint32_t lbn,uint16_t dst[256]){
+    unsigned *calls=ctx;(*calls)++;
+    for(unsigned i=0;i<256u;i++)dst[i]=(uint16_t)(lbn+i);
+    return 0;
+}
 int main(void){
     enum {BASE=0x00370000u,START=0x00324120u,RET=0x00324104u};
     struct port_dq_fdt fdt={0};
@@ -47,6 +52,42 @@ int main(void){
     CHECK(port_dqddt_validate(&d,&fdt)==PORT_DQDDT_BAD);
     d.driver_bound=0u;
     CHECK(port_dqddt_validate(&d,&fdt)==PORT_DQDDT_OK);
+
+    /* The validated stage now reaches the one already implemented native
+     * DQ action: privileged physical READPBLK over the real ATA callback. */
+    uint32_t db_words[PORT_V37_DEVICE_BYTES/4u]={0};
+    uint32_t irp_words[PORT_V37_IRP_SIZE/4u]={0};
+    uint16_t sector[256]={0};
+    struct port_v37_device_result info={0};
+    uint8_t *db=(uint8_t *)db_words,*irp=(uint8_t *)irp_words;
+    CHECK(port_v37_devices_prelink(db,sizeof db_words,
+        (uint32_t)(uintptr_t)db,&info)==PORT_V37_DEV_OK);
+    port_v37_write32(db+PORT_V37_DDB_NL_OFF+12u,0x00700000u);
+    port_v37_write32(db+PORT_V37_UCB_NL_OFF+120u,0x00700000u);
+    info.bound_nl_ddt=0x00700000u;info.incomplete_driver_mask=7u;
+    db[20u]=3u;db[21u]='D';db[22u]='Q';db[23u]='A';db[36u]=8u;
+    {const char name[]="DQDRIVER";for(unsigned i=0;i<8u;i++)db[37u+i]=(uint8_t)name[i];}
+    info.boot_name_ready=1u;
+    CHECK(port_v37_devices_check(db,sizeof db_words,
+        (uint32_t)(uintptr_t)db,&info)==PORT_V37_DEV_OK);
+    CHECK(port_v37_irp_prepare(irp,PORT_V37_IRP_SIZE,0x00712000u,
+        info.ucb[0],PORT_DQ_READPBLK)==PORT_V37_QIO_OK);
+    port_v37_write16(irp+42u,PORT_DQ_PHYSIO);
+    port_v37_write16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
+    port_v37_write32(irp+PORT_V37_IRP_MEDIA,7u);
+    unsigned calls=0u;
+    struct port_dq_bootread_request request={.fdt=&fdt,.device_db=db,
+        .device_info=&info,.irp=irp,.irp_bytes=PORT_V37_IRP_SIZE,
+        .sector=sector,.sector_bytes=sizeof sector,.boot_unit=0u,
+        .read_sector=mock_read,.read_context=&calls};
+    struct port_dq_bootread_result read_result={0};
+    CHECK(port_dqddt_bootread(&d,&fdt,&request,&read_result,7u)==
+        PORT_DQ_BOOTREAD_OK);
+    CHECK(calls==1u&&read_result.lbn==7u&&read_result.bytes==512u&&
+        read_result.irp_status==1u&&sector[0]==7u&&sector[255]==262u);
+    CHECK(port_dqddt_bootread(&d,&fdt,&request,&read_result,8u)==
+        PORT_DQ_BOOTREAD_BAD);
+    CHECK(calls==1u);
     struct port_dqddt_stage before=d;
     CHECK(port_dqddt_stage_init(&d,&fdt,BASE+1u,START,RET)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
@@ -54,6 +95,6 @@ int main(void){
     CHECK(!memcmp(&before,&d,sizeof d));
     CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    puts("DQDRIVER.MAR source DPTAB/DDTAB and 136-byte FUNCTAB stage, all ten actions unbound PASS");
+    puts("DQ DDT staged privileged READPBLK dispatch PASS; general DDT and public QIO remain unbound");
     return 0;
 }

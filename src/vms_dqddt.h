@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "vms_dq_fdt.h"
+#include "vms_dq_bootread.h"
 /* Original DRIVER/SRC/DQDRIVER.MAR DPTAB 392-436, DDTAB 438-465,
  * FUNCTAB 496-592 and SHRLIB/SYSMAR.MAR DDTAB/GENRADDR macro.
  * Only the source-layout table *stage* is usable: the PC ATA READPBLK
@@ -33,6 +34,11 @@ uint32_t port_dqddt_validate(const struct port_dqddt_stage *,
     const struct port_dq_fdt *);
 uint32_t port_dqddt_function(const struct port_dqddt_stage *,
     const struct port_dq_fdt *,uint16_t);
+/* Execute only the existing privileged physical READPBLK path through a
+ * validated staged DDT. This does not bind the general driver or public QIO. */
+uint32_t port_dqddt_bootread(const struct port_dqddt_stage *,
+    const struct port_dq_fdt *,const struct port_dq_bootread_request *,
+    struct port_dq_bootread_result *,uint32_t);
 uint32_t port_dqddt_entry_offset(unsigned);
 uint32_t port_dqddt_fdt_check(const struct port_dqddt_stage *,
     const struct port_dq_fdt *);
