@@ -19,6 +19,8 @@ struct port_ini_packet_list {
     uint32_t next,previous;  /* Original INSQUE-compatible links. */
     uint32_t packet_count,packet_bytes,minimum_bytes;
     uint32_t split_address,remainder_address,remainder_bytes;
+    uint32_t sentinel_address,free_count;
+    uint8_t *memory;
 };
 uint32_t port_ini_packet_init(const struct port_ini_packet_area *a,
                              struct port_ini_packet_list *out);

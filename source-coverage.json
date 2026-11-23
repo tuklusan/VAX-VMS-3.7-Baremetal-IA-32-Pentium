@@ -21919,6 +21919,78 @@
         }
       ],
       "unresolved_integration": "Private bounded two-entry resident SYSTEM bootstrap table can resolve SYS$DISK/SYS$SYSDEVICE. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic create/delete, access control, and disk DDT/ACP are absent."
+    },
+    {
+      "original_file": "SYS/SRC/MEMORYALC.MAR",
+      "original_lines": 919,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            214
+          ],
+          "status": "unresolved",
+          "reason": "Original nonpaged allocation declarations, shared pool, and general ALLOCATE machinery unresolved"
+        },
+        {
+          "original_lines": [
+            215,
+            240
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_qio_irp_pool.c",
+          "pc_symbol": "port_v37_irp_pool_alloc",
+          "pc_line": 49,
+          "function": "IRP-sized requests dequeue a validated source INIT lookaside packet, write requested size/type, and restore synchronization IPL; nonpaged variable allocation, pool extension, resource waiting and AST-delivery return semantics remain unported"
+        },
+        {
+          "original_lines": [
+            241,
+            349
+          ],
+          "status": "unresolved",
+          "reason": "Other ALLOC* entries, ALONPAGWAIT caller-mode wait and cleanup semantics unresolved"
+        },
+        {
+          "original_lines": [
+            350,
+            397
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_qio_irp_pool.c",
+          "pc_symbol": "port_v37_irp_pool_alloc",
+          "pc_line": 49,
+          "function": "ALONONPAGED source IRP lookaside dequeue path with FIFO ordering and synchronized queue mutation; SRP/LRP selection and variable nonpaged allocator/extension remain unresolved"
+        },
+        {
+          "original_lines": [
+            398,
+            515
+          ],
+          "status": "unresolved",
+          "reason": "Paged-pool allocation, block splitting, mutexes and shared memory pool unresolved"
+        },
+        {
+          "original_lines": [
+            516,
+            545
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_qio_irp_pool.c",
+          "pc_symbol": "port_v37_irp_pool_free",
+          "pc_line": 83,
+          "function": "Return an allocated source DYN$C_IRP block to the tail of its original lookaside queue with duplicate/corruption guards and synchronization; SRP/LRP/general pool return paths unresolved"
+        },
+        {
+          "original_lines": [
+            546,
+            919
+          ],
+          "status": "unresolved",
+          "reason": "Paged deallocation, allocator coalescing, shared-pool return, queue synchronization and pool extension unresolved"
+        }
+      ],
+      "unresolved_integration": "The native SYS.EXE source IRP lookaside queue now allocates/releases its preallocated IRP slots under a caller-provided IPL synchronization contract. It has no fallback nonpaged allocator, pool extension, resource wait, runtime user SYS$QIO integration, or source-wide SRP/LRP/allocation behavior."
     }
   ]
 }

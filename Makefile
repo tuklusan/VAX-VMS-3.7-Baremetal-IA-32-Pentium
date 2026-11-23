@@ -226,7 +226,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck
+test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck irpalloccheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 	python3 tests/test_guest_layout.py
@@ -1326,12 +1326,18 @@ iocphyscheck: $(M120_IOC_OBJS) | build
 
 # M121: source SYSQIOREQ.MAR EXE$FINISHIOC to IOC post queue, used
 # by NLDRIVER.MAR; this is not a user $QIO/AST delivery interface.
-$(M121_QIO_OBJS): build/%.o: src/%.c src/vms_qio_post.h | build
+$(M121_QIO_OBJS): build/%.o: src/%.c src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_ini_packet_queues.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: qiopostcheck
 qiopostcheck: $(M121_QIO_OBJS) | build
 	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M121_QIO_SRCS) $(M118_DB_SRCS) src/vms_sys85.c src/vms_rtl85.c src/vms_rtl85_tables.c tests/test_qio_post_host.c -o build/qiopostcheck
 	./build/qiopostcheck
+
+# M234: SYSQIO's source MEMORYALC IRP lookaside allocate/return operations.
+.PHONY: irpalloccheck
+irpalloccheck: | build
+	$(CC) -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_ini_packet_queues.c src/vms_qio_irp_pool.c tests/test_irp_pool_host.c -o build/irpalloccheck
+	ASAN_OPTIONS=detect_leaks=1 ./build/irpalloccheck
 
 # M122: source SYSMAR DDTAB/FUNCTAB, NLDRIVER and DEVICEDAT NL$DDT.
 $(M122_NL_DDT_OBJS): build/%.o: src/%.c src/vms_nl_ddt.h src/vms_qio_post.h | build

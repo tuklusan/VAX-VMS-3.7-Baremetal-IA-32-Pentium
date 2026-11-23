@@ -27,9 +27,12 @@ uint32_t port_ini_packet_init(const struct port_ini_packet_area *a,
     struct port_ini_packet_list tmp={0};
     tmp.next=tmp.previous=a->sentinel_address;
     tmp.packet_count=a->count;
+    tmp.free_count=a->count;
     tmp.packet_bytes=a->packet_bytes;
     tmp.minimum_bytes=a->minimum_bytes;
     tmp.split_address=a->address;
+    tmp.sentinel_address=a->sentinel_address;
+    tmp.memory=a->memory;
     /* INSQUE (R0),@IOC$GL_IRPBL: insert at head in increasing addresses.
      * New head points to old head; old head's previous points to new. */
     for(uint32_t i=0u;i<a->count;i++){
