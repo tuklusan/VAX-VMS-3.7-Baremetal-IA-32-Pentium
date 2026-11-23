@@ -596,4 +596,4 @@ Verification: `make sysqioargscheck` passed with success and IRP-construction-fa
 
 Remaining: connect this transaction to live process AP/PCB/channel state and implement channel IOC, source error rollback, DQA0 FDT/IRQ completion, public SYS$QIO ABI dispatch, Files-11 ACP, AST completion, scheduler and image activation. Acceptance boot/login/DECnet/SET HOST 0 sequence is not achieved.
 
-M250 implementation commit: `119d0a69795aa45d2284a0f3fe8aca11898fc0a1` (local; push unavailable because HTTPS GitHub credentials are not available to the local Git process).
+M250 implementation commit (local): `119d0a69795aa45d2284a0f3fe8aca11898fc0a1`. The code and coverage were published to GitHub `main` through contents commits ending at `e0c9b101b82d3a79d6dc01bba79b5bf62a910683`; resume publication commit: `511f8d5110465ba6e5c8a26bdcf0e954972683e1`. Native Git push remains unavailable because this environment has no HTTPS Git credentials.
