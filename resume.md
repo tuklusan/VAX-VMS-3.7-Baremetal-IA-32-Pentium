@@ -648,3 +648,13 @@ M254 implementation commit (local): `55079635ee0e79fe6205a05f2fddf8757d19ac63`.
 
 M254 GitHub `main` exact-content publication commits: Makefile `d1d2dd7a63d9fcfa8f57ef6f4516af568f9c7ffb`; manifest `f759cbf59529825972b8eade7362da427d5e980f`; SYSQIO source `6b172fa30d230390a9dc8997acf7d1ae461b5e91` and `00142d0e44bd6c426c1e021ba5c897fc9f3f0a9e`; host test `a7a4139ed9d30e3ccbff04794da2191455aba0c2`; coverage generator `6aac6c796d7d5d653c19f9081d5a29d640aa7862`; raw QEMU log `5d2fdd3caf5f2e635afab62c67bd73e98d8b67c8`; exact coverage `63cbbbca7064bcd719c5756a4ffd008e1eb7ee33`; resume publication follows.
 M254 resume publication commit: `005622f9329fb04b78ff217364cfc0d82fcd0808`.
+
+## M255 — IOC free CCB allocation scan, 23 November 2026
+
+Implemented the source IOC backward channel-table scan in the resident-linked CCB module. It walks 16-byte CCB tokens from channel 1, reads CCB, returns the first free channel/CCB, and updates CTL only when the new token extends the high-water mark. Host tests cover allocation, high-water update, exhausted tables, bounded backing storage, and a zero-channel table. Coverage now maps IOSUBPAGD.MAR lines 216–248 partially to this function; adjacent source routines and full SYS allocation remain uncovered. This does not yet create or bind a live process CCB table.
+
+Verification: make -j2 all test sysqioresidentcheck sysexecentrycheck PASS (exit 0); source coverage generation/validation PASS (2,015 ranges, 0 errors; 444/4,566 original files indexed; 17,016 mapped, 29,402 partial, 51,790 unresolved, 7,799 missing, 26,237 excluded, 917 hardware-excluded); QEMU manifest check PASS. git diff --check PASS. Real make qemu-sysboot-m217 PASS through the existing 700-byte Files-11 DQA0 read via IRQ14, then halted at the known incomplete INIT boundary. Capture logs/serial/qemu-m217-run-local-20261124T003929803577Z.log, 5,350 bytes, SHA-256 8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c. QEMU exited normally. No public QIO, SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M255 implementation commit (local): 5b089e82dea3625af525e38c4468e1aa49c33da7.
+
+Remaining: connect this allocator to genuine SYS and live process CCB tables; connect public SYS dispatch, DQA0 DDT/CRB and process-owned completion/AST; implement the Files-11 ACP and native INIT continuation; activate resident VMS process images and complete DECnet Phase IV plus nested SYSTEM/DCL SET HOST 0 acceptance.
