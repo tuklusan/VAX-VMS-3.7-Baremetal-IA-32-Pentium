@@ -647,3 +647,4 @@ M254 implementation commit (local): `55079635ee0e79fe6205a05f2fddf8757d19ac63`.
 
 
 M254 GitHub `main` exact-content publication commits: Makefile `d1d2dd7a63d9fcfa8f57ef6f4516af568f9c7ffb`; manifest `f759cbf59529825972b8eade7362da427d5e980f`; SYSQIO source `6b172fa30d230390a9dc8997acf7d1ae461b5e91` and `00142d0e44bd6c426c1e021ba5c897fc9f3f0a9e`; host test `a7a4139ed9d30e3ccbff04794da2191455aba0c2`; coverage generator `6aac6c796d7d5d653c19f9081d5a29d640aa7862`; raw QEMU log `5d2fdd3caf5f2e635afab62c67bd73e98d8b67c8`; exact coverage `63cbbbca7064bcd719c5756a4ffd008e1eb7ee33`; resume publication follows.
+M254 resume publication commit: `005622f9329fb04b78ff217364cfc0d82fcd0808`.
