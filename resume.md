@@ -1,6 +1,6 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M215
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M216
 
-INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes; public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
+INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216 rereads 64 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
 
 Active repository: tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium main
@@ -252,3 +252,14 @@ Extended the host regression for the bounded DQ WRITEPBLK FIFO to inject one bac
 Verification at test commit `af9806bbf71e442c6bac921c5736d786623245fc`: `make dqwriteioccheck` PASS; full `make test` PASS (exit 0, suite reached M49); `git diff --check` PASS. The immediately preceding M214 QEMU run remains the current guest evidence; this host-only change did not alter the boot image. No QEMU process was started for M215. Source coverage counts unchanged. Public SYS$QIO and process completion remain missing.
 
 M215 test commit: `af9806bbf71e442c6bac921c5736d786623245fc`.
+
+
+## M216 — Files-11 chain read through published DQA0 DDT, 23 November 2026
+
+After resident SYS.EXE publishes DQA0 in the DDB/UCB and IOC$SEARCHDEV resolves the bound unit, INIT rereads 64 bytes at an unaligned SYS.EXE file offset by following the existing FH2 retrieval map. Physical sector requests use the published DDT STARTIO entry, a physical READPBLK IRP and real ATA IRQ14 completion. The returned bytes are compared with the independently cached SYS.EXE text. This verifies Files-11 chain callback integration with the published native DDT. It remains a supervisor INIT operation, not public SYS$QIO, a Files-11 ACP, process AST completion, or process-aware I/O.
+
+Verification at implementation commit `4d35917c10c2a700e487e2aaf4fc52a02319af0d`: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (1,957 ranges, zero unmapped; 441/4,566 original files indexed; 28,697 partial, 50,504 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `python3 tools/checkpoint_serial_logs.py verify` PASS (76 raw logs). Real `make qemu-sysboot-m216` PASS; raw COM1 transcript `logs/serial/qemu-m216-run-local-20261123T142250878233Z.log`, 5,153 bytes, SHA-256 `6b565037e853b69bfe8c3eae60de36cf13b24828b26dc03fa8c25d37399bc268`. The guest reached the explicit incomplete-INIT stop; no SYSTEM login, DCL or DECnet initialization occurred. The QEMU runner terminated.
+
+Coverage records this limited FILEREAD.MAR integration and does not count it as ACP coverage. Public SYS$QIO, Files-11 ACP, process-aware AST/scheduling, native INIT completion, process image activation, DECnet Phase IV runtime initialization, SYSTEM login/DCL and genuine SET HOST 0 remain unfinished.
+
+M216 implementation commit: `4d35917c10c2a700e487e2aaf4fc52a02319af0d`.
