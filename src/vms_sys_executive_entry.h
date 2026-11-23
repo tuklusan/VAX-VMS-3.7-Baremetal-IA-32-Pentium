@@ -17,6 +17,7 @@
 #include "vms_ini_bootdev_scan.h"
 #include "vms_dq_fdt.h"
 #include "vms_dqddt.h"
+#include "vms_dq_crb.h"
 #include "vms_relocdrv.h"
 #include "vms_dq_bootread.h"
 #include "vms_dq_index_header.h"
@@ -68,13 +69,15 @@ enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=30u,
        PORT_SYS_EXEC_INIT_DQ_DDT_STAGE=26u,PORT_SYS_EXEC_DQ_DDT_TAG=0x54444451u,
        PORT_SYS_EXEC_INIT_RELOCDRV_DQ=27u,PORT_SYS_EXEC_RELOCDRV_DQ_TAG=0x44524c52u,
        PORT_SYS_EXEC_INIT_DDT_RELOC_PRIVATE=28u,
-       PORT_SYS_EXEC_DDT_RELOC_PRIVATE_TAG=0x54524c44u };
+       PORT_SYS_EXEC_DDT_RELOC_PRIVATE_TAG=0x54524c44u,
+       PORT_SYS_EXEC_INIT_DQ_CRB_READ=29u,PORT_SYS_EXEC_DQ_CRB_READ_TAG=0x42524344u };
 /* This is an explicitly privileged early-boot disk path. Hardware is real
  * ATA PIO; the original DQ disk DDT and Files-11 ACP are NOT bound. */
 struct port_sys_exec_dq_boot_settings {
     port_dq_native_read_fn read_sector;
     void *context;
     uint16_t boot_unit,reserved;
+    port_dq_crb_handler irq_handler;
 };
 /* The IA-32 privilege-transition stack is the first live counterpart of
  * INIT.MAR EXE$GL_INTSTK; source VAX IPL stack switching is not present. */
@@ -163,6 +166,7 @@ struct port_sys_exec_result {
     const struct port_dqddt_stage *dq_ddt_stage;
     uint32_t (*dq_ddt_function)(const struct port_dqddt_stage *,
         const struct port_dq_fdt *,uint16_t);
+    const struct port_dq_crb *dq_crb;
     /* Private stage-validated READPBLK bridge result, not DDB/CRB binding. */
     const struct port_dq_bootread_result *dq_ddt_bootread;
     const uint16_t *dq_ddt_bootread_sector;

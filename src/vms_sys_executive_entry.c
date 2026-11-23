@@ -229,6 +229,8 @@ static uint32_t executive_dq_bootread_ready;
 /* Source DQDRIVER DDTAB and FUNCTAB are inactive until original IOC/ACP. */
 static struct port_dqddt_stage executive_dqddt;
 static uint32_t executive_dqddt_ready;
+static struct port_dq_crb executive_dq_crb;
+static uint32_t executive_dq_crb_read_ready;
 /* Exercise the stage-validated READPBLK bridge with a real resident IRP.
  * This remains private; DQA0's DDB DDT and UCB CRB/DDT stay unpublished. */
 static union {uint32_t align;uint8_t bytes[PORT_V37_IRP_SIZE];}
@@ -1519,6 +1521,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            !executive_boot_system_log_ready||executive_dqddt_ready||
            executive_devicedb_result.incomplete_driver_mask!=7u||
            !p->dq_boot_io||!p->dq_boot_io->read_sector||
+           !p->dq_boot_io->irq_handler||
            p->dq_boot_io->boot_unit!=0u||p->dq_boot_io->reserved||
            port_v37_read32(executive_devicedb_bytes.data+
                PORT_V37_DDB_BOOT_OFF+12u)!=0u||
@@ -1543,41 +1546,66 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            port_v37_read32(executive_devicedb_bytes.data+
                PORT_V37_UCB_BOOT_OFF+120u)!=0u)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        if(port_v37_irp_prepare(executive_dqddt_irp.bytes,
-               PORT_V37_IRP_SIZE,
+        if(port_dq_crb_init(&executive_dq_crb,p->dq_boot_io->irq_handler,
+               PORT_DQ_CRB_IRQ14_VECTOR)!=PORT_DQ_CRB_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        executive_dqddt_ready=1u;
+        p->result->dq_ddt_stage=&executive_dqddt;
+        p->result->dq_ddt_function=port_dqddt_function;
+        p->result->dq_crb=&executive_dq_crb;
+        p->result->signature=PORT_SYS_EXEC_DQ_DDT_TAG;
+        return PORT_SYS_EXEC_NORMAL;
+    }
+    if(p->phase==PORT_SYS_EXEC_INIT_DQ_CRB_READ){
+        if(!executive_dqddt_ready||!p->dq_boot_io||
+           !p->dq_boot_io->read_sector||!p->dq_boot_io->irq_handler||
+           port_dq_crb_validate(&executive_dq_crb)!=PORT_DQ_CRB_OK||
+           executive_dq_crb_read_ready||
+           port_v37_read32(executive_devicedb_bytes.data+
+               PORT_V37_UCB_BOOT_OFF+32u)!=0u||
+           port_v37_read32(executive_devicedb_bytes.data+
+               PORT_V37_DDB_BOOT_OFF+12u)!=0u||
+           port_v37_read32(executive_devicedb_bytes.data+
+               PORT_V37_UCB_BOOT_OFF+120u)!=0u)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        port_v37_write32(executive_devicedb_bytes.data+
+            PORT_V37_UCB_BOOT_OFF+32u,(uint32_t)(uintptr_t)&executive_dq_crb);
+        executive_devicedb_result.bound_dqa_crb=
+            (uint32_t)(uintptr_t)&executive_dq_crb;
+        if(port_v37_devices_check(executive_devicedb_bytes.data,
+              sizeof executive_devicedb_bytes.data,
+              (uint32_t)(uintptr_t)executive_devicedb_bytes.data,
+              &executive_devicedb_result)!=PORT_V37_DEV_OK||
+           port_v37_irp_prepare(executive_dqddt_irp.bytes,PORT_V37_IRP_SIZE,
                (uint32_t)(uintptr_t)executive_dqddt_irp.bytes,
                executive_devicedb_result.ucb[0],PORT_DQ_READPBLK)!=
                    PORT_V37_QIO_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         port_v37_write16(executive_dqddt_irp.bytes+42u,PORT_DQ_PHYSIO);
-        port_v37_write16(executive_dqddt_irp.bytes+50u,
-                         PORT_DQ_BOOTREAD_BYTES);
+        port_v37_write16(executive_dqddt_irp.bytes+50u,PORT_DQ_BOOTREAD_BYTES);
         port_v37_write32(executive_dqddt_irp.bytes+PORT_V37_IRP_MEDIA,0u);
         const struct port_dq_bootread_request read={
-            .fdt=&executive_dq_fdt,
-            .device_db=executive_devicedb_bytes.data,
+            .fdt=&executive_dq_fdt,.device_db=executive_devicedb_bytes.data,
             .device_info=&executive_devicedb_result,
-            .irp=executive_dqddt_irp.bytes,
-            .irp_bytes=PORT_V37_IRP_SIZE,
+            .irp=executive_dqddt_irp.bytes,.irp_bytes=PORT_V37_IRP_SIZE,
             .sector=executive_dqddt_sector.words,
             .sector_bytes=PORT_DQ_BOOTREAD_BYTES,
             .boot_unit=p->dq_boot_io->boot_unit,
             .read_sector=p->dq_boot_io->read_sector,
             .read_context=p->dq_boot_io->context};
-        if(port_dqddt_bootread(&executive_dqddt,&executive_dq_fdt,
-               &read,&executive_dqddt_io,0u)!=PORT_DQ_BOOTREAD_OK||
+        if(port_dqddt_bootread(&executive_dqddt,&executive_dq_fdt,&read,
+               &executive_dqddt_io,0u)!=PORT_DQ_BOOTREAD_OK||
            executive_dqddt_io.lbn!=0u||
            executive_dqddt_io.bytes!=PORT_DQ_BOOTREAD_BYTES||
            executive_dqddt_io.irp_status!=PORT_SYS85_NORMAL||
            executive_dqddt_io.io_function!=PORT_DQ_READPBLK||
            executive_dqddt_io.ucb_media!=0u)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        executive_dqddt_ready=1u;
-        p->result->dq_ddt_stage=&executive_dqddt;
-        p->result->dq_ddt_function=port_dqddt_function;
+        executive_dq_crb_read_ready=1u;
+        p->result->dq_crb=&executive_dq_crb;
         p->result->dq_ddt_bootread=&executive_dqddt_io;
         p->result->dq_ddt_bootread_sector=executive_dqddt_sector.words;
-        p->result->signature=PORT_SYS_EXEC_DQ_DDT_TAG;
+        p->result->signature=PORT_SYS_EXEC_DQ_CRB_READ_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }
     if(p->phase==PORT_SYS_EXEC_INIT_RELOCDRV_DQ){

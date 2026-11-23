@@ -73,7 +73,10 @@ uint32_t port_v37_devices_check(const uint8_t *m,size_t cap,uint32_t base,
        (r->incomplete_driver_mask==7u &&
           (!r->bound_nl_ddt||(r->bound_nl_ddt&3u) ||
            ((uint64_t)r->bound_nl_ddt>=base &&
-            (uint64_t)r->bound_nl_ddt<(uint64_t)base+PORT_V37_DEVICE_BYTES))))
+            (uint64_t)r->bound_nl_ddt<(uint64_t)base+PORT_V37_DEVICE_BYTES))) ||
+       (r->bound_dqa_crb && ((r->bound_dqa_crb&3u) ||
+          ((uint64_t)r->bound_dqa_crb>=base &&
+           (uint64_t)r->bound_dqa_crb<(uint64_t)base+PORT_V37_DEVICE_BYTES))))
         return PORT_V37_DEV_BAD;
     const unsigned ddb_offset[4]={0u,52u,104u,156u};
     const unsigned ucb_offset[5]={208u,460u,780u,912u,1044u};
@@ -105,6 +108,7 @@ uint32_t port_v37_devices_check(const uint8_t *m,size_t cap,uint32_t base,
            port_v37_read16(u+8u)!=sz[i] || u[10u]!=PORT_V37_DYN_UCB ||
            port_v37_read32(u+28u)!=owner[i] ||
            port_v37_read32(u+36u)!=r->ddb[backlink[i]] ||
+           port_v37_read32(u+32u)!=(i==0u?r->bound_dqa_crb:0u) ||
            port_v37_read32(u+64u)!=r->ucb[i]+64u ||
            port_v37_read32(u+68u)!=r->ucb[i]+64u ||
            port_v37_read16(u+58u)!=bufsize[i] ||

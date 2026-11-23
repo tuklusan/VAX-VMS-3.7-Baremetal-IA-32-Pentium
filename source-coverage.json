@@ -10250,7 +10250,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2466,
+          "pc_line": 2470,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10288,7 +10288,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2466,
+          "pc_line": 2470,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -21160,7 +21160,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 298,
+          "pc_line": 300,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -21510,7 +21510,7 @@
           "reason": "RB730 CSR/interrupts, retry, init, controller/port resource and remaining disk source unresolved"
         }
       ],
-      "unresolved_integration": "Native primary ATA IRQ14 completes bounded one-sector PIO transfers. Resident SYS.EXE now validates its staged DQ DDT/FDT and runs one private physical READPBLK bridge through that table gate; it still has no callable DDT action slot, DQA0 DDB DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP or process AST completion."
+      "unresolved_integration": "Native primary ATA IRQ14 is routed through a source-shaped CRB attached to the DQA UCB; resident SYS.EXE validates staged DQ DDT/FDT and completes one private physical READPBLK through that IRQ path. DQA DDB DDT/action slots, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented."
     },
     {
       "original_file": "SYS/SRC/RELOCDRV.MAR",

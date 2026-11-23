@@ -6,7 +6,8 @@
 /* The prelinked DEVICEDAT.MAR device database, in native IA-32 memory.
  * Source DEVICEDAT.MAR 129-254, 354-475; SYSDEF.MDL DDB/UCB layouts.
  * BOOT/OPA/MBA DDT/CRB and unverified STARLET fields remain zero.
- * M122 binds the software-only NLA DDT/FDT; it is not a public $QIO. */
+ * M122 binds the software-only NLA DDT/FDT; it is not a public $QIO.
+ * The native DQA CRB may be attached while DQA's DDT remains unbound. */
 enum {
     PORT_V37_DDB_SIZE=52u, PORT_V37_UCB_SIZE=132u,
     PORT_V37_BOOT_UCB_SIZE=252u, PORT_V37_OPA_UCB_SIZE=320u,
@@ -32,6 +33,7 @@ struct port_v37_device_result {
     uint32_t incomplete_driver_mask;
     uint32_t bound_nl_ddt; /* M122: actual native source NL$DDT table, if bound */
     uint32_t boot_name_ready; /* M127 source FIN_DATABASE DQA name only; DDT remains zero */
+    uint32_t bound_dqa_crb; /* Native IRQ14 CRB; never implies a bound disk DDT */
 };
 void port_v37_write16(uint8_t *,uint16_t);
 void port_v37_write32(uint8_t *,uint32_t);

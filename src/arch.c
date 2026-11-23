@@ -20,6 +20,7 @@
 #include "vms_logintime.h"
 #include "vms_iopost_swi.h"
 #include "vms_sysboot_elf.h"
+#include "vms_dq_crb.h"
 
 extern const uint32_t arch_isr_table[37];
 extern uint32_t port_gdt[];
@@ -99,10 +100,27 @@ const struct port_exe_systime *arch_exe_systime(void) {
  * interrupt, not a pretend VAX PSL or PIC hardware IRQ. */
 static struct port_iopost_swi resident_iopost_irq;
 static void (*disk_irq_handler)(void);
+static struct port_dq_crb *volatile disk_irq_crb;
+static volatile uint32_t disk_irq_bind_faults;
 int arch_disk_irq_bind(void (*handler)(void)) {
     if(!handler||(disk_irq_handler&&disk_irq_handler!=handler))return 0;
     disk_irq_handler=handler;
     return 1;
+}
+int arch_disk_irq_bind_crb(struct port_dq_crb *crb){
+    if(port_dq_crb_validate(crb)!=PORT_DQ_CRB_OK||
+       crb->irq_handler!=disk_irq_handler||
+       (disk_irq_crb&&disk_irq_crb!=crb))return 0;
+    uint32_t flags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
+    disk_irq_crb=crb;
+    if(flags&0x200u)__asm__ volatile("sti":::"memory");
+    return 1;
+}
+uint32_t arch_disk_irq_crb_count(void){
+    struct port_dq_crb *crb=disk_irq_crb;
+    return crb&&port_dq_crb_validate(crb)==PORT_DQ_CRB_OK?
+        crb->interrupts:0u;
 }
 uint32_t arch_iopost_bind(uint32_t (*callback)(void)){
     uintptr_t address=(uintptr_t)callback;
@@ -1263,7 +1281,11 @@ int arch_trap(struct port_trap_frame *f) {
         return 0;
     } else if (f->vector == 46) {
         /* Primary ATA channel completion: drain device status before EOI. */
-        if(disk_irq_handler)disk_irq_handler();
+        struct port_dq_crb *crb=disk_irq_crb;
+        if(crb){
+            if(port_dq_crb_interrupt(crb,f->vector)!=PORT_DQ_CRB_OK)
+                ++disk_irq_bind_faults;
+        }else if(disk_irq_handler)disk_irq_handler();
         outb(0xa0,0x20);
         outb(0x20,0x20);
         return 0;

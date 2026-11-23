@@ -55,6 +55,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #include "vms_serial.h"
 #include "vms_qio.h"
 #include "vms_channels.h"
+#include "vms_dq_crb.h"
 
 #define VGA ((volatile uint16_t *)0xB8000)
 #define WIDTH 80
@@ -119,6 +120,9 @@ extern uint32_t arch_mutex_remaining(void);
 extern uint32_t arch_mutex_held(void);
 extern int port_ata_x86_read28(uint32_t lba,uint16_t dst[256]);
 extern uint32_t port_ata_x86_irq_count(void);
+extern void port_ata_x86_irq(void);
+extern int arch_disk_irq_bind_crb(struct port_dq_crb *);
+extern uint32_t arch_disk_irq_crb_count(void);
 extern int port_ne2k_x86_probe(struct port_ne2k *nic);
 extern int port_ne2k_x86_pending(struct port_ne2k *nic);
 extern int port_ne2k_x86_send(struct port_ne2k *nic,const uint8_t *frame,unsigned len);
@@ -3124,7 +3128,8 @@ void kmain(void) {
     static struct port_sys_exec_result dq_bootread_result;
     const struct port_sys_exec_dq_boot_settings dq_boot_io={
         .read_sector=native_ini_ata_read,.context=0,
-        .boot_unit=boot_rpb.boot_unit,.reserved=0u};
+        .boot_unit=boot_rpb.boot_unit,.reserved=0u,
+        .irq_handler=port_ata_x86_irq};
     const struct port_sys_exec_start dq_bootread_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&dq_bootread_result,
@@ -3492,7 +3497,6 @@ void kmain(void) {
     /* Source DQDRIVER.MAR DPTAB/DDTAB/FUNCTAB: native supervisor table
      * layout staging only, no DQA0 DDT binding or Files-11 ACP. */
     static struct port_sys_exec_result dq_ddt_result;
-    uint32_t dq_ddt_irq_before=port_ata_x86_irq_count();
     const struct port_sys_exec_start dq_ddt_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&dq_ddt_result,
@@ -3500,23 +3504,16 @@ void kmain(void) {
     if(loaded_sys(&dq_ddt_request)!=PORT_SYS_EXEC_NORMAL||
        dq_ddt_result.signature!=PORT_SYS_EXEC_DQ_DDT_TAG||
        !dq_ddt_result.dq_ddt_stage||!dq_ddt_result.dq_ddt_function||
-       !dq_ddt_result.dq_ddt_bootread||!dq_ddt_result.dq_ddt_bootread_sector||
+       !dq_ddt_result.dq_crb||
        (uintptr_t)dq_ddt_result.dq_ddt_stage<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_stage>
            PORT_SYS_ELF_LIMIT-sizeof(struct port_dqddt_stage)||
        (uintptr_t)dq_ddt_result.dq_ddt_function<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_function>=PORT_SYS_ELF_LIMIT||
-       (uintptr_t)dq_ddt_result.dq_ddt_bootread<PORT_SYS_ELF_START||
-       (uintptr_t)dq_ddt_result.dq_ddt_bootread>
-           PORT_SYS_ELF_LIMIT-sizeof(struct port_dq_bootread_result)||
-       (uintptr_t)dq_ddt_result.dq_ddt_bootread_sector<PORT_SYS_ELF_START||
-       (uintptr_t)dq_ddt_result.dq_ddt_bootread_sector>
-           PORT_SYS_ELF_LIMIT-PORT_DQ_BOOTREAD_BYTES||
-       dq_ddt_result.dq_ddt_bootread->lbn!=0u||
-       dq_ddt_result.dq_ddt_bootread->bytes!=PORT_DQ_BOOTREAD_BYTES||
-       dq_ddt_result.dq_ddt_bootread->irp_status!=PORT_SYS85_NORMAL||
-       dq_ddt_result.dq_ddt_bootread->io_function!=PORT_DQ_READPBLK||
-       port_ata_x86_irq_count()<=dq_ddt_irq_before||
+       (uintptr_t)dq_ddt_result.dq_crb<PORT_SYS_ELF_START||
+       (uintptr_t)dq_ddt_result.dq_crb>
+           PORT_SYS_ELF_LIMIT-sizeof(struct port_dq_crb)||
+       port_dq_crb_validate(dq_ddt_result.dq_crb)!=PORT_DQ_CRB_OK||
        !dq_ddt_result.dq_ddt_stage->ready||
        dq_ddt_result.dq_ddt_stage->driver_bound||
        dq_ddt_result.dq_ddt_stage->table_base!=
@@ -3535,7 +3532,11 @@ void kmain(void) {
         bootstrap_message("INIT: resident DQ DDT source table staging failed.");
         bootstrap_halt();
     }
-    bootstrap_message("INIT: SYS.EXE staged DQ DPTAB/DDTAB/FUNCTAB and completed private READPBLK through IRQ14 (DDB DDT/CRB unpublished).");
+    if(!arch_disk_irq_bind_crb((struct port_dq_crb *)dq_ddt_result.dq_crb)){
+        bootstrap_message("INIT: native DQA0 CRB could not bind IRQ14.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: SYS.EXE staged DQ DPTAB/DDTAB/FUNCTAB and native IRQ14 CRB; DQA0 DDT remains unbound.");
 
     /* Source RELOCDRV IOC$INITDRV: DPT_STORE program initializes a
      * verified copy of original DQA0 DDB/UCB, never the active driver. */
@@ -3593,6 +3594,46 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: resident IOC$RELOC_DDT source DDT/FDT relocation verified (private only; DQA0 unbound).");
+    /* Attach the CRB to the boot UCB only after private relocation has
+     * consumed the original unbound device database state. */
+    static struct port_sys_exec_result dq_crb_read_result;
+    uint32_t dq_crb_irqs_before=arch_disk_irq_crb_count();
+    uint32_t dq_ata_irqs_before=port_ata_x86_irq_count();
+    const struct port_sys_exec_start dq_crb_read_request={
+        .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
+        .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&dq_crb_read_result,
+        .phase=PORT_SYS_EXEC_INIT_DQ_CRB_READ,.dq_boot_io=&dq_boot_io};
+    if(loaded_sys(&dq_crb_read_request)!=PORT_SYS_EXEC_NORMAL||
+       dq_crb_read_result.signature!=PORT_SYS_EXEC_DQ_CRB_READ_TAG||
+       dq_crb_read_result.dq_crb!=dq_ddt_result.dq_crb||
+       !dq_crb_read_result.dq_ddt_bootread||
+       !dq_crb_read_result.dq_ddt_bootread_sector||
+       (uintptr_t)dq_crb_read_result.dq_ddt_bootread<PORT_SYS_ELF_START||
+       (uintptr_t)dq_crb_read_result.dq_ddt_bootread>
+          PORT_SYS_ELF_LIMIT-sizeof(struct port_dq_bootread_result)||
+       (uintptr_t)dq_crb_read_result.dq_ddt_bootread_sector<PORT_SYS_ELF_START||
+       (uintptr_t)dq_crb_read_result.dq_ddt_bootread_sector>
+          PORT_SYS_ELF_LIMIT-PORT_DQ_BOOTREAD_BYTES||
+       dq_crb_read_result.dq_ddt_bootread->lbn!=0u||
+       dq_crb_read_result.dq_ddt_bootread->bytes!=PORT_DQ_BOOTREAD_BYTES||
+       dq_crb_read_result.dq_ddt_bootread->irp_status!=PORT_SYS85_NORMAL||
+       dq_crb_read_result.dq_ddt_bootread->io_function!=PORT_DQ_READPBLK||
+       port_ata_x86_irq_count()<=dq_ata_irqs_before||
+       arch_disk_irq_crb_count()<=dq_crb_irqs_before||
+       devicedb_result.device_db_bytes[PORT_V37_UCB_BOOT_OFF+32u]!=
+          (uint8_t)(uintptr_t)dq_ddt_result.dq_crb||
+       devicedb_result.device_db_bytes[PORT_V37_UCB_BOOT_OFF+33u]!=
+          (uint8_t)((uintptr_t)dq_ddt_result.dq_crb>>8)||
+       devicedb_result.device_db_bytes[PORT_V37_UCB_BOOT_OFF+34u]!=
+          (uint8_t)((uintptr_t)dq_ddt_result.dq_crb>>16)||
+       devicedb_result.device_db_bytes[PORT_V37_UCB_BOOT_OFF+35u]!=
+          (uint8_t)((uintptr_t)dq_ddt_result.dq_crb>>24)||
+       devicedb_result.device_db_bytes[PORT_V37_UCB_BOOT_OFF+120u]!=0u||
+       devicedb_result.device_db_bytes[PORT_V37_DDB_BOOT_OFF+12u]!=0u){
+        bootstrap_message("INIT: native DQA0 CRB IRQ14 READPBLK completion failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: SYS.EXE attached native DQA CRB; staged physical READPBLK completed through IRQ14 (DDB DDT unpublished).");
 
     /* Source NLDRIVER.MAR DDT/FDT through SYSQIOREQ.MAR 741-749: two original
      * IRP$L_MEDIA statuses and an IOC$GL_PSBL append in actual loaded
