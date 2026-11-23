@@ -16,6 +16,7 @@ required = {
     "port_v37_sysqio_prepare_irp",
     "port_v37_sysqio_process_bind_pcb",
     "port_v37_ccb_resolve",
+    "port_v37_ccb_find_free",
 }
 missing = sorted(required - symbols.keys())
 if missing:
@@ -25,4 +26,3 @@ if non_text:
     raise SystemExit("SYS.EXE SYSQIO entry points are not resident text: " +
                      ", ".join(non_text))
 print("Resident SYS.EXE contains SYSQIO begin, IRP preparation and PCB binding; live service dispatch remains incomplete")
-
