@@ -1766,9 +1766,13 @@ pdat_rows=[
  (1,90,None,None,'Original PCB/PHD declarations and VAX PHD generation dependencies unresolved','unresolved'),
  (91,170,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb',"Emit SYSDEF.MDL's 156-byte PCB layout and source GENPCB queue heads, DYN type, state, privileges, PID/PHD and lock queue fields; native PHD creation and process activation remain missing",'partial'),
  (171,220,'src/vms_v37_phd.c','port_v37_phd_init_genphd',"Encode the GENPHD fields in the 376-byte SYSDEFMP.MDL fixed PHD record; native page-table allocation, P0/P1 mapping and process activation remain missing",'partial'),
- (221,278,None,None,'Null/swapper PHDs, stacks and scheduler PCB source instances unresolved','unresolved'),
+ (221,254,None,None,'NULL/SWAPPER stack and PHD source construction unresolved','unresolved'),
+ (255,256,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb','Create the source-layout NULL GENPCB record and PID; VMS PHD and native context remain absent','partial'),
+ (257,268,None,None,'SWAPPER PHD and stack initialization unresolved','unresolved'),
+ (269,272,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb','Create the source-layout SWAPPER GENPCB record and PID; VMS PHD and native context remain absent','partial'),
+ (273,278,None,None,'Remaining SWAPPER source PHD/context setup unresolved','unresolved'),
  (279,281,'src/vms_v37_pcb.c','port_v37_pcb_init_syspcb_template','Construct the unactivated MMG$AL_SYSPCB data template; SYS PHD and native PHYPCB have not been attached','partial'),
- (282,307,None,None,'Original PCB/sequence vector and swapper/null process activation unresolved','unresolved'),
+ (282,307,'src/vms_ini_procvec.c','port_ini_procvec_init','Initialize source PCB/sequence vectors; native port now installs NULL, SWAPPER and SYSTEM PCB pointers and queues resident COM entries, but process contexts/activation remain unresolved','partial'),
  (308,308,None,None,'Terminal MACRO END directive','excluded')]
 pdat_sections=[]
 for first,last,path,symbol,description,status in pdat_rows:
@@ -1783,6 +1787,27 @@ for first,last,path,symbol,description,status in pdat_rows:
 result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
     'original_lines':308,'sections':pdat_sections,
     'unresolved_integration':'Native SYS.EXE has source-layout SYSTEM and NULL PCB records and an INI_PSTATE vector pointing to those records. Their PHD/native hardware contexts remain absent, and the separate scheduler records are not bound to VMS processes.'})
+
+# M241: source RSE.MAR executable queue insertion and priority selection.
+rse_lines=735 # pinned original SYS/SRC/RSE.MAR line count at REVISION
+rse_sections=[]
+for first,last,path,symbol,description,status in [
+ (1,339,None,None,'RSE wait-state, AST, swapping and synchronization routines remain unresolved except separately mapped source entries','unresolved'),
+ (340,347,'src/vms_v37_sched.c','port_v37_sched_chse','Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial','partial'),
+ (348,394,None,None,'SCH$CHSE IPL checks and preceding/following RSE entry paths remain unresolved','unresolved'),
+ (395,440,'src/vms_v37_sched.c','port_v37_sched_chse','Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points','partial'),
+ (441,rse_lines,None,None,'Remaining RSE process state, wait, swap and scheduler routines unresolved','unresolved')]:
+    if path:
+        ln=line_for_symbol(path,symbol)
+        if ln is None:missing+=1
+        rse_sections.append({'original_lines':[first,last],
+            'status':status if ln else 'missing','pc_file':path,
+            'pc_symbol':symbol,'pc_line':ln,'function':description})
+    else:rse_sections.append({'original_lines':[first,last],
+        'status':status,'reason':description})
+result['files'].append({'original_file':'SYS/SRC/RSE.MAR',
+    'original_lines':rse_lines,'sections':rse_sections,
+    'unresolved_integration':'SCH$CHSE model is now integrated during INIT for resident NULL/SWAPPER queue insertion; actual process context activation, full IPL semantics, swapper execution and the remaining scheduler routines are unresolved.'})
 
 # M107: per-source native assembly-free RTL routines, each saved as its own
 # source file with one callable symbol. These are host-tested and built into

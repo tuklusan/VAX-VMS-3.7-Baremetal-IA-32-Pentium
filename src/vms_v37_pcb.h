@@ -40,6 +40,7 @@ struct port_v37_pcb_seed {
 uint32_t port_v37_pcb_init_genpcb(uint8_t *,size_t,
     const struct port_v37_pcb_seed *);
 uint32_t port_v37_pcb_init_syspcb_template(uint8_t *,size_t,uint32_t);
+uint32_t port_v37_pcb_set_pix(uint8_t *,size_t,uint16_t);
 /* INIT.MAR INI_SYSPCB: update the static PDAT system PCB after SYS PHD
  * creation. PID's high sequence word remains the GENPCB value of one. */
 uint32_t port_v37_pcb_finish_syspcb(uint8_t *,size_t,uint16_t,

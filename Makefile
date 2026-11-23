@@ -211,7 +211,10 @@ build/vms_ini_pc_bus.o: src/vms_ini_pc_bus.c src/vms_ini_pc_bus.h src/vms_iniloa
 M125_DQ_SRCS=$(wildcard src/vms_dq_fdt_*.c)
 M125_DQ_OBJS=$(patsubst src/%.c,build/%.o,$(M125_DQ_SRCS))
 M197_DQ_CRB_SRCS=$(wildcard src/vms_dq_crb*.c)
+M197_DQ_CRB_SRCS+=src/vms_v37_sched.c
 M197_DQ_CRB_OBJS=$(patsubst src/%.c,build/%.o,$(M197_DQ_CRB_SRCS))
+build/vms_v37_sched.o: src/vms_v37_sched.c src/vms_v37_sched.h src/vms_v37_pcb.h src/vms_v37_dyn_tags.h | build
+	$(CC) $(CFLAGS) -c $< -o $@
 M124_SWI_SRCS=$(wildcard src/vms_iopost_swi_*.c)
 M124_SWI_OBJS=$(patsubst src/%.c,build/%.o,$(M124_SWI_SRCS))
 build/kernel.elf: build/start.o build/vms_vmb_rpb.o build/vms_sysmount.o build/vms_vmbargs.o build/vms_filerwio.o build/vms_sysboot_map.o build/vms_sysboot_read.o build/vms_sysboot_elf.o build/vms_bootio.o build/vms_boot_files11.o build/vms_sysinit_names.o build/vms_initvec.o build/vms_booparam.o build/vms_boot_readprompt.o build/kernel.o build/vms_dcl_exit.o build/vms_dcl_status.o build/vms_dcl_if.o build/vms_dcl_inquire.o build/vms_dcl_on.o build/vms_dcl_intimages.o build/vms_dcl_goto.o build/vms_dcl_readrec.o build/vms_dcl_initial.o build/vms_dcl_command.o build/vms_dcl_descr.o build/vms_login_interact.o build/vms_logincmd.o build/vms_login_fileio.o build/vms_login_uart.o build/vms_hpwd.o build/vms_validate.o build/vms_uaf_v37.o build/vms_logintime.o build/vms_rtc_x86.o build/vms_hpwd_selftest.o build/vms_mutex.o build/vms_mutex_selftest.o build/vms_postef.o build/vms_postef_selftest.o build/vms_astdel.o build/vms_astdel_selftest.o build/vms_ast.o build/vms_condition.o build/vms_pmap.o build/vms_pcb.o build/vms_phys.o build/vms_ramcheck.o build/vms_vmem.o build/vms_event.o build/vms_ata.o build/vms_ata_x86.o build/vms_dq_crb.o build/vms_ne2k.o build/vms_ne2k_x86.o build/vms_decnet.o build/vms_rem_protocol.o build/vms_rem_protocol_selftest.o build/vms_nsp.o build/vms_nsp_link.o build/vms_session.o build/vms_nsp_data.o build/vms_nsp_reliable.o build/vms_mirror.o build/vms_mirror_server.o build/vms_serial.o build/vms_serial_x86.o build/vms_qio.o build/vms_channels.o build/vms_userptr.o build/vms_userio.o build/vms_kstack.o build/arch.o build/arch_asm.o build/vms_exe_gettim.o build/vms_exe_sched.o build/vms_ini_pc_bus.o $(M168_IOC_OBJS) linked.ld $(M124_SWI_OBJS) build/vms_dq_index_validate.o build/vms_dq_index_decode.o build/vms_dq_mfd_map.o build/vms_dq_mfd_validate.o build/vms_dq_index_location.o
@@ -226,7 +229,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37phdcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck irpalloccheck
+test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37phdcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck irpalloccheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 	python3 tests/test_guest_layout.py
@@ -498,6 +501,11 @@ initveccheck: | build
 v37pcbcheck: | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c tests/test_v37_pcb_host.c -o build/v37pcbcheck
 	./build/v37pcbcheck
+
+.PHONY: v37schedcheck
+v37schedcheck: | build
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c src/vms_v37_sched.c tests/test_v37_sched_host.c -o build/v37schedcheck
+	./build/v37schedcheck
 
 .PHONY: v37phdcheck
 v37phdcheck: | build
@@ -784,6 +792,7 @@ files1187check: portdisk.img build/files11-acp-partial.o | build
 # M88: genuine, independently linked native SYS.EXE and Files-11 installation.
 build/vms_sys_executive_entry.o: src/vms_sys_executive_entry.c src/vms_sys_executive_entry.h src/vms_sysloavec.h src/vms_sysloa386.h src/vms_exe_gettim.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_ini_lockdb.h src/vms_ini_procvec.h src/vms_ini_phv_swap.h src/vms_ini_mpw.h src/vms_ini_pflvec.h src/vms_ini_syswcb.h src/vms_ini_log_templates.h src/vms_v37_dyn_tags.h src/vms_v37_pcb.h src/vms_ini_syslog.h src/vms_ini_bootdev_scan.h src/vms_ini_dpt_templates.h src/vms_sys85.h src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_dq_bootread.h src/vms_dqddt.h src/vms_dq_crb.h src/vms_ini_devicedb.h src/vms_ioc_phys.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
+build/vms_sys_executive_entry.o: src/vms_v37_sched.h
 build/vms_sysboot_pktmem.o: src/vms_sysboot_pktmem.c src/vms_sysboot_pktmem.h src/vms_booparam.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/vms_ini_packet_queues.o: src/vms_ini_packet_queues.c src/vms_ini_packet_queues.h | build

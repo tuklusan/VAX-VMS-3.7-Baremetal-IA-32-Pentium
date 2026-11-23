@@ -476,6 +476,25 @@ static struct port_exe_sched_process executive_system_pcb;
 static struct port_exe_sched_process executive_null_pcb;
 _Alignas(8) static uint8_t executive_vms_system_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_null_pcb[PORT_V37_PCB_BYTES];
+_Alignas(8) static uint8_t executive_vms_swapper_pcb[PORT_V37_PCB_BYTES];
+static struct port_v37_scheduler executive_vms_scheduler;
+static uint32_t executive_vms_address(void *unused,const void *p){
+    (void)unused;
+    return (uintptr_t)p<=UINT32_MAX?(uint32_t)(uintptr_t)p:0u;
+}
+static uint8_t *executive_vms_resolve(void *unused,uint32_t a,size_t n){
+    (void)unused;
+    const uintptr_t start=(uintptr_t)&executive_vms_scheduler.heads[0];
+    const uintptr_t limit=(uintptr_t)&executive_vms_scheduler.heads[64];
+    if(a>=start&&a<=limit&&n<=limit-a)return (uint8_t *)(uintptr_t)a;
+    const uintptr_t pcbs[3]={(uintptr_t)executive_vms_null_pcb,
+        (uintptr_t)executive_vms_swapper_pcb,
+        (uintptr_t)executive_vms_system_pcb};
+    for(unsigned i=0;i<3u;i++)
+        if(a>=pcbs[i]&&a<=pcbs[i]+PORT_V37_PCB_BYTES&&
+           n<=pcbs[i]+PORT_V37_PCB_BYTES-a)return (uint8_t *)(uintptr_t)a;
+    return 0;
+}
 
 
 
@@ -582,12 +601,16 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         if(used>=executive_free_npages)return PORT_SYS_EXEC_BAD_PARAMETERS;
         struct port_ini_proc_settings settings=*p->proc_settings;
         if((uintptr_t)executive_vms_system_pcb>UINT32_MAX ||
-           (uintptr_t)executive_vms_null_pcb>UINT32_MAX)
+           (uintptr_t)executive_vms_null_pcb>UINT32_MAX ||
+           (uintptr_t)executive_vms_swapper_pcb>UINT32_MAX)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         if(port_v37_pcb_init_syspcb_template(executive_vms_system_pcb,
               sizeof executive_vms_system_pcb,
               (uint32_t)(uintptr_t)executive_vms_system_pcb)!=PORT_V37_PCB_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
+        if(port_v37_pcb_set_pix(executive_vms_system_pcb,
+              sizeof executive_vms_system_pcb,(uint16_t)settings.max_processes)!=
+              PORT_V37_PCB_OK)return PORT_SYS_EXEC_BAD_PARAMETERS;
         const struct port_v37_pcb_seed null_template={
             .address=(uint32_t)(uintptr_t)executive_vms_null_pcb,
             .pid=UINT32_C(0x00010000),.priority=0u,.name="NULL",
@@ -595,11 +618,31 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         if(port_v37_pcb_init_genpcb(executive_vms_null_pcb,
               sizeof executive_vms_null_pcb,&null_template)!=PORT_V37_PCB_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
+        const struct port_v37_pcb_seed swapper_template={
+            .address=(uint32_t)(uintptr_t)executive_vms_swapper_pcb,
+            .pid=UINT32_C(0x00010001),.priority=16u,.name="SWAPPER",
+            .name_bytes=7u};
+        if(port_v37_pcb_init_genpcb(executive_vms_swapper_pcb,
+              sizeof executive_vms_swapper_pcb,&swapper_template)!=PORT_V37_PCB_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
         settings.system_pcb_address=(uint32_t)(uintptr_t)executive_vms_system_pcb;
         settings.null_pcb_address=(uint32_t)(uintptr_t)executive_vms_null_pcb;
         if(port_ini_procvec_init(executive_packet_pages+used,
                  executive_free_npages-used,&settings,
                  &executive_procvec)!=PORT_INI_PROC_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        const struct port_v37_sched_ops sched_ops={0,
+            executive_vms_address,executive_vms_resolve,0,0};
+        if(port_ini_procvec_set_pcb(&executive_procvec,1u,
+              (uint32_t)(uintptr_t)executive_vms_swapper_pcb)!=PORT_INI_PROC_OK||
+           port_v37_sched_init(&executive_vms_scheduler,&sched_ops)!=
+              PORT_V37_SCHED_OK||
+           port_v37_sched_chse(&executive_vms_scheduler,
+              (uint32_t)(uintptr_t)executive_vms_null_pcb,0u)!=PORT_V37_SCHED_OK||
+           port_v37_sched_chse(&executive_vms_scheduler,
+              (uint32_t)(uintptr_t)executive_vms_swapper_pcb,0u)!=
+              PORT_V37_SCHED_OK||
+           port_v37_sched_check(&executive_vms_scheduler)!=PORT_V37_SCHED_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         executive_null_pcb=(struct port_exe_sched_process){0};
         executive_null_pcb.type=PORT_SYS_EXEC_PCB_KIND;
@@ -614,6 +657,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->null_sched_process=&executive_null_pcb;
         p->result->system_vms_pcb=executive_vms_system_pcb;
         p->result->null_vms_pcb=executive_vms_null_pcb;
+        p->result->swapper_vms_pcb=executive_vms_swapper_pcb;
+        p->result->vms_scheduler=&executive_vms_scheduler;
         p->result->signature=PORT_SYS_EXEC_PV_RESULT_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }

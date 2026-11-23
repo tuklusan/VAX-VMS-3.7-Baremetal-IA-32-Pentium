@@ -7,6 +7,7 @@
 #include "vms_ini_packet_queues.h"
 #include "vms_ini_lockdb.h"
 #include "vms_ini_procvec.h"
+#include "vms_v37_sched.h"
 #include "vms_ini_phv_swap.h"
 #include "vms_ini_mpw.h"
 #include "vms_ini_pflvec.h"
@@ -230,6 +231,8 @@ struct port_sys_exec_result {
     const struct port_exe_sched_process *system_sched_process,*null_sched_process;
     /* PDAT.MAR source-layout PCB templates; both PHDs remain absent. */
     const uint8_t *system_vms_pcb,*null_vms_pcb;
+    const uint8_t *swapper_vms_pcb;
+    const struct port_v37_scheduler *vms_scheduler;
 };
 struct port_sys_exec_start {
     uint32_t signature,version;

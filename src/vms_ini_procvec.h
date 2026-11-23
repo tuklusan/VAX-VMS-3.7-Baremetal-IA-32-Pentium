@@ -13,12 +13,14 @@ struct port_ini_proc_settings {
     uint16_t dyn_pcbvec_type; /* supplied from original DYNDEF when ported */
 };
 struct port_ini_procvec {
-    const uint8_t *pcb_vector, *sequence_vector;
+    uint8_t *pcb_vector, *sequence_vector;
     uint32_t system_pix,max_pix,allocated_slots,allocated_bytes;
 };
 uint32_t port_ini_procvec_init(void *pool,size_t capacity,
                  const struct port_ini_proc_settings *settings,
                  struct port_ini_procvec *out);
+uint32_t port_ini_procvec_set_pcb(struct port_ini_procvec *,uint32_t,
+                                  uint32_t);
 uint32_t port_ini_procvec_ptr(const struct port_ini_procvec *p,uint32_t pix);
 uint16_t port_ini_procvec_seq(const struct port_ini_procvec *p,uint32_t pix);
 #endif

@@ -43,6 +43,13 @@ uint32_t port_ini_procvec_ptr(const struct port_ini_procvec *p,uint32_t pix){
     if(!p || !p->pcb_vector || pix>=p->allocated_slots)return 0u;
     return load32(p->pcb_vector+pix*4u);
 }
+uint32_t port_ini_procvec_set_pcb(struct port_ini_procvec *p,uint32_t pix,
+                                  uint32_t pcb_address){
+    if(!p||!p->pcb_vector||pix>=p->allocated_slots||!pcb_address||
+       (pcb_address&3u))return PORT_INI_PROC_BADPARAM;
+    store32(p->pcb_vector+pix*4u,pcb_address);
+    return PORT_INI_PROC_OK;
+}
 uint16_t port_ini_procvec_seq(const struct port_ini_procvec *p,uint32_t pix){
     if(!p || !p->sequence_vector || pix>=p->allocated_slots)return UINT16_MAX;
     const uint8_t *x=p->sequence_vector+pix*2u;

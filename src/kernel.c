@@ -3070,7 +3070,7 @@ void kmain(void) {
        proc_result.system_vms_pcb[PORT_V37_PCB_SIZE]!=PORT_V37_PCB_BYTES||
        proc_result.system_vms_pcb[PORT_V37_PCB_SIZE+1u]!=0u||
        proc_result.system_vms_pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
-       m202_get32(proc_result.system_vms_pcb+PORT_V37_PCB_PID)!=0x00010000u||
+       m202_get32(proc_result.system_vms_pcb+PORT_V37_PCB_PID)!=0x00010020u||
        m202_get32(proc_result.system_vms_pcb+PORT_V37_PCB_PHD)!=0u||
        !proc_result.null_vms_pcb||
        ((uintptr_t)proc_result.null_vms_pcb&7u)!=0u||
@@ -3086,7 +3086,20 @@ void kmain(void) {
         bootstrap_message("INIT: resident SYS.EXE PCB sequence vectors failed.");
         bootstrap_halt();
     }
-    bootstrap_message("INIT: SYS.EXE built source-layout SYSTEM/NULL PCB vector; PHD/context activation pending.");
+    if(!proc_result.swapper_vms_pcb||!proc_result.vms_scheduler||
+       m202_get32(proc_result.swapper_vms_pcb+PORT_V37_PCB_PID)!=
+          0x00010001u||
+       *(const uint32_t *)(const void *)(proc_result.process_vector->pcb_vector+4u)!=
+          (uint32_t)(uintptr_t)proc_result.swapper_vms_pcb||
+       !proc_result.vms_scheduler->initialized||
+       proc_result.vms_scheduler->summary[0]!=0x80008000u||
+       proc_result.vms_scheduler->summary[1]!=0u||
+       proc_result.vms_scheduler->ready_count[15]!=1u||
+       proc_result.vms_scheduler->ready_count[31]!=1u){
+        bootstrap_message("INIT: resident SYS.EXE scheduler queues failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.");
 
     /* Original INIT.MAR INI_PHV and INI_SWAP reserve the process header
      * slots and the swapper P0 page-table map. This is *not* a running

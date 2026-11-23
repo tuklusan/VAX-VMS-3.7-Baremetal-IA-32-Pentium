@@ -73,13 +73,23 @@ uint32_t port_v37_pcb_init_syspcb_template(uint8_t *record,size_t capacity,
     return port_v37_pcb_init_genpcb(record,capacity,&system);
 }
 
+uint32_t port_v37_pcb_set_pix(uint8_t *record,size_t capacity,uint16_t pix){
+    if(!record||capacity<PORT_V37_PCB_BYTES||
+       get16(record+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+       record[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
+       (get32(record+PORT_V37_PCB_PID)>>16)!=1u)
+        return PORT_V37_PCB_BADPARAM;
+    put16(record+PORT_V37_PCB_PID,pix);
+    return PORT_V37_PCB_OK;
+}
+
 uint32_t port_v37_pcb_finish_syspcb(uint8_t *record,size_t capacity,
     uint16_t system_pix,uint32_t phd_address,uint32_t native_phy_pcb_address){
     if(!record||capacity<PORT_V37_PCB_BYTES||!phd_address||
        !native_phy_pcb_address||
        get16(record+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
        record[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
-       get32(record+PORT_V37_PCB_PID)!=UINT32_C(0x00010000))
+       (get32(record+PORT_V37_PCB_PID)>>16)!=1u)
         return PORT_V37_PCB_BADPARAM;
     /* INIT.MAR stores a word to the low half of PID, preserving sequence. */
     put16(record+PORT_V37_PCB_PID,system_pix);

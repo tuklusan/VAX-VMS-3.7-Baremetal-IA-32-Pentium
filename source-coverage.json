@@ -10384,7 +10384,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_pcb.c",
           "pc_symbol": "port_v37_pcb_finish_syspcb",
-          "pc_line": 76,
+          "pc_line": 86,
           "function": "INIT_SYSPCB low-word PID update preserving the GENPCB sequence and native PHD/PHYPCB fields; boot currently has no system PHD and cannot activate it"
         },
         {
@@ -10555,10 +10555,48 @@
         {
           "original_lines": [
             221,
+            254
+          ],
+          "status": "unresolved",
+          "reason": "NULL/SWAPPER stack and PHD source construction unresolved"
+        },
+        {
+          "original_lines": [
+            255,
+            256
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_pcb.c",
+          "pc_symbol": "port_v37_pcb_init_genpcb",
+          "pc_line": 30,
+          "function": "Create the source-layout NULL GENPCB record and PID; VMS PHD and native context remain absent"
+        },
+        {
+          "original_lines": [
+            257,
+            268
+          ],
+          "status": "unresolved",
+          "reason": "SWAPPER PHD and stack initialization unresolved"
+        },
+        {
+          "original_lines": [
+            269,
+            272
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_pcb.c",
+          "pc_symbol": "port_v37_pcb_init_genpcb",
+          "pc_line": 30,
+          "function": "Create the source-layout SWAPPER GENPCB record and PID; VMS PHD and native context remain absent"
+        },
+        {
+          "original_lines": [
+            273,
             278
           ],
           "status": "unresolved",
-          "reason": "Null/swapper PHDs, stacks and scheduler PCB source instances unresolved"
+          "reason": "Remaining SWAPPER source PHD/context setup unresolved"
         },
         {
           "original_lines": [
@@ -10576,8 +10614,11 @@
             282,
             307
           ],
-          "status": "unresolved",
-          "reason": "Original PCB/sequence vector and swapper/null process activation unresolved"
+          "status": "partial",
+          "pc_file": "src/vms_ini_procvec.c",
+          "pc_symbol": "port_ini_procvec_init",
+          "pc_line": 14,
+          "function": "Initialize source PCB/sequence vectors; native port now installs NULL, SWAPPER and SYSTEM PCB pointers and queues resident COM entries, but process contexts/activation remain unresolved"
         },
         {
           "original_lines": [
@@ -10589,6 +10630,59 @@
         }
       ],
       "unresolved_integration": "Native SYS.EXE has source-layout SYSTEM and NULL PCB records and an INI_PSTATE vector pointing to those records. Their PHD/native hardware contexts remain absent, and the separate scheduler records are not bound to VMS processes."
+    },
+    {
+      "original_file": "SYS/SRC/RSE.MAR",
+      "original_lines": 735,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            339
+          ],
+          "status": "unresolved",
+          "reason": "RSE wait-state, AST, swapping and synchronization routines remain unresolved except separately mapped source entries"
+        },
+        {
+          "original_lines": [
+            340,
+            347
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_chse",
+          "pc_line": 101,
+          "function": "Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial"
+        },
+        {
+          "original_lines": [
+            348,
+            394
+          ],
+          "status": "unresolved",
+          "reason": "SCH$CHSE IPL checks and preceding/following RSE entry paths remain unresolved"
+        },
+        {
+          "original_lines": [
+            395,
+            440
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_chse",
+          "pc_line": 101,
+          "function": "Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points"
+        },
+        {
+          "original_lines": [
+            441,
+            735
+          ],
+          "status": "unresolved",
+          "reason": "Remaining RSE process state, wait, swap and scheduler routines unresolved"
+        }
+      ],
+      "unresolved_integration": "SCH$CHSE model is now integrated during INIT for resident NULL/SWAPPER queue insertion; actual process context activation, full IPL semantics, swapper execution and the remaining scheduler routines are unresolved."
     },
     {
       "original_file": "RTL/SRC/MTHIIDNNT.MAR",
