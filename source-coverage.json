@@ -5852,7 +5852,7 @@
           "pc_file": "src/vms_v37_ia32_context.c",
           "pc_symbol": "port_v37_ia32_context_init",
           "pc_line": 8,
-          "function": "construct initial IA-32 IRET register frame with matching VMS access-mode CPL; QEMU exercises CPL1/CPL2 IRET and interrupt return, while VMS process scheduler dispatch remains unresolved"
+          "function": "construct initial IA-32 IRET frame with matching VMS CPL; QEMU dispatches a selected CPL2 frame from a CPL1 trap, but VMS PCB context save/restore and scheduler integration remain unresolved"
         },
         {
           "original_lines": [

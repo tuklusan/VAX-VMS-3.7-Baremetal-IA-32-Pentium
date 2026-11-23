@@ -2766,7 +2766,7 @@ void kmain(void) {
         bootstrap_message("IA-32 VMS CPL1/CPL2 IRET transition regression failed.");
         bootstrap_halt();
     }
-    bootstrap_message("IA-32 VMS executive/supervisor CPL1/CPL2 interrupt-return transitions passed.");
+    bootstrap_message("IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.");
     /* VMB.MAR: form the real PC PFN bitmap and RPB argument cells
      * before SYSBOOT attempts to open SYS.EXE. */
     static struct port_vmb_arguments vmb_args;

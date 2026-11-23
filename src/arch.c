@@ -70,11 +70,15 @@ extern void arch_resume_initial_frame(
 extern void arch_vms_ring1_probe_entry(void);
 extern void arch_vms_ring2_probe_entry(void);
 extern void arch_vms_ring_probe_exit(void);
+extern struct port_v37_ia32_restore_frame *arch_vms_probe_next_frame;
 
 static volatile uint32_t ticks;
+enum { ARCH_TRAP_RETURN_CURRENT=0,ARCH_TRAP_RETURN_RING3=1,
+       ARCH_TRAP_RESTORE_SELECTED_FRAME=2 };
 static volatile uint32_t vms_ring_probe_active;
 static volatile uint32_t vms_ring_probe_seen[3];
 static uint8_t vms_ring_probe_stack[2][512] __attribute__((aligned(16)));
+static struct port_v37_ia32_restore_frame *vms_ring_probe_frames[3];
 
 int arch_vms_ring_probe(void){
     uint32_t cr3;
@@ -95,8 +99,13 @@ int arch_vms_ring_probe(void){
         if(port_v37_ia32_context_init(vms_ring_probe_stack[i],
             sizeof vms_ring_probe_stack[i],&seeds[i],&frame)!=
             PORT_V37_IA32_CONTEXT_OK){valid=0;break;}
-        arch_resume_initial_frame(frame);
-        if(vms_ring_probe_seen[i+1u]!=1u){valid=0;break;}
+        vms_ring_probe_frames[i+1u]=frame;
+    }
+    if(valid){
+        arch_vms_probe_next_frame=vms_ring_probe_frames[2];
+        arch_resume_initial_frame(vms_ring_probe_frames[1]);
+        if(vms_ring_probe_seen[1]!=1u||vms_ring_probe_seen[2]!=1u)
+            valid=0;
     }
     vms_ring_probe_active=0u;
     return valid;
@@ -1012,6 +1021,7 @@ int arch_trap(struct port_trap_frame *f) {
                 for(;;)__asm__ volatile("cli; hlt");
             }
             ++vms_ring_probe_seen[mode];
+            if(mode==1u)return ARCH_TRAP_RESTORE_SELECTED_FRAME;
             f->eip=(uint32_t)(uintptr_t)arch_vms_ring_probe_exit;
             f->cs=0x08u;
             f->eflags&=~UINT32_C(0x00027000);

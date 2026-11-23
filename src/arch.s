@@ -19,6 +19,9 @@ port_gdt_end:
 .global arch_vms_probe_saved_esp
 arch_vms_probe_saved_esp:
     .long 0
+.global arch_vms_probe_next_frame
+arch_vms_probe_next_frame:
+    .long 0
 gdt_ptr:
     .word port_gdt_end - port_gdt - 1
     .long port_gdt
@@ -117,7 +120,11 @@ arch_isr_common:
     call arch_trap
     addl $4,%esp
     testl %eax,%eax
-    jnz arch_ring3_resume
+    jz arch_restore_initial_frame
+    /* arch_trap return 2 selects the next saved IA-32 frame. */
+    cmpl $2,%eax
+    je arch_restore_selected_frame
+    jmp arch_ring3_resume
 .global arch_restore_initial_frame
 arch_restore_initial_frame:
     popl %gs
@@ -127,6 +134,10 @@ arch_restore_initial_frame:
     popal
     addl $8,%esp          /* discard vector and (real/synthetic) error */
     iret
+.global arch_restore_selected_frame
+arch_restore_selected_frame:
+    movl arch_vms_probe_next_frame,%esp
+    jmp arch_restore_initial_frame
 
 /* Enter a seeded source-layout IA-32 frame. The matching probe exit restores
  * this caller stack after an inner-ring INT returns through the kernel. */
