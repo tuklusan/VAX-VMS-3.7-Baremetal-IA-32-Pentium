@@ -58,4 +58,3 @@ INIT: Files-11 FH2 chain read 700 SYS.EXE bytes across two sectors through IOC-s
 INIT: M202 ATA scratch restore reread completed.
 INIT: SYS.EXE DQA0 write FIFO completed two ordered DDT WRITEPBLK IRPs; read FIFO posted two READPBLK IRPs via IRQ14, readback and restore verified.
 INIT stopped: remaining original initialization dependencies incomplete.
-
