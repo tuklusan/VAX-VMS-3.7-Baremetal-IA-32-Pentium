@@ -2306,12 +2306,12 @@ assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M125/M193: DQ FUNCTAB masks and native primary ATA IRQ14 transfer completion.
 # The first two masks specify legal/buffered I/O and the ten remaining
-# rows identify source ACP/EXE action classes. All action addresses,
-# physical RB730 transfers, CRB, class driver, Files-11 ACP remain missing.
+# rows identify source ACP/EXE action classes. Native action addresses and
+# bounded ATA transfer are partial; RB730 controller and Files-11 ACP remain.
 dq_fdt_rows=[
  (1,391,None,None,'Original RB730 declarations and hardware definitions unresolved'),
  (392,437,'src/vms_dqddt_stage_init.c','port_dqddt_stage_init','DPTAB source unit defaults staged only; original UBA/CRB device initialization absent'),
- (438,471,'src/vms_dqddt_fill_header.c','port_dqddt_fill_header','Original DDTAB 38-byte header and source FUNCTAB offset, unresolved native regdump and MNTVER left zero'),
+ (438,471,'src/vms_dqddt_activate.c','port_dqddt_activate','Native DDT/FDT activation relocates source action slots to real IA-32 pointers; unsupported actions fail closed, source regdump/MNTVER and RB730 behavior remain unresolved'),
  (472,495,None,None,'Original RB730 hardware FTAB and GENF controller actions unresolved'),
  (496,525,'src/vms_dq_fdt_legal.c','port_dq_fdt_legal','Original legal IO$_ function code bitmap (27 bits), not dispatch'),
  (526,545,'src/vms_dq_fdt_buffered.c','port_dq_fdt_buffered','Original buffered I/O bitmap (18 bits)'),
@@ -2326,7 +2326,7 @@ dq_fdt_rows=[
  (585,588,'src/vms_dq_fdt_sense.c','port_dq_fdt_sense','Source EXE$SENSEMODE characteristics mask'),
  (589,592,'src/vms_dq_fdt_set.c','port_dq_fdt_set','Source EXE$SETCHAR disk set-mode mask'),
  (593,633,None,None,'Original RB730 driver setup and controller dispatch entry unresolved'),
- (634,639,'src/vms_dqddt_bootread.c','port_dqddt_startio','Native DQ_STARTIO entry dispatches validated private physical READPBLK/WRITEPBLK IRPs through the staged source DDT action slots; DQA DDB/UCB DDT publication, buffered I/O, public QIO and ACP remain unimplemented'),
+ (634,639,'src/vms_dqddt_bootread.c','port_dqddt_startio','Native DQ_STARTIO dispatches validated physical READPBLK/WRITEPBLK IRPs through activated native DDT/FDT pointers. SYS.EXE now publishes this partial DDT into DQA0 DDB/UCB and verifies IOC$SEARCHDEV; buffered/public QIO, ACP, RB730 error/controller semantics and process completion remain unimplemented'),
  (640,654,'src/vms_dq_bootread_decode.c','port_dq_bootread_decode','IRP MEDIA physical LBN extraction for bounded ATA LBA28; resident early INIT verifies LBN1 and LBN0 independently'),
  (655,671,'src/vms_dq_bootread_commit.c','port_dq_bootread_commit','UCB retry count, BCNT, FEX and media field update, partial DQ PREPROCESS'),
  (672,677,None,None,'Unimplemented RB730 branch/diagnostic bits and controller hardware'),

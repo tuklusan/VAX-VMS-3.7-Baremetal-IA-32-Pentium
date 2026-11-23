@@ -67,13 +67,19 @@ uint32_t port_v37_devices_check(const uint8_t *m,size_t cap,uint32_t base,
                                  const struct port_v37_device_result *r){
     if(!m || !r || ((uintptr_t)m&3u) || !range32(base,cap) ||
        r->list_head!=base || r->bytes!=PORT_V37_DEVICE_BYTES ||
-       (r->incomplete_driver_mask!=15u && r->incomplete_driver_mask!=7u) ||
+       (r->incomplete_driver_mask!=15u && r->incomplete_driver_mask!=7u &&
+        r->incomplete_driver_mask!=6u) ||
        r->boot_name_ready>1u ||
-       (r->incomplete_driver_mask==15u && r->bound_nl_ddt) ||
-       (r->incomplete_driver_mask==7u &&
+       ((r->incomplete_driver_mask&(1u<<3u)) && r->bound_nl_ddt) ||
+       (!(r->incomplete_driver_mask&(1u<<3u)) &&
           (!r->bound_nl_ddt||(r->bound_nl_ddt&3u) ||
            ((uint64_t)r->bound_nl_ddt>=base &&
             (uint64_t)r->bound_nl_ddt<(uint64_t)base+PORT_V37_DEVICE_BYTES))) ||
+       ((r->incomplete_driver_mask&1u) && r->bound_dqa_ddt) ||
+       (!(r->incomplete_driver_mask&1u) &&
+          (!r->bound_dqa_ddt||(r->bound_dqa_ddt&3u) ||
+           ((uint64_t)r->bound_dqa_ddt>=base &&
+            (uint64_t)r->bound_dqa_ddt<(uint64_t)base+PORT_V37_DEVICE_BYTES))) ||
        (r->bound_dqa_crb && ((r->bound_dqa_crb&3u) ||
           ((uint64_t)r->bound_dqa_crb>=base &&
            (uint64_t)r->bound_dqa_crb<(uint64_t)base+PORT_V37_DEVICE_BYTES))))
@@ -95,7 +101,8 @@ uint32_t port_v37_devices_check(const uint8_t *m,size_t cap,uint32_t base,
            port_v37_read32(d+4u)!=r->ucb[i==3u?4u:i] ||
            port_v37_read16(d+8u)!=PORT_V37_DDB_SIZE ||
            d[10u]!=PORT_V37_DYN_DDB || d[11u]!=0u ||
-           port_v37_read32(d+12u)!=(i==3u?r->bound_nl_ddt:0u) || d[20u]!=nlen[i] ||
+           port_v37_read32(d+12u)!=(i==0u?r->bound_dqa_ddt:
+                                     i==3u?r->bound_nl_ddt:0u) || d[20u]!=nlen[i] ||
            d[36u]!=dlen[i])return PORT_V37_DEV_BAD;
         for(unsigned j=0;j<nlen[i];j++)if(d[21u+j]!=(uint8_t)names[i][j])return PORT_V37_DEV_BAD;
         for(unsigned j=0;j<dlen[i];j++)if(d[37u+j]!=(uint8_t)drivers[i][j])return PORT_V37_DEV_BAD;
@@ -112,7 +119,8 @@ uint32_t port_v37_devices_check(const uint8_t *m,size_t cap,uint32_t base,
            port_v37_read32(u+64u)!=r->ucb[i]+64u ||
            port_v37_read32(u+68u)!=r->ucb[i]+64u ||
            port_v37_read16(u+58u)!=bufsize[i] ||
-           port_v37_read32(u+120u)!=(i==4u?r->bound_nl_ddt:0u))return PORT_V37_DEV_BAD;
+           port_v37_read32(u+120u)!=(i==0u?r->bound_dqa_ddt:
+                                     i==4u?r->bound_nl_ddt:0u))return PORT_V37_DEV_BAD;
     }
     if(m[PORT_V37_UCB_BOOT_OFF+11u]!=8u ||
        m[PORT_V37_UCB_BOOT_OFF+82u]!=21u ||

@@ -283,6 +283,7 @@ static uint32_t executive_relocdrv_dq_ready;
 static union {uint32_t align; uint8_t bytes[PORT_DQDDT_IMAGE_BYTES];}
     executive_relocated_private;
 static uint32_t executive_relocated_private_ready;
+static struct port_dqddt_native executive_native_dqddt;
 static uint32_t executive_private_reloc_check(const uint8_t *b,size_t n,uint32_t base){
     if(!b||b!=executive_relocated_private.bytes||
        n!=PORT_DQDDT_IMAGE_BYTES||!executive_relocated_private_ready||
@@ -1643,8 +1644,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             .boot_unit=p->dq_boot_io->boot_unit,
             .read_sector=executive_dq_ioc_read_sector,
             .read_context=(void *)p->dq_boot_io};
-        if(port_dqddt_startio(&executive_dqddt,&executive_dq_fdt,&read,
-               &executive_dqddt_io)!=PORT_DQ_BOOTREAD_OK||
+        if(port_dqddt_dispatch_bootread(&executive_dqddt,&executive_dq_fdt,&read,
+               &executive_dqddt_io,0u)!=PORT_DQ_BOOTREAD_OK||
            executive_dqddt_io.lbn!=0u||
            executive_dqddt_io.bytes!=PORT_DQ_BOOTREAD_BYTES||
            executive_dqddt_io.irp_status!=PORT_SYS85_NORMAL||
@@ -1656,6 +1657,44 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->dq_ddt_bootread=&executive_dqddt_io;
         p->result->dq_ddt_bootread_sector=executive_dqddt_sector.words;
         p->result->signature=PORT_SYS_EXEC_DQ_CRB_READ_TAG;
+        return PORT_SYS_EXEC_NORMAL;
+    }
+    if(p->phase==PORT_SYS_EXEC_INIT_DQ_DDT_PUBLISH){
+        if(!executive_dq_crb_read_ready||!executive_dqddt_ready||
+           !executive_relocated_private_ready||!executive_devicedb_ready||
+           !executive_ioc_ready||executive_devicedb_result.incomplete_driver_mask!=7u)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        p->result->device_db=&executive_devicedb_result;
+        p->result->device_db_bytes=executive_devicedb_bytes.data;
+        p->result->dq_native_ddt=&executive_native_dqddt;
+        p->result->dqa_ioc_status=port_dqddt_publish_ioc(executive_devicedb_bytes.data,
+             sizeof executive_devicedb_bytes.data,
+             (uint32_t)(uintptr_t)executive_devicedb_bytes.data,
+             &executive_devicedb_result,&executive_dqddt,&executive_dq_fdt,
+             &executive_native_dqddt,&executive_dq_crb);
+        if(p->result->dqa_ioc_status!=PORT_DQDDT_BIND_OK){
+            p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
+            return PORT_SYS_EXEC_NORMAL;
+        }
+        struct port_v37_ioc_result found={0};
+        p->result->dqa_ioc_status=port_v37_ioc_searchdev(executive_devicedb_bytes.data,
+             sizeof executive_devicedb_bytes.data,
+             (uint32_t)(uintptr_t)executive_devicedb_bytes.data,
+             &executive_devicedb_result,"DQA0",4u,&found);
+        if(p->result->dqa_ioc_status!=PORT_V37_IOC_OK||
+           found.ddb!=executive_devicedb_result.ddb[0]||
+           found.ucb!=executive_devicedb_result.ucb[0]||found.unit!=0u||
+           !found.driver_bound){
+            p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
+            p->result->dqa_ioc_ddb=found.ddb;
+            p->result->dqa_ioc_ucb=found.ucb;
+            return PORT_SYS_EXEC_NORMAL;
+        }
+        p->result->dq_ddt_published=1u;
+        p->result->dqa_ioc_status=PORT_V37_IOC_OK;
+        p->result->dqa_ioc_ddb=found.ddb;
+        p->result->dqa_ioc_ucb=found.ucb;
+        p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }
     if(p->phase==PORT_SYS_EXEC_INIT_RELOCDRV_DQ){
@@ -1705,9 +1744,18 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         executive_relocated_private_ready=1u;
         if(executive_private_reloc_check(im.image,im.length,im.pc_base)!=
            PORT_DDTRELOC_OK)return PORT_SYS_EXEC_BAD_PARAMETERS;
+        if(port_dqddt_activate(&executive_dqddt,&executive_dq_fdt,
+              &executive_native_dqddt,
+              (uint32_t)(uintptr_t)executive_native_dqddt.image)!=
+                 PORT_DQDDT_OK||
+           port_dqddt_native_validate(&executive_dqddt,&executive_dq_fdt,
+              &executive_native_dqddt)!=PORT_DQDDT_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
         p->result->dq_relocated_private=im.image;
         p->result->dq_relocated_private_base=im.pc_base;
         p->result->dq_private_relocation_check=executive_private_reloc_check;
+        p->result->dq_native_ddt=&executive_native_dqddt;
+        p->result->dq_native_ddt_check=port_dqddt_native_validate;
         p->result->signature=PORT_SYS_EXEC_DDT_RELOC_PRIVATE_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }

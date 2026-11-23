@@ -10250,7 +10250,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2570,
+          "pc_line": 2576,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10288,7 +10288,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2570,
+          "pc_line": 2576,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -21160,7 +21160,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 344,
+          "pc_line": 345,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -21236,10 +21236,10 @@
             471
           ],
           "status": "partial",
-          "pc_file": "src/vms_dqddt_fill_header.c",
-          "pc_symbol": "port_dqddt_fill_header",
-          "pc_line": 6,
-          "function": "Original DDTAB 38-byte header and source FUNCTAB offset, unresolved native regdump and MNTVER left zero"
+          "pc_file": "src/vms_dqddt_activate.c",
+          "pc_symbol": "port_dqddt_activate",
+          "pc_line": 51,
+          "function": "Native DDT/FDT activation relocates source action slots to real IA-32 pointers; unsupported actions fail closed, source regdump/MNTVER and RB730 behavior remain unresolved"
         },
         {
           "original_lines": [
@@ -21398,7 +21398,7 @@
           "pc_file": "src/vms_dqddt_bootread.c",
           "pc_symbol": "port_dqddt_startio",
           "pc_line": 44,
-          "function": "Native DQ_STARTIO entry dispatches validated private physical READPBLK/WRITEPBLK IRPs through the staged source DDT action slots; DQA DDB/UCB DDT publication, buffered I/O, public QIO and ACP remain unimplemented"
+          "function": "Native DQ_STARTIO dispatches validated physical READPBLK/WRITEPBLK IRPs through activated native DDT/FDT pointers. SYS.EXE now publishes this partial DDT into DQA0 DDB/UCB and verifies IOC$SEARCHDEV; buffered/public QIO, ACP, RB730 error/controller semantics and process completion remain unimplemented"
         },
         {
           "original_lines": [

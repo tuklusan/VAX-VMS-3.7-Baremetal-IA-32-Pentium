@@ -35,9 +35,10 @@
 #include "vms_iopost_end.h"
 #include "vms_ddtreloc.h"
 #include "vms_sys85.h"
+#include "vms_dqddt_ioc_bind.h"
 /* The resident SYS.EXE entry carries INIT.MAR's CPU-code vector binding
  * and subsequent source-ordered initialization as separate phases. */
-enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=30u,
+enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=32u,
        PORT_SYS_EXEC_NORMAL=1u,PORT_SYS_EXEC_BAD_PARAMETERS=2u,
        PORT_SYS_EXEC_RESULT_TAG=0x58455359u,PORT_SYS_EXEC_PCB_KIND=1u,
        PORT_SYS_EXEC_LINK_SYSLOA=1u,PORT_SYS_EXEC_INIT_RESIDENT=2u,
@@ -70,7 +71,8 @@ enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=30u,
        PORT_SYS_EXEC_INIT_RELOCDRV_DQ=27u,PORT_SYS_EXEC_RELOCDRV_DQ_TAG=0x44524c52u,
        PORT_SYS_EXEC_INIT_DDT_RELOC_PRIVATE=28u,
        PORT_SYS_EXEC_DDT_RELOC_PRIVATE_TAG=0x54524c44u,
-       PORT_SYS_EXEC_INIT_DQ_CRB_READ=29u,PORT_SYS_EXEC_DQ_CRB_READ_TAG=0x42524344u };
+       PORT_SYS_EXEC_INIT_DQ_CRB_READ=29u,PORT_SYS_EXEC_DQ_CRB_READ_TAG=0x42524344u,
+       PORT_SYS_EXEC_INIT_DQ_DDT_PUBLISH=30u,PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG=0x42515044u };
 /* This is an explicitly privileged early-boot disk path. Hardware is real
  * ATA PIO; the original DQ disk DDT and Files-11 ACP are NOT bound. */
 struct port_sys_exec_dq_boot_settings {
@@ -170,8 +172,8 @@ struct port_sys_exec_result {
         const struct port_dq_fdt *,const struct port_dq_bootread_request *,
         struct port_dq_bootread_result *,uint32_t);
     uint32_t (*dq_ddt_startio)(const struct port_dqddt_stage *,
-        const struct port_dq_fdt *,const struct port_dq_bootread_request *,
-        struct port_dq_bootread_result *);
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,struct port_dq_bootread_result *);
     const struct port_dq_crb *dq_crb;
     /* Private stage-validated READPBLK bridge result, not DDB/CRB binding. */
     const struct port_dq_bootread_result *dq_ddt_bootread;
@@ -185,7 +187,13 @@ struct port_sys_exec_result {
     const uint8_t *dq_relocated_private;
     uint32_t dq_relocated_private_base;
     uint32_t (*dq_private_relocation_check)(const uint8_t *,size_t,uint32_t);
-    /* Prelinked DEVICEDAT DDB/UCB pointer graph; no live driver DDT. */
+    /* Native-pointer DDT materialized from source and published in DQA0
+     * DDB/UCB. Supported actions are still private physical block I/O only. */
+    const struct port_dqddt_native *dq_native_ddt;
+    uint32_t (*dq_native_ddt_check)(const struct port_dqddt_stage *,
+        const struct port_dq_fdt *,const struct port_dqddt_native *);
+    uint32_t dq_ddt_published,dqa_ioc_status,dqa_ioc_ddb,dqa_ioc_ucb;
+    /* DEVICEDAT DDB/UCB pointer graph; DQA0 is partially DDT/CRB bound. */
     const struct port_v37_device_result *device_db;
     const uint8_t *device_db_bytes;
     const uint8_t *null_ddt_bytes; /* native source DDTAB/FUNCTAB, 80 bytes */

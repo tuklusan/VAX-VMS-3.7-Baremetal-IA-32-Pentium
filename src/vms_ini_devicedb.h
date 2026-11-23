@@ -34,6 +34,7 @@ struct port_v37_device_result {
     uint32_t bound_nl_ddt; /* M122: actual native source NL$DDT table, if bound */
     uint32_t boot_name_ready; /* M127 source FIN_DATABASE DQA name only; DDT remains zero */
     uint32_t bound_dqa_crb; /* Native IRQ14 CRB; never implies a bound disk DDT */
+    uint32_t bound_dqa_ddt; /* Native DQ DDT/FDT, published only after activation */
 };
 void port_v37_write16(uint8_t *,uint16_t);
 void port_v37_write32(uint8_t *,uint32_t);

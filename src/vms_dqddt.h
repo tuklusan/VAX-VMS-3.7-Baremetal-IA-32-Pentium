@@ -7,8 +7,8 @@
 /* Original DRIVER/SRC/DQDRIVER.MAR DPTAB 392-436, DDTAB 438-465,
  * FUNCTAB 496-592 and SHRLIB/SYSMAR.MAR DDTAB/GENRADDR macro.
  * The source-layout table remains private: native READPBLK and WRITEPBLK
- * action slots execute only privileged bootstrap IRPs; other DDT actions
- * and live IOC publication remain unbound. */
+ * action slots execute only privileged physical IRPs; other DDT actions,
+ * public QIO and the Files-11 ACP remain unimplemented. */
 enum {PORT_DQDDT_OK=1u,PORT_DQDDT_BAD=2u,PORT_DQDDT_UNBOUND=4u,
       PORT_DQDDT_NATIVE=8u,
       PORT_DQDDT_HEADER_BYTES=40u,PORT_DQDDT_DDT_BYTES=38u,
@@ -26,6 +26,13 @@ struct port_dqddt_stage {
     uint32_t native_read_action_pc,native_write_action_pc;
     uint8_t ready,driver_bound,reserved[2];
 };
+/* Native-pointer form of the source DDT/FDT, published into DQA0 DDB/UCB.
+ * Its supported actions remain limited to privileged physical block I/O. */
+struct port_dqddt_native {
+    uint32_t base;
+    uint8_t ready,reserved[3];
+    uint8_t image[PORT_DQDDT_IMAGE_BYTES] __attribute__((aligned(4)));
+};
 uint32_t port_dqddt_preflight(const struct port_dqddt_stage *,
     const struct port_dq_fdt *,uint32_t,uint32_t,uint32_t);
 uint32_t port_dqddt_fill_header(uint8_t *,size_t,uint32_t,uint32_t,uint32_t);
@@ -35,10 +42,14 @@ uint32_t port_dqddt_stage_init(struct port_dqddt_stage *,
     const struct port_dq_fdt *,uint32_t,uint32_t,uint32_t,uint32_t,uint32_t);
 uint32_t port_dqddt_validate(const struct port_dqddt_stage *,
     const struct port_dq_fdt *);
+uint32_t port_dqddt_activate(const struct port_dqddt_stage *,
+    const struct port_dq_fdt *,struct port_dqddt_native *,uint32_t);
+uint32_t port_dqddt_native_validate(const struct port_dqddt_stage *,
+    const struct port_dq_fdt *,const struct port_dqddt_native *);
 uint32_t port_dqddt_function(const struct port_dqddt_stage *,
     const struct port_dq_fdt *,uint16_t);
 /* Execute only the existing privileged physical READPBLK path through a
- * validated staged DDT. This does not bind the general driver or public QIO. */
+ * validated staged DDT. This does not implement public QIO or ACP behavior. */
 uint32_t port_dqddt_bootread(const struct port_dqddt_stage *,
     const struct port_dq_fdt *,const struct port_dq_bootread_request *,
     struct port_dq_bootread_result *,uint32_t);
@@ -51,8 +62,8 @@ uint32_t port_dqddt_dispatch_bootwrite(const struct port_dqddt_stage *,
 /* Partial native DQ_STARTIO entry: dispatches only validated physical
  * READPBLK/WRITEPBLK requests through their DDT FDT actions. */
 uint32_t port_dqddt_startio(const struct port_dqddt_stage *,
-    const struct port_dq_fdt *,const struct port_dq_bootread_request *,
-    struct port_dq_bootread_result *);
+    const struct port_dqddt_native *,const struct port_dq_fdt *,
+    const struct port_dq_bootread_request *,struct port_dq_bootread_result *);
 uint32_t port_dqddt_bootwrite(const struct port_dqddt_stage *,
     const struct port_dq_fdt *,const struct port_dq_bootread_request *,
     struct port_dq_bootread_result *,uint32_t);
