@@ -14,7 +14,8 @@ enum {
     PORT_V37_SCH_INCREMENT_CLASSES=5u
 };
 enum {PORT_V37_SCHED_OK=1u,PORT_V37_SCHED_BADPARAM=2u,
-      PORT_V37_SCHED_CORRUPT=4u,PORT_V37_SCHED_UNRESOLVED=8u};
+      PORT_V37_SCHED_CORRUPT=4u,PORT_V37_SCHED_UNRESOLVED=8u,
+      PORT_V37_SCHED_EMPTY=16u,PORT_V37_SCHED_NO_CONTEXT=32u};
 
 struct port_v37_sched_head {uint32_t forward,backward;};
 struct port_v37_sched_ops {
@@ -40,5 +41,8 @@ uint32_t port_v37_sched_init(struct port_v37_scheduler *,
  * Arbitrary wait-queue owners and swapper wake semantics remain callbacks. */
 uint32_t port_v37_sched_chse(struct port_v37_scheduler *,uint32_t pcb_address,
     uint8_t priority_increment_class);
+/* SCH$SCHED queue selection through CURPCB/priority bookkeeping. Refuses
+ * to consume a runnable PCB until real PHD and IA-32 PHYPCB context exist. */
+uint32_t port_v37_sched_select(struct port_v37_scheduler *,uint32_t *pcb_address);
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *);
 #endif

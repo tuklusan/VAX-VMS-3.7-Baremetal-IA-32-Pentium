@@ -146,6 +146,45 @@ uint32_t port_v37_sched_chse(struct port_v37_scheduler *s,uint32_t address,
     return PORT_V37_SCHED_OK;
 }
 
+uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
+                               uint32_t *selected_address){
+    if(!s||!s->initialized||!selected_address)return PORT_V37_SCHED_BADPARAM;
+    *selected_address=0u;
+    uint32_t bits=s->summary[0];
+    if(!bits)return PORT_V37_SCHED_EMPTY;
+    unsigned q=0u;
+    while(!(bits&1u)){bits>>=1;++q;}
+    const uint32_t head=head_address(s,q);
+    const uint32_t address=s->heads[q].forward;
+    uint8_t *pcb=resolve(s,address,PORT_V37_PCB_BYTES);
+    if(!head||address==head||!pcb)return PORT_V37_SCHED_CORRUPT;
+    int found=0;
+    if(list_contains(s,q,address,&found)!=PORT_V37_SCHED_OK||!found||
+       get16(pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+       pcb[Q_TYPE]!=PORT_V37_DYN_PCB||
+       get16(pcb+PCBSTATE)!=PORT_V37_SCH_COM||pcb[PCBPRI]!=q)
+        return PORT_V37_SCHED_CORRUPT;
+    /* SCH$SCHED executes LDPCTX after selecting. A PCB without its original
+     * PHD and native processor context cannot be made current on IA-32. */
+    if(!get32(pcb+PORT_V37_PCB_PHD)||!get32(pcb+PORT_V37_PCB_PHYPCB))
+        return PORT_V37_SCHED_NO_CONTEXT;
+    if(!s->ready_count[q])return PORT_V37_SCHED_CORRUPT;
+    uint32_t status=list_remove(s,address,pcb);
+    if(status!=PORT_V37_SCHED_OK)return status;
+    if(list_empty(s,q))set_summary(s,q,0);
+    s->ready_count[q]--;
+    put16(pcb+PCBSTATE,PORT_V37_SCH_CUR);
+    uint8_t priority=pcb[PCBPRI];
+    if(priority!=pcb[PCBPRIB]&&(priority&0x10u)){
+        priority=(uint8_t)(priority+1u);
+        pcb[PCBPRI]=priority;
+    }
+    s->current_pcb=address;
+    s->current_priority=priority;
+    *selected_address=address;
+    return PORT_V37_SCHED_OK;
+}
+
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){
     if(!s||!s->initialized)return PORT_V37_SCHED_BADPARAM;
     uint32_t summary[2]={0u,0u};uint32_t ready[32]={0u};

@@ -5811,32 +5811,29 @@
             74
           ],
           "status": "partial",
-          "pc_file": "src/vms_exe_sched.c",
-          "pc_symbol": "port_exe_sched_resched",
-          "pc_line": 26,
-          "function": "save current process state, enqueue and request next; native IA-32 adapter is exercised only by the two-task diagnostic scheduler"
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_chse",
+          "pc_line": 101,
+          "function": "Resident COM queue links and summary update are implemented; source context save and reschedule interrupt entry remain missing"
         },
         {
           "original_lines": [
             75,
-            99
+            98
           ],
           "status": "partial",
-          "pc_file": "src/vms_exe_sched.c",
-          "pc_symbol": "port_exe_sched_select",
-          "pc_line": 35,
-          "function": "highest ready queue, base-priority float and context load; native IA-32 adapter is exercised only by the two-task diagnostic scheduler"
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_select",
+          "pc_line": 149,
+          "function": "Highest resident COM queue selection, CUR state, current PCB/priority and floating priority; native LDPCTX remains blocked until PHD/PHYPCB context exists"
         },
         {
           "original_lines": [
-            100,
+            99,
             106
           ],
-          "status": "partial",
-          "pc_file": "src/vms_exe_sched.c",
-          "pc_symbol": "port_exe_sched_select",
-          "pc_line": 35,
-          "function": "wait for interrupt when idle and fatal queue error; native IA-32 adapter is exercised only by the two-task diagnostic scheduler"
+          "status": "excluded",
+          "reason": "source REI, idle wait loop and fatal empty-queue path lack native scheduler context restoration"
         },
         {
           "original_lines": [

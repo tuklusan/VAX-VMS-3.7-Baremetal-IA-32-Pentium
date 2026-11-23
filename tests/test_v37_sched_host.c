@@ -59,6 +59,10 @@ static uint32_t get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
        ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
+static void put32(uint8_t *p,uint32_t x){
+    p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
+    p[2]=(uint8_t)(x>>16);p[3]=(uint8_t)(x>>24);
+}
 
 int main(void){
     struct port_v37_scheduler scheduler;struct fixture f={
@@ -104,6 +108,31 @@ int main(void){
        f.reschedules!=prior_reschedules+1u||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("resident higher-priority reschedule request");
-    puts("SYS/SRC/RSE.MAR SCH$CHSE resident/nonresident queues and priority rules PASS");
+    uint32_t selected=0u;
+    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_NO_CONTEXT||
+       selected||count(&f,15u)!=2u)
+        return fail("scheduler leaves contextless PCB queued");
+    for(unsigned i=0;i<3u;i++){
+        put32(f.pcbs[i]+PORT_V37_PCB_PHD,0x00300000u+i*0x1000u);
+        put32(f.pcbs[i]+PORT_V37_PCB_PHYPCB,0x00400000u+i*0x1000u);
+    }
+    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+       selected!=f.pcb_va[2]||
+       get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR||
+       scheduler.current_pcb!=selected||scheduler.current_priority!=15u||
+       count(&f,15u)!=1u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("SCH$SCHED highest-priority FIFO PCB selection");
+    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+       selected!=f.pcb_va[1]||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("SCH$SCHED equal-priority FIFO selection");
+    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+       selected!=f.pcb_va[0]||f.pcbs[0][PORT_V37_PCB_PRI]!=29u||
+       scheduler.current_priority!=29u||port_v37_sched_check(&scheduler)!=
+           PORT_V37_SCHED_OK)
+        return fail("SCH$SCHED source floating priority and selection");
+    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_EMPTY||
+       selected)
+        return fail("SCH$SCHED empty resident set");
+    puts("SYS/SRC/SCHED.MAR SCH$SCHED selection and RSE.MAR SCH$CHSE queue rules PASS");
     return 0;
 }

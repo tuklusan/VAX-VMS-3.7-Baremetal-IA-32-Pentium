@@ -1418,9 +1418,9 @@ for original,length,ranges,note in [
        (113,114,None,None,'assembler end')],
        'Live exception and compatibility-mode trap dispatch not yet installed.'),
     ('SCHED.MAR',108,[(1,57,None,None,'copyright, source setup and scheduling interface'),
-       (58,74,'vms_exe_sched','port_exe_sched_resched','save current process state, enqueue and request next'),
-       (75,99,'vms_exe_sched','port_exe_sched_select','highest ready queue, base-priority float and context load'),
-       (100,106,'vms_exe_sched','port_exe_sched_select','wait for interrupt when idle and fatal queue error'),
+       (58,74,'vms_v37_sched','port_v37_sched_chse','Resident COM queue links and summary update are implemented; source context save and reschedule interrupt entry remain missing'),
+       (75,98,'vms_v37_sched','port_v37_sched_select','Highest resident COM queue selection, CUR state, current PCB/priority and floating priority; native LDPCTX remains blocked until PHD/PHYPCB context exists'),
+       (99,106,None,None,'source REI, idle wait loop and fatal empty-queue path lack native scheduler context restoration'),
        (107,108,None,None,'assembler end')],
        'The two-task diagnostic adapter is linked in the kernel; resident VMS PCB layout, executive wait/wake queues and normal reschedule-interrupt entry remain unbound.'),
     ('NULLPROC.MAR',103,[(1,97,None,None,'copyright and idle process description'),
@@ -1439,7 +1439,7 @@ for original,length,ranges,note in [
                            'status':('partial' if original=='SCHED.MAR' and line else
                                      'mapped' if line else 'missing'),
                            'pc_file':path,'pc_symbol':symbol,'pc_line':line,
-                           'function':(reason+'; native IA-32 adapter is exercised only by the two-task diagnostic scheduler' if original=='SCHED.MAR' else reason)})
+                           'function':reason})
             if line is None:missing+=1
     result['files'].append({'original_file':'SYS/SRC/'+original,
                             'original_lines':length,'sections':mapped,
