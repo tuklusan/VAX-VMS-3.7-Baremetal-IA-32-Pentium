@@ -462,6 +462,12 @@ int main(void){
        port_v37_sysqio_process_io_count(&pcb_process,
           PORT_V37_SYSQIO_PCB_BUFFERED)!=2)
         return 60;
+    struct port_v37_sysqio_process unchanged_process=pcb_process;
+    if(port_v37_sysqio_process_bind_pcb(source_pcb,sizeof source_pcb,
+          source_phd,sizeof source_phd,0x2004u,3u,&pcb_process)!=
+          PORT_V37_SYSQIO_PCB_BAD||
+       memcmp(&pcb_process,&unchanged_process,sizeof pcb_process))
+        return 68;
     memset(source_phd,0,sizeof source_phd);
     if(port_v37_sysqio_process_bind_pcb(source_pcb,sizeof source_pcb,
           source_phd,sizeof source_phd,0x2000u,3u,&pcb_process)!=
