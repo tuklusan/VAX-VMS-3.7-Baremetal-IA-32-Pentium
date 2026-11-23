@@ -25,7 +25,7 @@ static void put32(uint8_t *p,uint32_t v){
  * packet is built off-queue so malformed inputs cannot leave a partial IRP. */
 uint32_t port_v37_sysqio_build_irp(
     const struct port_v37_sysqio_prepared *request,
-    const struct port_v37_sysqio_process *process,
+    struct port_v37_sysqio_process *process,
     const struct port_v37_sysqio_irp_spec *spec,
     uint8_t *packet,size_t packet_bytes){
     if(!request||!process||!spec||!packet||!process->pid||
@@ -56,6 +56,11 @@ uint32_t port_v37_sysqio_build_irp(
     put16(candidate+IRP_BOFF,0u);
     put32(candidate+IRP_BCNT,0u);
     put32(candidate+PORT_V37_IRP_ARB,spec->arb_va);
+    if(request->args.ast_address){
+        /* VMS DECW semantics without signed C overflow. */
+        process->ast_count=process->ast_count==INT16_MIN?INT16_MAX:
+                           (int16_t)(process->ast_count-1);
+    }
     for(size_t i=0;i<sizeof candidate;i++)packet[i]=candidate[i];
     return PORT_V37_SYSQIO_IRP_BUILD_OK;
 }

@@ -66,6 +66,7 @@ struct port_v37_sysqio_process {
     uint8_t reserved[3];
     uint32_t local_event_flags[2];
     int16_t buffered_io_count,direct_io_count;
+    int16_t ast_count;
 };
 typedef int (*port_v37_sysqio_single_quota_fn)(void *,uint32_t,uint8_t);
 struct port_v37_sysqio_begin_ops {
@@ -96,8 +97,13 @@ struct port_v37_sysqio_irp_spec {
     uint8_t reserved[3];
 };
 uint32_t port_v37_sysqio_build_irp(const struct port_v37_sysqio_prepared *,
-    const struct port_v37_sysqio_process *,const struct port_v37_sysqio_irp_spec *,
+    struct port_v37_sysqio_process *,const struct port_v37_sysqio_irp_spec *,
     uint8_t *packet,size_t packet_bytes);
+enum { PORT_V37_SYSQIO_AST_OK=1u,PORT_V37_SYSQIO_AST_BAD=2u,
+       PORT_V37_SYSQIO_AST_EXQUOTA=4u };
+uint32_t port_v37_sysqio_check_ast_quota(
+    const struct port_v37_sysqio_prepared *,
+    const struct port_v37_sysqio_process *,uint32_t *service_status);
 
 /* SYSQIOREQ ACCESS: normalize WRITEVBLK for the boot-time device states. */
 enum { PORT_V37_SYSQIO_ACCESS_OK=1u,PORT_V37_SYSQIO_ACCESS_BAD=2u,

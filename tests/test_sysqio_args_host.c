@@ -238,6 +238,16 @@ int main(void){
        irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES]!=0xa5u){
         return 28;
     }
+    uint32_t ast_status=0u;
+    if(proc.ast_count!=-1||port_v37_sysqio_check_ast_quota(&prepared,&proc,
+          &ast_status)!=PORT_V37_SYSQIO_AST_EXQUOTA||
+       ast_status!=PORT_SS_EXQUOTA)
+        return 36;
+    struct port_v37_sysqio_prepared no_ast=prepared;
+    no_ast.args.ast_address=0u;proc.ast_count=-1;
+    if(port_v37_sysqio_check_ast_quota(&no_ast,&proc,&ast_status)!=
+          PORT_V37_SYSQIO_AST_OK||ast_status!=PORT_SYS85_NORMAL)
+        return 37;
     memset(irp,0x5a,sizeof irp);
     struct port_v37_sysqio_irp_spec bad_spec=ispec;
     bad_spec.packet_va=3u;

@@ -21211,7 +21211,7 @@
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
           "pc_line": 26,
-          "function": "Build the source-layout 136-byte standard IRP through CDRP$L_LENGTH, including ARB and fork fields, after caller packet allocation; native process/channel accounting and driver dispatch remain unbound"
+          "function": "Build the source-layout 136-byte standard IRP through CDRP$L_LENGTH, including ARB/fork fields and conditional ACB quota flag plus ASTCNT charge, after caller packet allocation; native channel accounting and driver dispatch remain unbound"
         },
         {
           "original_lines": [
@@ -21224,13 +21224,24 @@
         {
           "original_lines": [
             450,
-            479
+            476
           ],
           "status": "partial",
           "pc_file": "src/vms_sysqio_normalize.c",
           "pc_symbol": "port_v37_sysqio_normalize_write",
           "pc_line": 8,
-          "function": "Source FOD/MNT/FOR WRITEVBLK boot-window handling, logical WRITE conversion, NOPRIV status and AST-quota branch predicate; live device-characteristics/PCB wiring and AST-count service unresolved"
+          "function": "Source FOD/MNT/FOR WRITEVBLK boot-window handling, logical WRITE conversion, NOPRIV status and AST-quota branch predicate; live device-characteristics/PCB wiring remains unresolved"
+        },
+        {
+          "original_lines": [
+            477,
+            479
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_ast.c",
+          "pc_symbol": "port_v37_sysqio_check_ast_quota",
+          "pc_line": 7,
+          "function": "Reject negative ASTCNT only when the request has an AST, posting SS$_EXQUOTA status to the caller; real PCB and abort/post integration unresolved"
         },
         {
           "original_lines": [
@@ -21238,7 +21249,7 @@
             735
           ],
           "status": "unresolved",
-          "reason": "AST quota test and delivery, VMS device privilege/protection, FDT action dispatch, driver queueing and completion unresolved"
+          "reason": "VMS device privilege/protection, FDT action dispatch, driver queueing and completion unresolved"
         },
         {
           "original_lines": [
@@ -21279,7 +21290,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO and EXQUOTA values from VMSLIB/SRC/SSMSG.MSG V03-003. A separate host-tested builder fills the 136-byte standard IRP through CDRP$L_LENGTH only after the caller supplies a packet. WRITEVBLK device-state normalization covers the source FOD/MNT/FOR decision and reports whether AST quota testing is required, but it is not wired to a live UCB/PCB and does not perform access-right checks or AST charging. The request path is not connected to a user service entry, real CCB lookup, IRP allocation, source IPL/deletion protection, device access/protection, driver FDT dispatch or process AST completion. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs."
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO and EXQUOTA values from VMSLIB/SRC/SSMSG.MSG V03-003. A separate host-tested builder fills the 136-byte standard IRP through CDRP$L_LENGTH, sets the AST quota bit and decrements modeled ASTCNT after caller packet reservation. WRITEVBLK device-state normalization covers the source FOD/MNT/FOR decision; the AST quota check rejects negative ASTCNT for AST requests. Neither helper is wired to the live UCB/PCB or real abort/event posting. The request path is not connected to a user service entry, real CCB lookup, IRP allocation, source IPL/deletion protection, device access/protection, driver FDT dispatch or process AST completion. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",
