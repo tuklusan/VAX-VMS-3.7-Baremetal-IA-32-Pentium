@@ -608,3 +608,14 @@ Remaining: connect the wait callback to a real VMS scheduler, bind CCB/channel l
 
 M251 implementation commit (local): `865e0b3e864259d6e578f9900c7ab0bc56097856`.
 GitHub `main` publication commits for the M251 source paths: `d3460742b59168904ac0fd282962a9885a9952ee`, `290124540c75fb3800708186f35a6b774463331f`, `b912a85b17748abb667ee0700714f2e41f4d459e`, `7c0becb6de9bacd24c4763c4bef01b30be52f9d7`, `3ead951cb8ae67dc6f729ac186b4da8a351089a2`; coverage generator repair `2f13550811cb98a32bfe6dae14768598d5af565d`; exact generated coverage blob commit `1f9b59625d615fe9d352d45eb160daa85d519723`; resume publication `e781e4f64cbaaacca0a7fd86f4bbfd88c834a392`.
+
+## M252 — SYSQIO bound to the live VMS PCB ABI, 23 November 2026
+
+Added a validated binding from SYSQIO's process state to the original SYSDEF.MDL PCB layout. The native code now reads and updates the PCB's DIOCNT, BIOCNT, ASTCNT, EFCS and EFCU fields at their source offsets, preserving the existing fixture path for isolated host tests. The host regression uses a byte-layout PCB fixture to verify the actual quota, AST and event-flag words change. SYSQIO modules are now linked into resident SYS.EXE; an ELF32 symbol check confirms begin, IRP preparation and PCB bind entry points are present in the image. This is resident code availability only: no public SYS dispatcher invokes it, and no live channel/CCB lookup, driver completion, process AST delivery, or scheduler wait is connected.
+
+Verification: make -j2 all PASS; make -j2 test sysnativecheck sysqioresidentcheck sysexecentrycheck sysqioargscheck v37ia32ctxcheck PASS (full host suite exit 0); source-range validation PASS (2,013 ranges; 444/4,566 original source files indexed; zero mapping errors; 17,016 mapped, 29,364 partial, 51,828 unresolved, 7,799 missing, 26,237 excluded, 917 hardware-excluded); git diff --check PASS. Real make qemu-sysboot-m217 PASS for the existing boot and DQA0 Files-11 tests, then halted at the expected incomplete INIT boundary. Transcript logs/serial/qemu-m217-run-local-20261124T001208749404Z.log, 5,350 bytes, SHA-256 8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c. No SYSTEM login, DCL, DECnet Phase IV or SET HOST 0 occurred.
+
+Remaining: wire SYSQIO to live process/channel state, DQA0 completion and AST posting; implement Files-11 ACP and native INIT continuation; connect scheduler and process image activation; then verify the required nested SYSTEM/DCL SET HOST 0 interaction. Overall acceptance remains incomplete.
+
+M252 implementation commit (local): 91e3873bccd21b76a3575a2be8dca8d96e01aa6d.
+
