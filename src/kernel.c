@@ -56,6 +56,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #include "vms_qio.h"
 #include "vms_channels.h"
 #include "vms_dq_crb.h"
+#include "vms_dq_ioc_write.h"
 #include "vms_ioc_phys.h"
 
 #define VGA ((volatile uint16_t *)0xB8000)
@@ -2509,6 +2510,54 @@ static int m202_dispatch_io(const struct port_dqddt_stage *stage,
     }
     return 0;
 }
+struct m202_dq_write_context {
+    const struct port_dqddt_stage *stage;
+    const struct port_dq_fdt *fdt;
+    const uint8_t *device_db;
+    const struct port_v37_device_result *device_info;
+    const struct port_dqddt_native *native;
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+       const struct port_v37_device_result *,const char *,size_t,
+       struct port_v37_ioc_result *);
+};
+static uint32_t m202_dq_queued_write(void *opaque,uint32_t lbn,
+                                      const uint8_t payload[512]){
+    struct m202_dq_write_context *ctx=opaque;
+    if(!ctx||!payload)return PORT_DQ_IOCW_BAD;
+    uint16_t words[256];
+    for(unsigned i=0;i<256u;i++)
+        words[i]=(uint16_t)payload[i*2u]|((uint16_t)payload[i*2u+1u]<<8u);
+    return m202_dispatch_io(ctx->stage,ctx->fdt,ctx->device_db,
+        ctx->device_info,lbn,words,PORT_DQ_WRITEPBLK,ctx->native,
+        ctx->ioc_search)==0?PORT_DQ_IOCW_OK:PORT_DQ_IOCW_IO;
+}
+static int m202_submit_queued_write(const struct port_dqddt_stage *stage,
+    const struct port_dq_fdt *fdt,const uint8_t *device_db,
+    const struct port_v37_device_result *device_info,uint32_t lbn,
+    const uint16_t data[256],const struct port_dqddt_native *native,
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+       const struct port_v37_device_result *,const char *,size_t,
+       struct port_v37_ioc_result *)){
+    struct m202_dq_write_context context={stage,fdt,device_db,device_info,
+                                          native,ioc_search};
+    struct port_dq_ioc_write_queue queue;
+    struct port_dq_ioc_write_iosb iosb={0};
+    uint8_t payload[512];
+    for(unsigned i=0;i<256u;i++){
+        payload[i*2u]=(uint8_t)data[i];
+        payload[i*2u+1u]=(uint8_t)(data[i]>>8u);
+    }
+    if(port_dq_ioc_write_init(&queue,m202_dq_queued_write,&context)!=
+         PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_prepare(&queue,1u,lbn,payload,sizeof payload)!=
+         PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_enqueue(&queue,1u)!=PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_service(&queue,&iosb)!=PORT_DQ_IOCW_OK||
+       iosb.tag!=1u||iosb.status!=PORT_DQ_IOCW_OK||iosb.bytes!=512u||
+       queue.submitted!=1u||queue.completed!=1u||queue.failed!=0u)
+        return -1;
+    return 0;
+}
 static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,
@@ -2531,8 +2580,8 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
         return 0;
     }
     for(unsigned i=0;i<256u;i++)probe[i]=(uint16_t)(0x5a00u^i);
-    const int wrote=m202_dispatch_io(stage,fdt,device_db,device_info,
-        SCRATCH_LBN,probe,PORT_DQ_WRITEPBLK,native,ioc_search);
+    const int wrote=m202_submit_queued_write(stage,fdt,device_db,device_info,
+        SCRATCH_LBN,probe,native,ioc_search);
     if(wrote)bootstrap_message("INIT: staged DQ WRITEPBLK action failed.");
     const int read_probe=wrote? -1:port_ata_x86_read28(SCRATCH_LBN,observed);
     if(!wrote&&read_probe)bootstrap_message("INIT: M202 ATA write readback failed.");
@@ -2540,8 +2589,8 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     if(matches)for(unsigned i=0;i<256u;i++)if(observed[i]!=probe[i]){
         matches=0;break;
     }
-    const int restored=m202_dispatch_io(stage,fdt,device_db,device_info,
-        SCRATCH_LBN,saved,PORT_DQ_WRITEPBLK,native,ioc_search);
+    const int restored=m202_submit_queued_write(stage,fdt,device_db,device_info,
+        SCRATCH_LBN,saved,native,ioc_search);
     if(restored)bootstrap_message("INIT: staged DQ WRITEPBLK scratch restore failed.");
     const int reread=port_ata_x86_read28(SCRATCH_LBN,observed);
     if(!reread&&!restored)bootstrap_message("INIT: M202 ATA scratch restore reread completed.");
@@ -4000,7 +4049,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     if(ata_write_probe>0)
-        bootstrap_message("INIT: SYS.EXE IOC-selected DQA0 DDT STARTIO completed WRITEPBLK and READPBLK through ATA IRQ14; readback and restore verified.");
+        bootstrap_message("INIT: SYS.EXE DQ FIFO dispatched IOC-selected DQA0 DDT WRITEPBLK and READPBLK through ATA IRQ14; readback and restore verified.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

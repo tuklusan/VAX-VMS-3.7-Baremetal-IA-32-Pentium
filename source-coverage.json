@@ -10250,7 +10250,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2617,
+          "pc_line": 2666,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10288,7 +10288,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2617,
+          "pc_line": 2666,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -21398,7 +21398,7 @@
           "pc_file": "src/vms_dqddt_bootread.c",
           "pc_symbol": "port_dqddt_startio",
           "pc_line": 44,
-          "function": "Native DQ_STARTIO dispatches physical READPBLK/WRITEPBLK through activated DDT/FDT pointers; after DQA0 publication, IOC$SEARCHDEV-selected DDB DDT START dispatches both physical functions through that table. Buffered/public QIO, ACP, full RB730 error/controller semantics and process completion remain unimplemented"
+          "function": "Native DQ_STARTIO dispatches physical READPBLK/WRITEPBLK through activated DDT/FDT pointers; after DQA0 publication, IOC$SEARCHDEV-selected DDB DDT START dispatches both functions and the private write FIFO reaches that entry. Public process QIO, ACP, full RB730 error/controller semantics and process completion remain unimplemented"
         },
         {
           "original_lines": [
