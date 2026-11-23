@@ -461,3 +461,5 @@ Verification: `make sysqioargscheck irpalloccheck` PASS; full `make test sourcer
 SYSQIOREQ.MAR lines 336-345 and 537-540 now map partially to the tested reservation helper. The service entry, source IPL/deletion exclusion, failure rollback and event completion, CCB IOC accounting, buffered window, device FDT invocation, public SYS$QIO dispatch and process AST completion remain unresolved. No end-to-end acceptance condition is complete.
 
 M236 implementation commit: `dded7a52dfead635df3244d945fef333b123c4ab`.
+
+Post-M236 runtime regression: `make qemu-sysboot-m217` PASS. The guest again completed the 700-byte Files-11 chain read through published DQA0 DDT/IRQ14 and stopped at `INIT stopped: remaining original initialization dependencies incomplete.` Capture `logs/serial/qemu-m217-run-local-20261123T163911638559Z.log`, 5,264 bytes, SHA-256 `09541767cf4417c0a4d385da088608f87e30b726cd2e97a39f5d399eecf7685e`; serial manifest verification PASS (89 raw logs). This is boot regression evidence; the host-only M236 reservation helper is still not on the resident execution path. The QEMU runner terminated before return.
