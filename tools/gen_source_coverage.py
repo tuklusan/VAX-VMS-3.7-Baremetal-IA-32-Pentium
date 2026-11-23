@@ -1727,7 +1727,7 @@ init_parts=[
     (756,837,'src/kernel.c','kmain','Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete','partial'),
     (838,859,None,None,'INILOA code deallocation requires full nonpaged pool','unresolved'),
     (860,992,'src/vms_ini_lockdb.c','port_ini_lockdb_init','Realtime SPT bitmap, lock ID chain, power-of-two resource hash and optional process bitmap structures (DYNDEF and consumers unresolved)','partial'),
-    (993,1031,'src/vms_ini_procvec.c','port_ini_procvec_init','Resident PCB pointer and sequence array layout with SYSTEM and NULL descriptors; actual process activation not yet running','partial'),
+    (993,1031,'src/vms_ini_procvec.c','port_ini_procvec_init','Resident source PCB pointer/sequence arrays; SYSTEM and NULL entries now point at SYSDEF-layout PCB templates, but their PHD/native contexts are absent','partial'),
     (1032,1068,'src/vms_ini_phv_swap.c','port_ini_phvswap_init','Native PHV/system slot and swapper PTE map DYN record construction; pager and swapper process are not running','partial'),
     (1069,1089,'src/vms_ini_mpw.c','port_ini_mpw_init','Modified-page-writer PTE and PHV index record allocation, no pager consumer','partial'),
     (1090,1141,'src/vms_ini_pflvec.c','port_ini_pflvec_init','Source-derived global page-file count and null PFL shell VBN/window arithmetic; host-only, no operational shell WCB yet','partial'),
@@ -1782,7 +1782,7 @@ for first,last,path,symbol,description,status in pdat_rows:
         'status':status,'reason':description})
 result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
     'original_lines':308,'sections':pdat_sections,
-    'unresolved_integration':'Native SYS.EXE now carries the exact source-layout static system PCB template, with verified SYSDEF offsets. Its PHD and native hardware PCB pointer remain absent; the diagnostic process vector still points at scheduler records and cannot activate any VMS process.'})
+    'unresolved_integration':'Native SYS.EXE has source-layout SYSTEM and NULL PCB records and an INI_PSTATE vector pointing to those records. Their PHD/native hardware contexts remain absent, and the separate scheduler records are not bound to VMS processes.'})
 
 # M107: per-source native assembly-free RTL routines, each saved as its own
 # source file with one callable symbol. These are host-tested and built into

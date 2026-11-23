@@ -10319,7 +10319,7 @@
           "pc_file": "src/vms_ini_procvec.c",
           "pc_symbol": "port_ini_procvec_init",
           "pc_line": 14,
-          "function": "Resident PCB pointer and sequence array layout with SYSTEM and NULL descriptors; actual process activation not yet running"
+          "function": "Resident source PCB pointer/sequence arrays; SYSTEM and NULL entries now point at SYSDEF-layout PCB templates, but their PHD/native contexts are absent"
         },
         {
           "original_lines": [
@@ -10588,7 +10588,7 @@
           "reason": "Terminal MACRO END directive"
         }
       ],
-      "unresolved_integration": "Native SYS.EXE now carries the exact source-layout static system PCB template, with verified SYSDEF offsets. Its PHD and native hardware PCB pointer remain absent; the diagnostic process vector still points at scheduler records and cannot activate any VMS process."
+      "unresolved_integration": "Native SYS.EXE has source-layout SYSTEM and NULL PCB records and an INI_PSTATE vector pointing to those records. Their PHD/native hardware contexts remain absent, and the separate scheduler records are not bound to VMS processes."
     },
     {
       "original_file": "RTL/SRC/MTHIIDNNT.MAR",
