@@ -2576,7 +2576,8 @@ static uint32_t m202_dq_queued_read(void *opaque,uint32_t lbn,
 static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,uint32_t lbn,
-    uint8_t destination[512],const struct port_dqddt_native *native,
+    uint8_t destination[512],const uint16_t expected_boot[256],
+    const struct port_dqddt_native *native,
     uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
        const struct port_v37_device_result *,const char *,size_t,
        struct port_v37_ioc_result *)){
@@ -2584,16 +2585,24 @@ static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
                                           native,ioc_search};
     struct port_dq_ioc_queue queue;
     struct port_dq_ioc_report report={0};
+    uint8_t second[512];
     if(!destination||port_dq_ioc_init(&queue,m202_dq_queued_read,&context)!=
          PORT_DQ_IOC_OK||
        port_dq_ioc_prepare(&queue,2u,lbn,destination,512u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_set_retry(&queue,2u,2u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_enqueue(&queue,2u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_prepare(&queue,3u,0u,second,sizeof second)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_set_retry(&queue,3u,2u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_enqueue(&queue,3u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_run(&queue,&report)!=PORT_DQ_IOC_OK||
-       report.processed!=1u||report.succeeded!=1u||report.failed!=0u||
-       report.reads!=1u||queue.completed!=1u||queue.posted!=1u||
-       queue.active!=PORT_DQ_IOC_DEPTH||queue.reads!=1u)
+       report.processed!=2u||report.succeeded!=2u||report.failed!=0u||
+       report.reads!=2u||queue.completed!=2u||queue.posted!=2u||
+       queue.active!=PORT_DQ_IOC_DEPTH||queue.reads!=2u)
         return -1;
+    if(!expected_boot)return -1;
+    for(unsigned i=0;i<256u;i++)
+        if(expected_boot[i]!=(uint16_t)((uint16_t)second[i*2u]|
+             ((uint16_t)second[i*2u+1u]<<8u)))return -1;
     for(unsigned i=0;i<PORT_DQ_IOC_DEPTH;i++)
         if(queue.packets[i].state!=PORT_DQ_IOC_EMPTY)return -1;
     return 0;
@@ -2639,9 +2648,11 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
         restore_matches=0;break;
     }
     uint8_t through_ddt[512];
+    uint16_t boot_expected[256];
     int ddt_matches=!wrote&&!restored&&!reread&&restore_matches&&
+       !port_ata_x86_read28(0u,boot_expected)&&
        !m202_read_queued_sector(stage,fdt,device_db,device_info,SCRATCH_LBN,
-          through_ddt,native,ioc_search);
+          through_ddt,boot_expected,native,ioc_search);
     if(ddt_matches)for(unsigned i=0;i<256u;i++)
         if(saved[i]!=(uint16_t)((uint16_t)through_ddt[i*2u]|
              ((uint16_t)through_ddt[i*2u+1u]<<8u))){
