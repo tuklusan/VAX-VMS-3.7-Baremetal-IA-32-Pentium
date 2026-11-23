@@ -122,9 +122,20 @@ int main(void){
        scheduler.current_pcb!=selected||scheduler.current_priority!=15u||
        count(&f,15u)!=1u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("SCH$SCHED highest-priority FIFO PCB selection");
+    if(port_v37_sched_resched_current(&scheduler,selected)!=PORT_V37_SCHED_OK||
+       get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       count(&f,15u)!=2u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("SCH$RESCHED saves current PCB to COM tail");
     if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
        selected!=f.pcb_va[1]||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("SCH$SCHED equal-priority FIFO selection");
+    if(port_v37_sched_resched_current(&scheduler,selected)!=PORT_V37_SCHED_OK||
+       port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+       selected!=f.pcb_va[2]||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("SCH$RESCHED round-robin requeue order");
+    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+       selected!=f.pcb_va[1]||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("SCH$SCHED equal-priority FIFO selection after requeue");
     if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
        selected!=f.pcb_va[0]||f.pcbs[0][PORT_V37_PCB_PRI]!=29u||
        scheduler.current_priority!=29u||port_v37_sched_check(&scheduler)!=
@@ -133,6 +144,6 @@ int main(void){
     if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_EMPTY||
        selected)
         return fail("SCH$SCHED empty resident set");
-    puts("SYS/SRC/SCHED.MAR SCH$SCHED selection and RSE.MAR SCH$CHSE queue rules PASS");
+    puts("SYS/SRC/SCHED.MAR SCH$RESCHED/SCH$SCHED and RSE.MAR SCH$CHSE PASS");
     return 0;
 }

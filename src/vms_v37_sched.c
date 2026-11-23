@@ -185,6 +185,27 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
     return PORT_V37_SCHED_OK;
 }
 
+uint32_t port_v37_sched_resched_current(struct port_v37_scheduler *s,
+                                        uint32_t address){
+    if(!s||!s->initialized||!address||s->current_pcb!=address)
+        return PORT_V37_SCHED_BADPARAM;
+    uint8_t *pcb=resolve(s,address,PORT_V37_PCB_BYTES);
+    if(!pcb)return PORT_V37_SCHED_UNRESOLVED;
+    if(get16(pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+       pcb[Q_TYPE]!=PORT_V37_DYN_PCB||
+       get16(pcb+PCBSTATE)!=PORT_V37_SCH_CUR||pcb[PCBPRI]>=32u||
+       !(get32(pcb+PCBSTS)&PORT_V37_SCH_RESIDENT)||
+       get32(pcb+SQFL)!=address||get32(pcb+SQBL)!=address)
+        return PORT_V37_SCHED_CORRUPT;
+    const unsigned q=pcb[PCBPRI];
+    uint32_t status=list_insert_tail(s,q,address);
+    if(status!=PORT_V37_SCHED_OK)return status;
+    put16(pcb+PCBSTATE,PORT_V37_SCH_COM);
+    set_summary(s,q,1);
+    s->ready_count[q]++;
+    return PORT_V37_SCHED_OK;
+}
+
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){
     if(!s||!s->initialized)return PORT_V37_SCHED_BADPARAM;
     uint32_t summary[2]={0u,0u};uint32_t ready[32]={0u};

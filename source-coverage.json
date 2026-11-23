@@ -5808,24 +5808,48 @@
         {
           "original_lines": [
             58,
-            74
+            61
+          ],
+          "status": "excluded",
+          "reason": "native SCH$RESCHED interrupt entry, IPL transition and SVPCTX save remain unimplemented"
+        },
+        {
+          "original_lines": [
+            62,
+            67
           ],
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
-          "pc_symbol": "port_v37_sched_chse",
-          "pc_line": 101,
-          "function": "Resident COM queue links and summary update are implemented; source context save and reschedule interrupt entry remain missing"
+          "pc_symbol": "port_v37_sched_resched_current",
+          "pc_line": 188,
+          "function": "Requeue current resident PCB at the COM queue tail and set queue summary; caller context save and hardware interrupt entry remain unimplemented"
+        },
+        {
+          "original_lines": [
+            68,
+            74
+          ],
+          "status": "excluded",
+          "reason": "source comments and SCH$SCHED entry separator"
         },
         {
           "original_lines": [
             75,
-            98
+            96
           ],
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
           "pc_line": 149,
-          "function": "Highest resident COM queue selection, CUR state, current PCB/priority and floating priority; native LDPCTX remains blocked until PHD/PHYPCB context exists"
+          "function": "Highest resident COM queue selection, CUR state, current PCB/priority and floating priority; native context restore/PCBB programming remain unimplemented"
+        },
+        {
+          "original_lines": [
+            97,
+            98
+          ],
+          "status": "excluded",
+          "reason": "native IA-32 LDPCTX/REI context restoration remains unresolved"
         },
         {
           "original_lines": [
@@ -5833,7 +5857,7 @@
             106
           ],
           "status": "excluded",
-          "reason": "source REI, idle wait loop and fatal empty-queue path lack native scheduler context restoration"
+          "reason": "source idle wait and fatal empty-queue path lack native scheduler context restoration"
         },
         {
           "original_lines": [
