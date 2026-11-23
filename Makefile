@@ -232,7 +232,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: sysqioresidentcheck vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37phdcheck v37ia32ctxcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck irpalloccheck
+test: sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37phdcheck v37ia32ctxcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck irpalloccheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 
@@ -367,6 +367,11 @@ sysqioargscheck: | build
 .PHONY: sysqioresidentcheck
 sysqioresidentcheck: build/sys.exe | build
 	python3 tests/test_sysqio_resident.py build/sys.exe
+
+.PHONY: v37ccbcheck
+v37ccbcheck: | build
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_ccb.c tests/test_v37_ccb_host.c -o build/v37ccbcheck
+	./build/v37ccbcheck
 
 clean:
 	rm -rf build vms37lab.ima portdisk.img
@@ -838,7 +843,7 @@ M121_QIO_SRCS=$(wildcard src/vms_qio_*.c)
 M121_QIO_OBJS=$(patsubst src/%.c,build/%.o,$(M121_QIO_SRCS))
 # M218/M250/M251: native SYSQIO transaction helpers, now bound to the
 # source-layout PCB quota and local-event fields in resident SYS.EXE.
-M218_SYSQIO_SRCS=$(wildcard src/vms_sysqio_*.c)
+M218_SYSQIO_SRCS=$(wildcard src/vms_sysqio_*.c) src/vms_v37_ccb.c
 M218_SYSQIO_OBJS=$(patsubst src/%.c,build/%.o,$(M218_SYSQIO_SRCS))
 # The resident SYS.EXE link recipe consumes M121_QIO_OBJS.
 M121_QIO_OBJS+=$(M218_SYSQIO_OBJS)
@@ -1366,7 +1371,7 @@ iocphyscheck: $(M120_IOC_OBJS) | build
 
 # M121: source SYSQIOREQ.MAR EXE$FINISHIOC to IOC post queue, used
 # by NLDRIVER.MAR; this is not a user $QIO/AST delivery interface.
-$(M121_QIO_OBJS): build/%.o: src/%.c src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_ini_packet_queues.h src/vms_sysqio_args.h src/vms_v37_pcb.h src/vms_dq_fdt.h | build
+$(M121_QIO_OBJS): build/%.o: src/%.c src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_ini_packet_queues.h src/vms_sysqio_args.h src/vms_v37_pcb.h src/vms_v37_ccb.h src/vms_dq_fdt.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: qiopostcheck
 qiopostcheck: $(M121_QIO_OBJS) | build
