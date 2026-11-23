@@ -2269,7 +2269,9 @@ qio_rows=[
  (239,247,'src/vms_sysqio_ef.c','port_v37_sysqio_clear_efn','Local EFN clear through 63 and global SCH$CLREF callback selected by the source EFN boundary','partial'),
  (248,252,None,None,'Original channel-number validation and CCB lookup unresolved','unresolved'),
  (253,283,'src/vms_sysqio_args.c','port_v37_sysqio_preflight','Native CCB access-mode comparison, DQ FDT function legality and offline exceptions; channel lookup and full device semantics remain unimplemented','partial'),
- (284,735,None,None,'IOSB probing, quotas, IRP allocation, full device access checks, dispatch and completion unresolved','unresolved'),
+ (284,285,None,None,'Original IOSB branch prologue unresolved','unresolved'),
+ (286,292,'src/vms_sysqio_iosb.c','port_v37_sysqio_clear_iosb','Nullable IOSB, full 8-byte write probe before atomic two-longword clear; caller memory copy wiring remains unresolved','partial'),
+ (293,735,None,None,'Quota charging, IRP allocation, full device access checks, dispatch and completion unresolved','unresolved'),
  (736,740,None,None,'EXE$ABORTIO AST quota adjustments and IOSB clearing unported','unresolved'),
  (741,742,'src/vms_qio_finishioc.c','port_v37_qio_finishioc','EXE$FINISHIOC clears R1 before common finish path','partial'),
  (743,749,'src/vms_qio_finishio.c','port_v37_qio_finishio','UCB OPCNT, IRP media status, append IOC post FIFO and defer IPL4','partial'),
@@ -2284,7 +2286,7 @@ for lo,hi,pc,sym,description,status in qio_rows:
     else:qio_sec.append({'original_lines':[lo,hi],'status':status,'reason':description})
 result['files'].append({'original_file':'SYS/SRC/SYSQIOREQ.MAR',
     'original_lines':908,'sections':qio_sec,
-    'unresolved_integration':'The native AP decoder preserves the fixed 12-argument offsets; the local/global EFN clear helper implements the source boundary; and a preflight helper checks resolved-channel access threshold, DQ FDT legality and offline exceptions. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; user SYS$QIO entry, process channel lookup, live EFN integration, IOSB access, quotas, device access/protection, IRP allocation and process AST completion remain absent.'})
+    'unresolved_integration':'The native AP decoder preserves fixed argument offsets; helpers model local/global EFN clearing and nullable IOSB probing/clearing; a preflight helper checks resolved-channel access threshold, DQ FDT legality and offline exceptions. They are not connected to a user service entry. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; process channel lookup, live EFN/IOSB integration, quotas, device access/protection, IRP allocation and process AST completion remain absent.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M123: IOCIOPOST kernel-end-action subset executed in real SYS.EXE.

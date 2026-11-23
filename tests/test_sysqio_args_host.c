@@ -1,5 +1,6 @@
 #include "vms_sysqio_args.h"
 #include "vms_sysqio_ef.h"
+#include "vms_sysqio_iosb.h"
 #include "vms_sys85.h"
 #include <stdio.h>
 #include <string.h>
@@ -11,6 +12,23 @@ static void put32(uint8_t *p,uint32_t v){
 struct global_ef_test { uint8_t seen;uint32_t status; };
 static uint32_t clear_global(void *opaque,uint8_t efn){
     struct global_ef_test *t=opaque;t->seen=efn;return t->status;
+}
+struct iosb_memory_test {
+    uint32_t base;
+    uint8_t bytes[32];
+    uint32_t probes,clears;
+    int deny_probe,deny_clear;
+};
+static int probe_iosb(void *opaque,uint32_t address,size_t size){
+    struct iosb_memory_test *m=opaque;m->probes++;
+    return m->deny_probe||address<m->base||size>sizeof m->bytes||
+        address-m->base>sizeof m->bytes-size;
+}
+static int clear_iosb(void *opaque,uint32_t address,size_t size){
+    struct iosb_memory_test *m=opaque;m->clears++;
+    if(m->deny_clear||address<m->base||size>sizeof m->bytes||
+       address-m->base>sizeof m->bytes-size)return 1;
+    memset(m->bytes+(address-m->base),0,size);return 0;
 }
 
 int main(void){
@@ -80,6 +98,23 @@ int main(void){
     if(port_v37_sysqio_clear_efn(0x1ffu,local,clear_global,&global,
          &service_status)!=PORT_V37_SYSQIO_EF_GLOBAL_FAILURE||
        global.seen!=255u||service_status!=PORT_SYS85_NOPRIV)return 15;
-    puts("SYS$QIO EFN/AP/channel mode/FDT preflight cases PASS");
+    struct iosb_memory_test mem={.base=0x1000u};
+    memset(mem.bytes,0xa5,sizeof mem.bytes);
+    const struct port_v37_sysqio_memory memops={
+        probe_iosb,clear_iosb,&mem};
+    if(port_v37_sysqio_clear_iosb(0x1008u,&memops)!=
+       PORT_V37_SYSQIO_IOSB_OK||mem.probes!=1u||mem.clears!=1u)
+        return 16;
+    for(unsigned i=8;i<16;i++)if(mem.bytes[i]!=0u)return 17;
+    if(mem.bytes[7]!=0xa5u||mem.bytes[16]!=0xa5u)return 18;
+    mem.deny_probe=1;mem.probes=mem.clears=0u;
+    memset(mem.bytes,0xa5,sizeof mem.bytes);
+    if(port_v37_sysqio_clear_iosb(0x1008u,&memops)!=
+       PORT_V37_SYSQIO_IOSB_ACCVIO||mem.probes!=1u||mem.clears!=0u||
+       mem.bytes[8]!=0xa5u)return 19;
+    mem.deny_probe=0;mem.probes=mem.clears=0u;
+    if(port_v37_sysqio_clear_iosb(0u,&memops)!=
+       PORT_V37_SYSQIO_IOSB_OK||mem.probes||mem.clears)return 20;
+    puts("SYS$QIO AP/EFN/channel/FDT/IOSB preflight cases PASS");
     return 0;
 }
