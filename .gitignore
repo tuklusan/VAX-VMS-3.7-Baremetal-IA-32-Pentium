@@ -1,0 +1,74 @@
+
+# VAX/VMS 3.7 Native IA-32
+# Git exclusions for the public repository
+
+# Original DEC source code (restricted)
+original-vms37/
+third_party/vms37/
+*.mar
+*.MAR
+*.b32
+*.B32
+*.bli
+*.BLI
+*.req
+*.REQ
+
+# Historical and recovery directories
+recovery/
+optic-history/
+
+# Generated build files
+build/
+*.o
+*.obj
+*.a
+*.elf
+*.bin
+*.exe
+*.map
+
+# Virtual disks and operating system images
+*.img
+*.ima
+*.iso
+*.qcow2
+*.vmdk
+*.vdi
+
+# Archives and backups
+*.zip
+*.7z
+*.tar
+*.gz
+*.bak
+*.tmp
+
+# QEMU output and test logs
+*.log
+qemu-*.txt
+!logs/serial/*.log
+
+# Python temporary files
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+
+# Credentials and secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+
+# Local configuration
+local.config
+config.local

@@ -1,0 +1,677 @@
+{
+  "reference": "https://github.com/calmsacibis995/vms37-src",
+  "revision": "2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752",
+  "file_count": 34,
+  "modules": [
+    {
+      "name": "MTHCEXP",
+      "source": "RTL/SRC/MTHCEXP.MAR",
+      "lines": 146,
+      "entries": [
+        {
+          "line": 123,
+          "label": "MTH$CEXP"
+        }
+      ],
+      "format": "F",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCLOG",
+      "source": "RTL/SRC/MTHCLOG.MAR",
+      "lines": 138,
+      "entries": [
+        {
+          "line": 124,
+          "label": "MTH$CLOG"
+        }
+      ],
+      "format": "F",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCSQRT",
+      "source": "RTL/SRC/MTHCSQRT.MAR",
+      "lines": 167,
+      "entries": [
+        {
+          "line": 134,
+          "label": "MTH$CSQRT"
+        }
+      ],
+      "format": "F",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCSINCO",
+      "source": "RTL/SRC/MTHCSINCO.MAR",
+      "lines": 221,
+      "entries": [
+        {
+          "line": 124,
+          "label": "MTH$CSIN"
+        },
+        {
+          "line": 170,
+          "label": "MTH$CCOS"
+        }
+      ],
+      "format": "F",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCDEXP",
+      "source": "RTL/SRC/MTHCDEXP.MAR",
+      "lines": 144,
+      "entries": [
+        {
+          "line": 122,
+          "label": "MTH$CDEXP"
+        }
+      ],
+      "format": "D",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCDLOG",
+      "source": "RTL/SRC/MTHCDLOG.MAR",
+      "lines": 144,
+      "entries": [
+        {
+          "line": 127,
+          "label": "MTH$CDLOG"
+        }
+      ],
+      "format": "D",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCDSQRT",
+      "source": "RTL/SRC/MTHCDSQRT.MAR",
+      "lines": 171,
+      "entries": [
+        {
+          "line": 134,
+          "label": "MTH$CDSQRT"
+        }
+      ],
+      "format": "D",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCDSINC",
+      "source": "RTL/SRC/MTHCDSINC.MAR",
+      "lines": 226,
+      "entries": [
+        {
+          "line": 124,
+          "label": "MTH$CDSIN"
+        },
+        {
+          "line": 173,
+          "label": "MTH$CDCOS"
+        }
+      ],
+      "format": "D",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCGEXP",
+      "source": "RTL/SRC/MTHCGEXP.MAR",
+      "lines": 144,
+      "entries": [
+        {
+          "line": 122,
+          "label": "MTH$CGEXP"
+        }
+      ],
+      "format": "G",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCGLOG",
+      "source": "RTL/SRC/MTHCGLOG.MAR",
+      "lines": 145,
+      "entries": [
+        {
+          "line": 128,
+          "label": "MTH$CGLOG"
+        }
+      ],
+      "format": "G",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCGSQRT",
+      "source": "RTL/SRC/MTHCGSQRT.MAR",
+      "lines": 170,
+      "entries": [
+        {
+          "line": 133,
+          "label": "MTH$CGSQRT"
+        }
+      ],
+      "format": "G",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHCGSINC",
+      "source": "RTL/SRC/MTHCGSINC.MAR",
+      "lines": 226,
+      "entries": [
+        {
+          "line": 124,
+          "label": "MTH$CGSIN"
+        },
+        {
+          "line": 173,
+          "label": "MTH$CGCOS"
+        }
+      ],
+      "format": "G",
+      "kind": "complex"
+    },
+    {
+      "name": "MTHATANH",
+      "source": "RTL/SRC/MTHATANH.MAR",
+      "lines": 375,
+      "entries": [
+        {
+          "line": 229,
+          "label": "MTH$ATANH"
+        }
+      ],
+      "format": "F",
+      "kind": "atanh"
+    },
+    {
+      "name": "MTHDATANH",
+      "source": "RTL/SRC/MTHDATANH.MAR",
+      "lines": 388,
+      "entries": [
+        {
+          "line": 242,
+          "label": "MTH$DATANH"
+        }
+      ],
+      "format": "D",
+      "kind": "atanh"
+    },
+    {
+      "name": "MTHGATANH",
+      "source": "RTL/SRC/MTHGATANH.MAR",
+      "lines": 386,
+      "entries": [
+        {
+          "line": 238,
+          "label": "MTH$GATANH"
+        }
+      ],
+      "format": "G",
+      "kind": "atanh"
+    },
+    {
+      "name": "MTHHATANH",
+      "source": "RTL/SRC/MTHHATANH.MAR",
+      "lines": 405,
+      "entries": [
+        {
+          "line": 252,
+          "label": "MTH$HATANH"
+        }
+      ],
+      "format": "H",
+      "kind": "atanh"
+    },
+    {
+      "name": "MTHSINCOS",
+      "source": "RTL/SRC/MTHSINCOS.MAR",
+      "lines": 1599,
+      "entries": [
+        {
+          "line": 348,
+          "label": "MTH$SINCOS"
+        },
+        {
+          "line": 367,
+          "label": "MTH$SIN"
+        },
+        {
+          "line": 384,
+          "label": "MTH$COS"
+        },
+        {
+          "line": 436,
+          "label": "MTH$SINCOSD"
+        },
+        {
+          "line": 449,
+          "label": "MTH$SIND"
+        },
+        {
+          "line": 460,
+          "label": "MTH$COSD"
+        }
+      ],
+      "format": "F",
+      "kind": "sincos"
+    },
+    {
+      "name": "MTHDSINCO",
+      "source": "RTL/SRC/MTHDSINCO.MAR",
+      "lines": 1788,
+      "entries": [
+        {
+          "line": 356,
+          "label": "MTH$DSINCOS"
+        },
+        {
+          "line": 375,
+          "label": "MTH$DSIN"
+        },
+        {
+          "line": 392,
+          "label": "MTH$DCOS"
+        },
+        {
+          "line": 444,
+          "label": "MTH$DSINCOSD"
+        },
+        {
+          "line": 457,
+          "label": "MTH$DSIND"
+        },
+        {
+          "line": 468,
+          "label": "MTH$DCOSD"
+        }
+      ],
+      "format": "D",
+      "kind": "sincos"
+    },
+    {
+      "name": "MTHGSINCO",
+      "source": "RTL/SRC/MTHGSINCO.MAR",
+      "lines": 1731,
+      "entries": [
+        {
+          "line": 335,
+          "label": "MTH$GSINCOS"
+        },
+        {
+          "line": 354,
+          "label": "MTH$GSIN"
+        },
+        {
+          "line": 371,
+          "label": "MTH$GCOS"
+        },
+        {
+          "line": 423,
+          "label": "MTH$GSINCOSD"
+        },
+        {
+          "line": 436,
+          "label": "MTH$GSIND"
+        },
+        {
+          "line": 447,
+          "label": "MTH$GCOSD"
+        }
+      ],
+      "format": "G",
+      "kind": "sincos"
+    },
+    {
+      "name": "MTHHSINCO",
+      "source": "RTL/SRC/MTHHSINCO.MAR",
+      "lines": 2020,
+      "entries": [
+        {
+          "line": 425,
+          "label": "MTH$HSINCOS"
+        },
+        {
+          "line": 450,
+          "label": "MTH$HSIN"
+        },
+        {
+          "line": 468,
+          "label": "MTH$HCOS"
+        },
+        {
+          "line": 520,
+          "label": "MTH$HSINCOSD"
+        },
+        {
+          "line": 533,
+          "label": "MTH$HSIND"
+        },
+        {
+          "line": 545,
+          "label": "MTH$HCOSD"
+        }
+      ],
+      "format": "H",
+      "kind": "sincos"
+    },
+    {
+      "name": "LIBPOLYF",
+      "source": "RTL/SRC/LIBPOLYF.MAR",
+      "lines": 208,
+      "entries": [
+        {
+          "line": 155,
+          "label": "LIB$POLYF"
+        }
+      ],
+      "format": "F",
+      "kind": "poly"
+    },
+    {
+      "name": "LIBPOLYD",
+      "source": "RTL/SRC/LIBPOLYD.MAR",
+      "lines": 208,
+      "entries": [
+        {
+          "line": 155,
+          "label": "LIB$POLYD"
+        }
+      ],
+      "format": "D",
+      "kind": "poly"
+    },
+    {
+      "name": "LIBPOLYG",
+      "source": "RTL/SRC/LIBPOLYG.MAR",
+      "lines": 204,
+      "entries": [
+        {
+          "line": 151,
+          "label": "LIB$POLYG"
+        }
+      ],
+      "format": "G",
+      "kind": "poly"
+    },
+    {
+      "name": "LIBPOLYH",
+      "source": "RTL/SRC/LIBPOLYH.MAR",
+      "lines": 205,
+      "entries": [
+        {
+          "line": 152,
+          "label": "LIB$POLYH"
+        }
+      ],
+      "format": "H",
+      "kind": "poly"
+    },
+    {
+      "name": "LIBEMODF",
+      "source": "RTL/SRC/LIBEMODF.MAR",
+      "lines": 200,
+      "entries": [
+        {
+          "line": 155,
+          "label": "LIB$EMODF"
+        }
+      ],
+      "format": "F",
+      "kind": "emod"
+    },
+    {
+      "name": "LIBEMODD",
+      "source": "RTL/SRC/LIBEMODD.MAR",
+      "lines": 198,
+      "entries": [
+        {
+          "line": 153,
+          "label": "LIB$EMODD"
+        }
+      ],
+      "format": "D",
+      "kind": "emod"
+    },
+    {
+      "name": "LIBEMODG",
+      "source": "RTL/SRC/LIBEMODG.MAR",
+      "lines": 197,
+      "entries": [
+        {
+          "line": 152,
+          "label": "LIB$EMODG"
+        }
+      ],
+      "format": "G",
+      "kind": "emod"
+    },
+    {
+      "name": "LIBEMODH",
+      "source": "RTL/SRC/LIBEMODH.MAR",
+      "lines": 197,
+      "entries": [
+        {
+          "line": 151,
+          "label": "LIB$EMODH"
+        }
+      ],
+      "format": "H",
+      "kind": "emod"
+    },
+    {
+      "name": "MTHCVTDG",
+      "source": "RTL/SRC/MTHCVTDG.MAR",
+      "lines": 371,
+      "entries": [
+        {
+          "line": 174,
+          "label": "MTH$CVT_DA_GA"
+        },
+        {
+          "line": 180,
+          "label": "MTH$CVT_GA_DA"
+        },
+        {
+          "line": 187,
+          "label": "MTH$CVT_D_G"
+        },
+        {
+          "line": 193,
+          "label": "MTH$CVT_G_D"
+        }
+      ],
+      "format": "-",
+      "kind": "convert"
+    },
+    {
+      "name": "MTHCONVER",
+      "source": "RTL/SRC/MTHCONVER.MAR",
+      "lines": 1195,
+      "entries": [
+        {
+          "line": 128,
+          "label": "MTH$DFLOTI"
+        },
+        {
+          "line": 167,
+          "label": "MTH$DFLOTJ"
+        },
+        {
+          "line": 206,
+          "label": "MTH$IINT"
+        },
+        {
+          "line": 207,
+          "label": "MTH$IIFIX"
+        },
+        {
+          "line": 248,
+          "label": "MTH$JINT"
+        },
+        {
+          "line": 249,
+          "label": "MTH$JIFIX"
+        },
+        {
+          "line": 289,
+          "label": "MTH$IIDINT"
+        },
+        {
+          "line": 329,
+          "label": "MTH$JIDINT"
+        },
+        {
+          "line": 368,
+          "label": "MTH$REAL"
+        },
+        {
+          "line": 407,
+          "label": "MTH$AIMAG"
+        },
+        {
+          "line": 450,
+          "label": "MTH$CMPLX"
+        },
+        {
+          "line": 491,
+          "label": "MTH$DBLE"
+        },
+        {
+          "line": 531,
+          "label": "MTH$SNGL"
+        },
+        {
+          "line": 572,
+          "label": "MTH$SNGLG"
+        },
+        {
+          "line": 610,
+          "label": "MTH$FLOATI"
+        },
+        {
+          "line": 648,
+          "label": "MTH$FLOATJ"
+        },
+        {
+          "line": 687,
+          "label": "MTH$GFLOTI"
+        },
+        {
+          "line": 726,
+          "label": "MTH$GFLOTJ"
+        },
+        {
+          "line": 766,
+          "label": "MTH$IIGINT"
+        },
+        {
+          "line": 806,
+          "label": "MTH$JIGINT"
+        },
+        {
+          "line": 846,
+          "label": "MTH$IIHINT"
+        },
+        {
+          "line": 886,
+          "label": "MTH$JIHINT"
+        },
+        {
+          "line": 925,
+          "label": "MTH$DREAL"
+        },
+        {
+          "line": 964,
+          "label": "MTH$GREAL"
+        },
+        {
+          "line": 1003,
+          "label": "MTH$DIMAG"
+        },
+        {
+          "line": 1043,
+          "label": "MTH$GIMAG"
+        },
+        {
+          "line": 1093,
+          "label": "MTH$DCMPLX"
+        },
+        {
+          "line": 1146,
+          "label": "MTH$GCMPLX"
+        },
+        {
+          "line": 1189,
+          "label": "MTH$GDBLE"
+        }
+      ],
+      "format": "-",
+      "kind": "convert"
+    },
+    {
+      "name": "LIBTRAA2E",
+      "source": "RTL/SRC/LIBTRAA2E.MAR",
+      "lines": 328,
+      "entries": [
+        {
+          "line": 167,
+          "label": "LIB$TRA_ASC_EBC"
+        }
+      ],
+      "format": "-",
+      "kind": "translate"
+    },
+    {
+      "name": "LIBTRAE2A",
+      "source": "RTL/SRC/LIBTRAE2A.MAR",
+      "lines": 334,
+      "entries": [
+        {
+          "line": 170,
+          "label": "LIB$TRA_EBC_ASC"
+        }
+      ],
+      "format": "-",
+      "kind": "translate"
+    },
+    {
+      "name": "LIBEF",
+      "source": "RTL/SRC/LIBEF.MAR",
+      "lines": 385,
+      "entries": [
+        {
+          "line": 145,
+          "label": "LIB$GET_EF"
+        },
+        {
+          "line": 236,
+          "label": "LIB$FREE_EF"
+        },
+        {
+          "line": 336,
+          "label": "LIB$RESERVE_EF"
+        }
+      ],
+      "format": "-",
+      "kind": "ef"
+    },
+    {
+      "name": "LIBLUN",
+      "source": "RTL/SRC/LIBLUN.MAR",
+      "lines": 284,
+      "entries": [
+        {
+          "line": 150,
+          "label": "LIB$GET_LUN"
+        },
+        {
+          "line": 239,
+          "label": "LIB$FREE_LUN"
+        }
+      ],
+      "format": "-",
+      "kind": "lun"
+    }
+  ]
+}

@@ -1,0 +1,541 @@
+{
+  "revision": "2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752",
+  "file_count": 40,
+  "modules": [
+    {
+      "name": "LIBA2EREV",
+      "source": "RTL/SRC/LIBA2EREV.MAR",
+      "lines": 147,
+      "kind": "exact-table",
+      "entries": [
+        {
+          "line": 112,
+          "symbol": "port113_src_liba2erev",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBE2AREV",
+      "source": "RTL/SRC/LIBE2AREV.MAR",
+      "lines": 150,
+      "kind": "exact-table",
+      "entries": [
+        {
+          "line": 115,
+          "symbol": "port113_src_libe2arev",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBASCEBC",
+      "source": "RTL/SRC/LIBASCEBC.MAR",
+      "lines": 152,
+      "kind": "exact-table",
+      "entries": [
+        {
+          "line": 116,
+          "symbol": "port113_src_libascebc",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBEBCASC",
+      "source": "RTL/SRC/LIBEBCASC.MAR",
+      "lines": 161,
+      "kind": "exact-table",
+      "entries": [
+        {
+          "line": 125,
+          "symbol": "port113_src_libebcasc",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBASTINP",
+      "source": "RTL/SRC/LIBASTINP.MAR",
+      "lines": 177,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 125,
+          "symbol": "port113_src_libastinp",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBADDX",
+      "source": "RTL/SRC/LIBADDX.MAR",
+      "lines": 334,
+      "kind": "bounded-arithmetic",
+      "entries": [
+        {
+          "line": 163,
+          "symbol": "port113_src_addx",
+          "status": "partial"
+        },
+        {
+          "line": 281,
+          "symbol": "port113_src_subx",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBSIGNAL",
+      "source": "RTL/SRC/LIBSIGNAL.MAR",
+      "lines": 518,
+      "kind": "unresolved-frame",
+      "entries": [
+        {
+          "line": 187,
+          "symbol": "port113_src_stop",
+          "status": "unresolved"
+        },
+        {
+          "line": 242,
+          "symbol": "port113_src_signal",
+          "status": "unresolved"
+        }
+      ]
+    },
+    {
+      "name": "LIBINITIA",
+      "source": "RTL/SRC/LIBINITIA.MAR",
+      "lines": 247,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 180,
+          "symbol": "port113_src_libinitia",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBTEMPLA",
+      "source": "RTL/SRC/LIBTEMPLA.MAR",
+      "lines": 126,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 113,
+          "symbol": "port113_src_libtempla",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBCVTDF",
+      "source": "RTL/SRC/LIBCVTDF.MAR",
+      "lines": 146,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 135,
+          "symbol": "port113_src_libcvtdf",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBSPANC2",
+      "source": "RTL/SRC/COBSPANC2.MAR",
+      "lines": 109,
+      "kind": "exact-table",
+      "entries": [
+        {
+          "line": 99,
+          "symbol": "port113_src_cobspanc2",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBSPANC",
+      "source": "RTL/SRC/COBSPANC.MAR",
+      "lines": 142,
+      "kind": "exact-table",
+      "entries": [
+        {
+          "line": 107,
+          "symbol": "port113_src_cobspanc",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBDEEDIT",
+      "source": "RTL/SRC/COBDEEDIT.MAR",
+      "lines": 107,
+      "kind": "exact-table",
+      "entries": [
+        {
+          "line": 94,
+          "symbol": "port113_src_cobdeedit",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBDHANDL",
+      "source": "RTL/SRC/COBDHANDL.MAR",
+      "lines": 142,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 138,
+          "symbol": "port113_src_cobdhandl",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "LIBDAY",
+      "source": "RTL/SRC/LIBDAY.MAR",
+      "lines": 206,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 155,
+          "symbol": "port113_src_libday",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTPD",
+      "source": "RTL/SRC/COBCVTPD.MAR",
+      "lines": 171,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 140,
+          "symbol": "port113_src_cobcvtpd",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTPF",
+      "source": "RTL/SRC/COBCVTPF.MAR",
+      "lines": 171,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 139,
+          "symbol": "port113_src_cobcvtpf",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTFP",
+      "source": "RTL/SRC/COBCVTFP.MAR",
+      "lines": 183,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 141,
+          "symbol": "port113_src_cobcvtfp",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTDP",
+      "source": "RTL/SRC/COBCVTDP.MAR",
+      "lines": 184,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 142,
+          "symbol": "port113_src_cobcvtdp",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTRQP",
+      "source": "RTL/SRC/COBCVTRQP.MAR",
+      "lines": 174,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 142,
+          "symbol": "port113_src_cobcvtrqp",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTRFP",
+      "source": "RTL/SRC/COBCVTRFP.MAR",
+      "lines": 184,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 142,
+          "symbol": "port113_src_cobcvtrfp",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTRDP",
+      "source": "RTL/SRC/COBCVTRDP.MAR",
+      "lines": 184,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 142,
+          "symbol": "port113_src_cobcvtrdp",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTQP",
+      "source": "RTL/SRC/COBCVTQP.MAR",
+      "lines": 180,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 148,
+          "symbol": "port113_src_cobcvtqp",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTPQ",
+      "source": "RTL/SRC/COBCVTPQ.MAR",
+      "lines": 177,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 146,
+          "symbol": "port113_src_cobcvtpq",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTRPQ",
+      "source": "RTL/SRC/COBCVTRPQ.MAR",
+      "lines": 180,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 148,
+          "symbol": "port113_src_cobcvtrpq",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTQD",
+      "source": "RTL/SRC/COBCVTQD.MAR",
+      "lines": 195,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 146,
+          "symbol": "port113_src_cobcvtqd",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTQF",
+      "source": "RTL/SRC/COBCVTQF.MAR",
+      "lines": 195,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 145,
+          "symbol": "port113_src_cobcvtqf",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTFQ",
+      "source": "RTL/SRC/COBCVTFQ.MAR",
+      "lines": 213,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 154,
+          "symbol": "port113_src_cobcvtfq",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTDQ",
+      "source": "RTL/SRC/COBCVTDQ.MAR",
+      "lines": 213,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 154,
+          "symbol": "port113_src_cobcvtdq",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTRFQ",
+      "source": "RTL/SRC/COBCVTRFQ.MAR",
+      "lines": 213,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 154,
+          "symbol": "port113_src_cobcvtrfq",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCVTRDQ",
+      "source": "RTL/SRC/COBCVTRDQ.MAR",
+      "lines": 213,
+      "kind": "bounded-conversion",
+      "entries": [
+        {
+          "line": 154,
+          "symbol": "port113_src_cobcvtrdq",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBINVUSE",
+      "source": "RTL/SRC/COBINVUSE.MAR",
+      "lines": 219,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 140,
+          "symbol": "port113_src_cobinvuse",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBCNVOUT",
+      "source": "RTL/SRC/COBCNVOUT.MAR",
+      "lines": 285,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 163,
+          "symbol": "port113_src_cobcnvout",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBDIVQ",
+      "source": "RTL/SRC/COBDIVQ.MAR",
+      "lines": 359,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 154,
+          "symbol": "port113_src_cobdivq",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "COBEXPI",
+      "source": "RTL/SRC/COBEXPI.MAR",
+      "lines": 876,
+      "kind": "bounded-arithmetic",
+      "entries": [
+        {
+          "line": 397,
+          "symbol": "port113_src_expi_ose",
+          "status": "partial"
+        },
+        {
+          "line": 400,
+          "symbol": "port113_src_expi",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "BASMATNUL",
+      "source": "RTL/SRC/BASMATNUL.MAR",
+      "lines": 248,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 148,
+          "symbol": "port113_src_basmatnul",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "BASMATRED",
+      "source": "RTL/SRC/BASMATRED.MAR",
+      "lines": 359,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 153,
+          "symbol": "port113_src_basmatred",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "BASMATIDN",
+      "source": "RTL/SRC/BASMATIDN.MAR",
+      "lines": 364,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 319,
+          "symbol": "port113_src_basmatidn",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "BASMATINI",
+      "source": "RTL/SRC/BASMATINI.MAR",
+      "lines": 399,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 358,
+          "symbol": "port113_src_basmatini",
+          "status": "partial"
+        }
+      ]
+    },
+    {
+      "name": "BASEDIT",
+      "source": "RTL/SRC/BASEDIT.MAR",
+      "lines": 440,
+      "kind": "bounded-service",
+      "entries": [
+        {
+          "line": 168,
+          "symbol": "port113_src_basedit",
+          "status": "partial"
+        }
+      ]
+    }
+  ]
+}

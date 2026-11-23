@@ -1,0 +1,600 @@
+{
+  "reference": "https://github.com/calmsacibis995/vms37-src",
+  "revision": "2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752",
+  "file_count": 40,
+  "dispatch_files": 30,
+  "core_files": 10,
+  "scope": "Exact original FORTRAN statement type selection, source-specific native callbacks, bounded partial LUB/RMS support. No simulated VAX execution; no guest connection yet.",
+  "modules": [
+    {
+      "name": "FORDECOMF",
+      "source": "RTL/SRC/FORDECOMF.MAR",
+      "lines": 178,
+      "entries": [
+        {
+          "line": 172,
+          "label": "FOR$DECODE_MF",
+          "symbol": "port112_fordecomf"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 12,
+      "object_format": false
+    },
+    {
+      "name": "FORDECOMO",
+      "source": "RTL/SRC/FORDECOMO.MAR",
+      "lines": 183,
+      "entries": [
+        {
+          "line": 176,
+          "label": "FOR$DECODE_MO",
+          "symbol": "port112_fordecomo"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 12,
+      "object_format": true
+    },
+    {
+      "name": "FORENCOMF",
+      "source": "RTL/SRC/FORENCOMF.MAR",
+      "lines": 178,
+      "entries": [
+        {
+          "line": 172,
+          "label": "FOR$ENCODE_MF",
+          "symbol": "port112_forencomf"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 11,
+      "object_format": false
+    },
+    {
+      "name": "FORENCOMO",
+      "source": "RTL/SRC/FORENCOMO.MAR",
+      "lines": 183,
+      "entries": [
+        {
+          "line": 176,
+          "label": "FOR$ENCODE_MO",
+          "symbol": "port112_forencomo"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 11,
+      "object_format": true
+    },
+    {
+      "name": "FORREADDF",
+      "source": "RTL/SRC/FORREADDF.MAR",
+      "lines": 180,
+      "entries": [
+        {
+          "line": 174,
+          "label": "FOR$READ_DF",
+          "symbol": "port112_forreaddf"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 6,
+      "object_format": false
+    },
+    {
+      "name": "FORREADDO",
+      "source": "RTL/SRC/FORREADDO.MAR",
+      "lines": 185,
+      "entries": [
+        {
+          "line": 178,
+          "label": "FOR$READ_DO",
+          "symbol": "port112_forreaddo"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 6,
+      "object_format": true
+    },
+    {
+      "name": "FORREADDU",
+      "source": "RTL/SRC/FORREADDU.MAR",
+      "lines": 179,
+      "entries": [
+        {
+          "line": 173,
+          "label": "FOR$READ_DU",
+          "symbol": "port112_forreaddu"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 8,
+      "object_format": false
+    },
+    {
+      "name": "FORREADIF",
+      "source": "RTL/SRC/FORREADIF.MAR",
+      "lines": 178,
+      "entries": [
+        {
+          "line": 172,
+          "label": "FOR$READ_IF",
+          "symbol": "port112_forreadif"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 18,
+      "object_format": false
+    },
+    {
+      "name": "FORREADIO",
+      "source": "RTL/SRC/FORREADIO.MAR",
+      "lines": 183,
+      "entries": [
+        {
+          "line": 176,
+          "label": "FOR$READ_IO",
+          "symbol": "port112_forreadio"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 18,
+      "object_format": true
+    },
+    {
+      "name": "FORREADKF",
+      "source": "RTL/SRC/FORREADKF.MAR",
+      "lines": 181,
+      "entries": [
+        {
+          "line": 175,
+          "label": "FOR$READ_KF",
+          "symbol": "port112_forreadkf"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 14,
+      "object_format": false
+    },
+    {
+      "name": "FORREADKO",
+      "source": "RTL/SRC/FORREADKO.MAR",
+      "lines": 186,
+      "entries": [
+        {
+          "line": 179,
+          "label": "FOR$READ_KO",
+          "symbol": "port112_forreadko"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 14,
+      "object_format": true
+    },
+    {
+      "name": "FORREADKU",
+      "source": "RTL/SRC/FORREADKU.MAR",
+      "lines": 180,
+      "entries": [
+        {
+          "line": 174,
+          "label": "FOR$READ_KU",
+          "symbol": "port112_forreadku"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 16,
+      "object_format": false
+    },
+    {
+      "name": "FORREADSF",
+      "source": "RTL/SRC/FORREADSF.MAR",
+      "lines": 177,
+      "entries": [
+        {
+          "line": 171,
+          "label": "FOR$READ_SF",
+          "symbol": "port112_forreadsf"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 2,
+      "object_format": false
+    },
+    {
+      "name": "FORREADSL",
+      "source": "RTL/SRC/FORREADSL.MAR",
+      "lines": 176,
+      "entries": [
+        {
+          "line": 170,
+          "label": "FOR$READ_SL",
+          "symbol": "port112_forreadsl"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 10,
+      "object_format": false
+    },
+    {
+      "name": "FORREADSN",
+      "source": "RTL/SRC/FORREADSN.MAR",
+      "lines": 131,
+      "entries": [
+        {
+          "line": 125,
+          "label": "FOR$READ_SN",
+          "symbol": "port112_forreadsn"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 20,
+      "object_format": false
+    },
+    {
+      "name": "FORREADSO",
+      "source": "RTL/SRC/FORREADSO.MAR",
+      "lines": 182,
+      "entries": [
+        {
+          "line": 175,
+          "label": "FOR$READ_SO",
+          "symbol": "port112_forreadso"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 2,
+      "object_format": true
+    },
+    {
+      "name": "FORREADSU",
+      "source": "RTL/SRC/FORREADSU.MAR",
+      "lines": 178,
+      "entries": [
+        {
+          "line": 172,
+          "label": "FOR$READ_SU",
+          "symbol": "port112_forreadsu"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 4,
+      "object_format": false
+    },
+    {
+      "name": "FORREWRSF",
+      "source": "RTL/SRC/FORREWRSF.MAR",
+      "lines": 177,
+      "entries": [
+        {
+          "line": 171,
+          "label": "FOR$REWRITE_SF",
+          "symbol": "port112_forrewrsf"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 13,
+      "object_format": false
+    },
+    {
+      "name": "FORREWRSO",
+      "source": "RTL/SRC/FORREWRSO.MAR",
+      "lines": 182,
+      "entries": [
+        {
+          "line": 175,
+          "label": "FOR$REWRITE_SO",
+          "symbol": "port112_forrewrso"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 13,
+      "object_format": true
+    },
+    {
+      "name": "FORREWRSU",
+      "source": "RTL/SRC/FORREWRSU.MAR",
+      "lines": 180,
+      "entries": [
+        {
+          "line": 174,
+          "label": "FOR$REWRITE_SU",
+          "symbol": "port112_forrewrsu"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 15,
+      "object_format": false
+    },
+    {
+      "name": "FORWRITDF",
+      "source": "RTL/SRC/FORWRITDF.MAR",
+      "lines": 179,
+      "entries": [
+        {
+          "line": 173,
+          "label": "FOR$WRITE_DF",
+          "symbol": "port112_forwritdf"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 5,
+      "object_format": false
+    },
+    {
+      "name": "FORWRITDO",
+      "source": "RTL/SRC/FORWRITDO.MAR",
+      "lines": 180,
+      "entries": [
+        {
+          "line": 173,
+          "label": "FOR$WRITE_DO",
+          "symbol": "port112_forwritdo"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 5,
+      "object_format": true
+    },
+    {
+      "name": "FORWRITDU",
+      "source": "RTL/SRC/FORWRITDU.MAR",
+      "lines": 179,
+      "entries": [
+        {
+          "line": 173,
+          "label": "FOR$WRITE_DU",
+          "symbol": "port112_forwritdu"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 7,
+      "object_format": false
+    },
+    {
+      "name": "FORWRITIF",
+      "source": "RTL/SRC/FORWRITIF.MAR",
+      "lines": 180,
+      "entries": [
+        {
+          "line": 174,
+          "label": "FOR$WRITE_IF",
+          "symbol": "port112_forwritif"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 17,
+      "object_format": false
+    },
+    {
+      "name": "FORWRITIO",
+      "source": "RTL/SRC/FORWRITIO.MAR",
+      "lines": 185,
+      "entries": [
+        {
+          "line": 178,
+          "label": "FOR$WRITE_IO",
+          "symbol": "port112_forwritio"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 17,
+      "object_format": true
+    },
+    {
+      "name": "FORWRITSF",
+      "source": "RTL/SRC/FORWRITSF.MAR",
+      "lines": 177,
+      "entries": [
+        {
+          "line": 171,
+          "label": "FOR$WRITE_SF",
+          "symbol": "port112_forwritsf"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 1,
+      "object_format": false
+    },
+    {
+      "name": "FORWRITSL",
+      "source": "RTL/SRC/FORWRITSL.MAR",
+      "lines": 176,
+      "entries": [
+        {
+          "line": 170,
+          "label": "FOR$WRITE_SL",
+          "symbol": "port112_forwritsl"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 9,
+      "object_format": false
+    },
+    {
+      "name": "FORWRITSN",
+      "source": "RTL/SRC/FORWRITSN.MAR",
+      "lines": 131,
+      "entries": [
+        {
+          "line": 125,
+          "label": "FOR$WRITE_SN",
+          "symbol": "port112_forwritsn"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 19,
+      "object_format": false
+    },
+    {
+      "name": "FORWRITSO",
+      "source": "RTL/SRC/FORWRITSO.MAR",
+      "lines": 183,
+      "entries": [
+        {
+          "line": 176,
+          "label": "FOR$WRITE_SO",
+          "symbol": "port112_forwritso"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 1,
+      "object_format": true
+    },
+    {
+      "name": "FORWRITSU",
+      "source": "RTL/SRC/FORWRITSU.MAR",
+      "lines": 176,
+      "entries": [
+        {
+          "line": 170,
+          "label": "FOR$WRITE_SU",
+          "symbol": "port112_forwritsu"
+        }
+      ],
+      "kind": "statement-dispatch",
+      "statement_kind": 3,
+      "object_format": false
+    },
+    {
+      "name": "FORIOBEG",
+      "source": "RTL/SRC/FORIOBEG.B32",
+      "lines": 824,
+      "entries": [
+        {
+          "line": 305,
+          "label": "FOR$$IO_BEG",
+          "symbol": "port112_foriobeg"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORIOEND",
+      "source": "RTL/SRC/FORIOEND.B32",
+      "lines": 258,
+      "entries": [
+        {
+          "line": 139,
+          "label": "FOR$IO_END",
+          "symbol": "port112_forioend"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORASSOC",
+      "source": "RTL/SRC/FORASSOC.B32",
+      "lines": 169,
+      "entries": [
+        {
+          "line": 101,
+          "label": "FOR$$ASSOC",
+          "symbol": "port112_forassoc"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORBACKSP",
+      "source": "RTL/SRC/FORBACKSP.B32",
+      "lines": 296,
+      "entries": [
+        {
+          "line": 135,
+          "label": "FOR$BACKSPACE",
+          "symbol": "port112_forbacksp"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORCLOSE",
+      "source": "RTL/SRC/FORCLOSE.B32",
+      "lines": 403,
+      "entries": [
+        {
+          "line": 177,
+          "label": "FOR$CLOSE",
+          "symbol": "port112_forclose"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORDEFINE",
+      "source": "RTL/SRC/FORDEFINE.B32",
+      "lines": 328,
+      "entries": [
+        {
+          "line": 135,
+          "label": "FOR$DEF_FILE_W",
+          "symbol": "port112_fordefine_w"
+        },
+        {
+          "line": 178,
+          "label": "FOR$DEF_FILE",
+          "symbol": "port112_fordefine_l"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORDELETE",
+      "source": "RTL/SRC/FORDELETE.B32",
+      "lines": 462,
+      "entries": [
+        {
+          "line": 110,
+          "label": "FOR$DELETE",
+          "symbol": "port112_fordelete"
+        },
+        {
+          "line": 243,
+          "label": "FOR$DELETE_D",
+          "symbol": "port112_fordelete_d"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORENDFIL",
+      "source": "RTL/SRC/FORENDFIL.B32",
+      "lines": 262,
+      "entries": [
+        {
+          "line": 109,
+          "label": "FOR$ENDFILE",
+          "symbol": "port112_forendfil"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORREWIND",
+      "source": "RTL/SRC/FORREWIND.B32",
+      "lines": 250,
+      "entries": [
+        {
+          "line": 122,
+          "label": "FOR$REWIND",
+          "symbol": "port112_forrewind"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    },
+    {
+      "name": "FORUNLOCK",
+      "source": "RTL/SRC/FORUNLOCK.B32",
+      "lines": 222,
+      "entries": [
+        {
+          "line": 113,
+          "label": "FOR$UNLOCK",
+          "symbol": "port112_forunlock"
+        }
+      ],
+      "kind": "fortran-runtime-core"
+    }
+  ]
+}

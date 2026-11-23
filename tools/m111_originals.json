@@ -1,0 +1,532 @@
+{
+  "reference": "https://github.com/calmsacibis995/vms37-src",
+  "revision": "2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752",
+  "file_count": 40,
+  "scope": "Source-specific freestanding IA-32 partial RTL translation. VAX call frames and guest linkage unresolved.",
+  "modules": [
+    {
+      "name": "FORTIME",
+      "source": "RTL/SRC/FORTIME.MAR",
+      "lines": 132,
+      "entries": [
+        {
+          "line": 123,
+          "label": "FOR$TIME"
+        }
+      ],
+      "kind": "time"
+    },
+    {
+      "name": "FORTIMEDS",
+      "source": "RTL/SRC/FORTIMEDS.MAR",
+      "lines": 134,
+      "entries": [
+        {
+          "line": 120,
+          "label": "FOR$TIME_T_DS"
+        }
+      ],
+      "kind": "time"
+    },
+    {
+      "name": "FORJDATE",
+      "source": "RTL/SRC/FORJDATE.MAR",
+      "lines": 135,
+      "entries": [
+        {
+          "line": 121,
+          "label": "FOR$JDATE"
+        }
+      ],
+      "kind": "time"
+    },
+    {
+      "name": "FORIDATE",
+      "source": "RTL/SRC/FORIDATE.MAR",
+      "lines": 136,
+      "entries": [
+        {
+          "line": 122,
+          "label": "FOR$IDATE"
+        }
+      ],
+      "kind": "time"
+    },
+    {
+      "name": "FORDATE",
+      "source": "RTL/SRC/FORDATE.MAR",
+      "lines": 137,
+      "entries": [
+        {
+          "line": 123,
+          "label": "FOR$DATE"
+        }
+      ],
+      "kind": "time"
+    },
+    {
+      "name": "FORDATEDS",
+      "source": "RTL/SRC/FORDATEDS.MAR",
+      "lines": 138,
+      "entries": [
+        {
+          "line": 123,
+          "label": "FOR$DATE_T_DS"
+        }
+      ],
+      "kind": "time"
+    },
+    {
+      "name": "FORSECNDS",
+      "source": "RTL/SRC/FORSECNDS.MAR",
+      "lines": 150,
+      "entries": [
+        {
+          "line": 126,
+          "label": "FOR$SECNDS"
+        }
+      ],
+      "kind": "time"
+    },
+    {
+      "name": "OTSMULCD",
+      "source": "RTL/SRC/OTSMULCD.MAR",
+      "lines": 143,
+      "entries": [
+        {
+          "line": 126,
+          "label": "OTS$MULCD_R3"
+        }
+      ],
+      "kind": "complex_arith"
+    },
+    {
+      "name": "OTSMULCG",
+      "source": "RTL/SRC/OTSMULCG.MAR",
+      "lines": 143,
+      "entries": [
+        {
+          "line": 126,
+          "label": "OTS$MULCG_R3"
+        }
+      ],
+      "kind": "complex_arith"
+    },
+    {
+      "name": "OTSDIVC",
+      "source": "RTL/SRC/OTSDIVC.MAR",
+      "lines": 178,
+      "entries": [
+        {
+          "line": 144,
+          "label": "OTS$DIVC"
+        }
+      ],
+      "kind": "complex_arith"
+    },
+    {
+      "name": "OTSDIVCD",
+      "source": "RTL/SRC/OTSDIVCD.MAR",
+      "lines": 178,
+      "entries": [
+        {
+          "line": 144,
+          "label": "OTS$DIVCD_R3"
+        }
+      ],
+      "kind": "complex_arith"
+    },
+    {
+      "name": "OTSDIVCG",
+      "source": "RTL/SRC/OTSDIVCG.MAR",
+      "lines": 178,
+      "entries": [
+        {
+          "line": 144,
+          "label": "OTS$DIVCG_R3"
+        }
+      ],
+      "kind": "complex_arith"
+    },
+    {
+      "name": "OTSPOWCC",
+      "source": "RTL/SRC/OTSPOWCC.MAR",
+      "lines": 176,
+      "entries": [
+        {
+          "line": 132,
+          "label": "OTS$POWCC"
+        }
+      ],
+      "kind": "complex_pow"
+    },
+    {
+      "name": "OTSPOWCDC",
+      "source": "RTL/SRC/OTSPOWCDC.MAR",
+      "lines": 170,
+      "entries": [
+        {
+          "line": 135,
+          "label": "OTS$POWCDCD_R3"
+        }
+      ],
+      "kind": "complex_pow"
+    },
+    {
+      "name": "OTSPOWCGC",
+      "source": "RTL/SRC/OTSPOWCGC.MAR",
+      "lines": 170,
+      "entries": [
+        {
+          "line": 135,
+          "label": "OTS$POWCGCG_R3"
+        }
+      ],
+      "kind": "complex_pow"
+    },
+    {
+      "name": "OTSPOWLUL",
+      "source": "RTL/SRC/OTSPOWLUL.MAR",
+      "lines": 149,
+      "entries": [
+        {
+          "line": 112,
+          "label": "OTS$POWLULU"
+        }
+      ],
+      "kind": "integer_pow"
+    },
+    {
+      "name": "OTSPOWHH",
+      "source": "RTL/SRC/OTSPOWHH.MAR",
+      "lines": 185,
+      "entries": [
+        {
+          "line": 155,
+          "label": "OTS$POWHH_R3"
+        }
+      ],
+      "kind": "real_pow"
+    },
+    {
+      "name": "OTSPOWGG",
+      "source": "RTL/SRC/OTSPOWGG.MAR",
+      "lines": 194,
+      "entries": [
+        {
+          "line": 163,
+          "label": "OTS$POWGG"
+        }
+      ],
+      "kind": "real_pow"
+    },
+    {
+      "name": "OTSPOWRR",
+      "source": "RTL/SRC/OTSPOWRR.MAR",
+      "lines": 196,
+      "entries": [
+        {
+          "line": 163,
+          "label": "OTS$POWRR"
+        }
+      ],
+      "kind": "real_pow"
+    },
+    {
+      "name": "OTSPOWCDJ",
+      "source": "RTL/SRC/OTSPOWCDJ.MAR",
+      "lines": 220,
+      "entries": [
+        {
+          "line": 148,
+          "label": "OTS$POWCDJ_R3"
+        }
+      ],
+      "kind": "complex_intpow"
+    },
+    {
+      "name": "OTSPOWCGJ",
+      "source": "RTL/SRC/OTSPOWCGJ.MAR",
+      "lines": 220,
+      "entries": [
+        {
+          "line": 148,
+          "label": "OTS$POWCGJ_R3"
+        }
+      ],
+      "kind": "complex_intpow"
+    },
+    {
+      "name": "OTSPOWII",
+      "source": "RTL/SRC/OTSPOWII.MAR",
+      "lines": 241,
+      "entries": [
+        {
+          "line": 160,
+          "label": "OTS$POWII"
+        }
+      ],
+      "kind": "integer_pow"
+    },
+    {
+      "name": "OTSPOWDD",
+      "source": "RTL/SRC/OTSPOWDD.MAR",
+      "lines": 226,
+      "entries": [
+        {
+          "line": 177,
+          "label": "OTS$POWDR"
+        },
+        {
+          "line": 187,
+          "label": "OTS$POWRD"
+        },
+        {
+          "line": 193,
+          "label": "OTS$POWDD"
+        }
+      ],
+      "kind": "real_pow"
+    },
+    {
+      "name": "OTSPOWJJ",
+      "source": "RTL/SRC/OTSPOWJJ.MAR",
+      "lines": 243,
+      "entries": [
+        {
+          "line": 160,
+          "label": "OTS$POWJJ"
+        }
+      ],
+      "kind": "integer_pow"
+    },
+    {
+      "name": "OTSPOWCJ",
+      "source": "RTL/SRC/OTSPOWCJ.MAR",
+      "lines": 222,
+      "entries": [
+        {
+          "line": 156,
+          "label": "OTS$POWCJ"
+        }
+      ],
+      "kind": "complex_intpow"
+    },
+    {
+      "name": "OTSLUN",
+      "source": "RTL/SRC/OTSLUN.MAR",
+      "lines": 337,
+      "entries": [
+        {
+          "line": 125,
+          "label": "OTS$$GET_LUN"
+        },
+        {
+          "line": 211,
+          "label": "OTS$$FREE_LUN"
+        },
+        {
+          "line": 296,
+          "label": "OTS$$TAKE_LUN"
+        }
+      ],
+      "kind": "lun"
+    },
+    {
+      "name": "OTSCVTTLL",
+      "source": "RTL/SRC/OTSCVTTLL.MAR",
+      "lines": 215,
+      "entries": [
+        {
+          "line": 155,
+          "label": "FOR$CNV_IN_L"
+        },
+        {
+          "line": 156,
+          "label": "OTS$CVT_TL_L"
+        }
+      ],
+      "kind": "logical"
+    },
+    {
+      "name": "OTSCVTTIL",
+      "source": "RTL/SRC/OTSCVTTIL.MAR",
+      "lines": 301,
+      "entries": [
+        {
+          "line": 168,
+          "label": "FOR$CNV_IN_I"
+        },
+        {
+          "line": 169,
+          "label": "OTS$CVT_TI_L"
+        }
+      ],
+      "kind": "text_integer"
+    },
+    {
+      "name": "OTSMOVE",
+      "source": "RTL/SRC/OTSMOVE.MAR",
+      "lines": 219,
+      "entries": [
+        {
+          "line": 118,
+          "label": "OTS$MOVE3"
+        },
+        {
+          "line": 166,
+          "label": "OTS$MOVE3_R5"
+        }
+      ],
+      "kind": "memory_move"
+    },
+    {
+      "name": "BASPOWRJ",
+      "source": "RTL/SRC/BASPOWRJ.MAR",
+      "lines": 183,
+      "entries": [
+        {
+          "line": 134,
+          "label": "BAS$POWRJ"
+        }
+      ],
+      "kind": "basic_pow"
+    },
+    {
+      "name": "BASPOWDJ",
+      "source": "RTL/SRC/BASPOWDJ.MAR",
+      "lines": 183,
+      "entries": [
+        {
+          "line": 134,
+          "label": "BAS$POWDJ"
+        }
+      ],
+      "kind": "basic_pow"
+    },
+    {
+      "name": "BASPOWJJ",
+      "source": "RTL/SRC/BASPOWJJ.MAR",
+      "lines": 183,
+      "entries": [
+        {
+          "line": 134,
+          "label": "BAS$POWJJ"
+        }
+      ],
+      "kind": "basic_pow"
+    },
+    {
+      "name": "BASPOWII",
+      "source": "RTL/SRC/BASPOWII.MAR",
+      "lines": 185,
+      "entries": [
+        {
+          "line": 135,
+          "label": "BAS$POWII"
+        }
+      ],
+      "kind": "basic_pow"
+    },
+    {
+      "name": "BASPOWRR",
+      "source": "RTL/SRC/BASPOWRR.MAR",
+      "lines": 202,
+      "entries": [
+        {
+          "line": 137,
+          "label": "BAS$POWRR"
+        }
+      ],
+      "kind": "basic_pow"
+    },
+    {
+      "name": "BASPOWDD",
+      "source": "RTL/SRC/BASPOWDD.MAR",
+      "lines": 202,
+      "entries": [
+        {
+          "line": 137,
+          "label": "BAS$POWDD"
+        }
+      ],
+      "kind": "basic_pow"
+    },
+    {
+      "name": "BASMULDDI",
+      "source": "RTL/SRC/BASMULDDI.MAR",
+      "lines": 202,
+      "entries": [
+        {
+          "line": 130,
+          "label": "BAS$$MULD"
+        },
+        {
+          "line": 186,
+          "label": "BAS$$DIVD"
+        }
+      ],
+      "kind": "basic_arith"
+    },
+    {
+      "name": "BASCOPYFD",
+      "source": "RTL/SRC/BASCOPYFD.MAR",
+      "lines": 179,
+      "entries": [
+        {
+          "line": 131,
+          "label": "BAS$$COPY_F_R1"
+        },
+        {
+          "line": 173,
+          "label": "BAS$$COPY_D_R1"
+        }
+      ],
+      "kind": "basic_copy"
+    },
+    {
+      "name": "BASDET",
+      "source": "RTL/SRC/BASDET.MAR",
+      "lines": 227,
+      "entries": [
+        {
+          "line": 131,
+          "label": "BAS$DET_F"
+        },
+        {
+          "line": 175,
+          "label": "BAS$DET_D"
+        },
+        {
+          "line": 220,
+          "label": "BAS$$STORE_DET"
+        }
+      ],
+      "kind": "basic_det"
+    },
+    {
+      "name": "BASXLATE",
+      "source": "RTL/SRC/BASXLATE.MAR",
+      "lines": 242,
+      "entries": [
+        {
+          "line": 148,
+          "label": "BAS$XLATE"
+        }
+      ],
+      "kind": "basic_translate"
+    },
+    {
+      "name": "COBMULQ",
+      "source": "RTL/SRC/COBMULQ.MAR",
+      "lines": 151,
+      "entries": [
+        {
+          "line": 137,
+          "label": "COB$MULQ_R8"
+        }
+      ],
+      "kind": "quad_mul"
+    }
+  ]
+}

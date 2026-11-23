@@ -1,0 +1,615 @@
+{
+  "reference": "https://github.com/calmsacibis995/vms37-src",
+  "revision": "2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752",
+  "file_count": 36,
+  "modules": [
+    {
+      "source": "RTL/SRC/MTHACOS.MAR",
+      "lines": 411,
+      "entries": [
+        {
+          "label": "MTH$ACOS",
+          "line": 169,
+          "symbol": "port109_mthacos"
+        },
+        {
+          "label": "MTH$ACOSD",
+          "line": 323,
+          "symbol": "port109_mthacosd"
+        }
+      ],
+      "format": "F",
+      "op": "ACOS"
+    },
+    {
+      "source": "RTL/SRC/MTHDACOS.MAR",
+      "lines": 418,
+      "entries": [
+        {
+          "label": "MTH$DACOS",
+          "line": 173,
+          "symbol": "port109_mthdacos"
+        },
+        {
+          "label": "MTH$DACOSD",
+          "line": 328,
+          "symbol": "port109_mthdacosd"
+        }
+      ],
+      "format": "D",
+      "op": "ACOS"
+    },
+    {
+      "source": "RTL/SRC/MTHGACOS.MAR",
+      "lines": 410,
+      "entries": [
+        {
+          "label": "MTH$GACOS",
+          "line": 164,
+          "symbol": "port109_mthgacos"
+        },
+        {
+          "label": "MTH$GACOSD",
+          "line": 318,
+          "symbol": "port109_mthgacosd"
+        }
+      ],
+      "format": "G",
+      "op": "ACOS"
+    },
+    {
+      "source": "RTL/SRC/MTHHACOS.MAR",
+      "lines": 433,
+      "entries": [
+        {
+          "label": "MTH$HACOS",
+          "line": 174,
+          "symbol": "port109_mthhacos"
+        },
+        {
+          "label": "MTH$HACOSD",
+          "line": 338,
+          "symbol": "port109_mthhacosd"
+        }
+      ],
+      "format": "H",
+      "op": "ACOS"
+    },
+    {
+      "source": "RTL/SRC/MTHASIN.MAR",
+      "lines": 359,
+      "entries": [
+        {
+          "label": "MTH$ASIN",
+          "line": 162,
+          "symbol": "port109_mthasin"
+        },
+        {
+          "label": "MTH$ASIND",
+          "line": 291,
+          "symbol": "port109_mthasind"
+        }
+      ],
+      "format": "F",
+      "op": "ASIN"
+    },
+    {
+      "source": "RTL/SRC/MTHDASIN.MAR",
+      "lines": 365,
+      "entries": [
+        {
+          "label": "MTH$DASIN",
+          "line": 169,
+          "symbol": "port109_mthdasin"
+        },
+        {
+          "label": "MTH$DASIND",
+          "line": 298,
+          "symbol": "port109_mthdasind"
+        }
+      ],
+      "format": "D",
+      "op": "ASIN"
+    },
+    {
+      "source": "RTL/SRC/MTHGASIN.MAR",
+      "lines": 353,
+      "entries": [
+        {
+          "label": "MTH$GASIN",
+          "line": 158,
+          "symbol": "port109_mthgasin"
+        },
+        {
+          "label": "MTH$GASIND",
+          "line": 287,
+          "symbol": "port109_mthgasind"
+        }
+      ],
+      "format": "G",
+      "op": "ASIN"
+    },
+    {
+      "source": "RTL/SRC/MTHHASIN.MAR",
+      "lines": 370,
+      "entries": [
+        {
+          "label": "MTH$HASIN",
+          "line": 163,
+          "symbol": "port109_mthhasin"
+        },
+        {
+          "label": "MTH$HASIND",
+          "line": 304,
+          "symbol": "port109_mthhasind"
+        }
+      ],
+      "format": "H",
+      "op": "ASIN"
+    },
+    {
+      "source": "RTL/SRC/MTHATAN.MAR",
+      "lines": 972,
+      "entries": [
+        {
+          "label": "MTH$ATAN",
+          "line": 402,
+          "symbol": "port109_mthatan"
+        },
+        {
+          "label": "MTH$ATAN2",
+          "line": 439,
+          "symbol": "port109_mthatan2"
+        },
+        {
+          "label": "MTH$ATAND",
+          "line": 717,
+          "symbol": "port109_mthatand"
+        },
+        {
+          "label": "MTH$ATAND2",
+          "line": 754,
+          "symbol": "port109_mthatand2"
+        }
+      ],
+      "format": "F",
+      "op": "ATAN"
+    },
+    {
+      "source": "RTL/SRC/MTHDATAN.MAR",
+      "lines": 984,
+      "entries": [
+        {
+          "label": "MTH$DATAN",
+          "line": 422,
+          "symbol": "port109_mthdatan"
+        },
+        {
+          "label": "MTH$DATAN2",
+          "line": 459,
+          "symbol": "port109_mthdatan2"
+        },
+        {
+          "label": "MTH$DATAND",
+          "line": 732,
+          "symbol": "port109_mthdatand"
+        },
+        {
+          "label": "MTH$DATAND2",
+          "line": 769,
+          "symbol": "port109_mthdatand2"
+        }
+      ],
+      "format": "D",
+      "op": "ATAN"
+    },
+    {
+      "source": "RTL/SRC/MTHGATAN.MAR",
+      "lines": 979,
+      "entries": [
+        {
+          "label": "MTH$GATAN",
+          "line": 405,
+          "symbol": "port109_mthgatan"
+        },
+        {
+          "label": "MTH$GATAN2",
+          "line": 441,
+          "symbol": "port109_mthgatan2"
+        },
+        {
+          "label": "MTH$GATAND",
+          "line": 719,
+          "symbol": "port109_mthgatand"
+        },
+        {
+          "label": "MTH$GATAND2",
+          "line": 755,
+          "symbol": "port109_mthgatand2"
+        }
+      ],
+      "format": "G",
+      "op": "ATAN"
+    },
+    {
+      "source": "RTL/SRC/MTHHATAN.MAR",
+      "lines": 1077,
+      "entries": [
+        {
+          "label": "MTH$HATAN",
+          "line": 445,
+          "symbol": "port109_mthhatan"
+        },
+        {
+          "label": "MTH$HATAN2",
+          "line": 495,
+          "symbol": "port109_mthhatan2"
+        },
+        {
+          "label": "MTH$HATAND",
+          "line": 792,
+          "symbol": "port109_mthhatand"
+        },
+        {
+          "label": "MTH$HATAND2",
+          "line": 842,
+          "symbol": "port109_mthhatand2"
+        }
+      ],
+      "format": "H",
+      "op": "ATAN"
+    },
+    {
+      "source": "RTL/SRC/MTHALOG.MAR",
+      "lines": 614,
+      "entries": [
+        {
+          "label": "MTH$ALOG",
+          "line": 371,
+          "symbol": "port109_mthalog"
+        },
+        {
+          "label": "MTH$ALOG10",
+          "line": 407,
+          "symbol": "port109_mthalog10"
+        },
+        {
+          "label": "MTH$ALOG2",
+          "line": 443,
+          "symbol": "port109_mthalog2"
+        }
+      ],
+      "format": "F",
+      "op": "LOG"
+    },
+    {
+      "source": "RTL/SRC/MTHDLOG.MAR",
+      "lines": 589,
+      "entries": [
+        {
+          "label": "MTH$DLOG",
+          "line": 349,
+          "symbol": "port109_mthdlog"
+        },
+        {
+          "label": "MTH$DLOG10",
+          "line": 385,
+          "symbol": "port109_mthdlog10"
+        },
+        {
+          "label": "MTH$DLOG2",
+          "line": 421,
+          "symbol": "port109_mthdlog2"
+        }
+      ],
+      "format": "D",
+      "op": "LOG"
+    },
+    {
+      "source": "RTL/SRC/MTHGLOG.MAR",
+      "lines": 574,
+      "entries": [
+        {
+          "label": "MTH$GLOG",
+          "line": 323,
+          "symbol": "port109_mthglog"
+        },
+        {
+          "label": "MTH$GLOG10",
+          "line": 359,
+          "symbol": "port109_mthglog10"
+        },
+        {
+          "label": "MTH$GLOG2",
+          "line": 396,
+          "symbol": "port109_mthglog2"
+        }
+      ],
+      "format": "G",
+      "op": "LOG"
+    },
+    {
+      "source": "RTL/SRC/MTHHLOG.MAR",
+      "lines": 605,
+      "entries": [
+        {
+          "label": "MTH$HLOG",
+          "line": 346,
+          "symbol": "port109_mthhlog"
+        },
+        {
+          "label": "MTH$HLOG10",
+          "line": 389,
+          "symbol": "port109_mthhlog10"
+        },
+        {
+          "label": "MTH$HLOG2",
+          "line": 432,
+          "symbol": "port109_mthhlog2"
+        }
+      ],
+      "format": "H",
+      "op": "LOG"
+    },
+    {
+      "source": "RTL/SRC/MTHEXP.MAR",
+      "lines": 376,
+      "entries": [
+        {
+          "label": "MTH$EXP",
+          "line": 248,
+          "symbol": "port109_mthexp"
+        }
+      ],
+      "format": "F",
+      "op": "EXP"
+    },
+    {
+      "source": "RTL/SRC/MTHDEXP.MAR",
+      "lines": 425,
+      "entries": [
+        {
+          "label": "MTH$DEXP",
+          "line": 285,
+          "symbol": "port109_mthdexp"
+        }
+      ],
+      "format": "D",
+      "op": "EXP"
+    },
+    {
+      "source": "RTL/SRC/MTHGEXP.MAR",
+      "lines": 431,
+      "entries": [
+        {
+          "label": "MTH$GEXP",
+          "line": 278,
+          "symbol": "port109_mthgexp"
+        }
+      ],
+      "format": "G",
+      "op": "EXP"
+    },
+    {
+      "source": "RTL/SRC/MTHHEXP.MAR",
+      "lines": 466,
+      "entries": [
+        {
+          "label": "MTH$HEXP",
+          "line": 312,
+          "symbol": "port109_mthhexp"
+        }
+      ],
+      "format": "H",
+      "op": "EXP"
+    },
+    {
+      "source": "RTL/SRC/MTHSQRT.MAR",
+      "lines": 287,
+      "entries": [
+        {
+          "label": "MTH$SQRT",
+          "line": 196,
+          "symbol": "port109_mthsqrt"
+        }
+      ],
+      "format": "F",
+      "op": "SQRT"
+    },
+    {
+      "source": "RTL/SRC/MTHDSQRT.MAR",
+      "lines": 289,
+      "entries": [
+        {
+          "label": "MTH$DSQRT",
+          "line": 199,
+          "symbol": "port109_mthdsqrt"
+        }
+      ],
+      "format": "D",
+      "op": "SQRT"
+    },
+    {
+      "source": "RTL/SRC/MTHGSQRT.MAR",
+      "lines": 271,
+      "entries": [
+        {
+          "label": "MTH$GSQRT",
+          "line": 182,
+          "symbol": "port109_mthgsqrt"
+        }
+      ],
+      "format": "G",
+      "op": "SQRT"
+    },
+    {
+      "source": "RTL/SRC/MTHHSQRT.MAR",
+      "lines": 292,
+      "entries": [
+        {
+          "label": "MTH$HSQRT",
+          "line": 185,
+          "symbol": "port109_mthhsqrt"
+        }
+      ],
+      "format": "H",
+      "op": "SQRT"
+    },
+    {
+      "source": "RTL/SRC/MTHSINH.MAR",
+      "lines": 296,
+      "entries": [
+        {
+          "label": "MTH$SINH",
+          "line": 180,
+          "symbol": "port109_mthsinh"
+        }
+      ],
+      "format": "F",
+      "op": "SINH"
+    },
+    {
+      "source": "RTL/SRC/MTHDSINH.MAR",
+      "lines": 314,
+      "entries": [
+        {
+          "label": "MTH$DSINH",
+          "line": 197,
+          "symbol": "port109_mthdsinh"
+        }
+      ],
+      "format": "D",
+      "op": "SINH"
+    },
+    {
+      "source": "RTL/SRC/MTHGSINH.MAR",
+      "lines": 298,
+      "entries": [
+        {
+          "label": "MTH$GSINH",
+          "line": 179,
+          "symbol": "port109_mthgsinh"
+        }
+      ],
+      "format": "G",
+      "op": "SINH"
+    },
+    {
+      "source": "RTL/SRC/MTHHSINH.MAR",
+      "lines": 329,
+      "entries": [
+        {
+          "label": "MTH$HSINH",
+          "line": 209,
+          "symbol": "port109_mthhsinh"
+        }
+      ],
+      "format": "H",
+      "op": "SINH"
+    },
+    {
+      "source": "RTL/SRC/MTHCOSH.MAR",
+      "lines": 276,
+      "entries": [
+        {
+          "label": "MTH$COSH",
+          "line": 185,
+          "symbol": "port109_mthcosh"
+        }
+      ],
+      "format": "F",
+      "op": "COSH"
+    },
+    {
+      "source": "RTL/SRC/MTHDCOSH.MAR",
+      "lines": 283,
+      "entries": [
+        {
+          "label": "MTH$DCOSH",
+          "line": 198,
+          "symbol": "port109_mthdcosh"
+        }
+      ],
+      "format": "D",
+      "op": "COSH"
+    },
+    {
+      "source": "RTL/SRC/MTHGCOSH.MAR",
+      "lines": 269,
+      "entries": [
+        {
+          "label": "MTH$GCOSH",
+          "line": 177,
+          "symbol": "port109_mthgcosh"
+        }
+      ],
+      "format": "G",
+      "op": "COSH"
+    },
+    {
+      "source": "RTL/SRC/MTHHCOSH.MAR",
+      "lines": 305,
+      "entries": [
+        {
+          "label": "MTH$HCOSH",
+          "line": 210,
+          "symbol": "port109_mthhcosh"
+        }
+      ],
+      "format": "H",
+      "op": "COSH"
+    },
+    {
+      "source": "RTL/SRC/MTHTANH.MAR",
+      "lines": 213,
+      "entries": [
+        {
+          "label": "MTH$TANH",
+          "line": 143,
+          "symbol": "port109_mthtanh"
+        }
+      ],
+      "format": "F",
+      "op": "TANH"
+    },
+    {
+      "source": "RTL/SRC/MTHDTANH.MAR",
+      "lines": 219,
+      "entries": [
+        {
+          "label": "MTH$DTANH",
+          "line": 149,
+          "symbol": "port109_mthdtanh"
+        }
+      ],
+      "format": "D",
+      "op": "TANH"
+    },
+    {
+      "source": "RTL/SRC/MTHGTANH.MAR",
+      "lines": 212,
+      "entries": [
+        {
+          "label": "MTH$GTANH",
+          "line": 142,
+          "symbol": "port109_mthgtanh"
+        }
+      ],
+      "format": "G",
+      "op": "TANH"
+    },
+    {
+      "source": "RTL/SRC/MTHHTANH.MAR",
+      "lines": 224,
+      "entries": [
+        {
+          "label": "MTH$HTANH",
+          "line": 155,
+          "symbol": "port109_mthhtanh"
+        }
+      ],
+      "format": "H",
+      "op": "TANH"
+    }
+  ]
+}

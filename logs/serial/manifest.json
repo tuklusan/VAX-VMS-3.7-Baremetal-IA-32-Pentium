@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "kind": "raw-qemu-serial-archive",
+  "runs": [
+    {
+      "milestone": "M160",
+      "run_id": "44935116986",
+      "run_url": "https://github.com/tuklusan/OpticOS/actions/runs/44935116986",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m160-run-44935116986.log",
+      "bytes": 4529,
+      "sha256": "a719420873b57304b7b17c4e77f5f5152cb8b435ff49990aaa6e9c0a5405dea7"
+    },
+    {
+      "milestone": "M192",
+      "run_id": "local-20261123T040040872345Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m192-run-local-20261123T040040872345Z.log",
+      "bytes": 4529,
+      "sha256": "a719420873b57304b7b17c4e77f5f5152cb8b435ff49990aaa6e9c0a5405dea7"
+    }
+  ]
+}
