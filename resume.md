@@ -79,3 +79,12 @@ Verification: `make -j2 all dqcrbcheck` PASS; `make test` PASS (exit 0, includin
 Coverage: DQDRIVER.MAR integration note now records native UCB CRB publication and CRB-dispatched IRQ14 completion as partial coverage. DQA DDB DDT/action slots, RB730 semantics, public IOC/$QIO, Files-11 ACP and process AST completion remain unresolved. Native INIT, scheduler/process image activation, genuine login/DCL, DECnet Phase IV and SET HOST 0 remain incomplete.
 
 M197 implementation commit: `64d4d57e6e8e8e3985a34d1eb5a2b8ea44deacfa`.
+## M198 — Resident DQ IOC FIFO over the attached CRB, 22 November 2026
+
+The resident private READPBLK request now enters the existing bounded DQ IOC FIFO state machine (prepare, enqueue, start, retry/transfer, completion/post) before its physical ATA callback. That callback completes through the attached DQA CRB and IDT IRQ14 path; data is committed to the resident sector only after successful IOC completion. This remains a single private supervisor boot read: DQA DDB DDT action slots, public process `$QIO`, Files-11 ACP and process AST delivery are not implemented.
+
+Verification after the change: `make -j2 all dqprivateioccheck dqcrbcheck sysexecentrycheck` PASS; `make test` PASS (exit 0, including 32 IOC host regressions and the CRB host regression); `python3 tools/validate_source_ranges.py` PASS (1,957 ranges, zero unmapped functions; 441/4,566 originals indexed, status totals unchanged); real `python3 tools/qemu_sysboot_m198.py` PASS. COM1 shows one resident DQ IOC FIFO READPBLK completed through the attached CRB IRQ14, then the existing incomplete INIT stop. No login, DCL or DECnet initialization was observed. QEMU runner terminated; no QEMU process remained. Raw transcript `logs/serial/qemu-m198-run-local-20261123T045801658353Z.log`, 4,697 bytes, SHA-256 `8a0693a1dd9b91c0ba132bcf81c587fb3ae15d9d097e60b3acd38913583ad05c`; serial manifest verifies 15 raw logs.
+
+DQDRIVER.MAR coverage now maps the resident single-read queue/transfer path as partial. Native full driver dispatch, physical RB730 control/error handling, public SYS$QIO, Files-11 ACP, AST completion, scheduler-driven INIT and process activation remain unfinished. Genuine SYSTEM login, DCL, DECnet Phase IV and SET HOST 0 remain unverified and incomplete.
+
+M198 implementation commit: `4c7933768bfb3948f386f840bd8eaa22e9e4836a`.
