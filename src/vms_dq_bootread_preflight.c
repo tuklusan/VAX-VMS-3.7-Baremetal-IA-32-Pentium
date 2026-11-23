@@ -23,16 +23,18 @@ uint32_t port_dq_bootread_preflight(const struct port_dq_bootread_request *q){
        (function!=PORT_DQ_READPBLK&&function!=PORT_DQ_WRITEPBLK))
         return PORT_DQ_BOOTREAD_BAD;
     const uint32_t mask=q->device_info->incomplete_driver_mask;
-    const int prepublish=mask==7u&&q->active_ddt_base==0u;
-    const int published=mask==6u&&q->active_ddt_base!=0u&&
-       q->active_ddt_base==q->device_info->bound_dqa_ddt&&
-       q->device_info->bound_dqa_crb!=0u;
     if(port_v37_devices_check(q->device_db,PORT_V37_DEVICE_BYTES,
          (uint32_t)(uintptr_t)q->device_db,q->device_info)!=PORT_V37_DEV_OK ||
-       !q->device_info->bound_nl_ddt || (!prepublish&&!published) ||
+       !q->device_info->bound_nl_ddt ||
        port_dq_fdt_validate(q->fdt,sizeof(*q->fdt))!=PORT_DQ_FDT_OK)
         return PORT_DQ_BOOTREAD_BAD;
     const uint8_t *u=q->device_db+PORT_V37_UCB_BOOT_OFF;
+    const int prepublish=mask==7u&&q->active_ddt_base==0u;
+    const int published=mask==6u&&q->active_ddt_base!=0u&&
+       q->active_ddt_base==q->device_info->bound_dqa_ddt&&
+       q->device_info->bound_dqa_crb!=0u&&
+       port_v37_read32(u+32u)==q->device_info->bound_dqa_crb;
+    if(!prepublish&&!published)return PORT_DQ_BOOTREAD_BAD;
     if(q->device_info->ucb[0]!=(uint32_t)(uintptr_t)u ||
        port_v37_read16(u+8u)!=PORT_V37_BOOT_UCB_SIZE ||
        port_v37_read32(u+36u)!=q->device_info->ddb[0] ||

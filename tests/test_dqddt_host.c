@@ -161,6 +161,16 @@ int main(void){
     struct port_dq_bootread_request published_request=request;
     published_request.active_ddt_base=native_base;
     CHECK(port_dq_bootread_preflight(&published_request)==PORT_DQ_BOOTREAD_OK);
+    const uint32_t ucb_crb=port_v37_read32(db+PORT_V37_UCB_BOOT_OFF+32u);
+    port_v37_write32(db+PORT_V37_UCB_BOOT_OFF+32u,ucb_crb+4u);
+    CHECK(port_dq_bootread_preflight(&published_request)==PORT_DQ_BOOTREAD_BAD);
+    port_v37_write32(db+PORT_V37_UCB_BOOT_OFF+32u,ucb_crb);
+    port_v37_write32(db+PORT_V37_UCB_BOOT_OFF+120u,native_base+4u);
+    CHECK(port_dq_bootread_preflight(&published_request)==PORT_DQ_BOOTREAD_BAD);
+    port_v37_write32(db+PORT_V37_UCB_BOOT_OFF+120u,native_base);
+    port_v37_write32(db+PORT_V37_DDB_BOOT_OFF+12u,native_base+4u);
+    CHECK(port_dq_bootread_preflight(&published_request)==PORT_DQ_BOOTREAD_BAD);
+    port_v37_write32(db+PORT_V37_DDB_BOOT_OFF+12u,native_base);
     uint32_t published_lbn=0u;uint16_t published_function=0u;
     CHECK(port_dq_bootread_decode_physical(&published_request,&published_lbn,
         &published_function,9u)==PORT_DQ_BOOTREAD_OK);
