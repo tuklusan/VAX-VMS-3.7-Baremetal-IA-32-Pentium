@@ -45,4 +45,5 @@ Verification from a clean tree: `make clean && make -j2 all` PASS with default G
 
 No VMS source coverage status changed. DQA0 DDT/CRB publication, public process `$QIO`, Files-11 ACP/AST integration, INIT, process activation, LOGINOUT/DCL, DECnet and SET HOST 0 remain incomplete.
 
-M194 commit: pending.
+M194 commit: `d1ee8397ad7cea37c6aa03e6885418d44d44a8a3`.
+
