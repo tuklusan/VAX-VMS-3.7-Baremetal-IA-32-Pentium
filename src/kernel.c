@@ -3764,7 +3764,7 @@ void kmain(void) {
         bootstrap_message("INIT: native DQA0 CRB IRQ14 READPBLK completion failed.");
         bootstrap_halt();
     }
-    bootstrap_message("INIT: SYS.EXE DQ IOC FIFO READPBLK completed through attached CRB IRQ14 (DDB DDT unpublished).");
+    bootstrap_message("INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.");
 
     /* Source NLDRIVER.MAR DDT/FDT through SYSQIOREQ.MAR 741-749: two original
      * IRP$L_MEDIA statuses and an IOC$GL_PSBL append in actual loaded

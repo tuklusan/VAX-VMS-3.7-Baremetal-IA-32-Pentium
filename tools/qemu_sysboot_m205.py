@@ -85,7 +85,7 @@ def main():
         b'INIT: SYS.EXE RELOCDRV IOC$INITDRV applied source DQ DPT_STORE to private DQA0 records (DDT/CRB unbound).',
         b'INIT: resident IOC$RELOC_DDT source DDT/FDT relocation verified (private only; DQA0 unbound).',
         b'INIT: SYS.EXE materialized native DQ DDT/FDT pointers (IOC publication pending).',
-        b'INIT: SYS.EXE DQ IOC FIFO READPBLK completed through attached CRB IRQ14 (DDB DDT unpublished).',
+        b'INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.',
         b'INIT: SYS.EXE NLDRIVER completed two IRPs via linked DDT/FDT and EXE$FINISHIOC (IPL4 requested).',
         b'INIT: SYS.EXE IOCIOPOST serviced two NLA IRPs through IA-32 CPL0 software INT 0x90 (no process AST).',
         b'INIT: loaded SYS.EXE resident entry executed and verified.',

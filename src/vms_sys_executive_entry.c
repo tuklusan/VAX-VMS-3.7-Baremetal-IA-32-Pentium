@@ -1608,7 +1608,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         return PORT_SYS_EXEC_NORMAL;
     }
     if(p->phase==PORT_SYS_EXEC_INIT_DQ_CRB_READ){
-        if(!executive_dqddt_ready||!p->dq_boot_io||
+        if(!executive_dqddt_ready||!executive_relocated_private_ready||
+           !p->dq_boot_io||
            !p->dq_boot_io->read_sector||!p->dq_boot_io->irq_handler||
            port_dq_crb_validate(&executive_dq_crb)!=PORT_DQ_CRB_OK||
            executive_dq_crb_read_ready||
@@ -1644,8 +1645,17 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             .boot_unit=p->dq_boot_io->boot_unit,
             .read_sector=executive_dq_ioc_read_sector,
             .read_context=(void *)p->dq_boot_io};
-        if(port_dqddt_dispatch_bootread(&executive_dqddt,&executive_dq_fdt,&read,
-               &executive_dqddt_io,0u)!=PORT_DQ_BOOTREAD_OK||
+        typedef uint32_t (*dq_startio_fn)(const struct port_dqddt_stage *,
+            const struct port_dqddt_native *,const struct port_dq_fdt *,
+            const struct port_dq_bootread_request *,
+            struct port_dq_bootread_result *);
+        const uint32_t start_pc=port_v37_read32(executive_native_dqddt.image);
+        if(start_pc!=(uint32_t)(uintptr_t)port_dqddt_startio)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        dq_startio_fn startio=(dq_startio_fn)(uintptr_t)start_pc;
+        if(startio(&executive_dqddt,&executive_native_dqddt,
+               &executive_dq_fdt,&read,&executive_dqddt_io)!=
+                   PORT_DQ_BOOTREAD_OK||
            executive_dqddt_io.lbn!=0u||
            executive_dqddt_io.bytes!=PORT_DQ_BOOTREAD_BYTES||
            executive_dqddt_io.irp_status!=PORT_SYS85_NORMAL||
