@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M248
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M249
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -575,3 +575,13 @@ Verification: `make -j2 all` PASS; full `make test sourcerangecheck sysexecentry
 No original coverage status totals changed; SCHED.MAR initial-context lines remain partial because runtime VMS scheduler dispatch, current-context save, VMS PHD/page-table setup and live PCB activation are still unimplemented. Public SYS$QIO, process-aware DQA0 completion/AST delivery, ACP, native INIT completion, login/DCL and DECnet/SET HOST 0 remain incomplete.
 
 M248 implementation commit (local): `37c40e2b7675c10bf50ff1074bc4621ba229d4b5`; published `main`: `33efcf0eafe36c2c81c4c3acfcfe20a9cc305674`.
+
+## M249 — Trap-selected IA-32 frame dispatch, 23 November 2026
+
+Extended `arch_isr_common` with a selected-frame return path for `arch_trap`. During the boot regression, a CPL1 software interrupt selects the already initialized CPL2 frame; common interrupt return restores that frame and enters CPL2, whose interrupt returns to the saved kernel caller. The QEMU harness requires the CPL1-to-CPL2 dispatch marker. This exercises the native hardware-frame selection step needed by future SCH$SCHED integration. The probe does not save a live VMS PCB context, switch a process CR3/TSS stack, or invoke resident SCH$SCHED, so no VMS scheduling or process activation is claimed.
+
+Verification: `make -j2 all` PASS; full `make test sysexecentrycheck v37ia32ctxcheck` PASS (exit 0); source coverage generation and validation PASS (2,009 ranges, zero mapping errors; 444/4,566 original files indexed; 29,248 partial, 51,944 unresolved, 7,799 missing, 26,237 excluded, 917 hardware-excluded, 17,016 mapped); serial manifest verification PASS (108 raw logs). Real `make qemu-sysboot-m217` PASS with the selected-frame assertion, the existing DQA0/IRQ14 700-byte Files-11 read, and the expected incomplete-INIT stop. Transcript `logs/serial/qemu-m217-run-local-20261123T233620657447Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`; QEMU exited.
+
+Public SYS$QIO, process-aware DQA0 completion/AST delivery, ACP, native INIT completion, login/DCL, DECnet and SET HOST 0 remain incomplete.
+
+M249 implementation commit (local): `186275478935110cf2875c05a86771cfa42b5ee9`; published `main`: `4ec4a4ac789d48a9f3b8fad7f40dd52cacac2004`.
