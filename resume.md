@@ -368,3 +368,5 @@ Added `port_exe_sched_suspend` for the original executive path where a current p
 Verification: `make exeportcorecheck` PASS; full `make test` PASS (exit 0, suite through M49; native image rebuilt and installed as part of test dependencies); `python3 tools/validate_source_ranges.py` PASS (441/4,566 originals indexed; 28,764 partial, 50,437 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `git diff --check` PASS. No QEMU run: the modified helper remains outside the live guest scheduler. No restricted DEC source or disk image was staged.
 
 Source coverage counts unchanged. Live scheduler binding, process wake queues, actual public SYS$QIO and DQA process completion, Files-11 ACP, native INIT continuation, process image activation, SYSTEM login/DCL, DECnet and SET HOST 0 remain incomplete.
+
+M226 implementation commit: `94d38f08320b81799b846c9d5c0acdbaebd5306b`.
