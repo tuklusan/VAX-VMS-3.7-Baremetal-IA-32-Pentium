@@ -1,0 +1,65 @@
+#include "vms_v37_ia32_context.h"
+#include <stdio.h>
+#include <string.h>
+
+static int fail(const char *s){fprintf(stderr,"IA32 CONTEXT FAIL: %s\n",s);return 1;}
+
+int main(void){
+    _Alignas(16) uint8_t stack[512];
+    memset(stack,0xa5,sizeof stack);
+    struct port_v37_ia32_restore_frame *frame=0;
+    const struct port_v37_ia32_context_seed kernel={
+        .cr3=0x00123000u,.entry_pc=0x00101000u,.eflags=0x202u,
+        .code_selector=0x08u,.data_selector=0x10u,.access_mode=0u};
+    const uint32_t kernel_status=port_v37_ia32_context_init(stack,sizeof stack,
+        &kernel,&frame);
+    if(kernel_status!=PORT_V37_IA32_CONTEXT_OK||!frame||
+       (uintptr_t)frame<(uintptr_t)stack||
+       (uintptr_t)frame+sizeof(*frame)>(uintptr_t)stack+sizeof stack||
+       ((uintptr_t)frame&15u)||frame->gs!=0x10u||frame->fs!=0x10u||
+       frame->es!=0x10u||frame->ds!=0x10u||
+       frame->registers.eip!=kernel.entry_pc||
+       frame->registers.cs!=kernel.code_selector||
+       frame->registers.eflags!=kernel.eflags||
+       frame->registers.user_esp||frame->registers.user_ss){
+        fprintf(stderr,"status=%u frame=%p",kernel_status,(void *)frame);
+        if(frame)fprintf(stderr," gs=%x fs=%x es=%x ds=%x eip=%x cs=%x flags=%x useresp=%x userss=%x\n",
+            frame->gs,frame->fs,frame->es,frame->ds,
+            frame->registers.eip,frame->registers.cs,
+            frame->registers.eflags,frame->registers.user_esp,
+            frame->registers.user_ss);
+        return fail("initial supervisor IRET frame");
+    }
+
+    const struct port_v37_ia32_context_seed user={
+        .cr3=0x00200000u,.entry_pc=0x00401000u,
+        .initial_stack=0x00800000u,.eflags=0x202u,
+        .code_selector=0x3bu,.data_selector=0x43u,.access_mode=3u};
+    if(port_v37_ia32_context_init(stack,sizeof stack,&user,&frame)!=
+       PORT_V37_IA32_CONTEXT_OK||frame->registers.cs!=0x3bu||
+       frame->registers.user_ss!=0x43u||
+       frame->registers.user_esp!=0x00800000u)
+        return fail("initial user IRET frame");
+
+    const struct port_v37_ia32_context_seed ring1={
+        .cr3=0x00200000u,.entry_pc=0x00401000u,.eflags=0x202u,
+        .code_selector=0x09u,.data_selector=0x11u,.access_mode=1u};
+    if(port_v37_ia32_context_init(stack,sizeof stack,&ring1,&frame)!=
+       PORT_V37_IA32_CONTEXT_PRIVILEGE)
+        return fail("unsupported VMS executive mode not silently mapped");
+    struct port_v37_ia32_context_seed invalid=user;
+    invalid.eflags|=0x3000u;
+    if(port_v37_ia32_context_init(stack,sizeof stack,&invalid,&frame)!=
+       PORT_V37_IA32_CONTEXT_FLAGS)
+        return fail("user cannot seed IOPL");
+    invalid=user;invalid.initial_stack=0u;
+    if(port_v37_ia32_context_init(stack,sizeof stack,&invalid,&frame)!=
+       PORT_V37_IA32_CONTEXT_STACK)
+        return fail("user context requires a stack");
+    invalid=user;invalid.cr3|=1u;
+    if(port_v37_ia32_context_init(stack,sizeof stack,&invalid,&frame)!=
+       PORT_V37_IA32_CONTEXT_BAD)
+        return fail("unaligned CR3 rejected");
+    puts("IA-32 kernel/user initial IRET context ABI PASS");
+    return 0;
+}
