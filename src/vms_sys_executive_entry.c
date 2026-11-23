@@ -1573,7 +1573,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
                PORT_V37_UCB_BOOT_OFF+120u)!=0u)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         const uint32_t base=(uint32_t)(uintptr_t)executive_dqddt.image;
-        const uint32_t start=(uint32_t)(uintptr_t)port_dq_bootread_execute;
+        const uint32_t start=(uint32_t)(uintptr_t)port_dqddt_startio;
         const uint32_t ret=(uint32_t)(uintptr_t)port_v37_nl_ioc_return;
         const uint32_t read_action=(uint32_t)(uintptr_t)port_dqddt_bootread;
         const uint32_t write_action=(uint32_t)(uintptr_t)port_dqddt_bootwrite;
@@ -1601,6 +1601,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->dq_ddt_stage=&executive_dqddt;
         p->result->dq_ddt_function=port_dqddt_function;
         p->result->dq_ddt_dispatch_bootwrite=port_dqddt_dispatch_bootwrite;
+        p->result->dq_ddt_startio=port_dqddt_startio;
         p->result->dq_crb=&executive_dq_crb;
         p->result->signature=PORT_SYS_EXEC_DQ_DDT_TAG;
         return PORT_SYS_EXEC_NORMAL;
@@ -1642,8 +1643,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             .boot_unit=p->dq_boot_io->boot_unit,
             .read_sector=executive_dq_ioc_read_sector,
             .read_context=(void *)p->dq_boot_io};
-        if(port_dqddt_dispatch_bootread(&executive_dqddt,&executive_dq_fdt,&read,
-               &executive_dqddt_io,0u)!=PORT_DQ_BOOTREAD_OK||
+        if(port_dqddt_startio(&executive_dqddt,&executive_dq_fdt,&read,
+               &executive_dqddt_io)!=PORT_DQ_BOOTREAD_OK||
            executive_dqddt_io.lbn!=0u||
            executive_dqddt_io.bytes!=PORT_DQ_BOOTREAD_BYTES||
            executive_dqddt_io.irp_status!=PORT_SYS85_NORMAL||

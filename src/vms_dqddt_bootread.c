@@ -36,6 +36,31 @@ uint32_t port_dqddt_dispatch_bootwrite(const struct port_dqddt_stage *stage,
 #endif
 }
 
+/* Native DQ_STARTIO subset. The staged DDT START slot names this dispatcher;
+ * resident SYS.EXE calls it through the private typed request contract. Only
+ * the two privileged physical block actions have handlers.
+ * Buffered I/O, ACP, process windows and RB730 controller commands remain
+ * unbound and cannot fall through to a guessed native implementation. */
+uint32_t port_dqddt_startio(const struct port_dqddt_stage *stage,
+    const struct port_dq_fdt *fdt,const struct port_dq_bootread_request *q,
+    struct port_dq_bootread_result *result){
+    if(!q||!q->irp||q->irp_bytes!=PORT_V37_IRP_SIZE||!result||
+       port_dqddt_validate(stage,fdt)!=PORT_DQDDT_OK)
+        return PORT_DQ_BOOTREAD_BAD;
+    const uint16_t function=port_v37_read16(q->irp+PORT_V37_IRP_FUNC);
+    const uint32_t action=port_dqddt_function(stage,fdt,function);
+    if(action==PORT_DQDDT_BAD)return PORT_DQ_BOOTREAD_BAD;
+    if(action!=PORT_DQDDT_NATIVE)return PORT_DQ_BOOTREAD_UNBOUND;
+    uint32_t st=port_dq_bootread_preflight(q);
+    if(st!=PORT_DQ_BOOTREAD_OK)return st;
+    const uint32_t lbn=port_v37_read32(q->irp+PORT_V37_IRP_MEDIA);
+    if(function==PORT_DQ_READPBLK)
+        return port_dqddt_dispatch_bootread(stage,fdt,q,result,lbn);
+    if(function==PORT_DQ_WRITEPBLK)
+        return port_dqddt_dispatch_bootwrite(stage,fdt,q,result,lbn);
+    return PORT_DQ_BOOTREAD_UNBOUND;
+}
+
 uint32_t port_dqddt_bootread(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const struct port_dq_bootread_request *q,
     struct port_dq_bootread_result *result,uint32_t lbn){

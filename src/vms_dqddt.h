@@ -48,6 +48,11 @@ uint32_t port_dqddt_dispatch_bootread(const struct port_dqddt_stage *,
 uint32_t port_dqddt_dispatch_bootwrite(const struct port_dqddt_stage *,
     const struct port_dq_fdt *,const struct port_dq_bootread_request *,
     struct port_dq_bootread_result *,uint32_t);
+/* Partial native DQ_STARTIO entry: dispatches only validated physical
+ * READPBLK/WRITEPBLK requests through their DDT FDT actions. */
+uint32_t port_dqddt_startio(const struct port_dqddt_stage *,
+    const struct port_dq_fdt *,const struct port_dq_bootread_request *,
+    struct port_dq_bootread_result *);
 uint32_t port_dqddt_bootwrite(const struct port_dqddt_stage *,
     const struct port_dq_fdt *,const struct port_dq_bootread_request *,
     struct port_dq_bootread_result *,uint32_t);

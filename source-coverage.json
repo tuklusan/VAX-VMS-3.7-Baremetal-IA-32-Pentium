@@ -21396,9 +21396,9 @@
           ],
           "status": "partial",
           "pc_file": "src/vms_dqddt_bootread.c",
-          "pc_symbol": "port_dqddt_dispatch_bootwrite",
-          "pc_line": 22,
-          "function": "Staged native READPBLK and WRITEPBLK action slots dispatch private privileged IRPs; WRITEPBLK enters a bounded source-shaped FIFO, but DQA DDB/DDT publication and public QIO/ACP remain unimplemented"
+          "pc_symbol": "port_dqddt_startio",
+          "pc_line": 44,
+          "function": "Native DQ_STARTIO entry dispatches validated private physical READPBLK/WRITEPBLK IRPs through the staged source DDT action slots; DQA DDB/UCB DDT publication, buffered I/O, public QIO and ACP remain unimplemented"
         },
         {
           "original_lines": [

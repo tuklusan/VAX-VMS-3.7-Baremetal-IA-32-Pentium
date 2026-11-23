@@ -91,10 +91,19 @@ int main(void){
         .sector=sector,.sector_bytes=sizeof sector,.boot_unit=0u,
         .read_sector=mock_read,.write_sector=mock_write,.read_context=&calls};
     struct port_dq_bootread_result read_result={0};
-    CHECK(port_dqddt_dispatch_bootread(&d,&fdt,&request,&read_result,7u)==
+    CHECK(port_dqddt_startio(&d,&fdt,&request,&read_result)==
         PORT_DQ_BOOTREAD_OK);
     CHECK(calls==1u&&read_result.lbn==7u&&read_result.bytes==512u&&
         read_result.irp_status==1u&&sector[0]==7u&&sector[255]==262u);
+    port_v37_write16(irp+PORT_V37_IRP_FUNC,PORT_DQ_READVBLK);
+    CHECK(port_dqddt_startio(&d,&fdt,&request,&read_result)==
+        PORT_DQ_BOOTREAD_UNBOUND);
+    CHECK(calls==1u);
+    port_v37_write16(irp+PORT_V37_IRP_FUNC,63u);
+    CHECK(port_dqddt_startio(&d,&fdt,&request,&read_result)==
+        PORT_DQ_BOOTREAD_BAD);
+    CHECK(calls==1u);
+    port_v37_write16(irp+PORT_V37_IRP_FUNC,PORT_DQ_READPBLK);
     CHECK(port_dqddt_dispatch_bootread(&d,&fdt,&request,&read_result,8u)==
         PORT_DQ_BOOTREAD_BAD);
     CHECK(calls==1u);
@@ -105,8 +114,7 @@ int main(void){
     port_v37_write16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
     port_v37_write32(irp+PORT_V37_IRP_MEDIA,7u);
     sector[0]=0x55aau;sector[255]=0xaa55u;
-    uint32_t write_status=port_dqddt_dispatch_bootwrite(&d,&fdt,&request,
-        &read_result,7u);
+    uint32_t write_status=port_dqddt_startio(&d,&fdt,&request,&read_result);
     CHECK(write_status==PORT_DQ_BOOTREAD_OK);
     CHECK(calls==2u&&read_result.io_function==PORT_DQ_WRITEPBLK&&
         read_result.irp_status==1u&&read_result.bytes==512u);

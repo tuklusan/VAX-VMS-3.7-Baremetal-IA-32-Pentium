@@ -2448,11 +2448,11 @@ static int m202_dispatch_write(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,uint32_t lbn,
     uint16_t data[256],
-    uint32_t (*dispatch)(const struct port_dqddt_stage *,
+    uint32_t (*startio)(const struct port_dqddt_stage *,
         const struct port_dq_fdt *,const struct port_dq_bootread_request *,
-        struct port_dq_bootread_result *,uint32_t)){
+        struct port_dq_bootread_result *)){
     uint8_t irp[PORT_V37_IRP_SIZE] __attribute__((aligned(4)));
-    if(!stage||!fdt||!device_db||!device_info||!data||!dispatch||
+    if(!stage||!fdt||!device_db||!device_info||!data||!startio||
        !device_info->ucb[0])
         return -1;
     for(unsigned i=0;i<sizeof irp;i++)irp[i]=0u;
@@ -2469,7 +2469,7 @@ static int m202_dispatch_write(const struct port_dqddt_stage *stage,
         .sector_bytes=PORT_DQ_BOOTREAD_BYTES,.boot_unit=0u,
         .write_sector=m202_ata_write_sector};
     struct port_dq_bootread_result result={0};
-    if(dispatch(stage,fdt,&request,&result,lbn)!=
+    if(startio(stage,fdt,&request,&result)!=
           PORT_DQ_BOOTREAD_OK||result.io_function!=PORT_DQ_WRITEPBLK||
        result.lbn!=lbn||result.bytes!=PORT_DQ_BOOTREAD_BYTES||
        result.irp_status!=PORT_SYS85_NORMAL||
@@ -2480,9 +2480,9 @@ static int m202_dispatch_write(const struct port_dqddt_stage *stage,
 static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,
-    uint32_t (*dispatch)(const struct port_dqddt_stage *,
+    uint32_t (*startio)(const struct port_dqddt_stage *,
         const struct port_dq_fdt *,const struct port_dq_bootread_request *,
-        struct port_dq_bootread_result *,uint32_t)){
+        struct port_dq_bootread_result *)){
     enum {SCRATCH_LBN=8063u};
     if(!m202_qemu_fw_cfg()){
         bootstrap_message("INIT: M202 QEMU fw_cfg signature not present; ATA write probe skipped.");
@@ -2499,7 +2499,7 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     }
     for(unsigned i=0;i<256u;i++)probe[i]=(uint16_t)(0x5a00u^i);
     const int wrote=m202_dispatch_write(stage,fdt,device_db,device_info,
-                                         SCRATCH_LBN,probe,dispatch);
+                                         SCRATCH_LBN,probe,startio);
     if(wrote)bootstrap_message("INIT: staged DQ WRITEPBLK action failed.");
     const int read_probe=wrote? -1:port_ata_x86_read28(SCRATCH_LBN,observed);
     if(!wrote&&read_probe)bootstrap_message("INIT: M202 ATA write readback failed.");
@@ -2508,7 +2508,7 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
         matches=0;break;
     }
     const int restored=m202_dispatch_write(stage,fdt,device_db,device_info,
-                                            SCRATCH_LBN,saved,dispatch);
+                                            SCRATCH_LBN,saved,startio);
     if(restored)bootstrap_message("INIT: staged DQ WRITEPBLK scratch restore failed.");
     const int reread=port_ata_x86_read28(SCRATCH_LBN,observed);
     if(!reread&&!restored)bootstrap_message("INIT: M202 ATA scratch restore reread completed.");
@@ -3605,6 +3605,7 @@ void kmain(void) {
        dq_ddt_result.signature!=PORT_SYS_EXEC_DQ_DDT_TAG||
        !dq_ddt_result.dq_ddt_stage||!dq_ddt_result.dq_ddt_function||
        !dq_ddt_result.dq_ddt_dispatch_bootwrite||
+       !dq_ddt_result.dq_ddt_startio||
        !dq_ddt_result.dq_crb||
        (uintptr_t)dq_ddt_result.dq_ddt_stage<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_stage>
@@ -3613,6 +3614,8 @@ void kmain(void) {
        (uintptr_t)dq_ddt_result.dq_ddt_function>=PORT_SYS_ELF_LIMIT||
        (uintptr_t)dq_ddt_result.dq_ddt_dispatch_bootwrite<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_dispatch_bootwrite>=PORT_SYS_ELF_LIMIT||
+       (uintptr_t)dq_ddt_result.dq_ddt_startio<PORT_SYS_ELF_START||
+       (uintptr_t)dq_ddt_result.dq_ddt_startio>=PORT_SYS_ELF_LIMIT||
        (uintptr_t)dq_ddt_result.dq_crb<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_crb>
            PORT_SYS_ELF_LIMIT-sizeof(struct port_dq_crb)||
@@ -3621,6 +3624,8 @@ void kmain(void) {
        dq_ddt_result.dq_ddt_stage->driver_bound||
        dq_ddt_result.dq_ddt_stage->table_base!=
          (uint32_t)(uintptr_t)dq_ddt_result.dq_ddt_stage->image||
+       dq_ddt_result.dq_ddt_stage->native_start_pc!=
+         (uint32_t)(uintptr_t)dq_ddt_result.dq_ddt_startio||
        (dq_ddt_result.dq_ddt_stage->image[36u] !=
             (uint8_t)PORT_DQDDT_FDT_BYTES ||
         dq_ddt_result.dq_ddt_stage->image[37u]!=0u)||
@@ -3895,13 +3900,13 @@ void kmain(void) {
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,devicedb_result.device_db_bytes,
-        devicedb_result.device_db,dq_ddt_result.dq_ddt_dispatch_bootwrite);
+        devicedb_result.device_db,dq_ddt_result.dq_ddt_startio);
     if(ata_write_probe<0){
         bootstrap_message("INIT: marked QEMU ATA PIO write/readback/restore regression failed.");
         bootstrap_halt();
     }
     if(ata_write_probe>0)
-        bootstrap_message("INIT: SYS.EXE DQ IOC FIFO WRITEPBLK completed through staged DDT and ATA IRQ14, verified and restored.");
+        bootstrap_message("INIT: SYS.EXE DQ_STARTIO dispatched WRITEPBLK through staged DDT and ATA IRQ14, verified and restored.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

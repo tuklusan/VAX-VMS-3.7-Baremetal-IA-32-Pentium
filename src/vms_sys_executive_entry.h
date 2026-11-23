@@ -169,6 +169,9 @@ struct port_sys_exec_result {
     uint32_t (*dq_ddt_dispatch_bootwrite)(const struct port_dqddt_stage *,
         const struct port_dq_fdt *,const struct port_dq_bootread_request *,
         struct port_dq_bootread_result *,uint32_t);
+    uint32_t (*dq_ddt_startio)(const struct port_dqddt_stage *,
+        const struct port_dq_fdt *,const struct port_dq_bootread_request *,
+        struct port_dq_bootread_result *);
     const struct port_dq_crb *dq_crb;
     /* Private stage-validated READPBLK bridge result, not DDB/CRB binding. */
     const struct port_dq_bootread_result *dq_ddt_bootread;
