@@ -1677,6 +1677,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->device_db=&executive_devicedb_result;
         p->result->device_db_bytes=executive_devicedb_bytes.data;
         p->result->dq_native_ddt=&executive_native_dqddt;
+        p->result->ioc_search=port_v37_ioc_searchdev;
         p->result->dqa_ioc_status=port_dqddt_publish_ioc(executive_devicedb_bytes.data,
              sizeof executive_devicedb_bytes.data,
              (uint32_t)(uintptr_t)executive_devicedb_bytes.data,

@@ -43,11 +43,15 @@ uint32_t port_dqddt_dispatch_bootwrite(const struct port_dqddt_stage *stage,
  * unbound and cannot fall through to a guessed native implementation. */
 uint32_t port_dqddt_startio(const struct port_dqddt_stage *stage,
     const struct port_dqddt_native *native,const struct port_dq_fdt *fdt,
-    const struct port_dq_bootread_request *q,
+    const struct port_dq_bootread_request *request,
     struct port_dq_bootread_result *result){
-    if(!q||!q->irp||q->irp_bytes!=PORT_V37_IRP_SIZE||!result||
+    if(!request||!request->irp||request->irp_bytes!=PORT_V37_IRP_SIZE||!result||
        port_dqddt_native_validate(stage,fdt,native)!=PORT_DQDDT_OK)
         return PORT_DQ_BOOTREAD_BAD;
+    struct port_dq_bootread_request active=*request;
+    active.active_ddt_base=active.device_info&&
+        active.device_info->incomplete_driver_mask==6u?native->base:0u;
+    const struct port_dq_bootread_request *q=&active;
     const uint16_t function=port_v37_read16(q->irp+PORT_V37_IRP_FUNC);
     const uint32_t action=port_dqddt_function(stage,fdt,function);
     if(action==PORT_DQDDT_BAD)return PORT_DQ_BOOTREAD_BAD;

@@ -767,7 +767,7 @@ files1187check: portdisk.img build/files11-acp-partial.o | build
 	./build/files1187check portdisk.img
 
 # M88: genuine, independently linked native SYS.EXE and Files-11 installation.
-build/vms_sys_executive_entry.o: src/vms_sys_executive_entry.c src/vms_sys_executive_entry.h src/vms_sysloavec.h src/vms_sysloa386.h src/vms_exe_gettim.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_ini_lockdb.h src/vms_ini_procvec.h src/vms_ini_phv_swap.h src/vms_ini_mpw.h src/vms_ini_pflvec.h src/vms_ini_syswcb.h src/vms_ini_log_templates.h src/vms_v37_dyn_tags.h src/vms_ini_syslog.h src/vms_ini_bootdev_scan.h src/vms_ini_dpt_templates.h src/vms_sys85.h | build
+build/vms_sys_executive_entry.o: src/vms_sys_executive_entry.c src/vms_sys_executive_entry.h src/vms_sysloavec.h src/vms_sysloa386.h src/vms_exe_gettim.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_ini_lockdb.h src/vms_ini_procvec.h src/vms_ini_phv_swap.h src/vms_ini_mpw.h src/vms_ini_pflvec.h src/vms_ini_syswcb.h src/vms_ini_log_templates.h src/vms_v37_dyn_tags.h src/vms_ini_syslog.h src/vms_ini_bootdev_scan.h src/vms_ini_dpt_templates.h src/vms_sys85.h src/vms_dq_bootread.h src/vms_dqddt.h src/vms_dq_crb.h src/vms_ini_devicedb.h src/vms_ioc_phys.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/vms_sysboot_pktmem.o: src/vms_sysboot_pktmem.c src/vms_sysboot_pktmem.h src/vms_booparam.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -995,7 +995,7 @@ build/iniloa.exe: build/vms_iniloa_iomap.o build/vms_iniloa_entry.o iniloa_nativ
 	$(LD) -m elf_i386 -T iniloa_native.ld -o $@ build/vms_iniloa_entry.o build/vms_iniloa_iomap.o
 build/install_iniloa_image: tools/install_iniloa_image.c src/vms_boot_files11.c src/vms_bootio.c src/vms_f11_home.c | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $^ -o $@
-.PHONY: dqcrbcheck sysexecentrycheck qemu-sysboot-m197 qemu-sysboot-m198 qemu-sysboot-m199 qemu-sysboot-m201 qemu-sysboot-m202 qemu-sysboot-m203 qemu-sysboot-m204 qemu-sysboot-m205 qemu-sysboot-m206
+.PHONY: dqcrbcheck sysexecentrycheck qemu-sysboot-m197 qemu-sysboot-m198 qemu-sysboot-m199 qemu-sysboot-m201 qemu-sysboot-m202 qemu-sysboot-m203 qemu-sysboot-m204 qemu-sysboot-m205 qemu-sysboot-m206 qemu-sysboot-m207
 dqcrbcheck: $(M197_DQ_CRB_OBJS) | build
 	$(CC) -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_dq_crb.c tests/test_dq_crb_host.c -o build/dqcrbcheck
 	ASAN_OPTIONS=detect_leaks=1 ./build/dqcrbcheck
@@ -1386,13 +1386,14 @@ devlogcheck: $(M129_DEVLOG_OBJS) | build
 	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -Isrc $(M129_DEVLOG_SRCS) $(M128_LOG_SRCS) $(M127_FIN_SRCS) $(M120_IOC_SRCS) $(M118_DB_SRCS) src/vms_ini_log_templates.c src/vms_ini_syslog.c tests/test_devlog_search_host.c -o build/devlogcheck
 	ASAN_OPTIONS=detect_leaks=1 ./build/devlogcheck
 
-# M130: source DQ DPTAB/DDTAB and 136-byte original FUNCTAB staging.
-# Real DQ IOC handler, DQ_REGDUMP, IOC$MNTVER and ACP are unported.
-$(M130_DQDDT_OBJS): build/%.o: src/%.c src/vms_dqddt.h | build
+# M130-M207: source DQ DDT/FDT activation, partial DQA0 publication and
+# IOC-selected STARTIO. Full RB730 IOC/error paths, REGDUMP, MNTVER and ACP
+# remain unported.
+$(M130_DQDDT_OBJS): build/%.o: src/%.c src/vms_dqddt.h src/vms_dq_bootread.h src/vms_ini_devicedb.h src/vms_dq_crb.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: dqddtcheck
 dqddtcheck: $(M130_DQDDT_OBJS) | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M130_DQDDT_SRCS) $(M134_DDTRELOC_SRCS) $(M197_DQ_CRB_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c src/vms_ini_devicedb.c $(filter-out src/vms_ini_devicedb.c,$(M118_DB_SRCS)) tests/test_dqddt_host.c -o build/dqddtcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M130_DQDDT_SRCS) $(M134_DDTRELOC_SRCS) $(M197_DQ_CRB_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M120_IOC_SRCS) src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c src/vms_ini_devicedb.c $(filter-out src/vms_ini_devicedb.c,$(M118_DB_SRCS)) tests/test_dqddt_host.c -o build/dqddtcheck
 	./build/dqddtcheck
 
 # M131: original RELOCDRV IOC$INITDRV DPT STORE operations, no DDT bind.
@@ -1454,3 +1455,6 @@ qemu-sysboot-m205: vms37lab.ima portdisk.img
 
 qemu-sysboot-m206: vms37lab.ima portdisk.img
 	python3 tools/qemu_sysboot_m206.py
+
+qemu-sysboot-m207: vms37lab.ima portdisk.img
+	python3 tools/qemu_sysboot_m207.py

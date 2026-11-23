@@ -56,6 +56,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #include "vms_qio.h"
 #include "vms_channels.h"
 #include "vms_dq_crb.h"
+#include "vms_ioc_phys.h"
 
 #define VGA ((volatile uint16_t *)0xB8000)
 #define WIDTH 80
@@ -2451,15 +2452,35 @@ static uint32_t m202_get32(const uint8_t *p){
 static int m202_dispatch_write(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,uint32_t lbn,
-    uint16_t data[256],
-    uint32_t (*startio)(const struct port_dqddt_stage *,
-        const struct port_dqddt_native *,const struct port_dq_fdt *,
-        const struct port_dq_bootread_request *,struct port_dq_bootread_result *),
-    const struct port_dqddt_native *native){
+    uint16_t data[256],const struct port_dqddt_native *native,
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+       const struct port_v37_device_result *,const char *,size_t,
+       struct port_v37_ioc_result *)){
     uint8_t irp[PORT_V37_IRP_SIZE] __attribute__((aligned(4)));
-    if(!stage||!native||!fdt||!device_db||!device_info||!data||!startio||
-       !device_info->ucb[0])
+    if(!stage||!native||!fdt||!device_db||!device_info||!data||
+       !ioc_search||!device_info->ucb[0]){
+        bootstrap_message("INIT: IOC-selected DQA0 DDT request context invalid.");
         return -1;
+    }
+    struct port_v37_ioc_result found={0};
+    if(ioc_search(device_db,PORT_V37_DEVICE_BYTES,
+         device_info->list_head,device_info,"DQA0",4u,&found)!=PORT_V37_IOC_OK||
+       found.ddb!=device_info->ddb[0]||found.ucb!=device_info->ucb[0]||
+       found.unit!=0u||!found.driver_bound){
+        bootstrap_message("INIT: IOC$SEARCHDEV did not select bound DQA0 for WRITEPBLK.");
+        return -1;
+    }
+    const uint32_t ddt=m202_get32(device_db+PORT_V37_DDB_BOOT_OFF+12u);
+    if(ddt!=(uint32_t)(uintptr_t)native->image||ddt!=native->base||
+       m202_get32((const uint8_t *)(uintptr_t)ddt)!=stage->native_start_pc){
+        bootstrap_message("INIT: DQA0 DDB DDT START pointer validation failed.");
+        return -1;
+    }
+    typedef uint32_t (*dq_startio_fn)(const struct port_dqddt_stage *,
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,struct port_dq_bootread_result *);
+    dq_startio_fn startio=(dq_startio_fn)(uintptr_t)
+        m202_get32((const uint8_t *)(uintptr_t)ddt);
     for(unsigned i=0;i<sizeof irp;i++)irp[i]=0u;
     m202_put16(irp+8u,PORT_V37_IRP_SIZE);
     irp[10u]=PORT_V37_DYN_IRP;
@@ -2478,17 +2499,19 @@ static int m202_dispatch_write(const struct port_dqddt_stage *stage,
           PORT_DQ_BOOTREAD_OK||result.io_function!=PORT_DQ_WRITEPBLK||
        result.lbn!=lbn||result.bytes!=PORT_DQ_BOOTREAD_BYTES||
        result.irp_status!=PORT_SYS85_NORMAL||
-       result.irp_second!=PORT_DQ_BOOTREAD_BYTES)
+       result.irp_second!=PORT_DQ_BOOTREAD_BYTES){
+        bootstrap_message("INIT: IOC-selected DQA0 DDT STARTIO rejected WRITEPBLK.");
         return -1;
+    }
     return 0;
 }
 static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,
-    uint32_t (*startio)(const struct port_dqddt_stage *,
-        const struct port_dqddt_native *,const struct port_dq_fdt *,
-        const struct port_dq_bootread_request *,struct port_dq_bootread_result *),
-    const struct port_dqddt_native *native){
+    const struct port_dqddt_native *native,
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+       const struct port_v37_device_result *,const char *,size_t,
+       struct port_v37_ioc_result *)){
     enum {SCRATCH_LBN=8063u};
     if(!m202_qemu_fw_cfg()){
         bootstrap_message("INIT: M202 QEMU fw_cfg signature not present; ATA write probe skipped.");
@@ -2505,7 +2528,7 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     }
     for(unsigned i=0;i<256u;i++)probe[i]=(uint16_t)(0x5a00u^i);
     const int wrote=m202_dispatch_write(stage,fdt,device_db,device_info,
-                                         SCRATCH_LBN,probe,startio,native);
+                                         SCRATCH_LBN,probe,native,ioc_search);
     if(wrote)bootstrap_message("INIT: staged DQ WRITEPBLK action failed.");
     const int read_probe=wrote? -1:port_ata_x86_read28(SCRATCH_LBN,observed);
     if(!wrote&&read_probe)bootstrap_message("INIT: M202 ATA write readback failed.");
@@ -2514,7 +2537,7 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
         matches=0;break;
     }
     const int restored=m202_dispatch_write(stage,fdt,device_db,device_info,
-                                            SCRATCH_LBN,saved,startio,native);
+                                            SCRATCH_LBN,saved,native,ioc_search);
     if(restored)bootstrap_message("INIT: staged DQ WRITEPBLK scratch restore failed.");
     const int reread=port_ata_x86_read28(SCRATCH_LBN,observed);
     if(!reread&&!restored)bootstrap_message("INIT: M202 ATA scratch restore reread completed.");
@@ -3919,21 +3942,6 @@ void kmain(void) {
     }
     bootstrap_message("INIT: actual IRQ0 advanced resident SYS.EXE VMS clock.");
 
-    uint32_t (*native_dq_startio)(const struct port_dqddt_stage *,
-        const struct port_dqddt_native *,const struct port_dq_fdt *,
-        const struct port_dq_bootread_request *,struct port_dq_bootread_result *)=(void *)(uintptr_t)
-        m202_get32(ddtreloc_result.dq_native_ddt->image);
-    int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
-        dq_result.dq_source_fdt,devicedb_result.device_db_bytes,
-        devicedb_result.device_db,native_dq_startio,
-        ddtreloc_result.dq_native_ddt);
-    if(ata_write_probe<0){
-        bootstrap_message("INIT: marked QEMU ATA PIO write/readback/restore regression failed.");
-        bootstrap_halt();
-    }
-    if(ata_write_probe>0)
-        bootstrap_message("INIT: SYS.EXE activated DQ DDT/FDT STARTIO dispatched WRITEPBLK through ATA IRQ14, verified and restored.");
-
     static struct port_sys_exec_result dq_publish_result;
     const struct port_sys_exec_start dq_publish_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
@@ -3954,6 +3962,7 @@ void kmain(void) {
     }
     if(dq_publish_result.dq_ddt_published!=1u||
        !dq_publish_result.device_db||!dq_publish_result.dq_native_ddt||
+       !dq_publish_result.ioc_search||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
        dq_publish_result.device_db->incomplete_driver_mask!=6u||
@@ -3963,6 +3972,17 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).");
+
+    int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
+        dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,
+        dq_publish_result.device_db,dq_publish_result.dq_native_ddt,
+        dq_publish_result.ioc_search);
+    if(ata_write_probe<0){
+        bootstrap_message("INIT: marked QEMU ATA PIO write/readback/restore regression failed.");
+        bootstrap_halt();
+    }
+    if(ata_write_probe>0)
+        bootstrap_message("INIT: SYS.EXE IOC-selected DQA0 DDT STARTIO completed WRITEPBLK through ATA IRQ14; readback and restore verified.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

@@ -4,6 +4,7 @@
 #include "vms_dqddt.h"
 #include "vms_dqddt_ioc_bind.h"
 #include "vms_ini_devicedb.h"
+#include "vms_ioc_phys.h"
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"DQ DDT failed line %u: %s\n",(unsigned)__LINE__,#x);return 1;}}while(0)
 static int mock_read(void *ctx,uint32_t lbn,uint16_t dst[256]){
     unsigned *calls=ctx;(*calls)++;
@@ -148,6 +149,24 @@ int main(void){
         (uint32_t)(uintptr_t)db,&info,&d,&fdt,&native,&crb)==
             PORT_DQDDT_BIND_BAD);
     CHECK(port_v37_read32(db+PORT_V37_DDB_BOOT_OFF+12u)==bound_base);
+    struct port_v37_ioc_result found={0};
+    CHECK(port_v37_ioc_searchdev(db,sizeof db_words,
+        (uint32_t)(uintptr_t)db,&info,"DQA0",4u,&found)==PORT_V37_IOC_OK);
+    CHECK(found.ddb==info.ddb[0]&&found.ucb==info.ucb[0]&&
+        found.unit==0u&&found.driver_bound);
+    port_v37_write16(irp+PORT_V37_IRP_FUNC,PORT_DQ_READPBLK);
+    port_v37_write32(irp+PORT_V37_IRP_MEDIA,9u);
+    port_v37_write32(irp+PORT_V37_IRP_IOST2,0u);
+    CHECK(port_dq_bootread_preflight(&request)==PORT_DQ_BOOTREAD_BAD);
+    struct port_dq_bootread_request published_request=request;
+    published_request.active_ddt_base=native_base;
+    CHECK(port_dq_bootread_preflight(&published_request)==PORT_DQ_BOOTREAD_OK);
+    uint32_t published_lbn=0u;uint16_t published_function=0u;
+    CHECK(port_dq_bootread_decode_physical(&published_request,&published_lbn,
+        &published_function,9u)==PORT_DQ_BOOTREAD_OK);
+    CHECK(port_dqddt_startio(&d,&native,&fdt,&request,&read_result)==
+        PORT_DQ_BOOTREAD_OK);
+    CHECK(calls==3u&&read_result.lbn==9u&&sector[0]==9u&&sector[255]==264u);
     struct port_dqddt_stage before=d;
     CHECK(port_dqddt_stage_init(&d,&fdt,BASE+1u,START,RET,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));

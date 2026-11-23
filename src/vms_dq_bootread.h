@@ -6,8 +6,8 @@
 #include "vms_ini_devicedb.h"
 #include "vms_qio_post.h"
 /* DRIVER/SRC/DQDRIVER.MAR PREPROCESS (640-671), FDISPATCH (678-709),
- * NORMAL/FUNCXT (790-940) on native ATA. Stage is one privileged raw
- * Files-11 home block physical I/O, not a complete DQ driver or user $QIO.
+ * NORMAL/FUNCXT (790-940) on native ATA. This is a privileged physical
+ * block path, not a complete DQ driver or public user $QIO implementation.
  * Source code uses IRP$L_MEDIA at offset 56 to hold the LBN before
  * completion, sharing storage with IOST1 after completion. */
 enum {PORT_DQ_BOOTREAD_OK=1u, PORT_DQ_BOOTREAD_BAD=2u,
@@ -28,6 +28,8 @@ struct port_dq_bootread_request {
     uint16_t *sector;
     size_t sector_bytes;
     uint16_t boot_unit;
+    /* Set only by validated native DQ_STARTIO after DDT publication. */
+    uint32_t active_ddt_base;
     port_dq_native_read_fn read_sector;
     port_dq_native_write_fn write_sector;
     void *read_context;

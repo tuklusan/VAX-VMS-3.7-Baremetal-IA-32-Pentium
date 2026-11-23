@@ -1,6 +1,6 @@
 #include "vms_dq_bootread.h"
-/* Privileged-only early-INIT DQ read path. Strictly no user buffers,
- * media writes, ACP invocation or emulated RB730 channel ownership. */
+/* Privileged-only DQ physical block path. Early INIT can run before DDT
+ * publication; active STARTIO supplies the validated published DDT base. */
 static int disjoint(const void *a,size_t as,const void *b,size_t bs){
     uintptr_t x=(uintptr_t)a,y=(uintptr_t)b;
     if(as>UINTPTR_MAX-x||bs>UINTPTR_MAX-y)return 0;
@@ -22,10 +22,14 @@ uint32_t port_dq_bootread_preflight(const struct port_dq_bootread_request *q){
        (function==PORT_DQ_WRITEPBLK&&!q->write_sector)||
        (function!=PORT_DQ_READPBLK&&function!=PORT_DQ_WRITEPBLK))
         return PORT_DQ_BOOTREAD_BAD;
+    const uint32_t mask=q->device_info->incomplete_driver_mask;
+    const int prepublish=mask==7u&&q->active_ddt_base==0u;
+    const int published=mask==6u&&q->active_ddt_base!=0u&&
+       q->active_ddt_base==q->device_info->bound_dqa_ddt&&
+       q->device_info->bound_dqa_crb!=0u;
     if(port_v37_devices_check(q->device_db,PORT_V37_DEVICE_BYTES,
          (uint32_t)(uintptr_t)q->device_db,q->device_info)!=PORT_V37_DEV_OK ||
-       q->device_info->incomplete_driver_mask!=7u ||
-       !q->device_info->bound_nl_ddt ||
+       !q->device_info->bound_nl_ddt || (!prepublish&&!published) ||
        port_dq_fdt_validate(q->fdt,sizeof(*q->fdt))!=PORT_DQ_FDT_OK)
         return PORT_DQ_BOOTREAD_BAD;
     const uint8_t *u=q->device_db+PORT_V37_UCB_BOOT_OFF;
@@ -34,7 +38,9 @@ uint32_t port_dq_bootread_preflight(const struct port_dq_bootread_request *q){
        port_v37_read32(u+36u)!=q->device_info->ddb[0] ||
        port_v37_read16(u+58u)!=512u ||
        port_v37_read16(u+72u)!=q->boot_unit ||
-       port_v37_read32(u+120u)!=0u || /* NO disk DDT linked */
+       port_v37_read32(u+120u)!=q->active_ddt_base ||
+       port_v37_read32(q->device_db+PORT_V37_DDB_BOOT_OFF+12u)!=
+           q->active_ddt_base ||
        port_v37_read32(q->irp+PORT_V37_IRP_UCB)!=q->device_info->ucb[0] ||
        port_v37_read16(q->irp+8u)!=PORT_V37_IRP_SIZE ||
        q->irp[10u]!=PORT_V37_DYN_IRP ||
