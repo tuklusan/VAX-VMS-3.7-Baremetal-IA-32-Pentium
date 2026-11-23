@@ -34,6 +34,10 @@ uint32_t port_v37_sysqio_process_bind_pcb(uint8_t *pcb,size_t bytes,
        !load32(pcb+PORT_V37_PCB_PID)||
        load32(pcb+PORT_V37_PCB_PHD)!=phd_va)
         return PORT_V37_SYSQIO_PCB_BAD;
+#if UINTPTR_MAX <= UINT32_MAX
+    if((uint32_t)(uintptr_t)phd!=phd_va)
+        return PORT_V37_SYSQIO_PCB_BAD;
+#endif
     const uint8_t *const priv=phd+PORT_V37_PHD_PRIVMSK;
     const struct port_v37_sysqio_process out={
         .pid=load32(pcb+PORT_V37_PCB_PID),
