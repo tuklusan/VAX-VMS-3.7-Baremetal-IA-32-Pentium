@@ -51,3 +51,40 @@ uint32_t port_v37_sysqio_reserve_irp(
     *packet=allocated;*packet_va=va;*service_status=PORT_SYS85_NORMAL;
     return PORT_V37_SYSQIO_RESERVE_OK;
 }
+
+/* SYSQIOREQ.MAR ALLOC/ERROR ordering: if lookaside allocation or AST quota
+ * fails after NOIOSB charged the process, back out that exact charge and post
+ * the error event. Outputs become visible only after the complete reservation. */
+uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
+    struct port_v37_sysqio_process *process,
+    const struct port_v37_sysqio_begin_ops *ops,
+    const struct port_v37_sysqio_irp_spec *spec,
+    struct port_ini_packet_list *pool,const struct port_v37_irp_pool_sync *sync,
+    struct port_v37_sysqio_prepared *prepared,uint8_t **packet,
+    uint32_t *packet_va,uint32_t *service_status){
+    if(!process||!ops||!spec||!pool||!sync||!prepared||!packet||!packet_va||
+       !service_status)return PORT_V37_SYSQIO_PREPARE_BEGIN;
+    struct port_v37_sysqio_prepared request;
+    uint32_t status=PORT_SYS85_BADPARAM;
+    const uint32_t begun=port_v37_sysqio_begin(ap,ap_bytes,process,ops,
+                                                &request,&status);
+    if(begun!=PORT_V37_SYSQIO_BEGIN_OK){
+        *service_status=status;
+        return PORT_V37_SYSQIO_PREPARE_BEGIN;
+    }
+    uint8_t *reserved=0;uint32_t va=0;
+    const uint32_t result=port_v37_sysqio_reserve_irp(&request,process,spec,
+        pool,sync,&reserved,&va,&status);
+    if(result!=PORT_V37_SYSQIO_RESERVE_OK){
+        int16_t *const count=request.dispatch.buffered?
+            &process->buffered_io_count:&process->direct_io_count;
+        if(*count<INT16_MAX)++*count;
+        if(ops->post_event)ops->post_event(ops->context,process->pid,
+            (uint8_t)request.args.event_flag,status);
+        *service_status=status;
+        return PORT_V37_SYSQIO_PREPARE_RESERVE;
+    }
+    *prepared=request;*packet=reserved;*packet_va=va;
+    *service_status=status;
+    return PORT_V37_SYSQIO_PREPARE_OK;
+}
