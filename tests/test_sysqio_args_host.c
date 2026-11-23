@@ -289,6 +289,32 @@ int main(void){
        reserved_irp!=pool_memory+QIO_POOL_STRIDE||pool.free_count!=1u||
        proc.ast_count!=0||get32(reserved_irp+12u)!=proc.pid)
         return 46;
+    if(port_v37_irp_pool_free(&pool,reserved_irp,reserved_va,
+          PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
+        return 49;
+    proc.direct_io_count=1;proc.ast_count=1;rig.posts=0u;
+    uint8_t *prepared_irp=0;uint32_t prepared_va=0u;
+    struct port_v37_sysqio_prepared integrated={0};
+    if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&proc,&begin_ops,
+          &reserve_spec,&pool,&pool_sync,&integrated,&prepared_irp,
+          &prepared_va,&ast_status)!=PORT_V37_SYSQIO_PREPARE_OK||
+       ast_status!=PORT_SYS85_NORMAL||proc.direct_io_count!=0||
+       proc.ast_count!=0||!prepared_irp||!prepared_va||rig.posts||
+       integrated.dispatch.function_code!=49u)
+        return 50;
+    if(port_v37_irp_pool_free(&pool,prepared_irp,prepared_va,
+          PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
+        return 51;
+    proc.direct_io_count=1;proc.ast_count=1;rig.posts=0u;
+    reserve_spec.ucb_va=0u;
+    if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&proc,&begin_ops,
+          &reserve_spec,&pool,&pool_sync,&integrated,&reserved_irp,
+          &reserved_va,&ast_status)!=PORT_V37_SYSQIO_PREPARE_RESERVE||
+       ast_status!=PORT_SYS85_BADPARAM||proc.direct_io_count!=1||
+       proc.ast_count!=1||rig.posts!=1u||rig.posted_efn!=3u||
+       rig.posted_status!=PORT_SYS85_BADPARAM||pool.free_count!=2u)
+        return 53;
+    reserve_spec.ucb_va=0x2000u;
     /* Source AST quota failure is after allocation and must restore the
      * same lookaside packet without consuming another AST unit. */
     proc.ast_count=-1;
@@ -297,7 +323,7 @@ int main(void){
           &reserve_spec,&pool,&pool_sync,&reserved_irp,&reserved_va,&ast_status);
     if(reserve_status!=
           PORT_V37_SYSQIO_RESERVE_ASTQUOTA||ast_status!=PORT_SS_EXQUOTA||
-       reserved_irp||reserved_va||pool.free_count!=1u||proc.ast_count!=-1){
+       reserved_irp||reserved_va||pool.free_count!=2u||proc.ast_count!=-1){
         return 47;
     }
     proc.ast_count=1;
@@ -305,7 +331,7 @@ int main(void){
     if(port_v37_sysqio_reserve_irp(&prepared,&proc,&reserve_spec,&pool,
           &pool_sync,&reserved_irp,&reserved_va,&ast_status)!=
           PORT_V37_SYSQIO_RESERVE_BAD||ast_status!=PORT_SYS85_BADPARAM||
-       reserved_irp||reserved_va||pool.free_count!=1u||proc.ast_count!=1)
+       reserved_irp||reserved_va||pool.free_count!=2u||proc.ast_count!=1)
         return 48;
     struct port_v37_sysqio_prepared no_ast=prepared;
     no_ast.args.ast_address=0u;proc.ast_count=-1;
