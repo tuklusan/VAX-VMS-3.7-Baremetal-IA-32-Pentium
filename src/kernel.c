@@ -2439,6 +2439,9 @@ static int m202_ata_write_sector(void *ctx,uint32_t lbn,
                                  const uint16_t src[256]){
     (void)ctx;return port_ata_x86_write28(lbn,src);
 }
+static int m202_ata_read_sector(void *ctx,uint32_t lbn,uint16_t dst[256]){
+    (void)ctx;return port_ata_x86_read28(lbn,dst);
+}
 static void m202_put16(uint8_t *p,uint16_t value){
     p[0]=(uint8_t)value;p[1]=(uint8_t)(value>>8u);
 }
@@ -2449,10 +2452,10 @@ static uint32_t m202_get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8u)|
         ((uint32_t)p[2]<<16u)|((uint32_t)p[3]<<24u);
 }
-static int m202_dispatch_write(const struct port_dqddt_stage *stage,
+static int m202_dispatch_io(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,uint32_t lbn,
-    uint16_t data[256],const struct port_dqddt_native *native,
+    uint16_t data[256],uint16_t function,const struct port_dqddt_native *native,
     uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
        const struct port_v37_device_result *,const char *,size_t,
        struct port_v37_ioc_result *)){
@@ -2467,7 +2470,7 @@ static int m202_dispatch_write(const struct port_dqddt_stage *stage,
          device_info->list_head,device_info,"DQA0",4u,&found)!=PORT_V37_IOC_OK||
        found.ddb!=device_info->ddb[0]||found.ucb!=device_info->ucb[0]||
        found.unit!=0u||!found.driver_bound){
-        bootstrap_message("INIT: IOC$SEARCHDEV did not select bound DQA0 for WRITEPBLK.");
+        bootstrap_message("INIT: IOC$SEARCHDEV did not select bound DQA0 for DQ I/O.");
         return -1;
     }
     const uint32_t ddt=m202_get32(device_db+PORT_V37_DDB_BOOT_OFF+12u);
@@ -2485,7 +2488,7 @@ static int m202_dispatch_write(const struct port_dqddt_stage *stage,
     m202_put16(irp+8u,PORT_V37_IRP_SIZE);
     irp[10u]=PORT_V37_DYN_IRP;
     m202_put32(irp+PORT_V37_IRP_UCB,device_info->ucb[0]);
-    m202_put16(irp+PORT_V37_IRP_FUNC,PORT_DQ_WRITEPBLK);
+    m202_put16(irp+PORT_V37_IRP_FUNC,function);
     m202_put16(irp+42u,PORT_DQ_PHYSIO);
     m202_put16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
     m202_put32(irp+PORT_V37_IRP_MEDIA,lbn);
@@ -2493,14 +2496,15 @@ static int m202_dispatch_write(const struct port_dqddt_stage *stage,
         .fdt=fdt,.device_db=device_db,.device_info=device_info,
         .irp=irp,.irp_bytes=sizeof irp,.sector=data,
         .sector_bytes=PORT_DQ_BOOTREAD_BYTES,.boot_unit=0u,
+        .read_sector=m202_ata_read_sector,
         .write_sector=m202_ata_write_sector};
     struct port_dq_bootread_result result={0};
     if(startio(stage,native,fdt,&request,&result)!=
-          PORT_DQ_BOOTREAD_OK||result.io_function!=PORT_DQ_WRITEPBLK||
+          PORT_DQ_BOOTREAD_OK||result.io_function!=function||
        result.lbn!=lbn||result.bytes!=PORT_DQ_BOOTREAD_BYTES||
        result.irp_status!=PORT_SYS85_NORMAL||
        result.irp_second!=PORT_DQ_BOOTREAD_BYTES){
-        bootstrap_message("INIT: IOC-selected DQA0 DDT STARTIO rejected WRITEPBLK.");
+        bootstrap_message("INIT: IOC-selected DQA0 DDT STARTIO rejected DQ I/O.");
         return -1;
     }
     return 0;
@@ -2527,8 +2531,8 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
         return 0;
     }
     for(unsigned i=0;i<256u;i++)probe[i]=(uint16_t)(0x5a00u^i);
-    const int wrote=m202_dispatch_write(stage,fdt,device_db,device_info,
-                                         SCRATCH_LBN,probe,native,ioc_search);
+    const int wrote=m202_dispatch_io(stage,fdt,device_db,device_info,
+        SCRATCH_LBN,probe,PORT_DQ_WRITEPBLK,native,ioc_search);
     if(wrote)bootstrap_message("INIT: staged DQ WRITEPBLK action failed.");
     const int read_probe=wrote? -1:port_ata_x86_read28(SCRATCH_LBN,observed);
     if(!wrote&&read_probe)bootstrap_message("INIT: M202 ATA write readback failed.");
@@ -2536,8 +2540,8 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     if(matches)for(unsigned i=0;i<256u;i++)if(observed[i]!=probe[i]){
         matches=0;break;
     }
-    const int restored=m202_dispatch_write(stage,fdt,device_db,device_info,
-                                            SCRATCH_LBN,saved,native,ioc_search);
+    const int restored=m202_dispatch_io(stage,fdt,device_db,device_info,
+        SCRATCH_LBN,saved,PORT_DQ_WRITEPBLK,native,ioc_search);
     if(restored)bootstrap_message("INIT: staged DQ WRITEPBLK scratch restore failed.");
     const int reread=port_ata_x86_read28(SCRATCH_LBN,observed);
     if(!reread&&!restored)bootstrap_message("INIT: M202 ATA scratch restore reread completed.");
@@ -2545,7 +2549,21 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     if(restore_matches)for(unsigned i=0;i<256u;i++)if(observed[i]!=saved[i]){
         restore_matches=0;break;
     }
-    return !wrote&&matches&&!restored&&!reread&&restore_matches?1:-1;
+    uint16_t through_ddt[256];
+    int ddt_matches=0;
+    if(!wrote&&!restored&&!reread&&restore_matches&&
+       !m202_dispatch_io(stage,fdt,device_db,device_info,SCRATCH_LBN,
+          through_ddt,PORT_DQ_READPBLK,native,ioc_search)){
+        ddt_matches=1;
+        for(unsigned i=0;i<256u;i++)if(saved[i]!=through_ddt[i]){
+            ddt_matches=0;break;
+        }
+    }
+    if(!wrote&&!restored&&!reread&&restore_matches&&!ddt_matches){
+        bootstrap_message("INIT: published DQA0 DDT READPBLK restore verification failed.");
+        return -1;
+    }
+    return !wrote&&matches&&!restored&&!reread&&restore_matches&&ddt_matches?1:-1;
 }
 /* FIL$RDWRTLBN calls the BIOS-independent boot driver. The IA-32 driver
  * reads actual blocks on the boot disk over primary IDE. */
@@ -3982,7 +4000,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     if(ata_write_probe>0)
-        bootstrap_message("INIT: SYS.EXE IOC-selected DQA0 DDT STARTIO completed WRITEPBLK through ATA IRQ14; readback and restore verified.");
+        bootstrap_message("INIT: SYS.EXE IOC-selected DQA0 DDT STARTIO completed WRITEPBLK and READPBLK through ATA IRQ14; readback and restore verified.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */
