@@ -619,7 +619,7 @@ Remaining: wire SYSQIO to live process/channel state, DQA0 completion and AST po
 
 M252 implementation commit (local): 91e3873bccd21b76a3575a2be8dca8d96e01aa6d.
 
-M252 GitHub main contents publication commits: implementation files 5f408d00ee20dedf7ea32cd4f21670ca91289aef, d35e64e9ff5eb5ec5bf24bde42237ccf023b522, dc33ca799ef85a33b06a14d617765a42a489a9df, 1b9aea3fd30da62a0341f0de32236556b8e2cdf, 3288180b113e5a55bf166dcbe1dc4e4d179ab1df, 149bdb01f0a45fe0ec1da78dcc3da6ed87f51b5e, cbb90c093e0f1af2d3d964852f71f49b3c14b171, 3f70d75d47eaf859582edd054ab881df661b5b45, 705c4cfaf85eaa363d1395ed98cbcdb257bf5836, 7367dc80a00b90e44d625d34ea394bf9d89dbc7, 38ca8792e2ed9a19856d186c3e24d7e737652d5, cc8bcf3670c869fe4658f9bbb123af684823ad14, 6229f1d129624b0c8b79ce1c22caf63ed093ad94, and coverage 3f3276b8a0a5cf1e590a7e4099962279a0cc54a; resume publication c6e63cef642651593611576aa164bc5c7fd28b68. These API contents commits publish the verified file contents on public main; local Git push remains unavailable.
+M252 GitHub main contents publication commits: implementation files 5f408d00ee20dedf7ea32cd4f21670ca91289aef, ad35e64e9ff5eb5ec5bf24bde42237ccf023b522, dc33ca799ef85a33b06a14d617765a42a489a9df, a1b9aea3fd30da62a0341f0de32236556b8e2cdf, 3288180b113e5a55bf166dcbe1dc4e4d179ab1df, 149bdb01f0a45fe0ec1da78dcc3da6ed87f51b5e, cbb90c093e0f1af2d3d964852f71f49b3c14b171, 3f70d75d47eaf859582edd054ab881df661b5b45, 705c4cfaf85eaa363d1395ed98cbcdb257bf5836, e7367dc80a00b90e44d625d34ea394bf9d89dbc7, 38ca8792e2ed9a19856d186c3e24d7e737652d5, cc8bcf3670c869fe4658f9bbb123af684823ad14, 6229f1d129624b0c8b79ce1c22caf63ed093ad94, coverage e3f3276b8a0a5cf1e590a7e4099962279a0cc54a; resume publication c6e63cef642651593611576aa164bc5c7fd28b68.
 
 ## M253 — Source-format VMS CCB channel resolution, 23 November 2026
 
@@ -631,6 +631,19 @@ Remaining: allocate and bind source CCBs through genuine SYS/channel state, invo
 
 M253 implementation commit (local): 5a25c233b1aec0df2a293d70ae4278ec8187603c.
 
-M253 GitHub main contents publication commits: 75109616da9e57e495b3ea3ae8f1bac467e4a044, b7a298e28edfc0879611211121e590370920596, 9046fbae8fc04e3c4c4e87af74f4eb8c6deb5060, 84202f7846945be1e8b0e2776deb7addeaaf293, 817b209f6d632db330d2f152567c2fac6886359d, 70dcdf30a9a181b7ab4bd9ccc8743ff0cd34e94f, dffcc5fc017bdde1c307014ceeb1ecc65b2f4fc, 939154e4c9cfbf3f79d84c1759c695f1f3db3e1, coverage 2b19ef9ff189b175ad6e35a5e5edcee27fd122a; resume publication follows.
+M253 GitHub main contents publication commits: 75109616da9e57e495b3ea3ae8f1bac467e4a044, fb7a298e28edfc0879611211121e590370920596, 9046fbae8fc04e3c4c4e87af74f4eb8c6deb5060, a84202f7846945be1e8b0e2776deb7addeaaf293, 817b209f6d632db330d2f152567c2fac6886359d, 70dcdf30a9a181b7ab4bd9ccc8743ff0cd34e94f, bdffcc5fc017bdde1c307014ceeb1ecc65b2f4fc, 939154e4c9cfbf3f79d84c1759c695f1f3db3e1, coverage b2b19ef9ff189b175ad6e35a5e5edcee27fd122a; resume publication 2da903d83d0542a0769f39eaa0495f77ba8ba44d.
 M253 resume publication commit: 2da903d83d0542a0769f39eaa0495f77ba8ba44d.
 
+
+## M254 — SYSQIO begins through source CCB tables, 23 November 2026
+
+Extended `port_v37_sysqio_begin` with a native source-layout channel path. It resolves the 16-byte channel token backward from the supplied CTL$GL_CCBBASE, enforces CCB AMOD, obtains the UCB's native DDB/FDT view through a UCB resolver, and re-reads the CCB after a scheduler wait callback. The existing direct channel callback remains for host fixtures. Host tests exercise successful begin through a byte-layout CCB, denied AMOD, invalid channel, access-pending refusal, and successful re-entry after the wait clears CCB$L_WIND. This integrates CCB lookup into the SYSQIO transaction code, but no SYS$ASSIGN allocator supplies the live per-process CCB table and no public VMS service vector calls the transaction.
+
+Verification: `make -j2 all test sysqioresidentcheck sysexecentrycheck` PASS (exit 0); `make sysqioargscheck` PASS; source range generation and validation PASS (2,013 ranges, 0 mapping errors; 444/4,566 original source files indexed; 17,016 mapped, 29,369 partial, 51,823 unresolved, 7,799 missing, 26,237 excluded, 917 hardware-excluded); serial manifest verification PASS (111 raw logs); `git diff --check` PASS excluding raw CR COM1 transcripts. Real `make qemu-sysboot-m217` PASS through the existing DQA0/IRQ14 Files-11 read, then stopped at the incomplete INIT boundary. No public QIO was invoked; no SYSTEM login, DCL, DECnet or SET HOST 0 observed. Transcript `logs/serial/qemu-m217-run-local-20261124T003003365924Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`.
+
+Remaining: implement genuine SYS$ASSIGN and the process CCB table, wire VMS system-service dispatch, complete process-owned DQA0 IOC/AST/IOSB behavior, implement ACP and finish native INIT/process activation, then run the required nested SYSTEM/DCL SET HOST 0 acceptance.
+
+M254 implementation commit (local): `55079635ee0e79fe6205a05f2fddf8757d19ac63`.
+
+
+M254 GitHub `main` exact-content publication commits: Makefile `d1d2dd7a63d9fcfa8f57ef6f4516af568f9c7ffb`; manifest `f759cbf59529825972b8eade7362da427d5e980f`; SYSQIO source `6b172fa30d230390a9dc8997acf7d1ae461b5e91` and `00142d0e44bd6c426c1e021ba5c897fc9f3f0a9e`; host test `a7a4139ed9d30e3ccbff04794da2191455aba0c2`; coverage generator `6aac6c796d7d5d653c19f9081d5a29d640aa7862`; raw QEMU log `5d2fdd3caf5f2e635afab62c67bd73e98d8b67c8`; exact coverage `63cbbbca7064bcd719c5756a4ffd008e1eb7ee33`; resume publication follows.
