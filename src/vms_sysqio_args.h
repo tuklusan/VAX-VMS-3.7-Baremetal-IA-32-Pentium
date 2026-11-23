@@ -105,6 +105,18 @@ uint32_t port_v37_sysqio_check_ast_quota(
     const struct port_v37_sysqio_prepared *,
     const struct port_v37_sysqio_process *,uint32_t *service_status);
 
+enum { PORT_V37_SYSQIO_ACCESS_PHYSICAL=1u,
+       PORT_V37_SYSQIO_ACCESS_LOGICAL=2u,
+       PORT_V37_SYSQIO_DEVICE_OK=1u,PORT_V37_SYSQIO_DEVICE_BAD=2u,
+       PORT_V37_SYSQIO_DEVICE_NOPRIV=4u };
+typedef uint32_t (*port_v37_sysqio_volume_check_fn)(void *,uint8_t,
+    uint16_t,uint32_t,uint32_t);
+uint32_t port_v37_sysqio_device_access(uint16_t function,
+    uint32_t device_characteristics,uint8_t has_phy_io,uint8_t has_log_io,
+    uint16_t volume_protection,uint32_t owner_uic,uint32_t arb_va,
+    port_v37_sysqio_volume_check_fn check_volume,void *context,
+    uint8_t *physical_io,uint32_t *service_status);
+
 /* SYSQIOREQ ACCESS: normalize WRITEVBLK for the boot-time device states. */
 enum { PORT_V37_SYSQIO_ACCESS_OK=1u,PORT_V37_SYSQIO_ACCESS_BAD=2u,
        PORT_V37_SYSQIO_ACCESS_NOPRIV=4u };

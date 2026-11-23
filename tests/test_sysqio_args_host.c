@@ -20,6 +20,18 @@ static uint32_t get32(const uint8_t *p){
            ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
 struct global_ef_test { uint8_t seen;uint32_t status; };
+struct volume_access_test {
+    unsigned calls;
+    uint8_t kind;
+    uint16_t protection;
+    uint32_t owner,arb,status;
+};
+static uint32_t check_volume(void *opaque,uint8_t kind,uint16_t protection,
+    uint32_t owner,uint32_t arb){
+    struct volume_access_test *t=opaque;
+    t->calls++;t->kind=kind;t->protection=protection;
+    t->owner=owner;t->arb=arb;return t->status;
+}
 static uint32_t clear_global(void *opaque,uint8_t efn){
     struct global_ef_test *t=opaque;t->seen=efn;return t->status;
 }
@@ -283,6 +295,46 @@ int main(void){
           &normalized,&check_ast,&access_status)!=PORT_V37_SYSQIO_ACCESS_OK||
        normalized!=PORT_DQ_READVBLK||check_ast)
         return 35;
-    puts("SYS$QIO begin, source IRP layout and virtual-write normalization PASS");
+    struct volume_access_test vat={.status=PORT_SYS85_NORMAL};
+    uint8_t physical=0xaau;
+    if(port_v37_sysqio_device_access(PORT_DQ_READPBLK,
+          PORT_V37_DEVCHAR_SHR,0u,0u,0x1234u,0x55667788u,0x3000u,
+          check_volume,&vat,&physical,&access_status)!=
+          PORT_V37_SYSQIO_DEVICE_NOPRIV||access_status!=PORT_SYS85_NOPRIV||
+       vat.calls||physical!=0xaau)
+        return 38;
+    if(port_v37_sysqio_device_access(PORT_DQ_READPBLK,
+          PORT_V37_DEVCHAR_SHR,0u,1u,0x1234u,0x55667788u,0x3000u,
+          check_volume,&vat,&physical,&access_status)!=
+          PORT_V37_SYSQIO_DEVICE_OK||vat.calls!=1u||
+       vat.kind!=PORT_V37_SYSQIO_ACCESS_PHYSICAL||vat.protection!=0x1234u||
+       vat.owner!=0x55667788u||vat.arb!=0x3000u||physical!=1u)
+        return 39;
+    vat.status=0u;vat.calls=0u;
+    if(port_v37_sysqio_device_access(PORT_DQ_READLBLK,
+          PORT_V37_DEVCHAR_FOD|PORT_V37_DEVCHAR_MNT|PORT_V37_DEVCHAR_FOR,
+          0u,0u,0x2345u,0x11223344u,0x4000u,check_volume,&vat,&physical,
+          &access_status)!=PORT_V37_SYSQIO_DEVICE_NOPRIV||vat.calls!=1u||
+       vat.kind!=PORT_V37_SYSQIO_ACCESS_LOGICAL||physical!=1u)
+        return 40;
+    vat.status=PORT_SYS85_NORMAL;vat.calls=0u;
+    if(port_v37_sysqio_device_access(PORT_DQ_READLBLK,
+          PORT_V37_DEVCHAR_FOD|PORT_V37_DEVCHAR_MNT,0u,0u,0u,0u,0u,
+          check_volume,&vat,&physical,&access_status)!=
+          PORT_V37_SYSQIO_DEVICE_NOPRIV||vat.calls||access_status!=PORT_SYS85_NOPRIV)
+        return 41;
+    if(port_v37_sysqio_device_access(PORT_DQ_READLBLK,
+          PORT_V37_DEVCHAR_SPL,0u,1u,0u,0u,0u,check_volume,&vat,&physical,
+          &access_status)!=PORT_V37_SYSQIO_DEVICE_OK||vat.calls||physical)
+        return 42;
+    if(port_v37_sysqio_device_access(PORT_DQ_READVBLK,
+          PORT_V37_DEVCHAR_SPL,0u,0u,0u,0u,0u,check_volume,&vat,&physical,
+          &access_status)!=PORT_V37_SYSQIO_DEVICE_OK||vat.calls||physical)
+        return 43;
+    if(port_v37_sysqio_device_access(PORT_DQ_READPBLK,
+          PORT_V37_DEVCHAR_SPL,1u,0u,0u,0u,0u,check_volume,&vat,&physical,
+          &access_status)!=PORT_V37_SYSQIO_DEVICE_OK||vat.calls||!physical)
+        return 44;
+    puts("SYS$QIO IRP, AST, device-state and VMS privilege checks PASS");
     return 0;
 }

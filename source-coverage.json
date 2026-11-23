@@ -21246,10 +21246,67 @@
         {
           "original_lines": [
             480,
+            514
+          ],
+          "status": "unresolved",
+          "reason": "I/O transaction measurement sequence and transition into device access policy unresolved"
+        },
+        {
+          "original_lines": [
+            515,
+            535
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_device_access.c",
+          "pc_symbol": "port_v37_sysqio_device_access",
+          "pc_line": 7,
+          "function": "Source PHY_IO/LOG_IO privilege gates, physical/logical volume-check selection, owner/UIC/ARB inputs and NOPRIV handling; live privilege-mask/ACL callback binding unresolved"
+        },
+        {
+          "original_lines": [
+            536,
+            544
+          ],
+          "status": "unresolved",
+          "reason": "EXE$ABORTIO rollback, packet return and event/status post integration unresolved"
+        },
+        {
+          "original_lines": [
+            545,
+            547
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_device_access.c",
+          "pc_symbol": "port_v37_sysqio_device_access",
+          "pc_line": 7,
+          "function": "Set the IRP physical-I/O decision for physical function codes after access is granted"
+        },
+        {
+          "original_lines": [
+            548,
+            569
+          ],
+          "status": "unresolved",
+          "reason": "DIAGNOSE privilege validation, driver diagnostic-buffer allocation and IRP diagnostic-buffer fields unresolved"
+        },
+        {
+          "original_lines": [
+            570,
+            581
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_device_access.c",
+          "pc_symbol": "port_v37_sysqio_device_access",
+          "pc_line": 7,
+          "function": "Source LOG_IO bypass and SPL/FOD/MNT/FOR/SHR gates before logical volume access callback"
+        },
+        {
+          "original_lines": [
+            582,
             735
           ],
           "status": "unresolved",
-          "reason": "VMS device privilege/protection, FDT action dispatch, driver queueing and completion unresolved"
+          "reason": "Remaining device FDT action dispatch, physical/diagnostic behavior and request queue/completion unresolved"
         },
         {
           "original_lines": [
@@ -21290,7 +21347,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO and EXQUOTA values from VMSLIB/SRC/SSMSG.MSG V03-003. A separate host-tested builder fills the 136-byte standard IRP through CDRP$L_LENGTH, sets the AST quota bit and decrements modeled ASTCNT after caller packet reservation. WRITEVBLK device-state normalization covers the source FOD/MNT/FOR decision; the AST quota check rejects negative ASTCNT for AST requests. Neither helper is wired to the live UCB/PCB or real abort/event posting. The request path is not connected to a user service entry, real CCB lookup, IRP allocation, source IPL/deletion protection, device access/protection, driver FDT dispatch or process AST completion. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs."
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO and EXQUOTA values from VMSLIB/SRC/SSMSG.MSG V03-003. A host-tested builder fills the 136-byte standard IRP through CDRP$L_LENGTH, sets the AST quota bit and decrements modeled ASTCNT; a separate check rejects negative ASTCNT for AST requests. WRITEVBLK normalization handles source FOD/MNT/FOR state. Device access decisions preserve PHY_IO/LOG_IO bypasses and source SPL/FOD/MNT/FOR/SHR checks, selecting a callback with volume protection/UIC/ARB inputs, but no live privilege mask, protection checker, UCB/PCB or abort/event wiring is connected. The request path is not connected to a user service entry, real CCB lookup, IRP allocation, source IPL/deletion protection, diagnostic-buffer handling, driver FDT dispatch or process AST completion. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",
