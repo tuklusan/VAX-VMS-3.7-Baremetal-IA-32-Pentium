@@ -4110,8 +4110,8 @@ void kmain(void) {
     if(dq_publish_result.dq_ddt_published!=1u||
        !dq_publish_result.device_db||!dq_publish_result.dq_native_ddt||
        !dq_publish_result.ioc_search||
-       dq_publish_result.dq_published_f11_read_bytes!=64u||
-       dq_publish_result.dq_published_f11_read_irps==0u||
+       dq_publish_result.dq_published_f11_read_bytes!=700u||
+       dq_publish_result.dq_published_f11_read_irps!=2u||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
        dq_publish_result.device_db->incomplete_driver_mask!=6u||
@@ -4121,7 +4121,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).");
-    bootstrap_message("INIT: Files-11 FH2 chain reread SYS.EXE bytes through IOC-selected DQA0 DDT and IRQ14.");
+    bootstrap_message("INIT: Files-11 FH2 chain read 700 SYS.EXE bytes across two sectors through IOC-selected DQA0 DDT/IRQ14.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,

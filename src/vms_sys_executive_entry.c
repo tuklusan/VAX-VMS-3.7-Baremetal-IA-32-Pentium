@@ -1773,7 +1773,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             (const uint8_t *)executive_dq_index_sector.words,
             (const uint8_t *)executive_dq_mfd_sector.words,
             executive_postpub_f11_sector,&f11ctx,1u};
-        uint8_t chain_sample[64];
+        uint8_t chain_sample[700];
         uint32_t chain_done=0u;
         const uint32_t sample_offset=
             executive_dq_image_probe.text_file_offset+321u;
@@ -1781,7 +1781,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            port_f11_chain_read(&f11volume,&executive_f11_chain,
                sample_offset,sizeof chain_sample,chain_sample,
                sizeof chain_sample,&chain_done)!=PORT_F11_CHAIN_OK||
-           chain_done!=sizeof chain_sample||f11ctx.reads==0u)
+           chain_done!=sizeof chain_sample||f11ctx.reads!=2u)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         for(unsigned i=0u;i<sizeof chain_sample;i++)
             if(chain_sample[i]!=executive_f11_chain_text[i])
