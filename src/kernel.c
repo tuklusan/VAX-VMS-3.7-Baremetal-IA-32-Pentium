@@ -119,6 +119,7 @@ extern uint32_t arch_mutex_wakes(void);
 extern uint32_t arch_mutex_remaining(void);
 extern uint32_t arch_mutex_held(void);
 extern int port_ata_x86_read28(uint32_t lba,uint16_t dst[256]);
+extern int port_ata_x86_write28(uint32_t lba,const uint16_t src[256]);
 extern uint32_t port_ata_x86_irq_count(void);
 extern void port_ata_x86_irq(void);
 extern int arch_disk_irq_bind_crb(struct port_dq_crb *);
@@ -2418,6 +2419,56 @@ static void bootstrap_message(const char *text){
     bootstrap_console.outlen=(uint16_t)n;
     (void)port_rio_output_line(&bootstrap_console);
 }
+/* M201's write-path regression is explicitly armed by the disposable QEMU
+ * disk image. It runs only when both QEMU fw_cfg and the full marker sector
+ * are present, and restores that sector before returning. */
+static void m201_outw(uint16_t port,uint16_t value){
+    __asm__ volatile("outw %w0,%w1"::"a"(value),"Nd"(port));
+}
+static uint16_t m201_marker_word(unsigned i){
+    static const uint16_t signature[4]={0x4d56u,0x5333u,0x3753u,0x5452u};
+    return i<4u?signature[i]:(uint16_t)(0xa000u|i);
+}
+static int m201_qemu_fw_cfg(void){
+    static const char expected[4]={'Q','E','M','U'};
+    m201_outw(0x510u,0u);
+    for(unsigned i=0;i<4u;i++)if(inb(0x511u)!=(uint8_t)expected[i])return 0;
+    return 1;
+}
+static int m201_ata_write_probe(void){
+    enum {SCRATCH_LBN=8063u};
+    if(!m201_qemu_fw_cfg()){
+        bootstrap_message("INIT: M201 QEMU fw_cfg signature not present; ATA write probe skipped.");
+        return 0;
+    }
+    uint16_t saved[256],probe[256],observed[256];
+    if(port_ata_x86_read28(SCRATCH_LBN,saved)){
+        bootstrap_message("INIT: M201 marked ATA scratch LBN could not be read.");
+        return -1;
+    }
+    for(unsigned i=0;i<256u;i++)if(saved[i]!=m201_marker_word(i)){
+        bootstrap_message("INIT: M201 marked ATA scratch LBN marker absent; write probe skipped.");
+        return 0;
+    }
+    for(unsigned i=0;i<256u;i++)probe[i]=(uint16_t)(0x5a00u^i);
+    const int wrote=port_ata_x86_write28(SCRATCH_LBN,probe);
+    if(wrote)bootstrap_message("INIT: M201 ATA write command/data/completion failed.");
+    const int read_probe=wrote? -1:port_ata_x86_read28(SCRATCH_LBN,observed);
+    if(!wrote&&read_probe)bootstrap_message("INIT: M201 ATA write readback failed.");
+    int matches=!read_probe;
+    if(matches)for(unsigned i=0;i<256u;i++)if(observed[i]!=probe[i]){
+        matches=0;break;
+    }
+    const int restored=port_ata_x86_write28(SCRATCH_LBN,saved);
+    if(restored)bootstrap_message("INIT: M201 ATA scratch restore command/data/completion failed.");
+    const int reread=port_ata_x86_read28(SCRATCH_LBN,observed);
+    if(!reread&&!restored)bootstrap_message("INIT: M201 ATA scratch restore reread completed.");
+    int restore_matches=!reread;
+    if(restore_matches)for(unsigned i=0;i<256u;i++)if(observed[i]!=saved[i]){
+        restore_matches=0;break;
+    }
+    return !wrote&&matches&&!restored&&!reread&&restore_matches?1:-1;
+}
 /* FIL$RDWRTLBN calls the BIOS-independent boot driver. The IA-32 driver
  * reads actual blocks on the boot disk over primary IDE. */
 static uint32_t bootstrap_disk_transfer(void *ctx,uint32_t mode,
@@ -3787,6 +3838,14 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: actual IRQ0 advanced resident SYS.EXE VMS clock.");
+
+    int ata_write_probe=m201_ata_write_probe();
+    if(ata_write_probe<0){
+        bootstrap_message("INIT: marked QEMU ATA PIO write/readback/restore regression failed.");
+        bootstrap_halt();
+    }
+    if(ata_write_probe>0)
+        bootstrap_message("INIT: QEMU ATA PIO WRITE SECTORS completed on marked scratch LBN through IRQ14 and was restored.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

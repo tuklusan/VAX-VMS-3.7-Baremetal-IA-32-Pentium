@@ -18,8 +18,8 @@ int port_ata_read28(const struct port_ata_bus *b,uint32_t lba,
                     uint16_t dst[256]);
 
 /* Write transactions use a distinct bus contract so existing read-only
- * callers cannot accidentally acquire a write path. Native hardware arms
- * one IRQ for data-ready and a second IRQ for command completion. */
+ * callers cannot accidentally acquire a write path. Native hardware polls
+ * the initial DRQ phase and arms IRQ14 for command completion. */
 struct port_ata_write_bus {
     uint8_t (*in8)(void *ctx,uint16_t port);
     void (*out8)(void *ctx,uint16_t port,uint8_t value);

@@ -3,7 +3,8 @@
 /* Native x86 primary-master PIO with real PIC IRQ14 sector completion. */
 extern int arch_disk_irq_bind(void (*handler)(void));
 enum { ATA_STATUS=0x1f7, ATA_BUSY=0x80, ATA_DRQ=0x08,
-       ATA_ERROR=0x01, ATA_DF=0x20, ATA_IRQ_SPIN_LIMIT=100000000u };
+       ATA_ERROR=0x01, ATA_DF=0x20, ATA_IRQ_SPIN_LIMIT=100000000u,
+       ATA_WRITE_POLL_LIMIT=10000000u };
 static volatile uint32_t irq_armed,irq_done,irq_write_phase;
 static volatile uint32_t irq_completed;
 static volatile int irq_result;
@@ -49,8 +50,8 @@ static int wait_read(void *ctx) {
 }
 static int begin_write(void *ctx) {
     (void)ctx;
-    irq_done=0;irq_result=PORT_ATA_TIMEOUT;irq_write_phase=1u;
-    irq_armed=1u;__asm__ volatile("" ::: "memory");
+    irq_done=0;irq_result=PORT_ATA_TIMEOUT;irq_write_phase=0u;
+    irq_armed=0u;__asm__ volatile("" ::: "memory");
     return 0;
 }
 static int wait_phase(void) {
@@ -66,9 +67,19 @@ static int wait_phase(void) {
 }
 static int wait_write_data(void *ctx) {
     (void)ctx;
-    const int rc=wait_phase();
-    if(!rc)irq_write_phase=2u;
-    return rc;
+    /* ATA PIO exposes the first DRQ phase by status polling. The device IRQ
+     * acknowledges completion after the data block has been supplied. */
+    for(uint32_t i=0;i<ATA_WRITE_POLL_LIMIT;i++){
+        const uint8_t status=read8(0,ATA_STATUS);
+        if(!status||status==0xffu)return PORT_ATA_NO_DISK;
+        if(status&(ATA_ERROR|ATA_DF))return PORT_ATA_DEVICE_ERROR;
+        if(!(status&ATA_BUSY)&&(status&ATA_DRQ)){
+            irq_write_phase=2u;
+            return PORT_ATA_OK;
+        }
+        __asm__ volatile("pause");
+    }
+    return PORT_ATA_TIMEOUT;
 }
 static int arm_write_complete(void *ctx) {
     (void)ctx;

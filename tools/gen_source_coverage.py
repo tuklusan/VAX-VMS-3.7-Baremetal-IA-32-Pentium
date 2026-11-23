@@ -2326,7 +2326,7 @@ dq_fdt_rows=[
  (585,588,'src/vms_dq_fdt_sense.c','port_dq_fdt_sense','Source EXE$SENSEMODE characteristics mask'),
  (589,592,'src/vms_dq_fdt_set.c','port_dq_fdt_set','Source EXE$SETCHAR disk set-mode mask'),
  (593,633,None,None,'Original RB730 driver setup and controller dispatch entry unresolved'),
- (634,639,'src/vms_dqddt_bootread.c','port_dqddt_bootread','Validated staged DDT dispatches the resident private READPBLK IRP; the native DQ IOC FIFO now completes its sector through the attached CRB IRQ14 path, while public process QIO and ACP remain unavailable'),
+ (634,639,'src/vms_dqddt_bootread.c','port_dqddt_dispatch_bootread','The single staged READPBLK action slot dispatches the privileged boot IRP; this is not an IOC-published DQA driver and public QIO/ACP are absent'),
  (640,654,'src/vms_dq_bootread_decode.c','port_dq_bootread_decode','IRP MEDIA physical LBN extraction for bounded ATA LBA28; resident early INIT verifies LBN1 and LBN0 independently'),
  (655,671,'src/vms_dq_bootread_commit.c','port_dq_bootread_commit','UCB retry count, BCNT, FEX and media field update, partial DQ PREPROCESS'),
  (672,677,None,None,'Unimplemented RB730 branch/diagnostic bits and controller hardware'),
