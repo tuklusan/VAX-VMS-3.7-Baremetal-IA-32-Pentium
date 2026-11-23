@@ -223,6 +223,8 @@ struct port_sys_exec_result {
     uint32_t iopost_remaining;
     uint32_t logical_table[2];
     uint8_t lock_max_resource_depth;
+    /* Diagnostic INI_PSTATE vector: entries currently name scheduler-model
+     * records, not source-layout VMS PCBs; never use for process activation. */
     const struct port_ini_procvec *process_vector;
     const struct port_exe_sched_process *system_pcb,*null_pcb;
 };

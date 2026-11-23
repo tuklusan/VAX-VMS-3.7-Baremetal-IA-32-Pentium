@@ -571,8 +571,10 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
     }
     if(p->phase==PORT_SYS_EXEC_INIT_PROCVEC){
         /* INIT.MAR INI_PSTATE follows realtime SPT and lock tables.
-         * Real native PCB descriptors are stored in loaded SYS.EXE BSS;
-         * this stage only initializes the PCB/sequence vectors. */
+         * The vector storage matches the source layout, but its entries
+         * currently address scheduler-model records, not SYSDEF.MDL PCB
+         * records. This diagnostic vector cannot activate VMS processes;
+         * source-layout PCB/PHD construction remains a prerequisite. */
         if(!executive_lockdb_ready || executive_procvec_ready ||
            !p->proc_settings)return PORT_SYS_EXEC_BAD_PARAMETERS;
         uint32_t used=(executive_lockdb.pool_bytes+3u)&~3u;
