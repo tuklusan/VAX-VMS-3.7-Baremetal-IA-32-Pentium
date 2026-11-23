@@ -5848,8 +5848,11 @@
             97,
             98
           ],
-          "status": "excluded",
-          "reason": "native IA-32 LDPCTX/REI context restoration remains unresolved"
+          "status": "partial",
+          "pc_file": "src/vms_v37_ia32_context.c",
+          "pc_symbol": "port_v37_ia32_context_init",
+          "pc_line": 8,
+          "function": "construct initial IA-32 IRET register frame; runtime context save/restore and scheduler dispatch remain unresolved"
         },
         {
           "original_lines": [
