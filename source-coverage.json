@@ -21389,8 +21389,11 @@
             313,
             335
           ],
-          "status": "unresolved",
-          "reason": "Exact failure epilogue and rollback before IRP reservation unresolved"
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_reserve.c",
+          "pc_symbol": "port_v37_sysqio_prepare_irp",
+          "pc_line": 46,
+          "function": "Join service begin with standard IRP/AST reservation; on reservation failure restore the process direct/buffered I/O charge and post the service error event. CCB IOC accounting, device dispatch, hardware submission and completion remain unresolved"
         },
         {
           "original_lines": [
