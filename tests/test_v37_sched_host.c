@@ -59,10 +59,6 @@ static uint32_t get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
        ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
-static void put32(uint8_t *p,uint32_t x){
-    p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
-    p[2]=(uint8_t)(x>>16);p[3]=(uint8_t)(x>>24);
-}
 
 int main(void){
     struct port_v37_scheduler scheduler;struct fixture f={
@@ -113,8 +109,9 @@ int main(void){
        selected||count(&f,15u)!=2u)
         return fail("scheduler leaves contextless PCB queued");
     for(unsigned i=0;i<3u;i++){
-        put32(f.pcbs[i]+PORT_V37_PCB_PHD,0x00300000u+i*0x1000u);
-        put32(f.pcbs[i]+PORT_V37_PCB_PHYPCB,0x00400000u+i*0x1000u);
+        if(port_v37_pcb_bind_context(f.pcbs[i],sizeof f.pcbs[i],
+           0x00300000u+i*0x1000u,0x00400000u+i*0x1000u)!=PORT_V37_PCB_OK)
+            return fail("source PCB PHD/native context binding");
     }
     if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
        selected!=f.pcb_va[2]||

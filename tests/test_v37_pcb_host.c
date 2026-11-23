@@ -53,7 +53,14 @@ int main(void){
     CHECK(bytes[PORT_V37_PCB_LNAME]==4u&&
           memcmp(bytes+PORT_V37_PCB_LNAME+1u,name,4u)==0&&
           bytes[PORT_V37_PCB_PRI]==31u&&rd32(bytes+PORT_V37_PCB_PID)==0x10000u);
+    CHECK(port_v37_pcb_bind_context(bytes,sizeof bytes,0x328000u,
+          0x328074u)==PORT_V37_PCB_OK&&
+          rd32(bytes+PORT_V37_PCB_PHD)==0x328000u&&
+          rd32(bytes+PORT_V37_PCB_PHYPCB)==0x328074u);
     uint8_t saved[sizeof bytes];memcpy(saved,bytes,sizeof bytes);
+    CHECK(port_v37_pcb_bind_context(bytes,sizeof bytes,0x328001u,
+          0x328074u)==PORT_V37_PCB_BADPARAM&&
+          memcmp(saved,bytes,sizeof bytes)==0);
     struct port_v37_pcb_seed invalid=nullpcb;invalid.address++;
     CHECK(port_v37_pcb_init_genpcb(bytes,sizeof bytes,&invalid)==PORT_V37_PCB_BADPARAM);
     CHECK(memcmp(saved,bytes,sizeof bytes)==0);

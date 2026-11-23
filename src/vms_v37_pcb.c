@@ -83,6 +83,19 @@ uint32_t port_v37_pcb_set_pix(uint8_t *record,size_t capacity,uint16_t pix){
     return PORT_V37_PCB_OK;
 }
 
+uint32_t port_v37_pcb_bind_context(uint8_t *record,size_t capacity,
+    uint32_t phd_address,uint32_t native_phy_pcb_address){
+    if(!record||capacity<PORT_V37_PCB_BYTES||!phd_address||
+       !native_phy_pcb_address||(phd_address&3u)||
+       (native_phy_pcb_address&3u)||
+       get16(record+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+       record[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB)
+        return PORT_V37_PCB_BADPARAM;
+    put32(record+PORT_V37_PCB_PHD,phd_address);
+    put32(record+PORT_V37_PCB_PHYPCB,native_phy_pcb_address);
+    return PORT_V37_PCB_OK;
+}
+
 uint32_t port_v37_pcb_finish_syspcb(uint8_t *record,size_t capacity,
     uint16_t system_pix,uint32_t phd_address,uint32_t native_phy_pcb_address){
     if(!record||capacity<PORT_V37_PCB_BYTES||!phd_address||
@@ -92,8 +105,9 @@ uint32_t port_v37_pcb_finish_syspcb(uint8_t *record,size_t capacity,
        (get32(record+PORT_V37_PCB_PID)>>16)!=1u)
         return PORT_V37_PCB_BADPARAM;
     /* INIT.MAR stores a word to the low half of PID, preserving sequence. */
+    if((phd_address&3u)||(native_phy_pcb_address&3u))
+        return PORT_V37_PCB_BADPARAM;
     put16(record+PORT_V37_PCB_PID,system_pix);
-    put32(record+PORT_V37_PCB_PHD,phd_address);
-    put32(record+PORT_V37_PCB_PHYPCB,native_phy_pcb_address);
-    return PORT_V37_PCB_OK;
+    return port_v37_pcb_bind_context(record,capacity,phd_address,
+                                     native_phy_pcb_address);
 }
