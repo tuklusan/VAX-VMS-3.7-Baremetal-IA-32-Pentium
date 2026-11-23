@@ -25,7 +25,7 @@ uint32_t port_v37_sysqio_reserve_irp(
         return alloc==PORT_V37_IRP_POOL_EMPTY?
             PORT_V37_SYSQIO_RESERVE_EMPTY:PORT_V37_SYSQIO_RESERVE_POOL;
     }
-    const int16_t ast_count_before=process->ast_count;
+    const int16_t ast_count_before=port_v37_sysqio_process_ast_count(process);
     struct port_v37_sysqio_irp_spec actual=*spec;
     actual.packet_va=va;
     if(port_v37_sysqio_build_irp(request,process,&actual,allocated,
@@ -39,7 +39,7 @@ uint32_t port_v37_sysqio_reserve_irp(
     uint32_t ast_status=PORT_SYS85_NORMAL;
     if(port_v37_sysqio_check_ast_quota(request,process,&ast_status)!=
        PORT_V37_SYSQIO_AST_OK){
-        process->ast_count=ast_count_before;
+        port_v37_sysqio_process_set_ast_count(process,ast_count_before);
         const uint32_t irp_bytes=(uint32_t)allocated[8u]|
             ((uint32_t)allocated[9u]<<8);
         const uint32_t returned=port_v37_irp_pool_free(pool,allocated,va,
@@ -78,9 +78,11 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
     const uint32_t result=port_v37_sysqio_reserve_irp(&request,process,spec,
         pool,sync,&reserved,&va,&status);
     if(result!=PORT_V37_SYSQIO_RESERVE_OK){
-        int16_t *const count=request.dispatch.buffered?
-            &process->buffered_io_count:&process->direct_io_count;
-        if(*count<INT16_MAX)++*count;
+        const int16_t count=port_v37_sysqio_process_io_count(process,
+            request.dispatch.buffered);
+        if(count<INT16_MAX)
+            port_v37_sysqio_process_set_io_count(process,
+                request.dispatch.buffered,(int16_t)(count+1));
         if(ops->post_event)ops->post_event(ops->context,process->pid,
             (uint8_t)request.args.event_flag,status);
         *service_status=status;
@@ -90,3 +92,4 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
     *service_status=status;
     return PORT_V37_SYSQIO_PREPARE_OK;
 }
+
