@@ -226,7 +226,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck
+test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 	python3 tests/test_guest_layout.py
@@ -991,12 +991,14 @@ build/iniloa.exe: build/vms_iniloa_iomap.o build/vms_iniloa_entry.o iniloa_nativ
 	$(LD) -m elf_i386 -T iniloa_native.ld -o $@ build/vms_iniloa_entry.o build/vms_iniloa_iomap.o
 build/install_iniloa_image: tools/install_iniloa_image.c src/vms_boot_files11.c src/vms_bootio.c src/vms_f11_home.c | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $^ -o $@
-.PHONY: dqcrbcheck sysexecentrycheck qemu-sysboot-m197
+.PHONY: dqcrbcheck sysexecentrycheck qemu-sysboot-m197 qemu-sysboot-m198
 dqcrbcheck: $(M197_DQ_CRB_OBJS) | build
 	$(CC) -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_dq_crb.c tests/test_dq_crb_host.c -o build/dqcrbcheck
 	ASAN_OPTIONS=detect_leaks=1 ./build/dqcrbcheck
 qemu-sysboot-m197: vms37lab.ima portdisk.img
 	python3 tools/qemu_sysboot_m197.py
+qemu-sysboot-m198: vms37lab.ima portdisk.img
+	python3 tools/qemu_sysboot_m198.py
 sysexecentrycheck: | build
 	$(CC) -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_sysloavec.c $(M118_DB_SRCS) $(M119_CON_SRCS) $(M120_IOC_SRCS) $(M121_QIO_SRCS) $(M122_NL_DDT_SRCS) $(M123_IOPOST_SRCS) $(M125_DQ_SRCS) $(M126_DQ_READ_SRCS) $(M127_FIN_SRCS) $(M128_LOG_SRCS) $(M129_DEVLOG_SRCS) $(M130_DQDDT_SRCS) $(M131_RELOC_SRCS) $(M134_DDTRELOC_SRCS) $(M137_INDEX_SRCS) $(M138_MFD_SRCS) $(M139_DIR_SRCS) $(M140_IMAGE_SRCS) $(M144_AUX_SRCS) $(M146_RANGE_SRCS) $(M149_BOOTPATH_SRCS) $(M149_BOOTDIR_SRCS) $(M152_CHAIN_SRCS) $(M160_CURSOR_SRCS) $(M168_IOC_SRCS) $(M184_F11_IOC_SRCS) $(M192_CHAN_SRCS) $(M197_DQ_CRB_SRCS) src/vms_boot_files11.c src/vms_bootio.c src/vms_sys_executive_entry.c src/vms_ini_log_templates.c src/vms_ini_syslog.c src/vms_ini_bootdev_scan.c src/vms_ini_dpt_templates.c src/vms_ini_dpt_mb.c src/vms_ini_dpt_nl.c src/vms_ini_dpt_op.c src/vms_sys85.c src/vms_rtl85.c src/vms_rtl85_tables.c src/vms_ini_syswcb.c src/vms_ini_pflvec.c src/vms_ini_mpw.c src/vms_ini_phv_swap.c src/vms_ini_procvec.c src/vms_ini_lockdb.c src/vms_sysboot_pktmem.c src/vms_ini_packet_queues.c src/vms_exe_sched.c src/vms_exe_scbvector.c src/vms_exe_gettim.c src/vms_userptr.c tests/test_sys_exec_entry_host.c -o build/sysexecentrycheck
 	ASAN_OPTIONS=detect_leaks=1 ./build/sysexecentrycheck

@@ -12,6 +12,7 @@
 #include "vms_ioc_phys.h"
 #include "vms_devlog_search.h"
 #include "vms_dqddt.h"
+#include "vms_dq_ioc.h"
 #include "vms_relocdrv.h"
 #include "vms_ddtreloc.h"
 #include "vms_dq_index_header.h"
@@ -231,8 +232,44 @@ static struct port_dqddt_stage executive_dqddt;
 static uint32_t executive_dqddt_ready;
 static struct port_dq_crb executive_dq_crb;
 static uint32_t executive_dq_crb_read_ready;
-/* Exercise the stage-validated READPBLK bridge with a real resident IRP.
- * This remains private; DQA0's DDB DDT and UCB CRB/DDT stay unpublished. */
+static struct port_dq_ioc_queue executive_dq_native_ioc;
+struct executive_dq_ioc_context {
+    port_dq_native_read_fn read_sector;
+    void *read_context;
+};
+static uint32_t executive_dq_ioc_sector(void *opaque,uint32_t lbn,
+                                         uint8_t destination[512]){
+    struct executive_dq_ioc_context *ctx=opaque;
+    if(!ctx||!ctx->read_sector||!destination)return 0u;
+    uint16_t sector[256];
+    if(ctx->read_sector(ctx->read_context,lbn,sector)!=0)return 0u;
+    for(unsigned i=0;i<256u;i++){
+        destination[i*2u]=(uint8_t)sector[i];
+        destination[i*2u+1u]=(uint8_t)(sector[i]>>8u);
+    }
+    return 1u;
+}
+static int executive_dq_ioc_read_sector(void *opaque,uint32_t lbn,
+                                         uint16_t destination[256]){
+    const struct port_sys_exec_dq_boot_settings *settings=opaque;
+    if(!settings||!settings->read_sector||!destination)return -1;
+    struct executive_dq_ioc_context ctx={settings->read_sector,
+                                         settings->context};
+    struct port_dq_ioc_report report;
+    if(port_dq_ioc_init(&executive_dq_native_ioc,
+           executive_dq_ioc_sector,&ctx)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_prepare(&executive_dq_native_ioc,1u,lbn,
+           (uint8_t *)destination,512u)!=
+           PORT_DQ_IOC_OK||
+       port_dq_ioc_enqueue(&executive_dq_native_ioc,1u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_run(&executive_dq_native_ioc,&report)!=PORT_DQ_IOC_OK||
+       report.processed!=1u||report.succeeded!=1u||report.reads!=1u)
+        return -1;
+    return 0;
+}
+/* Exercise the staged READPBLK bridge with a resident IRP. The actual
+ * private DQ IOC FIFO reaches ATA through the attached native CRB. DDB DDT
+ * actions and public process QIO remain unavailable. */
 static union {uint32_t align;uint8_t bytes[PORT_V37_IRP_SIZE];}
     executive_dqddt_irp;
 static union {uint32_t align;uint16_t words[256];} executive_dqddt_sector;
@@ -1591,8 +1628,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             .sector=executive_dqddt_sector.words,
             .sector_bytes=PORT_DQ_BOOTREAD_BYTES,
             .boot_unit=p->dq_boot_io->boot_unit,
-            .read_sector=p->dq_boot_io->read_sector,
-            .read_context=p->dq_boot_io->context};
+            .read_sector=executive_dq_ioc_read_sector,
+            .read_context=(void *)p->dq_boot_io};
         if(port_dqddt_bootread(&executive_dqddt,&executive_dq_fdt,&read,
                &executive_dqddt_io,0u)!=PORT_DQ_BOOTREAD_OK||
            executive_dqddt_io.lbn!=0u||

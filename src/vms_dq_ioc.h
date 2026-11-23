@@ -4,8 +4,9 @@
 #include <stddef.h>
 /* DRIVER/SRC/DQDRIVER.MAR DQ_STARTIO/PREPROCESS/FDISPATCH/FUNCXT
  * and SYS/SRC/IOCIOPOST.MAR I/O packet queue and completion ordering.
- * Bounded, private supervisor physical READPBLK bridge. No public $QIO,
- * DDT publishing, process AST, ACP, cancellation of a running IRP, or IRQ. */
+ * Bounded, private supervisor physical READPBLK queue. Resident SYS.EXE
+ * can drive its single physical request through the attached native CRB/IRQ
+ * callback. No public $QIO, process AST, ACP or running-IRP cancellation. */
 #define PORT_DQ_IOC_DEPTH 8u
 enum { PORT_DQ_IOC_OK=1u,PORT_DQ_IOC_BAD=2u,
        PORT_DQ_IOC_FULL=4u,PORT_DQ_IOC_BUSY=6u,

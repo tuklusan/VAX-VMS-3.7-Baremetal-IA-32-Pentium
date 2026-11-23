@@ -2326,14 +2326,14 @@ dq_fdt_rows=[
  (585,588,'src/vms_dq_fdt_sense.c','port_dq_fdt_sense','Source EXE$SENSEMODE characteristics mask'),
  (589,592,'src/vms_dq_fdt_set.c','port_dq_fdt_set','Source EXE$SETCHAR disk set-mode mask'),
  (593,633,None,None,'Original RB730 driver setup and controller dispatch entry unresolved'),
- (634,639,'src/vms_dqddt_bootread.c','port_dqddt_bootread','Validated staged DDT dispatches only the existing privileged physical READPBLK path across bounded ATA LBA28; DQA0 DDT remains unpublished, with no public QIO, async IOC or ACP'),
+ (634,639,'src/vms_dqddt_bootread.c','port_dqddt_bootread','Validated staged DDT dispatches the resident private READPBLK IRP; the native DQ IOC FIFO now completes its sector through the attached CRB IRQ14 path, while public process QIO and ACP remain unavailable'),
  (640,654,'src/vms_dq_bootread_decode.c','port_dq_bootread_decode','IRP MEDIA physical LBN extraction for bounded ATA LBA28; resident early INIT verifies LBN1 and LBN0 independently'),
  (655,671,'src/vms_dq_bootread_commit.c','port_dq_bootread_commit','UCB retry count, BCNT, FEX and media field update, partial DQ PREPROCESS'),
  (672,677,None,None,'Unimplemented RB730 branch/diagnostic bits and controller hardware'),
  (678,709,'src/vms_dq_bootread_preflight.c','port_dq_bootread_preflight','Source FDISPATCH: PHYSIO bypass of volume-valid, guarded read-only boot transfer'),
  (710,751,None,None,'Original RB730 pack acknowledgement, no-op commands and explicit seek hardware unresolved'),
  (752,771,'src/vms_dq_ioc_transfer.c','port_dq_ioc_transfer','Source DQ_READPBLK transfer state uses read-only IA-32 ATA LBA28 PIO with IRQ14 completion and a single outstanding private request; original seek/ERR paths remain unresolved'),
- (772,840,'src/vms_ata_x86.c','port_ata_x86_irq','Native primary ATA IRQ14 acknowledges device status and completes the bounded sector read; RB730 command/ECC semantics, DQA0 DDT/CRB and process-aware IOC completion remain unresolved'),
+ (772,840,'src/vms_dq_ioc_run.c','port_dq_ioc_run','Resident DQ IOC FIFO now services one private READPBLK through native ATA IRQ14 and the attached CRB; source RB730 ISR/recovery, active DQA DDT dispatch and process-aware/public completion remain unresolved'),
  (841,851,'src/vms_dq_ioc_retry.c','port_dq_ioc_retry','Source RETRYERR bounded error retry count and return to FDISPATCH; native private ATA callback, RB730 recalibration hardware and ISR unimplemented'),
  (852,916,None,None,'Original RB730 error classification, controller-specific faults and fatal ISR paths remain unresolved'),
  (917,939,'src/vms_dq_ioc_post.c','port_dq_ioc_post','Source FUNCXT one final status/bytes transferred, private IOC post and request retirement; no hardware channel/AST/public QIO'),
@@ -2350,7 +2350,7 @@ for first,last,path,symbol,detail in dq_fdt_rows:
              'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':detail})
 result['files'].append({'original_file':'DRIVER/SRC/DQDRIVER.MAR',
     'original_lines':2189,'sections':dq_fdt_sections,
-    'unresolved_integration':'Native primary ATA IRQ14 is routed through a source-shaped CRB attached to the DQA UCB; resident SYS.EXE validates staged DQ DDT/FDT and completes one private physical READPBLK through that IRQ path. DQA DDB DDT/action slots, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented.'})
+    'unresolved_integration':'Native primary ATA IRQ14 is routed through a SYSDEF.MDL-shaped CRB attached to the DQA UCB; resident SYS.EXE validates staged DQ DDT/FDT and completes one private READPBLK through the native DQ IOC FIFO. DQA DDB DDT/action slots, original RB730 behavior, public process IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented.'})
 # M131: original RELOCDRV.MAR LOCATE/EXECUTE and IOC$INITDRV,
 # limited to bounded source DQ DPT_STORE on isolated DDB/UCB copies.
 # Real CRB/IDB/port/relocation of DQ action pointers remain unresolved.
