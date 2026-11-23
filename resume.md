@@ -413,3 +413,11 @@ Extended source SYSQIOREQ IRP construction to set the ACB quota bit and decremen
 Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, through M49); source range generation/validation PASS (1,973 ranges, 0 missing mapped functions; 441/4,566 originals indexed; counts unchanged from M230 because these lines were already partial); `git diff --check` PASS. No QEMU run: host-only helper, not linked into the guest. No original DEC source or binary image was staged.
 
 M231 implementation commit: `181350020fde46e2c10a879efb443bc7ffa8cfee`.
+
+## M232 — SYS$QIO privilege and device-characteristic gates, 23 November 2026
+
+Ported the SYSQIOREQ.MAR ACCESS decision subset for virtual, logical and physical I/O. The helper applies PHY_IO and LOG_IO privilege bypasses, sets the physical-I/O result, rejects unprivileged physical requests, enforces SPL/FOD/MNT/FOR/SHR device gates, and selects the source physical or logical volume checker with VPROT/owner UIC/ARB inputs. A supplied callback decides the actual volume access; no real VMS privilege mask, UCB/PCB, EXE$CHKPHYACCES/CHKLOGACCES implementation, or abort/IOSB/event wiring is connected. Diagnostic-buffer handling remains unresolved. Coverage for SYSQIOREQ lines 515-535, 545-547 and 570-581 is partial.
+
+Verification: `make sysqioargscheck` PASS across privilege bypasses, physical/logical checker selection, denied ACL, spooled, unmounted/structured FOD, virtual I/O, and physical flag; full `make test` PASS (exit 0, through M49); coverage generation/validation PASS (1,979 ranges, zero missing mapped functions; 441/4,566 originals indexed; 28,923 partial, 50,327 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: host-only code is not linked to the guest. No original DEC source or binary image was staged.
+
+M232 implementation commit: `0c864cbd7df22e2abf6347a623208396bae2dc3a`.
