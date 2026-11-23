@@ -2350,7 +2350,7 @@ for first,last,path,symbol,detail in dq_fdt_rows:
              'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':detail})
 result['files'].append({'original_file':'DRIVER/SRC/DQDRIVER.MAR',
     'original_lines':2189,'sections':dq_fdt_sections,
-    'unresolved_integration':'Native primary ATA IRQ14 completes bounded one-sector PIO transfers used by the private boot IOC. A validated DDT stage dispatches one privileged physical READPBLK path, but resident SYS.EXE still stages source DPTAB/DDTAB/FUNCTAB only; DQA0 DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented.'})
+    'unresolved_integration':'Native primary ATA IRQ14 completes bounded one-sector PIO transfers. Resident SYS.EXE now validates its staged DQ DDT/FDT and runs one private physical READPBLK bridge through that table gate; it still has no callable DDT action slot, DQA0 DDB DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP or process AST completion.'})
 # M131: original RELOCDRV.MAR LOCATE/EXECUTE and IOC$INITDRV,
 # limited to bounded source DQ DPT_STORE on isolated DDB/UCB copies.
 # Real CRB/IDB/port/relocation of DQ action pointers remain unresolved.

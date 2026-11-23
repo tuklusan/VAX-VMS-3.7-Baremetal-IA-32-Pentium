@@ -21160,7 +21160,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 292,
+          "pc_line": 298,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -21510,7 +21510,7 @@
           "reason": "RB730 CSR/interrupts, retry, init, controller/port resource and remaining disk source unresolved"
         }
       ],
-      "unresolved_integration": "Native primary ATA IRQ14 completes bounded one-sector PIO transfers used by the private boot IOC. A validated DDT stage dispatches one privileged physical READPBLK path, but resident SYS.EXE still stages source DPTAB/DDTAB/FUNCTAB only; DQA0 DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented."
+      "unresolved_integration": "Native primary ATA IRQ14 completes bounded one-sector PIO transfers. Resident SYS.EXE now validates its staged DQ DDT/FDT and runs one private physical READPBLK bridge through that table gate; it still has no callable DDT action slot, DQA0 DDB DDT/CRB publication, original RB730 behavior, public IOC/$QIO, Files-11 ACP or process AST completion."
     },
     {
       "original_file": "SYS/SRC/RELOCDRV.MAR",

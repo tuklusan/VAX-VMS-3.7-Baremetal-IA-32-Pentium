@@ -55,6 +55,51 @@
       "path": "logs/serial/qemu-m193-run-local-20261123T042841960367Z.log",
       "bytes": 4600,
       "sha256": "b83ec2a164adef10221c110aba147dc906b7174b69c6ba0886e5d700589c2984"
+    },
+    {
+      "milestone": "M193",
+      "run_id": "local-20261123T043516600109Z",
+      "run_url": "",
+      "test_result": "harness-fail",
+      "path": "logs/serial/qemu-m193-run-local-20261123T043516600109Z.log",
+      "bytes": 4624,
+      "sha256": "d5bbb1bec480938886b7a2acfb938af07738ed07e424eb1797a8ec971eab9e35"
+    },
+    {
+      "milestone": "M193",
+      "run_id": "local-20261123T043535941634Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m193-run-local-20261123T043535941634Z.log",
+      "bytes": 4624,
+      "sha256": "d5bbb1bec480938886b7a2acfb938af07738ed07e424eb1797a8ec971eab9e35"
+    },
+    {
+      "milestone": "M193",
+      "run_id": "local-20261123T043802759843Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m193-run-local-20261123T043802759843Z.log",
+      "bytes": 4624,
+      "sha256": "d5bbb1bec480938886b7a2acfb938af07738ed07e424eb1797a8ec971eab9e35"
+    },
+    {
+      "milestone": "M196",
+      "run_id": "local-20261123T043821131044Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m196-run-local-20261123T043821131044Z.log",
+      "bytes": 4624,
+      "sha256": "d5bbb1bec480938886b7a2acfb938af07738ed07e424eb1797a8ec971eab9e35"
+    },
+    {
+      "milestone": "M196",
+      "run_id": "local-20261123T043848030722Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m196-run-local-20261123T043848030722Z.log",
+      "bytes": 4624,
+      "sha256": "d5bbb1bec480938886b7a2acfb938af07738ed07e424eb1797a8ec971eab9e35"
     }
   ]
 }

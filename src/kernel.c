@@ -3492,18 +3492,31 @@ void kmain(void) {
     /* Source DQDRIVER.MAR DPTAB/DDTAB/FUNCTAB: native supervisor table
      * layout staging only, no DQA0 DDT binding or Files-11 ACP. */
     static struct port_sys_exec_result dq_ddt_result;
+    uint32_t dq_ddt_irq_before=port_ata_x86_irq_count();
     const struct port_sys_exec_start dq_ddt_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&dq_ddt_result,
-        .phase=PORT_SYS_EXEC_INIT_DQ_DDT_STAGE};
+        .phase=PORT_SYS_EXEC_INIT_DQ_DDT_STAGE,.dq_boot_io=&dq_boot_io};
     if(loaded_sys(&dq_ddt_request)!=PORT_SYS_EXEC_NORMAL||
        dq_ddt_result.signature!=PORT_SYS_EXEC_DQ_DDT_TAG||
        !dq_ddt_result.dq_ddt_stage||!dq_ddt_result.dq_ddt_function||
+       !dq_ddt_result.dq_ddt_bootread||!dq_ddt_result.dq_ddt_bootread_sector||
        (uintptr_t)dq_ddt_result.dq_ddt_stage<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_stage>
            PORT_SYS_ELF_LIMIT-sizeof(struct port_dqddt_stage)||
        (uintptr_t)dq_ddt_result.dq_ddt_function<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_function>=PORT_SYS_ELF_LIMIT||
+       (uintptr_t)dq_ddt_result.dq_ddt_bootread<PORT_SYS_ELF_START||
+       (uintptr_t)dq_ddt_result.dq_ddt_bootread>
+           PORT_SYS_ELF_LIMIT-sizeof(struct port_dq_bootread_result)||
+       (uintptr_t)dq_ddt_result.dq_ddt_bootread_sector<PORT_SYS_ELF_START||
+       (uintptr_t)dq_ddt_result.dq_ddt_bootread_sector>
+           PORT_SYS_ELF_LIMIT-PORT_DQ_BOOTREAD_BYTES||
+       dq_ddt_result.dq_ddt_bootread->lbn!=0u||
+       dq_ddt_result.dq_ddt_bootread->bytes!=PORT_DQ_BOOTREAD_BYTES||
+       dq_ddt_result.dq_ddt_bootread->irp_status!=PORT_SYS85_NORMAL||
+       dq_ddt_result.dq_ddt_bootread->io_function!=PORT_DQ_READPBLK||
+       port_ata_x86_irq_count()<=dq_ddt_irq_before||
        !dq_ddt_result.dq_ddt_stage->ready||
        dq_ddt_result.dq_ddt_stage->driver_bound||
        dq_ddt_result.dq_ddt_stage->table_base!=
@@ -3522,7 +3535,7 @@ void kmain(void) {
         bootstrap_message("INIT: resident DQ DDT source table staging failed.");
         bootstrap_halt();
     }
-    bootstrap_message("INIT: SYS.EXE staged source DQ DPTAB/DDTAB and 136-byte FUNCTAB (all disk actions unbound).");
+    bootstrap_message("INIT: SYS.EXE staged DQ DPTAB/DDTAB/FUNCTAB and completed private READPBLK through IRQ14 (DDB DDT/CRB unpublished).");
 
     /* Source RELOCDRV IOC$INITDRV: DPT_STORE program initializes a
      * verified copy of original DQA0 DDB/UCB, never the active driver. */

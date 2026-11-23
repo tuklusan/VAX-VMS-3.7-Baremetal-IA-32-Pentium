@@ -163,6 +163,9 @@ struct port_sys_exec_result {
     const struct port_dqddt_stage *dq_ddt_stage;
     uint32_t (*dq_ddt_function)(const struct port_dqddt_stage *,
         const struct port_dq_fdt *,uint16_t);
+    /* Private stage-validated READPBLK bridge result, not DDB/CRB binding. */
+    const struct port_dq_bootread_result *dq_ddt_bootread;
+    const uint16_t *dq_ddt_bootread_sector;
     /* Original RELOCDRV IOC$INITDRV applies exact source DPT_STORE to
      * isolated DQA0 DDB/UCB copies; no driver/ACP/CRB publication. */
     const struct port_relocdrv_dq *dq_dpt_initialized;
