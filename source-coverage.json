@@ -10546,8 +10546,11 @@
             171,
             220
           ],
-          "status": "unresolved",
-          "reason": "Original PHD template generation, hardware context and page-table setup unresolved"
+          "status": "partial",
+          "pc_file": "src/vms_v37_phd.c",
+          "pc_symbol": "port_v37_phd_init_genphd",
+          "pc_line": 18,
+          "function": "Encode the GENPHD fields in the 376-byte SYSDEFMP.MDL fixed PHD record; native page-table allocation, P0/P1 mapping and process activation remain missing"
         },
         {
           "original_lines": [

@@ -1765,7 +1765,7 @@ result['files'].append({'original_file':'SYS/SRC/INIT.MAR',
 pdat_rows=[
  (1,90,None,None,'Original PCB/PHD declarations and VAX PHD generation dependencies unresolved','unresolved'),
  (91,170,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb',"Emit SYSDEF.MDL's 156-byte PCB layout and source GENPCB queue heads, DYN type, state, privileges, PID/PHD and lock queue fields; native PHD creation and process activation remain missing",'partial'),
- (171,220,None,None,'Original PHD template generation, hardware context and page-table setup unresolved','unresolved'),
+ (171,220,'src/vms_v37_phd.c','port_v37_phd_init_genphd',"Encode the GENPHD fields in the 376-byte SYSDEFMP.MDL fixed PHD record; native page-table allocation, P0/P1 mapping and process activation remain missing",'partial'),
  (221,278,None,None,'Null/swapper PHDs, stacks and scheduler PCB source instances unresolved','unresolved'),
  (279,281,'src/vms_v37_pcb.c','port_v37_pcb_init_syspcb_template','Construct the unactivated MMG$AL_SYSPCB data template; SYS PHD and native PHYPCB have not been attached','partial'),
  (282,307,None,None,'Original PCB/sequence vector and swapper/null process activation unresolved','unresolved'),

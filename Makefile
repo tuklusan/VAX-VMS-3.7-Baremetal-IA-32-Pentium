@@ -226,7 +226,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck irpalloccheck
+test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37phdcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck irpalloccheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 	python3 tests/test_guest_layout.py
@@ -498,6 +498,11 @@ initveccheck: | build
 v37pcbcheck: | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c tests/test_v37_pcb_host.c -o build/v37pcbcheck
 	./build/v37pcbcheck
+
+.PHONY: v37phdcheck
+v37phdcheck: | build
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_phd.c tests/test_v37_phd_host.c -o build/v37phdcheck
+	./build/v37phdcheck
 
 .PHONY: sysinitnamescheck
 sysinitnamescheck: | build
