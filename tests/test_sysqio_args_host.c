@@ -445,14 +445,24 @@ int main(void){
     put32(source_pcb+PORT_V37_PCB_EFCS,UINT32_MAX);
     put32(source_pcb+PORT_V37_PCB_EFCU,UINT32_MAX);
     put32(source_pcb+PORT_V37_PCB_PID,7u);
+    source_pcb[PORT_V37_PCB_PRIV+(PORT_V37_PRIV_LOG_IO>>3)]|=
+        (uint8_t)(1u<<(PORT_V37_PRIV_LOG_IO&7u));
+    source_pcb[PORT_V37_PCB_PRIV+(PORT_V37_PRIV_PHY_IO>>3)]|=
+        (uint8_t)(1u<<(PORT_V37_PRIV_PHY_IO&7u));
     struct port_v37_sysqio_process pcb_process={0};
     if(port_v37_sysqio_process_bind_pcb(source_pcb,sizeof source_pcb,3u,
           &pcb_process)!=PORT_V37_SYSQIO_PCB_OK||pcb_process.pid!=7u||
+       !pcb_process.has_phy_io||!pcb_process.has_log_io||
        port_v37_sysqio_process_io_count(&pcb_process,
           PORT_V37_SYSQIO_PCB_DIRECT)!=1||
        port_v37_sysqio_process_io_count(&pcb_process,
           PORT_V37_SYSQIO_PCB_BUFFERED)!=2)
         return 60;
+    memset(source_pcb+PORT_V37_PCB_PRIV,0,8u);
+    if(port_v37_sysqio_process_bind_pcb(source_pcb,sizeof source_pcb,3u,
+          &pcb_process)!=PORT_V37_SYSQIO_PCB_OK||pcb_process.has_phy_io||
+       pcb_process.has_log_io)
+        return 67;
     rig.window=0u;rig.posts=0u;proc.direct_io_count=1;proc.ast_count=1;
     if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&pcb_process,&begin_ops,
           &reserve_spec,&pool,&pool_sync,&integrated,&prepared_irp,
