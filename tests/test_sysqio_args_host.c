@@ -71,6 +71,8 @@ struct begin_rig {
     uint8_t posted_efn,ccb_access_limit;
     uint32_t quota_calls,waits,window;
     uint8_t quota_buffered;int deny_channel,grant_quota;
+    uint32_t source_ucb;
+    uint8_t *source_ccb;
 };
 static int lookup_channel(void *opaque,uint32_t pid,uint32_t channel,
     struct port_v37_sysqio_resolved_channel *out){
@@ -82,11 +84,25 @@ static int lookup_channel(void *opaque,uint32_t pid,uint32_t channel,
     out->ccb_access_limit=r->ccb_access_limit?r->ccb_access_limit:4u;
     return 0;
 }
+static int lookup_ucb(void *opaque,uint32_t pid,uint32_t ucb,
+    struct port_v37_sysqio_resolved_channel *out){
+    struct begin_rig *r=opaque;r->lookups++;
+    if(pid!=r->expected_pid||ucb!=r->source_ucb)return -1;
+    out->device=r->device;out->ucb=r->ucb;return 0;
+}
 static void wait_channel(void *opaque,uint32_t pid,uint32_t channel,
     struct port_v37_sysqio_resolved_channel *resolved){
     struct begin_rig *r=opaque;
     if(pid==r->expected_pid&&channel==r->expected_channel){
         ++r->waits;r->window&=~1u;resolved->window=r->window;
+    }
+}
+static void wait_source_channel(void *opaque,uint32_t pid,uint32_t channel,
+    struct port_v37_sysqio_resolved_channel *resolved){
+    struct begin_rig *r=opaque;
+    if(pid==r->expected_pid&&channel==32u&&r->source_ccb){
+        ++r->waits;put32(r->source_ccb+PORT_V37_CCB_WIND,0u);
+        resolved->window=0u;
     }
 }
 static int single_quota(void *opaque,uint32_t pid,uint8_t buffered){
@@ -206,6 +222,55 @@ int main(void){
        prepared.channel.ucb!=rig.ucb||prepared.dispatch.function_code!=49u||
        mem.probes!=1u||mem.clears!=1u||proc.direct_io_count!=0)
         return 21;
+    _Alignas(4) uint8_t ccb_table[64]={0};
+    uint8_t *const ccb_base=ccb_table+48u;
+    uint8_t *const source_ccb=ccb_base-32u;
+    put32(source_ccb+PORT_V37_CCB_UCB,0x2000u);
+    put32(source_ccb+PORT_V37_CCB_WIND,0u);
+    source_ccb[PORT_V37_CCB_AMOD]=4u;
+    rig.source_ucb=0x2000u;rig.lookups=rig.posts=0u;
+    struct port_v37_sysqio_begin_ops source_ccb_ops={
+        .context=&rig,.ccb_base=ccb_base,.ccb_preceding_bytes=48u,
+        .ccb_maximum_channel_offset=48u,.lookup_ucb=lookup_ucb,
+        .post_event=post_event,.single_io_quota=single_quota,
+        .user_memory=memops};
+    put32(ap+8u,32u);proc.direct_io_count=1;
+    proc.local_event_flags[0]=UINT32_MAX;
+    mem.probes=mem.clears=0u;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&source_ccb_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_OK||rig.lookups!=1u||
+       prepared.channel.ucb!=rig.ucb||prepared.channel.ccb_access_limit!=4u||
+       prepared.channel.window!=0u||proc.direct_io_count!=0)
+        return 59;
+    source_ccb[PORT_V37_CCB_AMOD]=3u;rig.lookups=rig.posts=0u;
+    proc.direct_io_count=1;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&source_ccb_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_NOPRIV||
+       begin_status!=PORT_SYS85_NOPRIV||rig.lookups||rig.posts!=1u||
+       proc.direct_io_count!=1)
+        return 60;
+    source_ccb[PORT_V37_CCB_AMOD]=4u;
+    rig.source_ccb=source_ccb;
+    put32(source_ccb+PORT_V37_CCB_WIND,1u);rig.lookups=0u;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&source_ccb_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_WAIT||rig.lookups!=1u||
+       proc.direct_io_count!=1)
+        return 61;
+    source_ccb_ops.wait_channel=wait_source_channel;
+    rig.waits=0u;proc.direct_io_count=1;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&source_ccb_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_OK||rig.waits!=1u||
+       rig.lookups!=3u||prepared.channel.window!=0u||
+       proc.direct_io_count!=0)
+        return 62;
+    source_ccb_ops.wait_channel=0;rig.posts=rig.lookups=0u;
+    proc.direct_io_count=1;put32(ap+8u,0u);
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&source_ccb_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_IVCHAN||
+       begin_status!=PORT_SYS85_IVCHAN||rig.posts!=1u||rig.lookups||
+       proc.direct_io_count!=1)
+        return 63;
+    put32(ap+8u,0x12340002u);
     rig.window=1u;rig.posts=0u;rig.waits=0u;proc.direct_io_count=1;
     mem.probes=mem.clears=0u;
     memset(&prepared,0x5a,sizeof prepared);untouched=prepared;
