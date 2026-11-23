@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M214
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M215
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes; public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -243,3 +243,12 @@ Added guest-side records of each actual write backend invocation: LBN and first 
 Verification at implementation commit `7dae89739dd36e4b47f799f791135358a321c67b`: `make -j2 all dqwriteioccheck dqprivateioccheck` PASS; full `make test` PASS (exit 0); `make qemu-sysboot-m214` PASS; `python3 tools/validate_source_ranges.py` PASS (1,957 ranges, zero unmapped; inventory counts unchanged); serial manifest PASS (75 raw logs); `git diff --check` PASS. Raw serial trace `logs/serial/qemu-m214-run-local-20261123T141142577386Z.log`, SHA-256 `5405179af72992cdfcae37122ef5ac0c2ed4159402093f98f696cecda3eeed94`. The guest shows two ordered WRITEPBLK payloads and two READPBLK completions through the published DQA0 DDT, with actual IRQ14, verified restoration, and the incomplete-INIT stop. QEMU terminated; no runner remains. No DEC source or binary image was staged.
 
 M214 implementation commit: `7dae89739dd36e4b47f799f791135358a321c67b`. Public SYS$QIO, ACP, process AST/scheduling, native INIT completion, login, DCL and DECnet remain incomplete.
+
+
+## M215 — DQA0 queued write failure posting, 23 November 2026
+
+Extended the host regression for the bounded DQ WRITEPBLK FIFO to inject one backend failure followed by a valid request. It verifies the failed IRP receives an I/O error and zero byte count, that the FIFO continues to the next request, and that completion/failure counters and successful media contents match the two outcomes. This covers private FIFO failure posting only; no hardware error was fabricated and no guest behavior was changed.
+
+Verification at test commit `af9806bbf71e442c6bac921c5736d786623245fc`: `make dqwriteioccheck` PASS; full `make test` PASS (exit 0, suite reached M49); `git diff --check` PASS. The immediately preceding M214 QEMU run remains the current guest evidence; this host-only change did not alter the boot image. No QEMU process was started for M215. Source coverage counts unchanged. Public SYS$QIO and process completion remain missing.
+
+M215 test commit: `af9806bbf71e442c6bac921c5736d786623245fc`.
