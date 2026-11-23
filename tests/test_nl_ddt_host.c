@@ -44,20 +44,20 @@ int main(void){
     REQUIRE(port_v37_nl_ddt_source_lookup(db,sizeof dbwords,DB,&d,"NLA0:",5,&found)==PORT_V37_NL_DDT_OK);
     REQUIRE(found.driver_bound&&found.ddb==d.ddb[3]&&found.ucb==d.ucb[4]);
     REQUIRE(port_v37_ioc_searchdev(db,sizeof dbwords,DB,&d,"OPA0:",5,&found)==PORT_V37_IOC_UNBOUND);
-    uint32_t packets[3][PORT_V37_IRP_SIZE/4]={0};
+    uint32_t packets[3][PORT_V37_IRP_POOL_STRIDE/4]={0};
     struct port_v37_iopost_queue q={0};
     struct interrupt_log irq={0};
-    REQUIRE(port_v37_post_init(&q,(uint8_t*)packets,sizeof packets,PACKETS,PORT_V37_IRP_SIZE,HEAD)==PORT_V37_QIO_OK);
+    REQUIRE(port_v37_post_init(&q,(uint8_t*)packets,sizeof packets,PACKETS,PORT_V37_IRP_POOL_STRIDE,HEAD)==PORT_V37_QIO_OK);
     const uint16_t fn[3]={PORT_SYS85_READVBLK,PORT_SYS85_WRITELBLK,PORT_SYS85_WRITEOF};
     const uint32_t statuses[3]={PORT_SYS85_ENDOFFILE,PORT_SYS85_NORMAL,PORT_SYS85_NORMAL};
     for(unsigned i=0;i<3u;i++){
         uint8_t *packet=(uint8_t*)packets[i];
-        const uint32_t packet_va=PACKETS+i*PORT_V37_IRP_SIZE;
-        REQUIRE(port_v37_irp_prepare(packet,64u,packet_va,d.ucb[4],fn[i])==PORT_V37_QIO_OK);
+        const uint32_t packet_va=PACKETS+i*PORT_V37_IRP_POOL_STRIDE;
+        REQUIRE(port_v37_irp_prepare(packet,PORT_V37_IRP_SIZE,packet_va,d.ucb[4],fn[i])==PORT_V37_QIO_OK);
         struct port_v37_qio_request req={
            .post=&q,.irp=packet,.ucb=db+PORT_V37_UCB_NL_OFF,
            .irp_va=packet_va,.ucb_va=d.ucb[4],.nl_ddb_va=d.ddb[3],
-           .irp_size=64u,.ucb_size=PORT_V37_UCB_SIZE,
+           .irp_size=PORT_V37_IRP_SIZE,.ucb_size=PORT_V37_UCB_SIZE,
            .softint=interrupt,.softint_arg=&irq};
         REQUIRE(port_v37_nl_ddt_dispatch(table,sizeof table,DDT,RET,READ,WRITE,
            fn[i],&req,port_v37_nl_fdt_read,port_v37_nl_fdt_write)==PORT_SYS85_NORMAL);
@@ -69,9 +69,9 @@ int main(void){
            fn[i],&req,port_v37_nl_fdt_read,port_v37_nl_fdt_write)==PORT_V37_QIO_DUP);
     }
     REQUIRE(port_v37_read32(db+PORT_V37_UCB_NL_OFF+96u)==3u);
-    REQUIRE(port_v37_read32((uint8_t*)packets[0])==PACKETS+64u);
+    REQUIRE(port_v37_read32((uint8_t*)packets[0])==PACKETS+PORT_V37_IRP_POOL_STRIDE);
     REQUIRE(port_v37_read32((uint8_t*)packets[2])==HEAD);
-    REQUIRE(port_v37_read32((uint8_t*)packets[2]+4u)==PACKETS+64u);
+    REQUIRE(port_v37_read32((uint8_t*)packets[2]+4u)==PACKETS+PORT_V37_IRP_POOL_STRIDE);
     uint8_t bad=(uint8_t)table[72u];table[72u]^=2u;
     REQUIRE(port_v37_nl_ddt_check(table,sizeof table,DDT,RET,READ,WRITE)==PORT_V37_NL_DDT_BAD);
     table[72u]=bad;

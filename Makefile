@@ -354,7 +354,7 @@ test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck boot
 
 .PHONY: sysqioargscheck
 sysqioargscheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c src/vms_sysqio_ef.c src/vms_sysqio_iosb.c $(wildcard src/vms_dq_fdt_*.c) tests/test_sysqio_args_host.c -o build/sysqioargscheck
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c src/vms_sysqio_irp_build.c src/vms_sysqio_ef.c src/vms_sysqio_iosb.c $(wildcard src/vms_dq_fdt_*.c) tests/test_sysqio_args_host.c -o build/sysqioargscheck
 	./build/sysqioargscheck
 clean:
 	rm -rf build vms37lab.ima portdisk.img
@@ -1363,7 +1363,7 @@ $(M126_DQ_READ_OBJS): build/%.o: src/%.c src/vms_dq_bootread.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: dqbootreadcheck
 dqbootreadcheck: $(M126_DQ_READ_OBJS) portdisk.img | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M118_DB_SRCS) src/vms_qio_irp_prepare.c tests/test_dq_bootread_host.c -o build/dqbootreadcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M118_DB_SRCS) src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c tests/test_dq_bootread_host.c -o build/dqbootreadcheck
 	ASAN_OPTIONS=detect_leaks=1 ./build/dqbootreadcheck
 
 # M127: INIT.MAR FIN_DATABASE source DDB names and boot logical equivalences.
@@ -1424,7 +1424,7 @@ ddtreloccasescheck: | build
 # M136: 34 original DQ physical READPBLK LBN/IOST cases on private DDB/UCB.
 .PHONY: dqphysicalcheck
 dqphysicalcheck: portdisk.img | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc -Itests $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M118_DB_SRCS) src/vms_qio_irp_prepare.c tests/test_dq_physical_case_*.c tests/test_dq_physical_cases_main.c -o build/dqphysicalcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc -Itests $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M118_DB_SRCS) src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c tests/test_dq_physical_case_*.c tests/test_dq_physical_cases_main.c -o build/dqphysicalcheck
 	./build/dqphysicalcheck
 
 # M145: FIL$FINDFILID scans VBNs across nonadjacent FH2 file extents.

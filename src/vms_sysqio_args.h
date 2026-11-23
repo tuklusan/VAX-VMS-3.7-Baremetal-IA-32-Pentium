@@ -83,6 +83,22 @@ struct port_v37_sysqio_prepared {
     struct port_v37_sysqio_resolved_channel channel;
 };
 
+/* Source SYSQIOREQ SUCCES constructs the device-independent standard IRP.
+ * This builder only consumes an already reserved packet; allocation,
+ * channel IOC accounting, device access checks and FDT invocation remain
+ * caller responsibilities. */
+enum { PORT_V37_SYSQIO_IRP_BUILD_OK=1u,
+       PORT_V37_SYSQIO_IRP_BUILD_BAD=2u,
+       PORT_V37_SYSQIO_IRP_STANDARD_BYTES=136u };
+struct port_v37_sysqio_irp_spec {
+    uint32_t packet_va,ucb_va,arb_va,window_va,channel_index;
+    uint8_t base_priority;
+    uint8_t reserved[3];
+};
+uint32_t port_v37_sysqio_build_irp(const struct port_v37_sysqio_prepared *,
+    const struct port_v37_sysqio_process *,const struct port_v37_sysqio_irp_spec *,
+    uint8_t *packet,size_t packet_bytes);
+
 /* Source-ordered EXE$QIO path through IOSB and I/O quota reservation. It
  * prepares a request for a later driver dispatcher; no IRP is allocated and
  * no hardware I/O is initiated here. */

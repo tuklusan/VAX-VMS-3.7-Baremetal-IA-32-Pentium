@@ -21197,10 +21197,29 @@
         {
           "original_lines": [
             313,
+            385
+          ],
+          "status": "unresolved",
+          "reason": "Exact failure epilogue, IRP allocation, section-window resolution and quota rollback unresolved"
+        },
+        {
+          "original_lines": [
+            386,
+            429
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_build.c",
+          "pc_symbol": "port_v37_sysqio_build_irp",
+          "pc_line": 26,
+          "function": "Build the source-layout 136-byte standard IRP through CDRP$L_LENGTH, including ARB and fork fields, after caller packet allocation; native process/channel accounting and driver dispatch remain unbound"
+        },
+        {
+          "original_lines": [
+            430,
             735
           ],
           "status": "unresolved",
-          "reason": "Exact failure epilogue, IRP allocation/build, full device access checks, FDT action dispatch and completion unresolved"
+          "reason": "Full device access/privilege checks, function-specific FDT action dispatch, VMS driver queueing and completion unresolved"
         },
         {
           "original_lines": [
@@ -21241,7 +21260,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO and EXQUOTA values from VMSLIB/SRC/SSMSG.MSG V03-003. It is host-tested but not connected to a user service entry, real CCB lookup or driver dispatch. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; source IPL/deletion protection, exact VMS failure epilogue, device access/protection, IRP allocation and process AST completion remain absent."
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO and EXQUOTA values from VMSLIB/SRC/SSMSG.MSG V03-003. A separate host-tested builder fills the 136-byte standard IRP through CDRP$L_LENGTH only after the caller supplies a packet. The request path is not connected to a user service entry, real CCB lookup, IRP allocation, source IPL/deletion protection, device access/protection, driver FDT dispatch or process AST completion. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

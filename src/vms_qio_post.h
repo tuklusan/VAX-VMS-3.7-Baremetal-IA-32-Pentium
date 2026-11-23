@@ -4,11 +4,15 @@
 #include <stddef.h>
 #include "vms_ini_devicedb.h"
 #include "vms_sys85.h"
-/* SHRLIB/SYSDEF.MDL IRP and UCB, SYS/SRC/SYSQIOREQ.MAR 735-749.
- * The original 32-bit IRP has status longwords at +56 and +60. The
+/* SHRLIB/SYSDEF.MDL CDRP defines the IRP at negative offsets through ARB
+ * (+88), then its positive fork-queue fields through CDRP$L_LENGTH at +136.
+ * That is IRP$C_LENGTH; SYSBOOT rounds it to a 144-byte packet stride.
+ * Status longwords are at +56 and +60. The
  * IOC$GL_PSFL/PSBL doubly-linked queue follows VAX INSQUE semantics.
  * This is *not* a public $QIO service or an I/O postprocess AST. */
-enum { PORT_V37_IRP_SIZE=64u, PORT_V37_IRP_FUNC=32u,
+enum { PORT_V37_IRP_SIZE=136u, PORT_V37_IRP_POOL_STRIDE=144u,
+       PORT_V37_IRP_PREFIX_SIZE=64u,
+       PORT_V37_IRP_ARB=88u, PORT_V37_IRP_FUNC=32u,
        PORT_V37_IRP_UCB=28u, PORT_V37_IRP_MEDIA=56u,
        PORT_V37_IRP_IOST2=60u, PORT_V37_UCB_OPCNT=96u,
        PORT_V37_IOPOST_IPL=4u, PORT_V37_QIO_OK=1u,

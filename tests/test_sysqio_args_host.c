@@ -1,14 +1,23 @@
 #include "vms_sysqio_args.h"
+#include "vms_qio_post.h"
 #include "vms_sysqio_ef.h"
 #include "vms_sysqio_iosb.h"
 #include "vms_sys85.h"
 #include "vms_exe_schevt.h"
+#include "vms_v37_dyn_tags.h"
 #include <stdio.h>
 #include <string.h>
 
 static void put32(uint8_t *p,uint32_t v){
     p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);
     p[2]=(uint8_t)(v>>16);p[3]=(uint8_t)(v>>24);
+}
+static uint16_t get16(const uint8_t *p){
+    return (uint16_t)((uint16_t)p[0]|((uint16_t)p[1]<<8));
+}
+static uint32_t get32(const uint8_t *p){
+    return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
+           ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
 struct global_ef_test { uint8_t seen;uint32_t status; };
 static uint32_t clear_global(void *opaque,uint8_t efn){
@@ -210,6 +219,31 @@ int main(void){
        begin_status!=PORT_V37_SYSQIO_BEGIN_OK||rig.quota_calls!=2u||
        proc.direct_io_count!=-1||prepared.dispatch.function_code!=49u)
         return 27;
-    puts("SYS$QIO argument, EFN, channel, FDT and IOSB begin path PASS");
+    uint8_t irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES+16u];
+    memset(irp,0xa5,sizeof irp);
+    const struct port_v37_sysqio_irp_spec ispec={
+        .packet_va=0x4000u,.ucb_va=0x2000u,.arb_va=0x3000u,
+        .window_va=0u,.channel_index=2u,.base_priority=8u};
+    if(port_v37_sysqio_build_irp(&prepared,&proc,&ispec,irp,sizeof irp)!=
+         PORT_V37_SYSQIO_IRP_BUILD_OK||
+       get16(irp+8u)!=PORT_V37_SYSQIO_IRP_STANDARD_BYTES||
+       irp[10u]!=PORT_V37_DYN_IRP||irp[11u]!=0x43u||
+       get32(irp+12u)!=7u||get32(irp+16u)!=0x2000u||
+       get32(irp+20u)!=0xaabbccddu||get32(irp+24u)!=0u||
+       get32(irp+28u)!=0x2000u||get16(irp+32u)!=0x31u||
+       irp[34u]!=3u||irp[35u]!=8u||get32(irp+36u)!=0x1000u||
+       get16(irp+40u)!=2u||get16(irp+42u)!=0u||
+       get32(irp+44u)!=0u||get16(irp+48u)!=0u||
+       get32(irp+52u)!=0u||get32(irp+PORT_V37_IRP_ARB)!=0x3000u||
+       irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES]!=0xa5u){
+        return 28;
+    }
+    memset(irp,0x5a,sizeof irp);
+    struct port_v37_sysqio_irp_spec bad_spec=ispec;
+    bad_spec.packet_va=3u;
+    if(port_v37_sysqio_build_irp(&prepared,&proc,&bad_spec,irp,sizeof irp)!=
+         PORT_V37_SYSQIO_IRP_BUILD_BAD||irp[0]!=0x5au||irp[sizeof irp-1u]!=0x5au)
+        return 29;
+    puts("SYS$QIO argument, begin and source-layout IRP construction PASS");
     return 0;
 }

@@ -2870,7 +2870,7 @@ void kmain(void) {
      * counts and sizes are a temporary native startup profile, not yet read
      * from a complete SYSGEN image. No QIO process is started here. */
     static const struct port_boo_packet_settings packet_profile={
-        .irp_length=160u,.irp_count=8u,.irp_virtual_count=8u,
+        .irp_length=PORT_V37_IRP_SIZE,.irp_count=8u,.irp_virtual_count=8u,
         .lrp_requested_size=512u,.lrp_count=2u,.lrp_virtual_count=2u,
         .srp_requested_size=128u,.srp_count=8u,.srp_virtual_count=8u};
     static struct port_sys_exec_result packet_result;
@@ -2889,7 +2889,7 @@ void kmain(void) {
        packet_result.irp_queue->next==0u ||
        packet_result.lrp_queue->next==0u ||
        packet_result.srp_queue->next==0u ||
-       packet_result.irp_queue->packet_bytes!=160u ||
+       packet_result.irp_queue->packet_bytes!=PORT_V37_IRP_POOL_STRIDE ||
        packet_result.lrp_queue->packet_bytes!=576u ||
        packet_result.srp_queue->packet_bytes!=128u ||
        packet_result.lrp_queue->minimum_bytes!=480u){
