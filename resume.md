@@ -546,4 +546,4 @@ Corrected `port_exe_nullproc` to emit the source `NULLPROC.MAR` unconditional se
 
 Verification: `make -j2 all` PASS; full `make test` PASS (exit 0, suite reached M49); source-range validation PASS (2,009 ranges, zero mapping errors; 444/4,566 original files indexed; 29,246 partial, 51,944 unresolved, 7,799 missing, 26,239 excluded, 917 hardware-excluded, 17,016 mapped); `objdump -dr build/vms_exe_nullproc.o` shows the self-loop; `git diff --check` PASS. Real `make qemu-sysboot-m217` PASS through existing DQA0 Files-11 I/O, then stopped at incomplete INIT. The null process was not dispatched; no login/DCL/DECnet/SET HOST 0 observed. QEMU exited. Transcript `logs/serial/qemu-m217-run-local-20261123T225905085756Z.log`, 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`; serial-manifest verification PASS (100 logs).
 
-M245 implementation commit: `106ab7c015415eaee2d316d0de8d94691ba7bf22`.
+M245 implementation commit (published `main`): `348f4b73d30f96982aeb439bd35b9ed390e9e9a6`.
