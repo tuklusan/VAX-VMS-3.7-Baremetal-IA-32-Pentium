@@ -1,6 +1,6 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M209
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M210
 
-INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, and reread the restored sector through the published DDT; public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
+INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded writes through a bounded FIFO; public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
 
 Active repository: tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium main
@@ -198,3 +198,12 @@ Extended the DQA0 DDT dispatch path to issue both READPBLK and WRITEPBLK through
 Verification at implementation commit `6170c013bece6ae9e9f99e807bfb90ee3dec5a6f`: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `make qemu-sysboot-m209` PASS twice. Both real serial traces show IOC-selected DQA0 DDT WRITEPBLK and READPBLK over ATA IRQ14, verified restoration and the explicit incomplete-INIT stop. `python3 tools/validate_source_ranges.py` PASS (1,957 ranges, zero unmapped; 441/4,566 original files indexed; status counts unchanged); serial manifest PASS (69 logs); `git diff --check` PASS. Logs `logs/serial/qemu-m209-run-local-20261123T072529189421Z.log` and `...T072637343273Z.log`, each 5,042 bytes, SHA-256 `3a60452228235d3d9f8dd7f2ae8d110dd51e05bf55fdb36b17de985b4c8a0427`. QEMU terminated; no runner remains. Candidate audit found no DEC source, binary images, secrets or new dependencies.
 
 M209 implementation commit: `6170c013bece6ae9e9f99e807bfb90ee3dec5a6f`. VMS initialization, login, DCL and DECnet remain incomplete.
+
+
+## M210 — DQA0 write through the FIFO, 23 November 2026
+
+The QEMU scratch-sector test now submits each WRITEPBLK payload through the existing bounded `port_dq_ioc_write` FIFO. The FIFO owns a copy, retains ordering/tag state, invokes a backend that resolves DQA0 through `IOC$SEARCHDEV`, calls STARTIO from the published DDB DDT, and returns a checked completion status/byte count before readback and restore. The kernel links the FIFO implementation directly. This is one synchronous privileged private FIFO request per service call; it is not public process SYS$QIO, a general resident IOC scheduler, process AST delivery, or ACP I/O.
+
+Verification at implementation commit `88920c95d8618f8bc10fbbb6b443eae062cb8fd2`: `make -j2 all dqwriteioccheck` PASS; host FIFO checks PASS; full `make test` PASS (exit 0); `make qemu-sysboot-m210` PASS. The real COM1 transcript confirms FIFO-dispatched DQA0 DDT WRITEPBLK and READPBLK via ATA IRQ14, physical readback/restoration, and the explicit incomplete-INIT stop. Source coverage validation PASS (1,957 ranges, zero unmapped functions; status counts unchanged); serial manifest verification PASS (70 raw logs); `git diff --check` PASS. Log `logs/serial/qemu-m210-run-local-20261123T072931380268Z.log`, 5,043 bytes, SHA-256 `f8bbf12bedd43cc193a3b571b8e10d2b3212b63963fd92858896a514eb69dbce`. QEMU terminated; no runner remains. Candidate audit found no restricted source, binary image, recognized secret, or new dependency.
+
+M210 implementation commit: `88920c95d8618f8bc10fbbb6b443eae062cb8fd2`. VMS INIT still stops before ACP/process creation; public QIO, login, DCL, and DECnet remain incomplete.
