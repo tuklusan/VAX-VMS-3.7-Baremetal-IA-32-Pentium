@@ -564,4 +564,4 @@ Verification: `make v37ia32ctxcheck` PASS for all four modes and a wrong-CPL1-de
 
 Coverage totals are descriptive inventory only. Scheduler dispatch/context restore, VMS PHD/page tables, process activation, public SYS$QIO, process AST completion, ACP, native INIT, login/DCL and DECnet remain incomplete.
 
-M247 implementation commit: `f998e536951e9c785c1a8c7c944b9e3d7f658a85`.
+M247 implementation commit (local): `f998e536951e9c785c1a8c7c944b9e3d7f658a85`; published `main`: `ae600ee7aa3e13d9b854480a9f5774352b6d0974`.
