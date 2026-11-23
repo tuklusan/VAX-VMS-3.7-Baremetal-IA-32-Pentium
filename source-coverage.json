@@ -21094,10 +21094,29 @@
         {
           "original_lines": [
             1,
+            111
+          ],
+          "status": "unresolved",
+          "reason": "Original declarations and pre-argument-offset service implementation unresolved"
+        },
+        {
+          "original_lines": [
+            112,
+            123
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_args.c",
+          "pc_symbol": "port_v37_sysqio_decode_args",
+          "pc_line": 11,
+          "function": "Fixed SYS$QIO argument-list offsets are decoded; event flag, channel, privilege, device and I/O processing remain unimplemented"
+        },
+        {
+          "original_lines": [
+            124,
             735
           ],
           "status": "unresolved",
-          "reason": "Original QIO entry, channel authorization, dispatch and VAX declarations unresolved"
+          "reason": "Original QIO entry, channel authorization, dispatch and VAX service behavior unresolved"
         },
         {
           "original_lines": [
@@ -21138,7 +21157,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "Only FINISHIOC, FINISHIO and IPL4 post request on reserved native IRPs; driver IOC queues, user $QIO, postprocessing, IOSB and AST completion absent."
+      "unresolved_integration": "The native AP decoder preserves the fixed 12-argument offsets. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; user SYS$QIO entry, channel authorization, device function dispatch, process IRP allocation, IOSB and process AST completion remain absent."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

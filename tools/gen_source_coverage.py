@@ -2263,7 +2263,9 @@ assert len({f['original_file'] for f in result['files']})==len(result['files'])
 # IOC$GL_PSBL append is real source-format resident IRP data, but public
 # $QIO setup, IOC driver dispatch and IOPOST delivery have not been ported.
 qio_rows=[
- (1,735,None,None,'Original QIO entry, channel authorization, dispatch and VAX declarations unresolved','unresolved'),
+ (1,111,None,None,'Original declarations and pre-argument-offset service implementation unresolved','unresolved'),
+ (112,123,'src/vms_sysqio_args.c','port_v37_sysqio_decode_args','Fixed SYS$QIO argument-list offsets are decoded; event flag, channel, privilege, device and I/O processing remain unimplemented','partial'),
+ (124,735,None,None,'Original QIO entry, channel authorization, dispatch and VAX service behavior unresolved','unresolved'),
  (736,740,None,None,'EXE$ABORTIO AST quota adjustments and IOSB clearing unported','unresolved'),
  (741,742,'src/vms_qio_finishioc.c','port_v37_qio_finishioc','EXE$FINISHIOC clears R1 before common finish path','partial'),
  (743,749,'src/vms_qio_finishio.c','port_v37_qio_finishio','UCB OPCNT, IRP media status, append IOC post FIFO and defer IPL4','partial'),
@@ -2278,7 +2280,7 @@ for lo,hi,pc,sym,description,status in qio_rows:
     else:qio_sec.append({'original_lines':[lo,hi],'status':status,'reason':description})
 result['files'].append({'original_file':'SYS/SRC/SYSQIOREQ.MAR',
     'original_lines':908,'sections':qio_sec,
-    'unresolved_integration':'Only FINISHIOC, FINISHIO and IPL4 post request on reserved native IRPs; driver IOC queues, user $QIO, postprocessing, IOSB and AST completion absent.'})
+    'unresolved_integration':'The native AP decoder preserves the fixed 12-argument offsets. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; user SYS$QIO entry, channel authorization, device function dispatch, process IRP allocation, IOSB and process AST completion remain absent.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M123: IOCIOPOST kernel-end-action subset executed in real SYS.EXE.

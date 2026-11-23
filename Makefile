@@ -226,7 +226,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck
+test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 	python3 tests/test_guest_layout.py
@@ -351,6 +351,11 @@ test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck boot
 	python3 tests/test_m44_layout.py
 	python3 tests/test_m47_qemu_manifest.py
 	python3 tests/test_m49_stress_manifest.py
+
+.PHONY: sysqioargscheck
+sysqioargscheck: | build
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c tests/test_sysqio_args_host.c -o build/sysqioargscheck
+	./build/sysqioargscheck
 clean:
 	rm -rf build vms37lab.ima portdisk.img
 
