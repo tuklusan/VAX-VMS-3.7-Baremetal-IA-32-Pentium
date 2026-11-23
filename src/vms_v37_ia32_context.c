@@ -14,7 +14,12 @@ uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
        (seed->data_selector&3u)!=seed->access_mode||
        !seed->code_selector||!seed->data_selector)
         return PORT_V37_IA32_CONTEXT_BAD;
-    if(seed->access_mode!=0u&&seed->access_mode!=3u)
+    if(seed->access_mode>3u)
+        return PORT_V37_IA32_CONTEXT_PRIVILEGE;
+    static const uint16_t code_selector[4]={0x08u,0x19u,0x2au,0x3bu};
+    static const uint16_t data_selector[4]={0x10u,0x21u,0x32u,0x43u};
+    if(seed->code_selector!=code_selector[seed->access_mode]||
+       seed->data_selector!=data_selector[seed->access_mode])
         return PORT_V37_IA32_CONTEXT_PRIVILEGE;
     if((seed->eflags&UINT32_C(0x00027000))||!(seed->eflags&2u))
         return PORT_V37_IA32_CONTEXT_FLAGS;
