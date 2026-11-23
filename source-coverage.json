@@ -21335,7 +21335,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 109,
+          "pc_line": 137,
           "function": "When CCB$L_WIND bit 0 marks access/deaccess pending, require a scheduler wait callback and resume only after the pending bit clears; no live SCH$WAIT/RSN$_ASTWAIT binding yet"
         },
         {
@@ -21362,7 +21362,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 109,
+          "pc_line": 137,
           "function": "Clear EFN before channel lookup and post failure status to the requested event flag"
         },
         {
@@ -21374,7 +21374,7 @@
           "pc_file": "src/vms_v37_ccb.c",
           "pc_symbol": "port_v37_ccb_resolve",
           "pc_line": 14,
-          "function": "Validate the source channel token, index CTL$GL_CCBBASE backward by the 16-byte CCB offset, check AMOD and return UCB/WIND/IOC fields; per-process channel table is not yet bound"
+          "function": "SYSQIO begin resolves the source channel token backward from CTL$GL_CCBBASE, checks AMOD, then calls the live UCB/device resolver; no native SYS$ASSIGN allocator supplies this table yet"
         },
         {
           "original_lines": [
@@ -21422,7 +21422,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 109,
+          "pc_line": 137,
           "function": "Direct/buffered per-process I/O counter charge with single-unit quota callback and rollback on denial; IRP reservation/dispatch remain unresolved"
         },
         {
