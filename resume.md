@@ -584,4 +584,4 @@ Verification: `make -j2 all` PASS; full `make test sysexecentrycheck v37ia32ctxc
 
 Public SYS$QIO, process-aware DQA0 completion/AST delivery, ACP, native INIT completion, login/DCL, DECnet and SET HOST 0 remain incomplete.
 
-M249 implementation commit (local): `186275478935110cf2875c05a86771cfa42b5ee9`.
+M249 implementation commit (local): `186275478935110cf2875c05a86771cfa42b5ee9`; published `main`: `4ec4a4ac789d48a9f3b8fad7f40dd52cacac2004`.
