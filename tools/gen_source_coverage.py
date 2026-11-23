@@ -1792,9 +1792,9 @@ result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
 rse_lines=735 # pinned original SYS/SRC/RSE.MAR line count at REVISION
 rse_sections=[]
 for first,last,path,symbol,description,status in [
- (1,339,None,None,'RSE wait-state, AST, swapping and synchronization routines remain unresolved except separately mapped source entries','unresolved'),
- (340,347,'src/vms_v37_sched.c','port_v37_sched_chse','Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial','partial'),
- (348,394,None,None,'SCH$CHSE IPL checks and preceding/following RSE entry paths remain unresolved','unresolved'),
+ (1,332,None,None,'RSE wait-state, AST, swapping and synchronization routines remain unresolved except separately mapped source entries','unresolved'),
+ (333,342,'src/vms_v37_sched.c','port_v37_sched_chse','Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial','partial'),
+ (343,394,None,None,'SCH$CHSE IPL checks and preceding/following RSE entry paths remain unresolved','unresolved'),
  (395,440,'src/vms_v37_sched.c','port_v37_sched_chse','Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points','partial'),
  (441,rse_lines,None,None,'Remaining RSE process state, wait, swap and scheduler routines unresolved','unresolved')]:
     if path:

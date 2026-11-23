@@ -10638,15 +10638,15 @@
         {
           "original_lines": [
             1,
-            339
+            332
           ],
           "status": "unresolved",
           "reason": "RSE wait-state, AST, swapping and synchronization routines remain unresolved except separately mapped source entries"
         },
         {
           "original_lines": [
-            340,
-            347
+            333,
+            342
           ],
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
@@ -10656,7 +10656,7 @@
         },
         {
           "original_lines": [
-            348,
+            343,
             394
           ],
           "status": "unresolved",
