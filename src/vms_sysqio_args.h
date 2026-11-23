@@ -146,4 +146,15 @@ uint32_t port_v37_sysqio_normalize_write(uint16_t function,
 uint32_t port_v37_sysqio_begin(const void *,size_t,
     struct port_v37_sysqio_process *,const struct port_v37_sysqio_begin_ops *,
     struct port_v37_sysqio_prepared *,uint32_t *service_status);
+
+/* Source-ordered SYSQIOREQ front end through standard IRP and AST quota
+ * reservation. Failed reservation restores the per-process I/O charge and
+ * posts the service error; driver dispatch and submission remain outstanding. */
+enum { PORT_V37_SYSQIO_PREPARE_OK=1u,PORT_V37_SYSQIO_PREPARE_BEGIN=2u,
+       PORT_V37_SYSQIO_PREPARE_RESERVE=4u };
+uint32_t port_v37_sysqio_prepare_irp(const void *,size_t,
+    struct port_v37_sysqio_process *,const struct port_v37_sysqio_begin_ops *,
+    const struct port_v37_sysqio_irp_spec *,struct port_ini_packet_list *,
+    const struct port_v37_irp_pool_sync *,struct port_v37_sysqio_prepared *,
+    uint8_t **,uint32_t *,uint32_t *service_status);
 #endif
