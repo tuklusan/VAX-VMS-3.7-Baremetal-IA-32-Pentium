@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 16384)
-Total output lines: 358
-
 # Native VAX/VMS 3.7 IA-32 recovery, updated through M247
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
@@ -147,7 +144,29 @@ No functional source or coverage status changed in this verification. The tested
 
 ## M204 — Native DQ_STARTIO dispatch through staged DDT, 23 November 2026
 
-The resident…1384 tokens truncated…ctions; inventory totals unchanged); `python3 tools/checkpoint_serial_logs.py verify` PASS (60 raw transcripts); `git diff --check` PASS. Latest raw COM1 log: `logs/serial/qemu-m206-run-local-20261123T065837305021Z.log`, 5,020 bytes, SHA-256 `a572600c1f03990b44e4432c812a82f7fd7a66c0f434ce5a8911f06ccab39e2d`. The guest still halts at incomplete INIT; no login, DCL or DECnet was observed. QEMU was terminated and no runner remains.
+The resident DQ DDT START slot now identifies a native DQ_STARTIO adapter. It validates the staged DDT/FDT and private IRP, classifies the function, dispatches READPBLK or WRITEPBLK through the corresponding FDT action slot, and fails closed for legal but unsupported actions and illegal function codes. SYS.EXE boot READPBLK and the disposable QEMU WRITEPBLK/readback/restore regression now exercise this STARTIO entry via its function pointer returned by resident SYS.EXE. DQA0 DDB/UCB DDT fields remain unpublished and DQA remains unavailable through IOC; the adapter is restricted to the existing privileged private physical-I/O request contract. It is not public process SYS$QIO, buffered/ACP I/O, full DQ/RB730 behavior, or process completion.
+
+Coverage: DQDRIVER.MAR lines 634-639 now map partial to src/vms_dqddt_bootread.c:port_dqddt_startio. Other source driver commands, live DDB/UCB DDT publication, SYS$QIO, Files-11 ACP, process AST completion and scheduler/process activation remain incomplete. The guest still stops at incomplete INIT; no SYSTEM login, DCL or DECnet startup was observed.
+
+Verification: make -j2 all dqddtcheck PASS; make relocdrvcheck sysexecentrycheck PASS; full make test PASS (exit 0); python3 tools/validate_source_ranges.py PASS (1,957 ranges, zero unmapped; 441/4,566 original files indexed; inventory counts unchanged); python3 tools/checkpoint_serial_logs.py verify PASS (53 raw transcripts); git diff --check PASS. make qemu-sysboot-m204 PASS on disposable media: real ATA IRQ14 WRITEPBLK, readback, restore and reread completed through DQ_STARTIO. Runner terminated QEMU and removed scratch media; no QEMU process remained. Final COM1 log logs/serial/qemu-m204-run-local-20261123T063030854847Z.log, 4,853 bytes, SHA-256 d4424f82e90fe120d841daf38fb574f38910e643c4f8fcd85bb2179da759a296. Candidate commit audit found no DEC source text, restricted source files, disk images, recognized credentials or private keys. Original source checkout remained pinned at 2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752; no build dependencies were added.
+
+M204 implementation commit: f86096995207d9b955f590f9494fbe1b526a6cc0.
+
+## M205 — Native DQA0 DDT/FDT activation and IOC graph publication, 23 November 2026
+
+Resident SYS.EXE now materializes the source DQ DDT/FDT at its actual IA-32 address, relocates the header and action slots to native pointers, and uses fail-closed native stubs for unsupported actions. It publishes the active DDT address into the DQA0 DDB and UCB, retaining the already attached IRQ14 CRB in the UCB. The existing physical READPBLK/WRITEPBLK FDT actions execute through the active table. SYS.EXE then calls the existing physical `IOC$SEARCHDEV` path and validates the DQA0 DDB/UCB/unit and bound-driver result. This remains a partial device driver: no public SYS$QIO or process channels, buffered/virtual/ACP services, full RB730 controller/error behavior, or process AST delivery. The private test path still does not constitute complete IOC request scheduling.
+
+Coverage: `DRIVER/SRC/DQDRIVER.MAR` lines 438-471 now map partial to `port_dqddt_activate`; lines 634-639 map partial to `port_dqddt_startio` and note the published DQA0 graph and remaining public I/O/ACP gaps. No original file is marked complete; inventory status totals remain unchanged. The native guest still halts at the original incomplete INIT boundary before login; no SYSTEM login, DCL or DECnet activity was observed.
+
+Verification: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `python3 tools/validate_source_ranges.py` PASS (1,957 ranges, zero unmapped functions; 441/4,566 original files indexed; counts unchanged); `python3 tools/checkpoint_serial_logs.py verify` PASS (57 raw logs); `git diff --check` PASS for source/doc changes. `make qemu-sysboot-m205` PASS twice on disposable QEMU media: resident DDT/FDT action dispatch performed actual ATA IRQ14 WRITEPBLK, readback and restore, then SYS.EXE published the native DQA0 DDT pointers and `IOC$SEARCHDEV` found DQA0. One intervening QEMU run failed during native DDT/CRB publication validation; the real failure log is retained. Latest COM1 log `logs/serial/qemu-m205-run-local-20261123T065319671972Z.log`, 5,042 bytes, SHA-256 `13c70ec84d6a903867651246ea53f726c5d2133571d2ca799a28ff3507ac6a64`. QEMU was terminated by the runner; no QEMU process remains. Original source checkout remains at `2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752`. Candidate audit found no restricted DEC source, credentials, private keys, disk images or new build dependencies.
+
+M205 implementation commit: 974a9a31273bcc887f396231f75569cb03620646.
+
+## M206 — Route IRQ14 boot READPBLK through native DQ STARTIO, 23 November 2026
+
+The resident SYS.EXE DQ CRB-read phase now calls the START function pointer from the activated native DDT, which enters `port_dqddt_startio` and dispatches the real READPBLK through the native DDT action slot. That request completes through the attached CRB and actual ATA IRQ14 before the later DQA0 DDB/UCB DDT publication phase. It keeps the existing privileged boot IRP contract; it does not implement public `$QIO`, process I/O, general RB730 interrupt/error processing, ACP, or process AST completion.
+
+Verification: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `make qemu-sysboot-m206` PASS (actual DDT STARTIO READPBLK through CRB IRQ14, followed by M205 DQA0 DDT publication and IOC search); `python3 tools/validate_source_ranges.py` PASS (1,957 ranges; no missing mapped functions; inventory totals unchanged); `python3 tools/checkpoint_serial_logs.py verify` PASS (60 raw transcripts); `git diff --check` PASS. Latest raw COM1 log: `logs/serial/qemu-m206-run-local-20261123T065837305021Z.log`, 5,020 bytes, SHA-256 `a572600c1f03990b44e4432c812a82f7fd7a66c0f434ce5a8911f06ccab39e2d`. The guest still halts at incomplete INIT; no login, DCL or DECnet was observed. QEMU was terminated and no runner remains.
 
 M206 implementation commit: 62191a4007ec435e6a8efc3310a5f3fce9377201.
 
@@ -336,4 +355,213 @@ M224 implementation commit: `130bb9476ba527c1b086133316fdbf4f8dd616fe`.
 
 Completed the SYSQIOREQ FDT/offline error status mapping using the VMS 3.7 SYSTEM/FATAL assignments in VMSLIB/SRC/SSMSG.MSG V03-003: SS$_ILLIOFUNC=244 and SS$_DEVOFFLINE=132. Host regressions verify both values are returned and posted through the event callback, with no quota charge. This closes the covered early-preflight status set; it does not implement the remaining SYSQIOREQ service path or connect these values to live processes.
 
-Verification: `make sysqioargscheck` PASS; `python3 tools/gen_source_coverage.py` PASS (1,968 ranges, zero unmapped); `python3 tools/validate
+Verification: `make sysqioargscheck` PASS; `python3 tools/gen_source_coverage.py` PASS (1,968 ranges, zero unmapped); `python3 tools/validate_source_ranges.py` PASS (441/4,566 original files indexed; 28,764 partial, 50,437 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `make -j2 all` PASS; full `make test` PASS (exit 0, suite reached M49); `git diff --check` PASS. No QEMU run: this behavior remains in a host-only helper not linked into the guest.
+
+SYSQIOREQ.MAR still lacks public entry integration, real CCB lookup, EXE$SNGLEQUOTA wait/commit semantics, IPL/deletion protection, IRP allocation and construction, device privilege/protection, FDT execution, DQA process I/O and completion/AST delivery. All end-to-end acceptance conditions remain incomplete.
+
+M225 implementation commit: `1607b2b76b78e570c425e22350c6179b803eac5c`.
+
+## M226 — Scheduler suspend dispatch, 23 November 2026
+
+Added `port_exe_sched_suspend` for the original executive path where a current process blocks or is deleted: it saves the live continuation while the PCB is CURRENT, marks it OTHER without putting it on a ready queue, clears scheduler ownership, then selects the highest-priority already-ready process through the existing source scheduler. Host coverage verifies the suspended PCB is not requeued, a ready higher-priority process is loaded, and invalid no-current calls are rejected. This closes a scheduler primitive needed by real wait/wake integration; `arch.c` still uses its diagnostic two-task XOR scheduler, and this helper is not yet bound to live VMS PCBs, event wakeups, IRQ rescheduling, or process activation.
+
+Verification: `make exeportcorecheck` PASS; full `make test` PASS (exit 0, suite through M49; native image rebuilt and installed as part of test dependencies); `python3 tools/validate_source_ranges.py` PASS (441/4,566 originals indexed; 28,764 partial, 50,437 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `git diff --check` PASS. No QEMU run: the modified helper remains outside the live guest scheduler. No restricted DEC source or disk image was staged.
+
+Source coverage counts unchanged. Live scheduler binding, process wake queues, actual public SYS$QIO and DQA process completion, Files-11 ACP, native INIT continuation, process image activation, SYSTEM login/DCL, DECnet and SET HOST 0 remain incomplete.
+
+M226 implementation commit: `94d38f08320b81799b846c9d5c0acdbaebd5306b`.
+
+## M227 — IA-32 diagnostic context switch uses executive scheduler, 23 November 2026
+
+Bounded the source `port_exe_sched` priority/FIFO engine into the actual kernel diagnostic task context-switch path. CPL3 yield, PIT preemption, block/wait, exit, and ready-task selection now save/load the IA-32 trap frame through scheduler callbacks; selection activates the chosen PCB, updates its TSS kernel stack and private CR3, and applies VMS time-sharing priority float. Event and mutex wake paths synchronize newly READY diagnostic PCBs into the executive priority queues. This replaces XOR alternation for these two diagnostic tasks; task priorities are the test fixture value 16, the adapter still has a fixed two-task table, and it is not the resident VMS PCB database, production wait queues, normal executive reschedule interrupt, or process activation. Accordingly `SCHED.MAR` source coverage is now `partial`, not full. Totals: 28,813 partial, 50,437 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped; 441/4,566 original source files indexed.
+
+Verification: `make -j2 all` PASS; `make exeportcorecheck` PASS; full `make test` PASS (exit 0, through M49); scheduler and preemption linked-layout checks PASS; `python3 tools/validate_source_ranges.py` PASS; `python3 tools/checkpoint_serial_logs.py verify` PASS (80 raw logs); `git diff --check` PASS. Two real `make qemu-sysboot-m217` runs PASS and both preserve the expected explicit incomplete-INIT stop; COM1 transcript `logs/serial/qemu-m217-run-local-20261123T152405875810Z.log`, 5,170 bytes, SHA-256 `c56c3238f189713bdb2dd893cd2f85bc3aff5bd25cfc1d06e2000019709d79a9`. The SYSBOOT runner terminated QEMU. The independent interactive `tools/qemu_smoke.py --timeout 300` did not reach its legacy `PORTLAB>` prompt: captured output reaches the known incomplete-INIT stop. Thus no interactive scheduler command or full login was observed; this is not recorded as a scheduler runtime pass.
+
+M227 does not finish public SYS$QIO, DQA0 process completion, Files-11 ACP, native INIT, production scheduler/process activation, SYSTEM login, DCL or DECnet. Continue by binding the executive process database and process-aware completion without weakening the source-order SYSQIO and privilege semantics.
+
+M227 implementation commit: `7101fe6a4d2965d08a71914e1b6648b5e6298c65`.
+
+## M228 — Source-layout SYS$QIO IRP construction, 23 November 2026
+
+Added a host-tested builder for SYSQIOREQ.MAR SUCCES's device-independent IRP fields. It validates the prepared request and caller-supplied reserved packet, writes PID/access mode/AST and AST parameter/window/UCB/function/EFN/priority/IOSB/channel/status, clears the translation/transfer fields, and stores ARB. Inspection of SHRLIB/SYSDEF.MDL's CDRP negative IRP fields plus positive fork fields established the standard IRP length as 136 bytes through CDRP$L_LENGTH; SYSBOOT rounds that to a 144-byte packet stride. Resident boot packet sizing and host queue fixtures now use the corrected size/stride. This helper still does not allocate a packet, account a live channel, enforce source IPL/deletion and all device checks, call the public service, dispatch the FDT, or complete a process AST. SYSQIOREQ source lines 386-429 are partial only.
+
+Verification: `make clean && make -j2 all && make test` PASS (suite through M49); `make sysqioargscheck qiopostcheck nlddtcheck dqddtcheck dqbootreadcheck dqphysicalcheck` PASS; `python3 tools/validate_source_ranges.py` PASS (1,970 ranges, 0 missing mapped functions; 441/4,566 original files indexed; 28,857 partial, 50,393 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `python3 tools/checkpoint_serial_logs.py verify` PASS (83 raw logs). Real `make qemu-sysboot-m217` PASS: the guest read 700 real Files-11 SYS.EXE bytes across two sectors via IOC-selected DQA0 DDT and IRQ14, then stopped at the known incomplete-INIT boundary. No login/DCL/DECnet success is claimed; the runner terminated. Two earlier incremental-build QEMU attempts stopped at the DQ read boundary; a complete clean build passed. Failed raw logs are 1,441 bytes each with SHA-256 `d3a605a12a27a5822c0612091bcc272938355fd538971eb926d59f3af2526f4f`; successful `logs/serial/qemu-m217-run-local-20261123T154547671352Z.log` is 5,170 bytes, SHA-256 `c56c3238f189713bdb2dd893cd2f85bc3aff5bd25cfc1d06e2000019709d79a9`.
+
+M228 implementation commit: `a8faddf181e73e7e3ffae15cf8956256c0d6ed12`.
+
+## M229 — Incremental IRP ABI dependency tracking, 23 November 2026
+
+The M228 incremental QEMU failures exposed missing explicit Make dependencies for `vms_qio_post.h`, which carries the resident IRP length. Added that header dependency to kernel, resident SYS.EXE, QIO, NLA DDT, IOC post, DQ boot-read, and DQ DDT object groups. Also fixed missing `vms_dq_ioc_write.c` linkage in the DQ boot-read and physical-read host targets. Touching the IRP header rebuilt 42 dependent objects, including kernel and resident SYS.EXE.
+
+Verification: header-triggered `make -j2 all` PASS; subsequent full `make test` PASS (exit 0, through M49); the six targeted SYSQIO/QIO/DDT/DQ host checks PASS with the 136-byte ABI; source-range validation PASS with the M228 counts above; QEMU serial manifest PASS (83 raw logs). The clean-build QEMU pass is recorded under M228. No new QEMU process was started for this Make-only change. No original DEC source or binary image was staged.
+
+M228 implementation commit: `a8faddf181e73e7e3ffae15cf8956256c0d6ed12`.
+M229 implementation commit: `9009e3302dbd13e05c8251bc10ad564b30e5458b`.
+
+## M230 — SYS$QIO WRITEVBLK device-state normalization, 23 November 2026
+
+Ported SYSQIOREQ.MAR ACCESS lines 450-479 for the source boot-time WRITEVBLK cases. The host-tested helper decodes the original DEV characteristics bits, preserves function modifiers, converts non-FOD and mounted-foreign no-window writes to WRITELBLK, rejects an unmounted FOD write with SS$_NOPRIV, preserves mounted structured/windowed requests, and reports the source AST-quota branch predicate. The helper is not wired to live UCB/PCB state; ASTCNT enforcement, device privileges/protection, FDT dispatch, public service entry and completion remain unresolved. SYSQIOREQ coverage for 450-479 is partial.
+
+Verification: `make sysqioargscheck` PASS with modifier preservation, FOD/MNT/FOR/window states, NOPRIV and AST predicate cases; full `make test` PASS (exit 0, through M49); `python3 tools/validate_source_ranges.py` PASS (1,972 ranges, zero missing mapped functions; 441/4,566 originals indexed; 28,887 partial, 50,363 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: helper is host-only and not linked into the guest. No original DEC source or binary image was staged.
+
+M230 implementation commit: `75cbb7e938f715643e2b0d2dda448a041875ef94`.
+
+## M231 — SYS$QIO AST quota charge and check, 23 November 2026
+
+Extended source SYSQIOREQ IRP construction to set the ACB quota bit and decrement the process AST count only when an AST routine is specified. Added the ACCESS quota check: a negative count is SS$_EXQUOTA only for AST requests; no-AST requests continue despite a negative AST count. Host tests cover successful build charge, AST quota failure, and the no-AST exception. This remains a supplied process-record model: it is not the live PCB, does not return the allocated IRP or channel IOC count through EXE$ABORTIO, and does not post the event/AST.
+
+Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, through M49); source range generation/validation PASS (1,973 ranges, 0 missing mapped functions; 441/4,566 originals indexed; counts unchanged from M230 because these lines were already partial); `git diff --check` PASS. No QEMU run: host-only helper, not linked into the guest. No original DEC source or binary image was staged.
+
+M231 implementation commit: `181350020fde46e2c10a879efb443bc7ffa8cfee`.
+
+## M232 — SYS$QIO privilege and device-characteristic gates, 23 November 2026
+
+Ported the SYSQIOREQ.MAR ACCESS decision subset for virtual, logical and physical I/O. The helper applies PHY_IO and LOG_IO privilege bypasses, sets the physical-I/O result, rejects unprivileged physical requests, enforces SPL/FOD/MNT/FOR/SHR device gates, and selects the source physical or logical volume checker with VPROT/owner UIC/ARB inputs. A supplied callback decides the actual volume access; no real VMS privilege mask, UCB/PCB, EXE$CHKPHYACCES/CHKLOGACCES implementation, or abort/IOSB/event wiring is connected. Diagnostic-buffer handling remains unresolved. Coverage for SYSQIOREQ lines 515-535, 545-547 and 570-581 is partial.
+
+Verification: `make sysqioargscheck` PASS across privilege bypasses, physical/logical checker selection, denied ACL, spooled, unmounted/structured FOD, virtual I/O, and physical flag; full `make test` PASS (exit 0, through M49); coverage generation/validation PASS (1,979 ranges, zero missing mapped functions; 441/4,566 originals indexed; 28,923 partial, 50,327 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: host-only code is not linked to the guest. No original DEC source or binary image was staged.
+
+M232 implementation commit: `0c864cbd7df22e2abf6347a623208396bae2dc3a`.
+
+## M233 — SYS$QIO ABORTIO IOSB and AST-quota return, 23 November 2026
+
+Ported SYSQIOREQ.MAR EXE$ABORTIO lines 736-740 into a bounded native completion routine. It validates an allocated standard IRP and IOC post queue, clears IRP$L_IOSB, clears ACB$V_QUOTA and restores the AST count exactly once when that reservation bit was set, appends the IRP to the IOC post FIFO, and requests IPL$_IOPOST. Host cases cover the quota-bit and no-quota paths, signed 16-bit AST-count wrap, IOSB clearing, queue insertion, and software-interrupt request. It still accepts an AST-count pointer rather than resolving the live PCB, and is not wired to public SYS$QIO, source abort/error status posting, IRP return, or process AST delivery.
+
+Verification at implementation commit `cca296792e53e826fd302c6765a7081c12901f88`: `make -j2 all` PASS; `make qiopostcheck` PASS; full `make test` PASS (exit 0, suite reached M49); coverage generation and `python3 tools/validate_source_ranges.py` PASS (1,979 ranges, zero mapped-function misses; 441/4,566 original files indexed; 28,928 partial, 50,322 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: this host-tested abort path is not connected to a live SYS$QIO or DQA process path. No original DEC source or binary image was staged.
+
+SYSQIOREQ.MAR lines 736-740 are now partial. Public service entry, live PCB/CCB lookup, source event and IOSB postprocessing, IRP allocation/return, driver/ACP completion, process AST delivery and channel accounting remain incomplete. The existing real QEMU boot still stops at incomplete INIT; DECnet, SYSTEM login, DCL, SET HOST 0, second login and logout remain unverified.
+
+M233 implementation commit: `cca296792e53e826fd302c6765a7081c12901f88`.
+
+## M234 — SYS$QIO IRP lookaside allocate and return, 23 November 2026
+
+Ported the IRP-sized `EXE$ALONONPAGED` lookaside dequeue and `EXE$DEANONPAGED` return behavior from MEMORYALC.MAR. The allocator rounds requests to 16-byte packet granularity, removes the oldest validated IRP from the resident FIFO, sets its source size/type fields, and restores the caller's IPL after synchronized queue access. Return inserts the packet at the source FIFO tail. Duplicate returns and malformed/corrupt links are rejected. The finite implementation reports an empty lookaside; VMS variable-pool allocation, extension, resource waits, and AST-delivery semantics are not implemented. These routines are linked into SYS.EXE but are not yet called by public SYS$QIO.
+
+Verification at implementation commit `423b173d0c68266aa42c70edf8ce14158b704c1e`: `make -j2 all irpalloccheck qiopostcheck` PASS; full `make test` PASS (exit 0, suite reached M49); coverage generation and `python3 tools/validate_source_ranges.py` PASS (1,986 ranges, zero mapped-function misses; 442/4,566 original files indexed; 29,032 partial, 51,137 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `python3 tools/checkpoint_serial_logs.py verify` PASS (85 raw logs). Real `make qemu-sysboot-m217` PASS: resident SYS.EXE verified the 700-byte Files-11 read across two published DQA0 DDT/IRQ14 sectors and the QEMU scratch write/read/restore; boot then stopped at the existing incomplete-INIT boundary. Raw COM1 log `logs/serial/qemu-m217-run-local-20261123T161833629743Z.log`, 5,170 bytes, SHA-256 `c56c3238f189713bdb2dd893cd2f85bc3aff5bd25cfc1d06e2000019709d79a9`. Runner exited and terminated QEMU. Raw CRLF serial logs are preserved as evidence; source/documentation `git diff --check` passed (raw serial logs naturally contain CR bytes).
+
+MEMORYALC.MAR IRP lookaside portions (lines 215-240, 350-397, 516-545) are now partial. Dynamic nonpaged allocation and waits, live CCB/PCB/channel accounting, public SYS$QIO dispatch, DQA process I/O, Files-11 ACP, process AST completion, native INIT continuation, login/DCL and DECnet remain unfinished. No restricted DEC source or disk image was staged. All end-to-end acceptance conditions remain incomplete.
+
+M234 implementation commit: `423b173d0c68266aa42c70edf8ce14158b704c1e`.
+
+## M235 — Resident DQA0 boot reads allocate real SYS.EXE IRPs, 23 November 2026
+
+Replaced the static scratch IRP in the resident SYS.EXE DQA0 physical-read path with allocation from INIT's real resident IRP lookaside queue. Both the prepublication DQA0 CRB read and the published DDT Files-11 chain-sector callback now allocate a source-sized IRP, build the physical READPBLK fields, call DQ DDT STARTIO/IRQ14, and return the same IRP to the FIFO tail. The guest checks that each operation restores the lookaside free count. On IA-32, the queue critical section preserves EFLAGS.IF and uses CLI/STI; host checks use a nonprivileged synchronization fixture. The QEMU runner now requires the guest's explicit allocation/completion/return line. This is a resident boot test of the allocator/DDT connection; public process SYS$QIO, CCB accounting, user IOSB/event/AST delivery, variable-pool fallback and resource waits are not implemented.
+
+Verification at implementation commit `0355f6a30455c4831ea1aa9fa7569eae23565a69`: `make -j2 all` PASS; full `make test` PASS (exit 0, through M49); `make sysexecentrycheck irpalloccheck qiopostcheck` PASS; coverage generation and source-range validation PASS (1,986 ranges, zero mapped-function misses; 442/4,566 original files indexed; 29,032 partial, 51,137 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); serial manifest verification PASS (88 raw logs). Real `make qemu-sysboot-m217` PASS. The serial capture includes `INIT: SYS.EXE allocated, completed and returned DQA0 IRP through resident source lookaside.`, verifies the 700-byte Files-11 chain across two IOC-selected DQA0 DDT sectors via IRQ14, and records the existing incomplete-INIT stop. Capture `logs/serial/qemu-m217-run-local-20261123T162635266763Z.log`, 5,264 bytes, SHA-256 `09541767cf4417c0a4d385da088608f87e30b726cd2e97a39f5d399eecf7685e`. QEMU runner exited and terminated its guest. No restricted DEC source or disk image was staged.
+
+MEMORYALC.MAR lookaside allocation/return now has actual resident boot-path use, but remains partial: public SYS$QIO, dynamic nonpaged pool fallback/wait, DQA process requests and Files-11 ACP, process-aware AST/scheduler completion, INIT process activation, SYSTEM login/DCL, DECnet and SET HOST 0 remain unfinished. All end-to-end acceptance conditions remain incomplete.
+
+M235 implementation commit: `0355f6a30455c4831ea1aa9fa7569eae23565a69`.
+
+## M236 — SYS$QIO IRP reservation stage, 23 November 2026
+
+Added a source-ordered SYS$QIO reservation helper that removes a real IRP-sized packet from the INIT lookaside, checks AST quota after allocation, writes the standard 136-byte IRP using the actual packet VA, and returns packets to the same pool on AST rejection or malformed IRP construction. Pool exhaustion maps to SS$_INSFMEM. Host regression covers successful reservation and ASTCNT charge, AST-quota failure with packet return, and malformed construction with packet return. This is a tested QIO transaction stage; it is not called by a VMS system service, does not account the channel IOC, and does not dispatch DQA0 FDT or deliver process completion.
+
+Verification: `make sysqioargscheck irpalloccheck` PASS; full `make test sourcerangecheck sysexecentrycheck qiopostcheck nlddtcheck` PASS (exit 0); `make -j2 all` PASS. Source-range validation reports 1,990 ranges, zero mapped-function misses, 442/4,566 original files indexed, 29,046 partial lines, 51,123 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded and 17,016 mapped. No QEMU test was run for M236 because the isolated reservation helper is not linked into the resident SYS.EXE/QEMU path. No restricted DEC source or disk image was added.
+
+SYSQIOREQ.MAR lines 336-345 and 537-540 now map partially to the tested reservation helper. The service entry, source IPL/deletion exclusion, failure rollback and event completion, CCB IOC accounting, buffered window, device FDT invocation, public SYS$QIO dispatch and process AST completion remain unresolved. No end-to-end acceptance condition is complete.
+
+M236 implementation commit: `dded7a52dfead635df3244d945fef333b123c4ab`.
+
+## M237 — Corrected INIT process-vector coverage statement, 23 November 2026
+
+Source audit found the diagnostic `INI_PSTATE` vector points at `port_exe_sched_process` records, whose offsets do not match SYSDEF.MDL's VMS PCB. Corrected the resident-entry comments and recovery summary to make clear these pointers cannot activate VMS processes. This removes the inaccurate claim that they are native PCB descriptors; it adds no process behavior. The required next process work is source-layout PCB plus PHD construction and activation, after the missing page-table/SPT prerequisites.
+
+Verification: `make sysexecentrycheck` PASS; `make -j2 all` PASS. No QEMU run was needed because runtime behavior did not change; the previous real QEMU capture still stops at incomplete INIT. No restricted DEC source or disk image was added.
+
+M237 implementation commit: `e84fbf482149c93c47e3c47cef3b88ad16341125`.
+
+Post-M236 runtime regression: `make qemu-sysboot-m217` PASS. The guest again completed the 700-byte Files-11 chain read through published DQA0 DDT/IRQ14 and stopped at `INIT stopped: remaining original initialization dependencies incomplete.` Capture `logs/serial/qemu-m217-run-local-20261123T163911638559Z.log`, 5,264 bytes, SHA-256 `09541767cf4417c0a4d385da088608f87e30b726cd2e97a39f5d399eecf7685e`; serial manifest verification PASS (89 raw logs). This is boot regression evidence; the host-only M236 reservation helper is still not on the resident execution path. The QEMU runner terminated before return.
+
+## M238 — SYSDEF-layout SYSTEM PCB template, 23 November 2026
+
+Added a tested 156-byte SYSDEF.MDL PCB initializer for the source `PDAT.MAR GENPCB` record and static `MMG$AL_SYSPCB` template, using source structure offsets checked against the pinned SYSDEF and original SYS.STB symbols. The initializer handles source queue heads, DYN PCB type, priority encoding, state/status, privileges, PID/PHD, inline ARB, UIC, ASCIC name and lock queue. `INIT_SYSPCB` finalization has a tested helper to attach PHD and translated native PHYPCB addresses. Resident SYS.EXE now stages and validates the static source-layout SYSTEM PCB and emits an explicit template/PHD-pending boot line. The separate diagnostic process vector still points at scheduler-model records; no VMS PCB vector switch, PHD allocation, process activation or scheduler integration occurred.
+
+Verification: `make -j2 all sysnativecheck` PASS; full `make test` PASS (exit 0, suite reached M49); `make sysexecentrycheck v37pcbcheck sourcerangecheck` PASS; source-range validation PASS (1,997 ranges, zero mapped-function misses; 443/4,566 original files indexed; 29,129 partial, 51,347 unresolved, 7,799 missing, 26,218 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS excluding preserved CRLF serial captures. Real `make qemu-sysboot-m217` PASS: guest validated the source-layout template, completed the existing 700-byte Files-11 chain read through published DQA0 DDT/IRQ14, then stopped at `INIT stopped: remaining original initialization dependencies incomplete.` No login, DCL, DECnet or SET HOST 0 was observed. Runner exited and terminated QEMU. Successful COM1 transcript `logs/serial/qemu-m217-run-local-20261123T165825955888Z.log`, 5,283 bytes, SHA-256 `236553623aa4d141aa426b14e12a72ec4792933f42baed27a2704f364080d121`; a second byte-identical successful transcript is `logs/serial/qemu-m217-run-local-20261123T170046152923Z.log`. Serial manifest verification PASS (93 raw logs). Two earlier actual boot attempts exposed a guest validation bug and a stale runner expectation; both transcripts remain recorded alongside the successful runs.
+
+PDAT.MAR source ranges now map the GENPCB record and static system PCB template as partial; PHD construction, null/swapper records and activation remain unresolved. INIT.MAR `INI_SYSPCB` is partial through a host-tested finalization helper, which is not yet executed against a real SYS PHD. No original DEC source, disk image, recognized secret, or restricted source file was staged.
+
+M238 implementation commit: `f70f15502ed02a9e9f03f6945eace60c723cb4da`.
+
+Next: implement the native PHD/page-table prerequisites and connect a genuine VMS PCB to the process vector; keep the scheduler-model vector explicitly diagnostic until ABI-compatible activation is verified. Public SYS$QIO, process-aware DQA0 completion, Files-11 ACP, AST scheduling, native INIT, login/DCL and DECnet remain incomplete. All end-to-end acceptance conditions remain incomplete.
+
+## M239 — Source-layout process-header initialization, 23 November 2026
+
+Added a native initializer for the fixed 376-byte `SYSDEFMP.MDL` PHD format and the `PDAT.MAR GENPHD` fields. Layout offsets follow the original PHD structure through its embedded hardware-context slots, process page-table descriptors, privilege masks and the dynamic WSL boundary. Callers supply aligned native stack and page-table addresses; the helper does not synthesize VAX address-bias values. Tests cover the initialized fields, zeroed untouched bytes and transactional rejection of malformed alignment/capacity. This helper is host-tested only and is not linked into SYS.EXE or connected to PHD allocation, IA-32 page mapping, PCB vectors or process activation.
+
+Verification: `make v37phdcheck sourcerangecheck` PASS; `make -j2 all` PASS (no guest relink required); full `make test` PASS (exit 0, suite reached M49); source-range validation PASS (1,997 ranges, zero mapped-function misses; 443/4,566 original files indexed; 29,179 partial, 51,297 unresolved, 7,799 missing, 26,218 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS. No QEMU run: new helper is host-only. No DEC source, binary image, or recognized secret was staged.
+
+PDAT.MAR lines 171-220 now map partially to `port_v37_phd_init_genphd`; the PHD byte layout and GENPHD field stores are covered, but the IA-32 page-table representation, process header allocation, null/swapper records and activation remain missing.
+
+M239 implementation commit: `fa949a95f830c5507bf132231447183147219147`.
+
+## M240 — INIT process vector points to VMS PCB records, 23 November 2026
+
+Changed the resident `INI_PSTATE` address vector to point at the actual 156-byte SYSDEF-layout SYSTEM and NULL PCB templates instead of scheduler-model records. The diagnostic scheduler descriptors remain separate and are not activated. The guest checks both record layouts, DYN tags, initial sequence/PID words, absent PHD pointers and exact vector entries before continuing. The INIT vector now has VMS PCB ABI pointers, but neither process has an allocated PHD/native context; no VMS process is activated.
+
+Verification: `make -j2 all sysexecentrycheck v37pcbcheck sourcerangecheck` PASS; real `make qemu-sysboot-m217` PASS through the changed guest checks and the existing 700-byte Files-11 DQA0 DDT/IRQ14 test; guest stopped at the incomplete-INIT boundary. No login, DCL, DECnet or SET HOST 0 observed. QEMU exited and terminated. `python3 tools/checkpoint_serial_logs.py verify` PASS (94 raw logs); source-range validation PASS (1,997 ranges, zero mapped-function misses; 443/4,566 originals indexed; 29,179 partial, 51,297 unresolved, 7,799 missing, 26,218 excluded, 917 hardware-excluded, 17,016 mapped); `git diff --check` PASS excluding CRLF serial logs. Capture `logs/serial/qemu-m217-run-local-20261123T171217945755Z.log`, 5,283 bytes, SHA-256 `2f81f677ef43ac153987d060cc21f3bce8e5d7e4b0be5c71337256d54fafa325`.
+
+Coverage counts are unchanged; `INIT.MAR` PSTATE mapping now records that the address vector points to VMS PCB-layout records. PDAT.MAR PHD/context creation, VMS PCB scheduler binding, page-table mapping, public SYS$QIO, Files-11 ACP, process AST completion, login/DCL and DECnet remain incomplete.
+
+M240 implementation commit: `4a9ab425064c59c426a0619b55a0c6bedc84a882`.
+
+## M241 — Native resident COM/COMO queues for NULL and SWAPPER, 23 November 2026
+
+Implemented the resident/nonresident executable queue portion of original `RSE.MAR SCH$CHSE`: 32 priority queues per class, source priority increments and inverted priorities, source PCB links/state, COMQS summary bits, and callback points for swapper wake/reschedule. INIT now sets SYSTEM PIX 32, installs the source NULL/SWAPPER/SYSTEM PCB pointers into the process vector and queues resident NULL and SWAPPER. Guest verifies their sequence PIDs, vector pointers and resident queue summaries. These PCBs still have no PHD/native hardware context and are not runnable; this is not scheduler activation.
+
+Verification: `make -j2 all sysexecentrycheck v37pcbcheck v37schedcheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (2,006 ranges, zero unmapped native functions; 444/4,566 original files indexed; 29,267 partial, 51,944 unresolved, 7,799 missing, 26,218 excluded, 917 hardware-excluded, 17,016 mapped); source audit and `git diff --check` PASS. Real `make qemu-sysboot-m217` PASS: COM1 verified the resident NULL/SWAPPER queues and existing DQA0 DDT/IRQ14 700-byte read, then stopped at the incomplete INIT boundary. No login, DCL, DECnet or SET HOST 0 was observed. QEMU exited. Transcript `logs/serial/qemu-m217-run-local-20261123T172440194753Z.log`, 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`; serial manifest verification PASS (95 raw logs).
+
+PDAT.MAR now maps NULL/SWAPPER GENPCB instances and the process-vector storage/installation as partial. RSE.MAR maps B_PINC/COMQS and SCH$CHSE queue behavior as partial; source IPL enforcement, swapper execution and remaining RSE routines are unresolved. Public process SYS$QIO, Files-11 ACP, process AST completion, PHD/page-table activation, scheduling, login/DCL and DECnet remain incomplete.
+
+M241 implementation commit: `35fecbeeda7bd60409675a7103a2550988055d32`.
+
+## M242 — Resident SCH$SCHED queue selection, 23 November 2026
+
+Added source-order resident COM queue selection to the native VMS scheduler state: choose the first set COMQS priority, remove the FIFO head, validate its source PCB, set CUR/current-PCB/current-priority, and apply source priority floating. Selection refuses to consume a PCB with no PHD or native PHYPCB context. This implements the selection bookkeeping before source LDPCTX; it does not restore an IA-32 register/stack context or run a process. SCHED.MAR coverage now maps these exact source ranges to this routine and leaves context save/restore, idle and empty-queue handling partial or unresolved.
+
+Verification: `make -j2 all sysexecentrycheck v37schedcheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (2,006 ranges, zero mapping errors; 444/4,566 original files indexed; 29,259 partial, 51,944 unresolved, 7,799 missing, 26,226 excluded, 917 hardware-excluded, 17,016 mapped). Host scheduler checks cover contextless queue preservation, priority/FIFO selection, CUR state, floating priority and empty COM queues. Real `make qemu-sysboot-m217` PASS through the existing INIT NULL/SWAPPER queue and DQA0 IRQ14 read checks; the new selection path is not invoked in the guest because the processes still have no native contexts. The guest stops at incomplete INIT; no login, DCL, DECnet or SET HOST 0 observed. QEMU exited. Transcript `logs/serial/qemu-m217-run-local-20261123T223814519904Z.log`, 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`; manifest verification PASS (96 raw logs).
+
+M242 implementation commit: `528adf358646539558896251de04643864715792`.
+
+## M243 — Native SCH$RESCHED COM queue requeue, 23 November 2026
+
+Added the source SCH$RESCHED queue update after an external architecture layer saves the running context: validate the current resident VMS PCB, set COM, append it to its priority queue, and publish the COMQS bit/count. Host regressions exercise FIFO round-robin requeue with SCH$SCHED selection. SCHED.MAR coverage now maps the exact current-PCB queue insertion lines to this routine. The IA-32 interrupt entry, IPL transition, saved-context construction, and eventual LDPCTX/IRET equivalent are still absent; this code does not switch the running process.
+
+Verification: `make -j2 all sysexecentrycheck` PASS; `make v37schedcheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (2,009 ranges, zero mapping errors; 444/4,566 original files indexed; 29,246 partial, 51,944 unresolved, 7,799 missing, 26,239 excluded, 917 hardware-excluded, 17,016 mapped). Real `make qemu-sysboot-m217` PASS through existing INIT PCB queue checks and DQA0 DDT/IRQ14 disk read, then stopped at incomplete INIT; no login/DCL/DECnet/SET HOST observed. QEMU exited. Capture `logs/serial/qemu-m217-run-local-20261123T224317238061Z.log`, 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`; serial manifest verification PASS (97 raw logs).
+
+M243 implementation commit: `bb04230f4cf246700a568582886c7d4b9a093024`.
+
+## M244 — Validated native PCB context binding, 23 November 2026
+
+Added a source-PCB helper to bind aligned native PHD and IA-32 processor-context addresses to a valid DYN PCB. SYSTEM PCB finalization uses the helper; scheduler host fixtures now bind context through this ABI helper instead of writing PCB bytes directly. Tests cover successful binding and transactional rejection of an unaligned PHD. Resident NULL/SWAPPER in the live guest still have no PHD or IA-32 context, so SCH$SCHED continues to refuse their dispatch and no context switch is claimed.
+
+Verification: `make v37pcbcheck v37schedcheck`, `make -j2 all sysexecentrycheck`, full `make test`, source-range validation (2,009 ranges, zero mapping errors) and serial manifest verification (98 transcripts) PASS. Real `make qemu-sysboot-m217` PASS through existing resident queue checks and DQA0 IRQ14 Files-11 read, then stopped at incomplete INIT; no login/DCL/DECnet/SET HOST observed. Transcript `logs/serial/qemu-m217-run-local-20261123T224722659349Z.log`, 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`.
+
+M244 implementation commit: `1319780d0d79512865133793fb2db78648134b0d`.
+
+Independent M244 checkpoint rerun, 23 November 2026: `make -j2 all sysexecentrycheck v37pcbcheck v37schedcheck`, full `make test`, source-range validation, and serial-manifest verification PASS at the existing M244 source commit `f0070116068a4b87c9a0290f593e4c7d9ae31779`. Real `make qemu-sysboot-m217` PASS through the existing 700-byte Files-11 read and DQA0 queued I/O checks, then stopped at the incomplete INIT boundary. No SYSTEM login, DCL, DECnet, or SET HOST 0 was observed. QEMU exited; no QEMU runner remains. Raw transcript `logs/serial/qemu-m217-run-local-20261123T225320429666Z.log`, 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`; transcript manifest verification PASS (99 logs). This rerun did not add functional coverage: PHD/native contexts are not created for live NULL/SWAPPER, so process activation and the remaining acceptance conditions are still incomplete.
+
+## M245 — Source-faithful native NULL loop, 23 November 2026
+
+Corrected `port_exe_nullproc` to emit the source `NULLPROC.MAR` unconditional self-branch. The earlier IA-32 `sti; hlt` sequence was interruptible idle behavior absent from the original `BRB 10$` loop. Object disassembly confirms the routine is exactly `eb fe` (`jmp` to itself). The source coverage record now describes that precise mapping. The live VMS process scheduler still does not activate this routine; this change does not claim NULL process runtime dispatch.
+
+Verification: `make -j2 all` PASS; full `make test` PASS (exit 0, suite reached M49); source-range validation PASS (2,009 ranges, zero mapping errors; 444/4,566 original files indexed; 29,246 partial, 51,944 unresolved, 7,799 missing, 26,239 excluded, 917 hardware-excluded, 17,016 mapped); `objdump -dr build/vms_exe_nullproc.o` shows the self-loop; `git diff --check` PASS. Real `make qemu-sysboot-m217` PASS through existing DQA0 Files-11 I/O, then stopped at incomplete INIT. The null process was not dispatched; no login/DCL/DECnet/SET HOST 0 observed. QEMU exited. Transcript `logs/serial/qemu-m217-run-local-20261123T225905085756Z.log`, 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`; serial-manifest verification PASS (100 logs).
+
+M245 implementation commit (published `main`): `348f4b73d30f96982aeb439bd35b9ed390e9e9a6`.
+
+## M246 — Initial native IA-32 process frames, 23 November 2026
+
+Added a kernel-linked constructor for initial IA-32 interrupt-return frames on a process-owned kernel stack. It lays out the segment-save prefix and PUSHAL/IRET register frame in the exact order consumed by `arch_isr_common`, supports native CPL0 and CPL3 starts, checks CR3/selector/stack validity, and rejects IOPL, NT, and VM EFLAGS bits. At M246, VMS executive and supervisor access modes (1 and 2) were rejected pending descriptor semantics; M247 maps all four VMS access modes directly to the matching IA-32 CPL and checks the exact GDT selectors. Host cases verify the frames and invalid privilege/flags/stack/CR3 cases. SCHED.MAR's initial context construction lines are partial coverage. The runtime trap return still restores only its current frame: this constructor is not called by SCH$SCHED and does not activate NULL, SWAPPER, or SYSTEM. No process dispatch or INIT progress is claimed.
+
+Verification: `make -j2 all` PASS and kernel symbol table contains `port_v37_ia32_context_init`; full `make test` PASS (exit 0, suite reached M49); `make v37ia32ctxcheck` PASS; source-range validation PASS (2,009 ranges, zero mapping errors; 444/4,566 original files indexed; 29,248 partial, 51,944 unresolved, 7,799 missing, 26,237 excluded, 917 hardware-excluded, 17,016 mapped); serial-manifest verification PASS (101 logs); `git diff --check` PASS excluding raw CRLF COM1 logs. Real `make qemu-sysboot-m217` PASS through existing DQA0/Files-11 tests, then stopped at incomplete INIT. The new frame constructor was not invoked in QEMU. No login, DCL, DECnet, or SET HOST 0 was observed. Transcript `logs/serial/qemu-m217-run-local-20261123T231143756841Z.log`, 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`.
+
+M246 implementation commit (published `main`): `60f209d06b83e9748e9bfe729dd70ad7c0c2a382`.
+
+## M247 — VMS access modes mapped to IA-32 rings, 23 November 2026
+
+Extended the initial IA-32 IRET frame constructor to represent VMS kernel, executive, supervisor and user access modes as CPL0, CPL1, CPL2 and CPL3. It requires the matching code/data descriptors in the native GDT (`08/10`, `19/21`, `2a/32`, `3b/43`), preventing a selector with a plausible RPL but the wrong descriptor privilege. Nonzero modes require the caller to supply already mapped initial stack and page tables. This makes the frame format capable of preserving each VMS access mode; it does not create those address spaces or activate a PCB.
+
+Verification: `make v37ia32ctxcheck` PASS for all four modes and a wrong-CPL1-descriptor rejection; `make -j2 all` PASS; full `make test sourcerangecheck sysexecentrycheck v37pcbcheck v37schedcheck` PASS (exit 0; suite reached the resident SYS.EXE link/fail-closed INIT checks); `python3 tools/validate_source_ranges.py` PASS (2,009 ranges, zero mapping errors; 444/4,566 original files indexed; 29,248 partial, 51,944 unresolved, 7,799 missing, 26,237 excluded, 917 hardware-excluded, 17,016 mapped); real `make qemu-sysboot-m217` PASS through the 700-byte Files-11 SYS.EXE read through IOC-selected DQA0 DDT and IRQ14, then the expected incomplete-INIT halt. No process was activated; no login, DCL, DECnet or SET HOST 0 was observed. The QEMU runner exited. Captures `logs/serial/qemu-m217-run-local-20261123T231957006092Z.log` and `logs/serial/qemu-m217-run-local-20261123T232014586790Z.log` are each 5,281 bytes, SHA-256 `498d256405c3824e1d81ad5d2fe63f8a0b6184dccce4551907ecf83594034bca`; manifest records both real runs.
+
+Coverage totals are descriptive inventory only. Scheduler dispatch/context restore, VMS PHD/page tables, process activation, public SYS$QIO, process AST completion, ACP, native INIT, login/DCL and DECnet remain incomplete.
+
+M247 implementation commit (local): `f998e536951e9c785c1a8c7c944b9e3d7f658a85`; published `main`: `ae600ee7aa3e13d9b854480a9f5774352b6d0974`.
