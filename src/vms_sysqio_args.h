@@ -55,10 +55,12 @@ enum { PORT_V37_SYSQIO_BEGIN_OK=1u,PORT_V37_SYSQIO_BEGIN_BAD=2u,
        PORT_V37_SYSQIO_BEGIN_OFFLINE=10u,
        PORT_V37_SYSQIO_BEGIN_ACCVIO=12u,
        PORT_V37_SYSQIO_BEGIN_EFERR=14u,
-       PORT_V37_SYSQIO_BEGIN_EXQUOTA=16u };
+       PORT_V37_SYSQIO_BEGIN_EXQUOTA=16u,
+       PORT_V37_SYSQIO_BEGIN_WAIT=18u };
 struct port_v37_sysqio_resolved_channel {
     const struct port_v37_sysqio_device *device;
     void *ucb;
+    uint32_t window;
     uint8_t ccb_access_limit;
     uint8_t reserved[3];
 };
@@ -75,6 +77,10 @@ struct port_v37_sysqio_begin_ops {
     void *context;
     port_v37_sysqio_clref_fn clear_global_efn;
     int (*lookup_channel)(void *,uint32_t,uint32_t,
+        struct port_v37_sysqio_resolved_channel *);
+    /* SCH$WAIT for RSN$_ASTWAIT and return after the CCB access/deaccess
+     * pending bit is cleared. Required only when resolved window bit 0 is set. */
+    void (*wait_channel)(void *,uint32_t,uint32_t,
         struct port_v37_sysqio_resolved_channel *);
     void (*post_event)(void *,uint32_t,uint8_t,uint32_t);
     port_v37_sysqio_single_quota_fn single_io_quota;
@@ -151,7 +157,8 @@ uint32_t port_v37_sysqio_begin(const void *,size_t,
  * reservation. Failed reservation restores the per-process I/O charge and
  * posts the service error; driver dispatch and submission remain outstanding. */
 enum { PORT_V37_SYSQIO_PREPARE_OK=1u,PORT_V37_SYSQIO_PREPARE_BEGIN=2u,
-       PORT_V37_SYSQIO_PREPARE_RESERVE=4u };
+       PORT_V37_SYSQIO_PREPARE_RESERVE=4u,
+       PORT_V37_SYSQIO_PREPARE_WAIT=6u };
 uint32_t port_v37_sysqio_prepare_irp(const void *,size_t,
     struct port_v37_sysqio_process *,const struct port_v37_sysqio_begin_ops *,
     const struct port_v37_sysqio_irp_spec *,struct port_ini_packet_list *,
