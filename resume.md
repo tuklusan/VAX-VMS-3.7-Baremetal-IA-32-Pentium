@@ -605,3 +605,5 @@ Added the source CCB$L_WIND pending-bit guard to SYSQIO begin. When access/deacc
 Coverage generator now records SYSQIOREQ.MAR lines 149–156 as partial and lines 313–335 as partial. Verification: `make sysqioargscheck` passed; full `make test sysexecentrycheck v37ia32ctxcheck` passed; `make -j2 all` passed (no rebuild required); source coverage validation passed with 2,011 ranges, 444/4,566 original files indexed, zero missing mapped functions, 29,279 partial and 51,913 unresolved lines. This host-only change was not given a new QEMU run; last real IA-32 QEMU boot remains the M249 run and still halts at incomplete INIT.
 
 Remaining: connect the wait callback to a real VMS scheduler, bind CCB/channel lookup to the process, perform source-ordered FDT/device access and DQA0 STARTIO, and complete IRP/IOSB/event/AST posting. Files-11 ACP, INIT completion, image activation, SYSTEM login, DECnet Phase IV and nested SET HOST 0 acceptance remain unachieved.
+
+M251 implementation commit (local): `865e0b3e864259d6e578f9900c7ab0bc56097856`.
