@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 185848)
-Total output lines: 22227
+Warning: truncated output (original token count: 186021)
+Total output lines: 22246
 
 {
   "source": "https://github.com/calmsacibis995/vms37-src",
@@ -738,7 +738,236 @@ Total output lines: 22227
           ],
           "status": "mapped",
           "pc_file": "src/vms_login_fileio.c",
-          "pc_symbol": "vms_lgi_open_input…175848 tokens truncated…eged NLA end-action subset. This is not a VAX IPL implementation or a real user I/O/AST. All process postprocessing remains unported."
+          "pc_symbol": "vms_lgi_open_input",
+          "pc_line": 100,
+          "function": "separate or shared stream, system input/command names, executive channels"
+        },
+        {
+          "original_lines": [
+            315,
+            336
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_login_fileio.c",
+          "pc_symbol": "vms_lgi_close_input",
+          "pc_line": 126,
+          "function": "release input stream without stopping a shared output stream"
+        },
+        {
+          "original_lines": [
+            337,
+            445
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_login_fileio.c",
+          "pc_symbol": "vms_lgi_open_output",
+          "pc_line": 72,
+          "function": "output creation, resolved filename, device and error stream names"
+        },
+        {
+          "original_lines": [
+            446,
+            470
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_login_fileio.c",
+          "pc_symbol": "vms_lgi_close_output",
+          "pc_line": 136,
+          "function": "flush, display and close output"
+        },
+        {
+          "original_lines": [
+            471,
+            547
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_login_fileio.c",
+          "pc_symbol": "vms_lgi_write_file",
+          "pc_line": 179,
+          "function": "128-byte record buffer, sequential read, output and close"
+        },
+        {
+          "original_lines": [
+            548,
+            585
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_login_fileio.c",
+          "pc_symbol": "vms_lgi_write_fao",
+          "pc_line": 197,
+          "function": "ASCIC control and FAO result through library callback"
+        },
+        {
+          "original_lines": [
+            586,
+            628
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_login_fileio.c",
+          "pc_symbol": "vms_lgi_write_output",
+          "pc_line": 147,
+          "function": "30-second write timer, output record, cancellation and return zero"
+        },
+        {
+          "original_lines": [
+            629,
+            657
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_login_fileio.c",
+          "pc_symbol": "vms_lgi_write_timeout",
+          "pc_line": 160,
+          "function": "cancel input channel to end blocked output"
+        },
+        {
+          "original_lines": [
+            658,
+            691
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_login_fileio.c",
+          "pc_symbol": "vms_lgi_get_input",
+          "pc_line": 164,
+          "function": "prompt, uppercase, purge, timed input and terminal NUL"
+        },
+        {
+          "original_lines": [
+            692,
+            693
+          ],
+          "status": "excluded",
+          "reason": "BLISS module close directives"
+        }
+      ],
+      "pc_driver": "src/vms_login_uart.c",
+      "unresolved_integration": "Listing files need RMS; FAOL requires full formatter; native COM1 input/output works with current process stream map"
+    },
+    {
+      "original_file": "LOGIN/SRC/LOGINCMD.CLD",
+      "original_lines": 31,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            22
+          ],
+          "status": "excluded",
+          "reason": "original DEC text notice"
+        },
+        {
+          "original_lines": [
+            23,
+            26
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_logincmd.c",
+          "pc_symbol": "vms_login_parse",
+          "pc_line": 36,
+          "function": "LOGIN verb recognition and module entry"
+        },
+        {
+          "original_lines": [
+            27,
+            27
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_logincmd.c",
+          "pc_symbol": "vms_login_parse",
+          "pc_line": 36,
+          "function": "username required, USERNAME prompt when missing"
+       …174021 tokens truncated…pc_file": "src/vms_qio_finishioc.c",
+          "pc_symbol": "port_v37_qio_finishioc",
+          "pc_line": 4,
+          "function": "EXE$FINISHIOC clears R1 before common finish path"
+        },
+        {
+          "original_lines": [
+            743,
+            749
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_qio_finishio.c",
+          "pc_symbol": "port_v37_qio_finishio",
+          "pc_line": 7,
+          "function": "UCB OPCNT, IRP media status, append IOC post FIFO and defer IPL4"
+        },
+        {
+          "original_lines": [
+            750,
+            908
+          ],
+          "status": "unresolved",
+          "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
+        }
+      ],
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; source-ordered begin clears EFN, checks supplied channel access/FDT/offline rules, probes/clears IOSB, charges direct/buffered I/O counts and posts validation failures. The host-tested reserve helper obtains an actual source INIT IRP packet, enforces AST quota after allocation, builds the 136-byte standard IRP and returns it to the same queue on post-allocation failure. The helpers map BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO, EXQUOTA and pool exhaustion to source status values. WRITEVBLK normalization and PHY_IO/LOG_IO gates preserve source device-state decisions. However, no live user service entry, real CCB lookup, source IPL/deletion protection, channel IOC accounting, EXE$ABORTIO service post, buffered window mapping, driver FDT dispatch or process AST completion is connected. Only FINISHIOC, FINISHIO and IPL4 post request run on resident test IRPs."
+    },
+    {
+      "original_file": "SYS/SRC/IOCIOPOST.MAR",
+      "original_lines": 1113,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            114
+          ],
+          "status": "unresolved",
+          "reason": "DEC headers, VAX registers, priority table and original declarations"
+        },
+        {
+          "original_lines": [
+            115,
+            144
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sys_executive_entry.c",
+          "pc_symbol": "executive_iopost_irq_entry",
+          "pc_line": 451,
+          "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
+        },
+        {
+          "original_lines": [
+            145,
+            155
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_pop.c",
+          "pc_symbol": "port_v37_iopost_pop",
+          "pc_line": 5,
+          "function": "First-in/first-out REMQUE and sentinel restoration, now called through x86 CPL0 IDT 0x90"
+        },
+        {
+          "original_lines": [
+            156,
+            159
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_kernel_end.c",
+          "pc_symbol": "port_v37_iopost_kernel_end",
+          "pc_line": 5,
+          "function": "Whitelisted native privileged end action; other VAX branch and kernel ABI unresolved"
+        },
+        {
+          "original_lines": [
+            160,
+            165
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_service.c",
+          "pc_symbol": "port_v37_iopost_service",
+          "pc_line": 5,
+          "function": "Kernel address branch for source IRP PID, IA-32 supervisor aperture replacing VAX high-bit test; PCB lookup unresolved"
+        },
+        {
+          "original_lines": [
+            166,
+            1113
+          ],
+          "status": "unresolved",
+          "reason": "Source original direct/buffered/paging postprocessing, PCB quotas, kernel AST, IOSB, wakeup, virtual segmentation, error paths, VAX interrupt frame and remainder unported"
+        }
+      ],
+      "unresolved_integration": "Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. This is not a VAX IPL implementation or a real user I/O/AST. All process postprocessing remains unported."
     },
     {
       "original_file": "DRIVER/SRC/DQDRIVER.MAR",
