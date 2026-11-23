@@ -709,9 +709,10 @@ Verification: source coverage generation/validation PASS (2,015 ranges, 0 errors
 
 M260 local coverage commits: 6697d7b240ad75db71443ef2e24731b48fb9a219; bf363c4a40117921559003fbfc86d1b13c2aa71e. GitHub main publication commits: coverage generator 1fe875816ef448175f26db5c33170451d05fd427; source coverage e6c126ce09c8785c0f2442ed21ae6f9bf7856093. Published file blobs match local Git objects. M260 resume local commit: 33a4add5c12a6e3aa6651f0c6995230f56284697.
 
-
 ## M261 — Repeat full regression from M260, 23 November 2026
 
-No source behavior changed. Rebuilt/checked the current tree with `make -j2 all test sysqioresidentcheck sysexecentrycheck sysqioargscheck`; PASS (exit 0). This includes the full host/layout suite, current SYSQIO argument and resident symbol checks, CCB checks, DQA private IOC tests, and the generated source audit (2,015 ranges; zero missing mapped functions). `make qemu-sysboot-m217` PASS under the sole QEMU runner: the guest performed the verified 700-byte Files-11 SYS.EXE chain read through published DQA0 DDT/IRQ14 and stopped at the documented incomplete-INIT boundary. No public SYS$QIO, login, DCL, DECnet or SET HOST 0 occurred. Runner exited before returning. Raw COM1 log `logs/serial/qemu-m217-run-local-20261124T012416575136Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`; manifest validation PASS. The local timestamp is UTC on 24 November despite the project checkpoint date.
-
-M261 is verification-only; SYS$ASSIGN/channel-table allocation, public service dispatch, process-owned DQA completion/AST, Files-11 ACP, INIT continuation and process image activation remain incomplete. Acceptance remains unachieved. Local commit: `cf2d0b69d2ff3bd146f5d5cc5b51930bf44ebbf1`. GitHub `main` exact-content publication commits: QEMU transcript `04af1e5ab997bdb3ead9f7d317c1cc2a60c6c2aa`; serial manifest `328a3274a5cbab249f95816a7f51928d4417452c`. Both published blobs match the local Git objects. Resume publication follows.
+No source behavior changed. Rebuilt/checked the current tree with `make -j2 all test sysqioresidentcheck sysexecentrycheck sysqioargscheck`; PASS (exit 0). This includes the full host/layout suite, current SYSQIO argument and resident symbol checks, CCB checks, DQA private IOC tests, and the generated source audit (2,015 ranges; zero missing mapped functions). `make qemu-sysboot-m217` PASS under the sole QEMU runner: the guest performed the verified 700-byte Files-11 SYS.EXE chain read thrMethodInvocationException: 
+Line |
+   2 |  … ntent resume.md -Raw; [Console]::Out.Write($s.Substring(134000,1139))
+     |                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Exception calling "Substring" with "2" argument(s): "Index and length must refer to a location within the string. (Parameter 'length')"
