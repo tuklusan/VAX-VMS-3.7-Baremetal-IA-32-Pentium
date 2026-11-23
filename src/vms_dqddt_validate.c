@@ -5,6 +5,7 @@ uint32_t port_dqddt_validate(const struct port_dqddt_stage *s,
     const struct port_dq_fdt *fdt){
     if(!s||!s->ready||s->driver_bound||s->reserved[0]||s->reserved[1]||
        s->native_read_action_pc!=(uint32_t)(uintptr_t)port_dqddt_bootread||
+       s->native_write_action_pc!=(uint32_t)(uintptr_t)port_dqddt_bootwrite||
        port_dqddt_preflight(s,fdt,s->table_base,
           s->native_start_pc,s->ioc_return_pc)!=PORT_DQDDT_OK||
        s->dpt.max_units!=4u||s->dpt.default_units!=4u||

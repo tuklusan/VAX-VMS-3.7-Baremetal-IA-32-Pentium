@@ -13,7 +13,9 @@ uint32_t port_dqddt_fdt_check(const struct port_dqddt_stage *s,
            port_v37_read32(s->image+off+4u)!=(uint32_t)(fdt->mask[i]>>32u))
             return PORT_DQDDT_BAD;
         const uint32_t action=i==PORT_DQ_FDT_READ?
-            (s->native_read_action_pc|UINT32_C(0x80000000)):0u;
+            (s->native_read_action_pc|UINT32_C(0x80000000)):
+            i==PORT_DQ_FDT_WRITE?
+            (s->native_write_action_pc|UINT32_C(0x80000000)):0u;
         if(i>=2u&&port_v37_read32(s->image+off+8u)!=action)
             return PORT_DQDDT_BAD;
     }

@@ -162,10 +162,13 @@ struct port_sys_exec_result {
         const uint8_t *,size_t,uint32_t,const struct port_v37_device_result *,
         const char *,size_t,unsigned,struct port_devlog_trace *);
     /* Source DQDRIVER DPTAB/DDTAB and exact 136-byte FUNCTAB staged in
-     * resident SYS.EXE. All ten action destinations unbound; DQA0 DDT=0. */
+     * resident SYS.EXE. Private physical READ/WRITE actions only; DQA0 DDT=0. */
     const struct port_dqddt_stage *dq_ddt_stage;
     uint32_t (*dq_ddt_function)(const struct port_dqddt_stage *,
         const struct port_dq_fdt *,uint16_t);
+    uint32_t (*dq_ddt_dispatch_bootwrite)(const struct port_dqddt_stage *,
+        const struct port_dq_fdt *,const struct port_dq_bootread_request *,
+        struct port_dq_bootread_result *,uint32_t);
     const struct port_dq_crb *dq_crb;
     /* Private stage-validated READPBLK bridge result, not DDB/CRB binding. */
     const struct port_dq_bootread_result *dq_ddt_bootread;

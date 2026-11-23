@@ -2419,50 +2419,99 @@ static void bootstrap_message(const char *text){
     bootstrap_console.outlen=(uint16_t)n;
     (void)port_rio_output_line(&bootstrap_console);
 }
-/* M201's write-path regression is explicitly armed by the disposable QEMU
- * disk image. It runs only when both QEMU fw_cfg and the full marker sector
- * are present, and restores that sector before returning. */
-static void m201_outw(uint16_t port,uint16_t value){
+/* The write-path regression is explicitly armed by disposable QEMU media.
+ * It runs only with QEMU fw_cfg and a full marker sector, and restores it. */
+static void m202_outw(uint16_t port,uint16_t value){
     __asm__ volatile("outw %w0,%w1"::"a"(value),"Nd"(port));
 }
-static uint16_t m201_marker_word(unsigned i){
+static uint16_t m202_marker_word(unsigned i){
     static const uint16_t signature[4]={0x4d56u,0x5333u,0x3753u,0x5452u};
     return i<4u?signature[i]:(uint16_t)(0xa000u|i);
 }
-static int m201_qemu_fw_cfg(void){
+static int m202_qemu_fw_cfg(void){
     static const char expected[4]={'Q','E','M','U'};
-    m201_outw(0x510u,0u);
+    m202_outw(0x510u,0u);
     for(unsigned i=0;i<4u;i++)if(inb(0x511u)!=(uint8_t)expected[i])return 0;
     return 1;
 }
-static int m201_ata_write_probe(void){
+static int m202_ata_write_sector(void *ctx,uint32_t lbn,
+                                 const uint16_t src[256]){
+    (void)ctx;return port_ata_x86_write28(lbn,src);
+}
+static void m202_put16(uint8_t *p,uint16_t value){
+    p[0]=(uint8_t)value;p[1]=(uint8_t)(value>>8u);
+}
+static void m202_put32(uint8_t *p,uint32_t value){
+    m202_put16(p,(uint16_t)value);m202_put16(p+2u,(uint16_t)(value>>16u));
+}
+static int m202_dispatch_write(const struct port_dqddt_stage *stage,
+    const struct port_dq_fdt *fdt,const uint8_t *device_db,
+    const struct port_v37_device_result *device_info,uint32_t lbn,
+    uint16_t data[256],
+    uint32_t (*dispatch)(const struct port_dqddt_stage *,
+        const struct port_dq_fdt *,const struct port_dq_bootread_request *,
+        struct port_dq_bootread_result *,uint32_t)){
+    uint8_t irp[PORT_V37_IRP_SIZE] __attribute__((aligned(4)));
+    if(!stage||!fdt||!device_db||!device_info||!data||!dispatch||
+       !device_info->ucb[0])
+        return -1;
+    for(unsigned i=0;i<sizeof irp;i++)irp[i]=0u;
+    m202_put16(irp+8u,PORT_V37_IRP_SIZE);
+    irp[10u]=PORT_V37_DYN_IRP;
+    m202_put32(irp+PORT_V37_IRP_UCB,device_info->ucb[0]);
+    m202_put16(irp+PORT_V37_IRP_FUNC,PORT_DQ_WRITEPBLK);
+    m202_put16(irp+42u,PORT_DQ_PHYSIO);
+    m202_put16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
+    m202_put32(irp+PORT_V37_IRP_MEDIA,lbn);
+    const struct port_dq_bootread_request request={
+        .fdt=fdt,.device_db=device_db,.device_info=device_info,
+        .irp=irp,.irp_bytes=sizeof irp,.sector=data,
+        .sector_bytes=PORT_DQ_BOOTREAD_BYTES,.boot_unit=0u,
+        .write_sector=m202_ata_write_sector};
+    struct port_dq_bootread_result result={0};
+    if(dispatch(stage,fdt,&request,&result,lbn)!=
+          PORT_DQ_BOOTREAD_OK||result.io_function!=PORT_DQ_WRITEPBLK||
+       result.lbn!=lbn||result.bytes!=PORT_DQ_BOOTREAD_BYTES||
+       result.irp_status!=PORT_SYS85_NORMAL||
+       result.irp_second!=PORT_DQ_BOOTREAD_BYTES)
+        return -1;
+    return 0;
+}
+static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
+    const struct port_dq_fdt *fdt,const uint8_t *device_db,
+    const struct port_v37_device_result *device_info,
+    uint32_t (*dispatch)(const struct port_dqddt_stage *,
+        const struct port_dq_fdt *,const struct port_dq_bootread_request *,
+        struct port_dq_bootread_result *,uint32_t)){
     enum {SCRATCH_LBN=8063u};
-    if(!m201_qemu_fw_cfg()){
-        bootstrap_message("INIT: M201 QEMU fw_cfg signature not present; ATA write probe skipped.");
+    if(!m202_qemu_fw_cfg()){
+        bootstrap_message("INIT: M202 QEMU fw_cfg signature not present; ATA write probe skipped.");
         return 0;
     }
     uint16_t saved[256],probe[256],observed[256];
     if(port_ata_x86_read28(SCRATCH_LBN,saved)){
-        bootstrap_message("INIT: M201 marked ATA scratch LBN could not be read.");
+        bootstrap_message("INIT: M202 marked ATA scratch LBN could not be read.");
         return -1;
     }
-    for(unsigned i=0;i<256u;i++)if(saved[i]!=m201_marker_word(i)){
-        bootstrap_message("INIT: M201 marked ATA scratch LBN marker absent; write probe skipped.");
+    for(unsigned i=0;i<256u;i++)if(saved[i]!=m202_marker_word(i)){
+        bootstrap_message("INIT: M202 marked ATA scratch LBN marker absent; write probe skipped.");
         return 0;
     }
     for(unsigned i=0;i<256u;i++)probe[i]=(uint16_t)(0x5a00u^i);
-    const int wrote=port_ata_x86_write28(SCRATCH_LBN,probe);
-    if(wrote)bootstrap_message("INIT: M201 ATA write command/data/completion failed.");
+    const int wrote=m202_dispatch_write(stage,fdt,device_db,device_info,
+                                         SCRATCH_LBN,probe,dispatch);
+    if(wrote)bootstrap_message("INIT: staged DQ WRITEPBLK action failed.");
     const int read_probe=wrote? -1:port_ata_x86_read28(SCRATCH_LBN,observed);
-    if(!wrote&&read_probe)bootstrap_message("INIT: M201 ATA write readback failed.");
+    if(!wrote&&read_probe)bootstrap_message("INIT: M202 ATA write readback failed.");
     int matches=!read_probe;
     if(matches)for(unsigned i=0;i<256u;i++)if(observed[i]!=probe[i]){
         matches=0;break;
     }
-    const int restored=port_ata_x86_write28(SCRATCH_LBN,saved);
-    if(restored)bootstrap_message("INIT: M201 ATA scratch restore command/data/completion failed.");
+    const int restored=m202_dispatch_write(stage,fdt,device_db,device_info,
+                                            SCRATCH_LBN,saved,dispatch);
+    if(restored)bootstrap_message("INIT: staged DQ WRITEPBLK scratch restore failed.");
     const int reread=port_ata_x86_read28(SCRATCH_LBN,observed);
-    if(!reread&&!restored)bootstrap_message("INIT: M201 ATA scratch restore reread completed.");
+    if(!reread&&!restored)bootstrap_message("INIT: M202 ATA scratch restore reread completed.");
     int restore_matches=!reread;
     if(restore_matches)for(unsigned i=0;i<256u;i++)if(observed[i]!=saved[i]){
         restore_matches=0;break;
@@ -3555,12 +3604,15 @@ void kmain(void) {
     if(loaded_sys(&dq_ddt_request)!=PORT_SYS_EXEC_NORMAL||
        dq_ddt_result.signature!=PORT_SYS_EXEC_DQ_DDT_TAG||
        !dq_ddt_result.dq_ddt_stage||!dq_ddt_result.dq_ddt_function||
+       !dq_ddt_result.dq_ddt_dispatch_bootwrite||
        !dq_ddt_result.dq_crb||
        (uintptr_t)dq_ddt_result.dq_ddt_stage<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_stage>
            PORT_SYS_ELF_LIMIT-sizeof(struct port_dqddt_stage)||
        (uintptr_t)dq_ddt_result.dq_ddt_function<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_function>=PORT_SYS_ELF_LIMIT||
+       (uintptr_t)dq_ddt_result.dq_ddt_dispatch_bootwrite<PORT_SYS_ELF_START||
+       (uintptr_t)dq_ddt_result.dq_ddt_dispatch_bootwrite>=PORT_SYS_ELF_LIMIT||
        (uintptr_t)dq_ddt_result.dq_crb<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_crb>
            PORT_SYS_ELF_LIMIT-sizeof(struct port_dq_crb)||
@@ -3574,6 +3626,8 @@ void kmain(void) {
         dq_ddt_result.dq_ddt_stage->image[37u]!=0u)||
        dq_ddt_result.dq_ddt_function(dq_ddt_result.dq_ddt_stage,
           dq_result.dq_source_fdt,PORT_DQ_READPBLK)!=PORT_DQDDT_NATIVE||
+       dq_ddt_result.dq_ddt_function(dq_ddt_result.dq_ddt_stage,
+          dq_result.dq_source_fdt,PORT_DQ_WRITEPBLK)!=PORT_DQDDT_NATIVE||
        dq_ddt_result.dq_ddt_function(dq_ddt_result.dq_ddt_stage,
           dq_result.dq_source_fdt,PORT_DQ_WRITELBLK)!=PORT_DQDDT_UNBOUND||
        (devicedb_result.device_db_bytes[PORT_V37_DDB_BOOT_OFF+12u]!=0u||
@@ -3839,13 +3893,15 @@ void kmain(void) {
     }
     bootstrap_message("INIT: actual IRQ0 advanced resident SYS.EXE VMS clock.");
 
-    int ata_write_probe=m201_ata_write_probe();
+    int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
+        dq_result.dq_source_fdt,devicedb_result.device_db_bytes,
+        devicedb_result.device_db,dq_ddt_result.dq_ddt_dispatch_bootwrite);
     if(ata_write_probe<0){
         bootstrap_message("INIT: marked QEMU ATA PIO write/readback/restore regression failed.");
         bootstrap_halt();
     }
     if(ata_write_probe>0)
-        bootstrap_message("INIT: QEMU ATA PIO WRITE SECTORS completed on marked scratch LBN through IRQ14 and was restored.");
+        bootstrap_message("INIT: SYS.EXE private DQ DDT WRITEPBLK action completed through ATA IRQ14, verified and restored.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

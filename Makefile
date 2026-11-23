@@ -991,7 +991,7 @@ build/iniloa.exe: build/vms_iniloa_iomap.o build/vms_iniloa_entry.o iniloa_nativ
 	$(LD) -m elf_i386 -T iniloa_native.ld -o $@ build/vms_iniloa_entry.o build/vms_iniloa_iomap.o
 build/install_iniloa_image: tools/install_iniloa_image.c src/vms_boot_files11.c src/vms_bootio.c src/vms_f11_home.c | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $^ -o $@
-.PHONY: dqcrbcheck sysexecentrycheck qemu-sysboot-m197 qemu-sysboot-m198 qemu-sysboot-m199 qemu-sysboot-m201
+.PHONY: dqcrbcheck sysexecentrycheck qemu-sysboot-m197 qemu-sysboot-m198 qemu-sysboot-m199 qemu-sysboot-m201 qemu-sysboot-m202
 dqcrbcheck: $(M197_DQ_CRB_OBJS) | build
 	$(CC) -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_dq_crb.c tests/test_dq_crb_host.c -o build/dqcrbcheck
 	ASAN_OPTIONS=detect_leaks=1 ./build/dqcrbcheck
@@ -1435,3 +1435,6 @@ qemu-sysboot-m199: vms37lab.ima portdisk.img
 
 qemu-sysboot-m201: vms37lab.ima portdisk.img
 	python3 tools/qemu_sysboot_m201.py
+
+qemu-sysboot-m202: vms37lab.ima portdisk.img
+	python3 tools/qemu_sysboot_m202.py

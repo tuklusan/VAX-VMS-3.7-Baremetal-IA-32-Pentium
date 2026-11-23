@@ -8,7 +8,7 @@ static int disjoint(const void *a,size_t as,const void *b,size_t bs){
 }
 uint32_t port_dq_bootread_preflight(const struct port_dq_bootread_request *q){
     if(!q||!q->irp||!q->sector||!q->device_info||!q->device_db||
-       !q->read_sector||!q->fdt||q->irp_bytes!=PORT_V37_IRP_SIZE||
+       !q->fdt||q->irp_bytes!=PORT_V37_IRP_SIZE||
        q->sector_bytes!=PORT_DQ_BOOTREAD_BYTES||q->boot_unit!=0u||
        ((uintptr_t)q->irp&3u)||((uintptr_t)q->sector&1u)||
        !disjoint(q->sector,q->sector_bytes,q->irp,q->irp_bytes)||
@@ -16,6 +16,11 @@ uint32_t port_dq_bootread_preflight(const struct port_dq_bootread_request *q){
        !disjoint(q->irp,q->irp_bytes,q->device_db,PORT_V37_DEVICE_BYTES)||
        !disjoint(q->sector,q->sector_bytes,q->fdt,sizeof(*q->fdt))||
        !disjoint(q->irp,q->irp_bytes,q->fdt,sizeof(*q->fdt)))
+        return PORT_DQ_BOOTREAD_BAD;
+    const uint16_t function=port_v37_read16(q->irp+PORT_V37_IRP_FUNC);
+    if((function==PORT_DQ_READPBLK&&!q->read_sector)||
+       (function==PORT_DQ_WRITEPBLK&&!q->write_sector)||
+       (function!=PORT_DQ_READPBLK&&function!=PORT_DQ_WRITEPBLK))
         return PORT_DQ_BOOTREAD_BAD;
     if(port_v37_devices_check(q->device_db,PORT_V37_DEVICE_BYTES,
          (uint32_t)(uintptr_t)q->device_db,q->device_info)!=PORT_V37_DEV_OK ||

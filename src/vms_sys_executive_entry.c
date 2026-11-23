@@ -293,10 +293,14 @@ static uint32_t executive_private_reloc_check(const uint8_t *b,size_t n,uint32_t
         return PORT_DDTRELOC_BAD;
     for(unsigned i=0;i<PORT_DQDDT_ACTIONS;i++){
         const unsigned offset=PORT_DQDDT_HEADER_BYTES+24u+12u*i;
-        const uint32_t native_read=i+2u==PORT_DQ_FDT_READ?
-            (executive_dqddt.native_read_action_pc|UINT32_C(0x80000000)):0u;
-        const uint32_t expected=i+2u==PORT_DQ_FDT_READ?native_read:base+offset-8u;
-        if(port_ddtreloc_read32(executive_dqddt.image+offset)!=native_read||
+        const unsigned row=i+2u;
+        const uint32_t source_action=row==PORT_DQ_FDT_READ?
+            (executive_dqddt.native_read_action_pc|UINT32_C(0x80000000)):
+            row==PORT_DQ_FDT_WRITE?
+            (executive_dqddt.native_write_action_pc|UINT32_C(0x80000000)):0u;
+        const uint32_t expected=row==PORT_DQ_FDT_READ||
+            row==PORT_DQ_FDT_WRITE?source_action:base+offset-8u;
+        if(port_ddtreloc_read32(executive_dqddt.image+offset)!=source_action||
            port_ddtreloc_read32(b+offset)!=expected)
             return PORT_DDTRELOC_BAD;
     }
@@ -1572,12 +1576,15 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         const uint32_t start=(uint32_t)(uintptr_t)port_dq_bootread_execute;
         const uint32_t ret=(uint32_t)(uintptr_t)port_v37_nl_ioc_return;
         const uint32_t read_action=(uint32_t)(uintptr_t)port_dqddt_bootread;
+        const uint32_t write_action=(uint32_t)(uintptr_t)port_dqddt_bootwrite;
         if(port_dqddt_stage_init(&executive_dqddt,&executive_dq_fdt,
-               base,start,ret,read_action)!=PORT_DQDDT_OK||
+               base,start,ret,read_action,write_action)!=PORT_DQDDT_OK||
            port_dqddt_validate(&executive_dqddt,&executive_dq_fdt)!=
                PORT_DQDDT_OK||
            port_dqddt_function(&executive_dqddt,&executive_dq_fdt,
                PORT_DQ_READPBLK)!=PORT_DQDDT_NATIVE||
+           port_dqddt_function(&executive_dqddt,&executive_dq_fdt,
+               PORT_DQ_WRITEPBLK)!=PORT_DQDDT_NATIVE||
            port_dqddt_function(&executive_dqddt,&executive_dq_fdt,
                PORT_DQ_WRITELBLK)!=PORT_DQDDT_UNBOUND||
            port_dqddt_function(&executive_dqddt,&executive_dq_fdt,
@@ -1593,6 +1600,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         executive_dqddt_ready=1u;
         p->result->dq_ddt_stage=&executive_dqddt;
         p->result->dq_ddt_function=port_dqddt_function;
+        p->result->dq_ddt_dispatch_bootwrite=port_dqddt_dispatch_bootwrite;
         p->result->dq_crb=&executive_dq_crb;
         p->result->signature=PORT_SYS_EXEC_DQ_DDT_TAG;
         return PORT_SYS_EXEC_NORMAL;

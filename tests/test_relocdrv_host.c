@@ -16,7 +16,8 @@ int main(void){
     struct port_dqddt_stage stage={0};
     CHECK(port_dq_fdt_build(&fdt,sizeof fdt)==PORT_DQ_FDT_OK);
     CHECK(port_dqddt_stage_init(&stage,&fdt,DDT_BASE,START,RET,
-        (uint32_t)(uintptr_t)port_dqddt_bootread)==PORT_DQDDT_OK);
+        (uint32_t)(uintptr_t)port_dqddt_bootread,
+        (uint32_t)(uintptr_t)port_dqddt_bootwrite)==PORT_DQDDT_OK);
     uint8_t prior[PORT_V37_DEVICE_BYTES]={0};
     memcpy(prior,source,sizeof prior);
     struct port_relocdrv_dq dq={0};

@@ -12,11 +12,13 @@ uint32_t port_dq_bootread_decode_physical(const struct port_dq_bootread_request 
      * accepts physical block numbers; the adapter boundary is explicit. */
     if(requested_lbn>UINT32_C(0x0fffffff)||media!=requested_lbn)
         return PORT_DQ_BOOTREAD_MEDIA;
-    if(func!=PORT_DQ_READPBLK)return PORT_DQ_BOOTREAD_UNBOUND;
+    if(func!=PORT_DQ_READPBLK&&func!=PORT_DQ_WRITEPBLK)
+        return PORT_DQ_BOOTREAD_UNBOUND;
     struct port_dq_fdt_decision d={0};
     if(port_dq_fdt_classify(q->fdt,sizeof(*q->fdt),func,&d)!=PORT_DQ_FDT_OK ||
-       d.action_class!=PORT_DQ_FDT_READ || d.buffered || d.driver_bound ||
-       d.full_function!=PORT_DQ_READPBLK)
+       d.action_class!=(func==PORT_DQ_READPBLK?PORT_DQ_FDT_READ:
+                                                   PORT_DQ_FDT_WRITE) ||
+       d.buffered || d.driver_bound || d.full_function!=func)
         return PORT_DQ_BOOTREAD_UNBOUND;
     *lbn=media;
     *function=func;

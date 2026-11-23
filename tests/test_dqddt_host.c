@@ -9,13 +9,18 @@ static int mock_read(void *ctx,uint32_t lbn,uint16_t dst[256]){
     for(unsigned i=0;i<256u;i++)dst[i]=(uint16_t)(lbn+i);
     return 0;
 }
+static int mock_write(void *ctx,uint32_t lbn,const uint16_t src[256]){
+    unsigned *calls=ctx;(*calls)++;
+    return lbn==7u&&src[0]==0x55aau&&src[255]==0xaa55u?0:-1;
+}
 int main(void){
     enum {BASE=0x00370000u,START=0x00324120u,RET=0x00324104u};
     const uint32_t action=(uint32_t)(uintptr_t)port_dqddt_bootread;
+    const uint32_t write_action=(uint32_t)(uintptr_t)port_dqddt_bootwrite;
     struct port_dq_fdt fdt={0};
     CHECK(port_dq_fdt_build(&fdt,sizeof fdt)==PORT_DQ_FDT_OK);
     struct port_dqddt_stage d={0};
-    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,RET,action)==PORT_DQDDT_OK);
+    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,RET,action,write_action)==PORT_DQDDT_OK);
     CHECK(d.table_base==BASE&&d.native_start_pc==START&&d.ioc_return_pc==RET);
     CHECK(port_dqddt_validate(&d,&fdt)==PORT_DQDDT_OK);
     CHECK(port_v37_read32(d.image)==(uint32_t)(START-BASE));
@@ -30,7 +35,10 @@ int main(void){
     CHECK(port_v37_read32(d.image+port_dqddt_entry_offset(2u)+4u)==(uint32_t)(fdt.mask[2u]>>32u));
     CHECK(port_v37_read32(d.image+port_dqddt_entry_offset(2u)+8u)==
           (action|UINT32_C(0x80000000)));
+    CHECK(port_v37_read32(d.image+port_dqddt_entry_offset(PORT_DQ_FDT_WRITE)+8u)==
+          (write_action|UINT32_C(0x80000000)));
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_READPBLK)==PORT_DQDDT_NATIVE);
+    CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_WRITEPBLK)==PORT_DQDDT_NATIVE);
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_WRITELBLK)==PORT_DQDDT_UNBOUND);
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_READVBLK)==PORT_DQDDT_UNBOUND);
     CHECK(port_dqddt_function(&d,&fdt,63u)==PORT_DQDDT_BAD);
@@ -56,8 +64,7 @@ int main(void){
     d.driver_bound=0u;
     CHECK(port_dqddt_validate(&d,&fdt)==PORT_DQDDT_OK);
 
-    /* The validated stage now reaches the one already implemented native
-     * DQ action: privileged physical READPBLK over the real ATA callback. */
+    /* Exercise both staged private physical action slots. */
     uint32_t db_words[PORT_V37_DEVICE_BYTES/4u]={0};
     uint32_t irp_words[PORT_V37_IRP_SIZE/4u]={0};
     uint16_t sector[256]={0};
@@ -82,7 +89,7 @@ int main(void){
     struct port_dq_bootread_request request={.fdt=&fdt,.device_db=db,
         .device_info=&info,.irp=irp,.irp_bytes=PORT_V37_IRP_SIZE,
         .sector=sector,.sector_bytes=sizeof sector,.boot_unit=0u,
-        .read_sector=mock_read,.read_context=&calls};
+        .read_sector=mock_read,.write_sector=mock_write,.read_context=&calls};
     struct port_dq_bootread_result read_result={0};
     CHECK(port_dqddt_dispatch_bootread(&d,&fdt,&request,&read_result,7u)==
         PORT_DQ_BOOTREAD_OK);
@@ -91,13 +98,25 @@ int main(void){
     CHECK(port_dqddt_dispatch_bootread(&d,&fdt,&request,&read_result,8u)==
         PORT_DQ_BOOTREAD_BAD);
     CHECK(calls==1u);
+    memset(irp,0,PORT_V37_IRP_SIZE);
+    CHECK(port_v37_irp_prepare(irp,PORT_V37_IRP_SIZE,0x00712000u,
+        info.ucb[0],PORT_DQ_WRITEPBLK)==PORT_V37_QIO_OK);
+    port_v37_write16(irp+42u,PORT_DQ_PHYSIO);
+    port_v37_write16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
+    port_v37_write32(irp+PORT_V37_IRP_MEDIA,7u);
+    sector[0]=0x55aau;sector[255]=0xaa55u;
+    uint32_t write_status=port_dqddt_dispatch_bootwrite(&d,&fdt,&request,
+        &read_result,7u);
+    CHECK(write_status==PORT_DQ_BOOTREAD_OK);
+    CHECK(calls==2u&&read_result.io_function==PORT_DQ_WRITEPBLK&&
+        read_result.irp_status==1u&&read_result.bytes==512u);
     struct port_dqddt_stage before=d;
-    CHECK(port_dqddt_stage_init(&d,&fdt,BASE+1u,START,RET,action)==PORT_DQDDT_BAD);
+    CHECK(port_dqddt_stage_init(&d,&fdt,BASE+1u,START,RET,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,BASE+4u,RET,action)==PORT_DQDDT_BAD);
+    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,BASE+4u,RET,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u,action)==PORT_DQDDT_BAD);
+    CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    puts("DQ DDT staged privileged READPBLK dispatch PASS; general DDT and public QIO remain unbound");
+    puts("DQ DDT staged privileged READPBLK/WRITEPBLK dispatch PASS; general DDT and public QIO remain unbound");
     return 0;
 }

@@ -7,7 +7,7 @@
 #include "vms_qio_post.h"
 /* DRIVER/SRC/DQDRIVER.MAR PREPROCESS (640-671), FDISPATCH (678-709),
  * NORMAL/FUNCXT (790-940) on native ATA. Stage is one privileged raw
- * Files-11 home block READPBLK, not a complete DQ driver or user $QIO.
+ * Files-11 home block physical I/O, not a complete DQ driver or user $QIO.
  * Source code uses IRP$L_MEDIA at offset 56 to hold the LBN before
  * completion, sharing storage with IOST1 after completion. */
 enum {PORT_DQ_BOOTREAD_OK=1u, PORT_DQ_BOOTREAD_BAD=2u,
@@ -18,6 +18,7 @@ enum {PORT_DQ_BOOTREAD_OK=1u, PORT_DQ_BOOTREAD_BAD=2u,
       PORT_DQ_UCB_FUNC=142u,PORT_DQ_UCB_VALID=0x0800u,
       PORT_DQ_BOOTREAD_LBN=1u,PORT_DQ_BOOTREAD_BYTES=512u};
 typedef int (*port_dq_native_read_fn)(void *,uint32_t,uint16_t[256]);
+typedef int (*port_dq_native_write_fn)(void *,uint32_t,const uint16_t[256]);
 struct port_dq_bootread_request {
     const struct port_dq_fdt *fdt;
     const uint8_t *device_db;
@@ -28,6 +29,7 @@ struct port_dq_bootread_request {
     size_t sector_bytes;
     uint16_t boot_unit;
     port_dq_native_read_fn read_sector;
+    port_dq_native_write_fn write_sector;
     void *read_context;
 };
 struct port_dq_bootread_result {
@@ -41,12 +43,16 @@ uint32_t port_dq_bootread_decode(const struct port_dq_bootread_request *,
                                 uint32_t *lbn,uint16_t *function);
 uint32_t port_dq_bootread_commit(const struct port_dq_bootread_request *,
     const uint16_t [256],struct port_dq_bootread_result *);
+uint32_t port_dq_bootwrite_commit(const struct port_dq_bootread_request *,
+    struct port_dq_bootread_result *);
 uint16_t port_dq_bootread_checksum(const uint16_t [256]);
 uint32_t port_dq_bootread_execute(const struct port_dq_bootread_request *,
                                  struct port_dq_bootread_result *);
 /* A second privileged bootstrap read. The requested LBN is explicit and
  * never obtained from user memory. No hardware writes or public QIO. */
 uint32_t port_dq_bootread_execute_physical(const struct port_dq_bootread_request *,
+    struct port_dq_bootread_result *,uint32_t requested_lbn);
+uint32_t port_dq_bootwrite_execute_physical(const struct port_dq_bootread_request *,
     struct port_dq_bootread_result *,uint32_t requested_lbn);
 uint32_t port_dq_bootread_decode_physical(const struct port_dq_bootread_request *,
     uint32_t *lbn,uint16_t *function,uint32_t requested_lbn);
