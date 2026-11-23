@@ -354,7 +354,7 @@ test: vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck boot
 
 .PHONY: sysqioargscheck
 sysqioargscheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c tests/test_sysqio_args_host.c -o build/sysqioargscheck
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c $(wildcard src/vms_dq_fdt_*.c) tests/test_sysqio_args_host.c -o build/sysqioargscheck
 	./build/sysqioargscheck
 clean:
 	rm -rf build vms37lab.ima portdisk.img

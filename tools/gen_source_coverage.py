@@ -2265,7 +2265,9 @@ assert len({f['original_file'] for f in result['files']})==len(result['files'])
 qio_rows=[
  (1,111,None,None,'Original declarations and pre-argument-offset service implementation unresolved','unresolved'),
  (112,123,'src/vms_sysqio_args.c','port_v37_sysqio_decode_args','Fixed SYS$QIO argument-list offsets are decoded; event flag, channel, privilege, device and I/O processing remain unimplemented','partial'),
- (124,735,None,None,'Original QIO entry, channel authorization, dispatch and VAX service behavior unresolved','unresolved'),
+ (124,252,None,None,'Original channel lookup, local/global event handling and access-pending scheduling unresolved','unresolved'),
+ (253,283,'src/vms_sysqio_args.c','port_v37_sysqio_preflight','Native CCB access-mode comparison, DQ FDT function legality and offline exceptions; channel lookup and full device semantics remain unimplemented','partial'),
+ (284,735,None,None,'IOSB probing, quotas, IRP allocation, full device access checks, dispatch and completion unresolved','unresolved'),
  (736,740,None,None,'EXE$ABORTIO AST quota adjustments and IOSB clearing unported','unresolved'),
  (741,742,'src/vms_qio_finishioc.c','port_v37_qio_finishioc','EXE$FINISHIOC clears R1 before common finish path','partial'),
  (743,749,'src/vms_qio_finishio.c','port_v37_qio_finishio','UCB OPCNT, IRP media status, append IOC post FIFO and defer IPL4','partial'),
@@ -2280,7 +2282,7 @@ for lo,hi,pc,sym,description,status in qio_rows:
     else:qio_sec.append({'original_lines':[lo,hi],'status':status,'reason':description})
 result['files'].append({'original_file':'SYS/SRC/SYSQIOREQ.MAR',
     'original_lines':908,'sections':qio_sec,
-    'unresolved_integration':'The native AP decoder preserves the fixed 12-argument offsets. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; user SYS$QIO entry, channel authorization, device function dispatch, process IRP allocation, IOSB and process AST completion remain absent.'})
+    'unresolved_integration':'The native AP decoder preserves the fixed 12-argument offsets, and a preflight helper checks the resolved channel access threshold, DQ FDT legality and offline exceptions. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; user SYS$QIO entry, process channel lookup, event flags, IOSB access, quotas, device access/protection, IRP allocation and process AST completion remain absent.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M123: IOCIOPOST kernel-end-action subset executed in real SYS.EXE.

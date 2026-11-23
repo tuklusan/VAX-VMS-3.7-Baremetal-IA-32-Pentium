@@ -31,6 +31,30 @@ int main(void){
        PORT_V37_SYSQIO_ARGS_BAD||memcmp(&out,&sentinel,sizeof out))return 4;
     if(port_v37_sysqio_decode_args(ap+1u,sizeof ap-1u,&out)!=
        PORT_V37_SYSQIO_ARGS_BAD)return 5;
+    struct port_dq_fdt fdt;
+    if(port_dq_fdt_build(&fdt,sizeof fdt)!=PORT_DQ_FDT_OK)return 6;
+    struct port_v37_sysqio_device device={&fdt,sizeof fdt,4u,1u};
+    struct port_v37_sysqio_dispatch action={0};
+    struct port_v37_sysqio_args request={.function=0x80ccu};
+    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+       PORT_V37_SYSQIO_PRECHECK_OK||action.full_function!=0x80ccu||
+       action.function_code!=PORT_DQ_READPBLK)return 7;
+    request.function=PORT_DQ_READLBLK;
+    device.ccb_access_limit=3u;
+    memset(&action,0x5a,sizeof action);
+    struct port_v37_sysqio_dispatch saved=action;
+    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+       PORT_V37_SYSQIO_PRECHECK_NOPRIV||memcmp(&action,&saved,sizeof action))
+        return 8;
+    device.ccb_access_limit=4u;device.online=0u;
+    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+       PORT_V37_SYSQIO_PRECHECK_OFFLINE)return 9;
+    request.function=PORT_DQ_DEACCESS;
+    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+       PORT_V37_SYSQIO_PRECHECK_OK)return 10;
+    request.function=63u;
+    if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
+       PORT_V37_SYSQIO_PRECHECK_ILLFUNC)return 11;
     puts("SYS$QIO AP argument layout and fail-atomic decode PASS");
     return 0;
 }
