@@ -115,6 +115,15 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
        !channel.device||!channel.ucb)
         return begin_failure(PORT_V37_SYSQIO_BEGIN_IVCHAN,
             PORT_SYS85_IVCHAN,&args,process,ops,service_status);
+    /* SYSQIOREQ.MAR DACSPND waits on SCH$GQ_MWAIT with RSN$_ASTWAIT while
+     * access/deaccess owns CCB$L_WIND bit 0. Never dispatch through a CCB in
+     * that transient state; callers without a scheduler binding must retry. */
+    if(channel.window&1u){
+        if(!ops->wait_channel)return PORT_V37_SYSQIO_BEGIN_WAIT;
+        ops->wait_channel(ops->context,process->pid,args.channel,&channel);
+        if((channel.window&1u)||!channel.device||!channel.ucb)
+            return PORT_V37_SYSQIO_BEGIN_WAIT;
+    }
     struct port_v37_sysqio_dispatch dispatch={0};
     const uint32_t check=port_v37_sysqio_preflight(&args,
         process->access_mode,channel.ccb_access_limit,channel.device,&dispatch);

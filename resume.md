@@ -597,3 +597,11 @@ Verification: `make sysqioargscheck` passed with success and IRP-construction-fa
 Remaining: connect this transaction to live process AP/PCB/channel state and implement channel IOC, source error rollback, DQA0 FDT/IRQ completion, public SYS$QIO ABI dispatch, Files-11 ACP, AST completion, scheduler and image activation. Acceptance boot/login/DECnet/SET HOST 0 sequence is not achieved.
 
 M250 implementation commit (local): `119d0a69795aa45d2284a0f3fe8aca11898fc0a1`. The code and coverage were published to GitHub `main` through contents commits ending at `e0c9b101b82d3a79d6dc01bba79b5bf62a910683`; resume publication commit: `511f8d5110465ba6e5c8a26bdcf0e954972683e1`. Native Git push remains unavailable because this environment has no HTTPS Git credentials.
+
+## M251 — SYSQIO CCB pending wait boundary, 23 November 2026
+
+Added the source CCB$L_WIND pending-bit guard to SYSQIO begin. When access/deaccess is pending, preparation now refuses to clear IOSB, charge I/O quota, allocate an IRP, or post a false service error until a scheduler wait callback returns with the CCB pending bit cleared. The no-callback result is a distinct internal wait condition propagated by the IRP preparation wrapper. Host tests cover both fail-closed/no-side-effect behavior and resumed preparation after the wait callback. This models the required `RSN$_ASTWAIT` synchronization boundary, but no live SCH$WAIT callback is wired to a process scheduler, so public SYS$QIO remains unavailable.
+
+Coverage generator now records SYSQIOREQ.MAR lines 149–156 as partial and lines 313–335 as partial. Verification: `make sysqioargscheck` passed; full `make test sysexecentrycheck v37ia32ctxcheck` passed; `make -j2 all` passed (no rebuild required); source coverage validation passed with 2,011 ranges, 444/4,566 original files indexed, zero missing mapped functions, 29,279 partial and 51,913 unresolved lines. This host-only change was not given a new QEMU run; last real IA-32 QEMU boot remains the M249 run and still halts at incomplete INIT.
+
+Remaining: connect the wait callback to a real VMS scheduler, bind CCB/channel lookup to the process, perform source-ordered FDT/device access and DQA0 STARTIO, and complete IRP/IOSB/event/AST posting. Files-11 ACP, INIT completion, image activation, SYSTEM login, DECnet Phase IV and nested SET HOST 0 acceptance remain unachieved.

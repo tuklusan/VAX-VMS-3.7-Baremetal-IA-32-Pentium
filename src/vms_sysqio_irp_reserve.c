@@ -69,6 +69,8 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
     const uint32_t begun=port_v37_sysqio_begin(ap,ap_bytes,process,ops,
                                                 &request,&status);
     if(begun!=PORT_V37_SYSQIO_BEGIN_OK){
+        if(begun==PORT_V37_SYSQIO_BEGIN_WAIT)
+            return PORT_V37_SYSQIO_PREPARE_WAIT;
         *service_status=status;
         return PORT_V37_SYSQIO_PREPARE_BEGIN;
     }

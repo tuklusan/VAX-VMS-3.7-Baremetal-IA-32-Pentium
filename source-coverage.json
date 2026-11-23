@@ -21303,10 +21303,29 @@
         {
           "original_lines": [
             124,
+            148
+          ],
+          "status": "unresolved",
+          "reason": "Original CCB access-pending detection and event/channel processing unresolved"
+        },
+        {
+          "original_lines": [
+            149,
+            156
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_args.c",
+          "pc_symbol": "port_v37_sysqio_begin",
+          "pc_line": 94,
+          "function": "When CCB$L_WIND bit 0 marks access/deaccess pending, require a scheduler wait callback and resume only after the pending bit clears; no live SCH$WAIT/RSN$_ASTWAIT binding yet"
+        },
+        {
+          "original_lines": [
+            157,
             238
           ],
           "status": "unresolved",
-          "reason": "Original channel lookup, local/global event handling and access-pending scheduling unresolved"
+          "reason": "Original spooled-device selection, channel lookup, local/global event handling and remaining service prologue unresolved"
         },
         {
           "original_lines": [
@@ -21344,7 +21363,7 @@
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_preflight",
           "pc_line": 36,
-          "function": "Native CCB access-mode comparison, DQ FDT function legality and offline exceptions with VMS NOPRIV/ILLIOFUNC/DEVOFFLINE status mapping; full device semantics remain unimplemented"
+          "function": "Native CCB access-mode comparison, DQ FDT function legality and offline exceptions with VMS status mapping; access/deaccess pending CCB waits are represented by a required callback but not bound to live SCH$WAIT"
         },
         {
           "original_lines": [
@@ -21392,8 +21411,8 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_irp",
-          "pc_line": 46,
-          "function": "Join service begin with standard IRP/AST reservation; on reservation failure restore the process direct/buffered I/O charge and post the service error event. CCB IOC accounting, device dispatch, hardware submission and completion remain unresolved"
+          "pc_line": 58,
+          "function": "Join service begin with standard IRP/AST reservation; on reservation failure restore direct/buffered process I/O count and post the service error event; channel IOC and driver dispatch remain unresolved"
         },
         {
           "original_lines": [

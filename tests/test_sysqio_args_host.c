@@ -67,7 +67,8 @@ struct begin_rig {
     void *ucb;
     uint32_t expected_pid,expected_channel,lookups,posts,posted_pid,posted_status;
     uint8_t posted_efn,ccb_access_limit;
-    uint32_t quota_calls;uint8_t quota_buffered;int deny_channel,grant_quota;
+    uint32_t quota_calls,waits,window;
+    uint8_t quota_buffered;int deny_channel,grant_quota;
 };
 static int lookup_channel(void *opaque,uint32_t pid,uint32_t channel,
     struct port_v37_sysqio_resolved_channel *out){
@@ -75,8 +76,16 @@ static int lookup_channel(void *opaque,uint32_t pid,uint32_t channel,
     if(r->deny_channel||pid!=r->expected_pid||channel!=r->expected_channel)
         return -1;
     out->device=r->device;out->ucb=r->ucb;
+    out->window=r->window;
     out->ccb_access_limit=r->ccb_access_limit?r->ccb_access_limit:4u;
     return 0;
+}
+static void wait_channel(void *opaque,uint32_t pid,uint32_t channel,
+    struct port_v37_sysqio_resolved_channel *resolved){
+    struct begin_rig *r=opaque;
+    if(pid==r->expected_pid&&channel==r->expected_channel){
+        ++r->waits;r->window&=~1u;resolved->window=r->window;
+    }
 }
 static int single_quota(void *opaque,uint32_t pid,uint8_t buffered){
     struct begin_rig *r=opaque;
@@ -183,6 +192,7 @@ int main(void){
         .context=&rig,.lookup_channel=lookup_channel,.post_event=post_event,
         .single_io_quota=single_quota,.user_memory=memops};
     struct port_v37_sysqio_prepared prepared={0};
+    struct port_v37_sysqio_prepared untouched;
     uint32_t begin_status=0u;
     proc.direct_io_count=1;
     memset(mem.bytes,0xa5,sizeof mem.bytes);mem.probes=mem.clears=0u;
@@ -194,9 +204,24 @@ int main(void){
        prepared.channel.ucb!=rig.ucb||prepared.dispatch.function_code!=49u||
        mem.probes!=1u||mem.clears!=1u||proc.direct_io_count!=0)
         return 21;
+    rig.window=1u;rig.posts=0u;rig.waits=0u;proc.direct_io_count=1;
+    mem.probes=mem.clears=0u;
+    memset(&prepared,0x5a,sizeof prepared);untouched=prepared;
+    begin_status=0xfeedu;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_WAIT||rig.posts||
+       rig.waits||proc.direct_io_count!=1||mem.probes||mem.clears||
+       begin_status!=0xfeedu||memcmp(&prepared,&untouched,sizeof prepared))
+        return 57;
+    struct port_v37_sysqio_begin_ops wait_ops=begin_ops;
+    wait_ops.wait_channel=wait_channel;
+    if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&wait_ops,&prepared,
+         &begin_status)!=PORT_V37_SYSQIO_BEGIN_OK||rig.waits!=1u||
+       prepared.channel.window!=0u||proc.direct_io_count!=0)
+        return 58;
+    proc.direct_io_count=0;rig.window=0u;rig.posts=0u;
     rig.deny_channel=1;rig.posts=0u;rig.lookups=0u;
     memset(mem.bytes,0xa5,sizeof mem.bytes);mem.probes=mem.clears=0u;
-    struct port_v37_sysqio_prepared untouched;
     memset(&untouched,0x5a,sizeof untouched);prepared=untouched;
     if(port_v37_sysqio_begin(ap,sizeof ap,&proc,&begin_ops,&prepared,
          &begin_status)!=PORT_V37_SYSQIO_BEGIN_IVCHAN||
@@ -292,9 +317,20 @@ int main(void){
     if(port_v37_irp_pool_free(&pool,reserved_irp,reserved_va,
           PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
         return 49;
-    proc.direct_io_count=1;proc.ast_count=1;rig.posts=0u;
     uint8_t *prepared_irp=0;uint32_t prepared_va=0u;
     struct port_v37_sysqio_prepared integrated={0};
+    proc.direct_io_count=1;proc.ast_count=1;rig.posts=0u;
+    rig.window=1u;integrated=untouched;prepared_irp=(uint8_t *)(uintptr_t)0x55u;
+    prepared_va=0x55u;ast_status=0xfeedu;
+    if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&proc,&begin_ops,
+          &reserve_spec,&pool,&pool_sync,&integrated,&prepared_irp,
+          &prepared_va,&ast_status)!=PORT_V37_SYSQIO_PREPARE_WAIT||
+       rig.posts||proc.direct_io_count!=1||proc.ast_count!=1||
+       prepared_irp!=(uint8_t *)(uintptr_t)0x55u||prepared_va!=0x55u||
+       ast_status!=0xfeedu||memcmp(&integrated,&untouched,sizeof integrated))
+        return 59;
+    rig.window=0u;
+    prepared_irp=0;prepared_va=0u;
     if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&proc,&begin_ops,
           &reserve_spec,&pool,&pool_sync,&integrated,&prepared_irp,
           &prepared_va,&ast_status)!=PORT_V37_SYSQIO_PREPARE_OK||
