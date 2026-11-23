@@ -84,11 +84,11 @@ int main(void){
         .sector=sector,.sector_bytes=sizeof sector,.boot_unit=0u,
         .read_sector=mock_read,.read_context=&calls};
     struct port_dq_bootread_result read_result={0};
-    CHECK(port_dqddt_bootread(&d,&fdt,&request,&read_result,7u)==
+    CHECK(port_dqddt_dispatch_bootread(&d,&fdt,&request,&read_result,7u)==
         PORT_DQ_BOOTREAD_OK);
     CHECK(calls==1u&&read_result.lbn==7u&&read_result.bytes==512u&&
         read_result.irp_status==1u&&sector[0]==7u&&sector[255]==262u);
-    CHECK(port_dqddt_bootread(&d,&fdt,&request,&read_result,8u)==
+    CHECK(port_dqddt_dispatch_bootread(&d,&fdt,&request,&read_result,8u)==
         PORT_DQ_BOOTREAD_BAD);
     CHECK(calls==1u);
     struct port_dqddt_stage before=d;

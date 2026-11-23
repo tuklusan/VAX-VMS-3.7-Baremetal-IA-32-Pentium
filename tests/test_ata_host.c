@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "vms_ata.h"
-struct mock { unsigned command,words,delay,drive,alt; uint8_t regs[8]; int broken; int selected; int use_irq,armed,waited; };
+struct mock { unsigned command,words,words_out,delay,drive,alt; uint8_t regs[8]; int broken; int selected; int use_irq,armed,waited,write_ready,write_done; uint16_t written[256]; };
 static uint8_t in8(void *p,uint16_t addr) {
     struct mock *m=p;
     if (addr==0x3f6) {++m->alt; return 0x50;}
@@ -38,6 +38,32 @@ static void out8(void *p,uint16_t addr,uint8_t value) {
     else {assert(addr>=0x1f2 && addr<=0x1f6);m->regs[addr-0x1f0]=value;
           if (addr==0x1f6) m->selected=1;}
 }
+static void out16(void *p,uint16_t addr,uint16_t value) {
+    struct mock *m=p;
+    assert(addr==0x1f0&&m->command==0x30&&m->write_ready&&
+           m->words_out<256);
+    m->written[m->words_out++]=value;
+}
+static int begin_write(void *p) {
+    struct mock *m=p;
+    assert(m->command==0&&!m->armed);
+    m->armed=1;return 0;
+}
+static int wait_write_data(void *p) {
+    struct mock *m=p;
+    assert(m->armed&&m->command==0x30);
+    m->write_ready=1;m->waited=1;return 0;
+}
+static int arm_write_complete(void *p) {
+    struct mock *m=p;
+    assert(m->write_ready&&m->words_out==0&&!m->write_done);
+    m->write_done=1;return 0;
+}
+static int wait_write_complete(void *p) {
+    struct mock *m=p;
+    assert(m->write_done&&m->words_out==256);
+    return 0;
+}
 int main(void) {
     struct mock m={0};
     struct port_ata_bus bus={in8,in16,out8,&m,0,0};
@@ -61,6 +87,17 @@ int main(void) {
     assert(m.armed&&m.waited&&m.command==0x20&&m.words==256);
     struct port_ata_bus unpaired={in8,in16,out8,&m,begin_read,0};
     assert(port_ata_read28(&unpaired,7,buf)==PORT_ATA_BAD_ARG);
+    struct mock w={.selected=1};
+    const struct port_ata_write_bus write_bus={in8,out8,out16,&w,
+        begin_write,wait_write_data,arm_write_complete,wait_write_complete};
+    for(unsigned i=0;i<256;i++)buf[i]=(uint16_t)(0x5300u+i);
+    assert(port_ata_write28(&write_bus,0x01020304u,buf)==PORT_ATA_OK);
+    assert(w.command==0x30&&w.words_out==256&&w.alt==4&&w.selected&&
+           w.write_ready&&w.write_done);
+    assert(w.regs[6]==0xe1&&w.regs[2]==1&&w.regs[3]==4&&
+           w.regs[4]==3&&w.regs[5]==2);
+    for(unsigned i=0;i<256;i++)assert(w.written[i]==(uint16_t)(0x5300u+i));
+    assert(port_ata_write28(&write_bus,0x10000000u,buf)==PORT_ATA_BAD_ARG);
     puts("M10 ATA host PASS: LBA28 port sequence, 256 words, error/timeout");
     return 0;
 }

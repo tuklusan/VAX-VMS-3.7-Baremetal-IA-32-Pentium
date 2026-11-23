@@ -21396,9 +21396,9 @@
           ],
           "status": "partial",
           "pc_file": "src/vms_dqddt_bootread.c",
-          "pc_symbol": "port_dqddt_bootread",
-          "pc_line": 22,
-          "function": "Validated staged DDT dispatches the resident private READPBLK IRP; the native DQ IOC FIFO now completes its sector through the attached CRB IRQ14 path, while public process QIO and ACP remain unavailable"
+          "pc_symbol": "port_dqddt_dispatch_bootread",
+          "pc_line": 3,
+          "function": "The single staged READPBLK action slot dispatches the privileged boot IRP; this is not an IOC-published DQA driver and public QIO/ACP are absent"
         },
         {
           "original_lines": [

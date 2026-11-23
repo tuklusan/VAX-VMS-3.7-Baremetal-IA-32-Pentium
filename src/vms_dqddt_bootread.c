@@ -6,10 +6,10 @@ uint32_t port_dqddt_dispatch_bootread(const struct port_dqddt_stage *stage,
     if(port_dqddt_function(stage,fdt,PORT_DQ_READPBLK)!=PORT_DQDDT_NATIVE)
         return PORT_DQ_BOOTREAD_UNBOUND;
 #if UINTPTR_MAX > UINT32_MAX
-    /* A 32-bit resident DDT function address cannot be called in a 64-bit
-     * host process. Host tests exercise the table and underlying action. */
-    (void)q; (void)result; (void)lbn;
-    return PORT_DQ_BOOTREAD_UNBOUND;
+    /* Host pointers do not fit the resident 32-bit table representation.
+     * Validation above binds this slot to this exact implementation, so
+     * exercise the same action through its typed host symbol. */
+    return port_dqddt_bootread(stage,fdt,q,result,lbn);
 #else
     typedef uint32_t (*read_action_fn)(const struct port_dqddt_stage *,
         const struct port_dq_fdt *,const struct port_dq_bootread_request *,
