@@ -7,6 +7,7 @@
 #include "vms_sysqio_iosb.h"
 #include "vms_qio_irp_pool.h"
 #include "vms_ini_packet_queues.h"
+#include "vms_v37_ccb.h"
 
 /* Native decoder for the fixed SYS$QIO/EXE$QIO argument list. The argument
  * list retains the VAX AP layout: count longword followed by 12 longwords. */
@@ -90,7 +91,14 @@ typedef int (*port_v37_sysqio_single_quota_fn)(void *,uint32_t,uint8_t);
 struct port_v37_sysqio_begin_ops {
     void *context;
     port_v37_sysqio_clref_fn clear_global_efn;
+    /* The source channel table is addressed backward from CTL$GL_CCBBASE.
+     * A live UCB/device resolver supplies the native DDB/FDT view. */
+    uint8_t *ccb_base;
+    size_t ccb_preceding_bytes;
+    uint16_t ccb_maximum_channel_offset;
     int (*lookup_channel)(void *,uint32_t,uint32_t,
+        struct port_v37_sysqio_resolved_channel *);
+    int (*lookup_ucb)(void *,uint32_t,uint32_t,
         struct port_v37_sysqio_resolved_channel *);
     /* SCH$WAIT for RSN$_ASTWAIT and return after the CCB access/deaccess
      * pending bit is cleared. Required only when resolved window bit 0 is set. */
