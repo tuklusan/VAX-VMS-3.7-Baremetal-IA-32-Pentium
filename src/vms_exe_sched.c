@@ -69,3 +69,20 @@ uint32_t port_exe_sched_select(struct port_exe_scheduler *s,
     ops->load_context(ops->context,p);
     return PORT_SS_NORMAL;
 }
+
+/* A blocked or deleted process must not be requeued by RESCHED. Save its
+ * interrupted context while it is still CURRENT, then relinquish ownership
+ * and dispatch only a process that an executive event has made READY. */
+uint32_t port_exe_sched_suspend(struct port_exe_scheduler *s,
+                               const struct port_exe_sched_ops *ops) {
+    if(!s || !ops || !ops->save_context || !ops->load_context ||
+       !ops->idle_until_interrupt || !ops->fatal_bad_queue ||
+       !s->current || s->current->state!=PORT_EXE_STATE_CURRENT)
+        return PORT_SS_BADPARAM;
+    struct port_exe_sched_process *p=s->current;
+    ops->save_context(ops->context,p);
+    p->state=PORT_EXE_STATE_OTHER;
+    p->next=p->previous=NULL;
+    s->current=NULL;
+    return port_exe_sched_select(s,ops);
+}

@@ -115,6 +115,24 @@ int main(void) {
     broken.ready_mask=1u<<3;
     assert(port_exe_sched_select(&broken,&ops)==PORT_SS_BADQUEUEHDR);
     assert(t.fatal==1u);
+    /* A blocked/deleted current PCB is saved but never reinserted. An
+     * already-ready process receives the next context. */
+    struct port_exe_scheduler suspended;
+    struct port_exe_sched_process running={.pid=21,.type=0x31u,
+        .current_priority=9,.base_priority=9,.state=PORT_EXE_STATE_CURRENT};
+    struct port_exe_sched_process ready={.pid=22,.type=0x31u,
+        .current_priority=3,.base_priority=3,.state=PORT_EXE_STATE_OTHER};
+    port_exe_sched_init(&suspended,0x31u);
+    suspended.current=&running;
+    assert(port_exe_sched_enqueue(&suspended,&ready)==PORT_SS_NORMAL);
+    unsigned saved_before=t.saved,loaded_before=t.loaded;
+    assert(port_exe_sched_suspend(&suspended,&ops)==PORT_SS_NORMAL);
+    assert(t.saved==saved_before+1u && t.loaded==loaded_before+1u);
+    assert(suspended.current==&ready && ready.state==PORT_EXE_STATE_CURRENT);
+    assert(running.state==PORT_EXE_STATE_OTHER &&
+           !(suspended.ready_mask&(1u<<running.current_priority)));
+    suspended.current=NULL;
+    assert(port_exe_sched_suspend(&suspended,&ops)==PORT_SS_BADPARAM);
     puts("SYSCHGMOD SYSDCLCMH SCHED pass");
     return 0;
 }

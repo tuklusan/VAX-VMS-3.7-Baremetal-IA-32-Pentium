@@ -33,4 +33,9 @@ uint32_t port_exe_sched_resched(struct port_exe_scheduler *s,
                                const struct port_exe_sched_ops *ops);
 uint32_t port_exe_sched_select(struct port_exe_scheduler *s,
                               const struct port_exe_sched_ops *ops);
+/* Suspend the running PCB without putting it on a ready queue. The save
+ * callback retains its continuation for a later wakeup; select then runs
+ * the highest-priority process already made ready by executive events. */
+uint32_t port_exe_sched_suspend(struct port_exe_scheduler *s,
+                               const struct port_exe_sched_ops *ops);
 #endif

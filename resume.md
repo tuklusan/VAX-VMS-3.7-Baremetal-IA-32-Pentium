@@ -360,3 +360,11 @@ Verification: `make sysqioargscheck` PASS; `python3 tools/gen_source_coverage.py
 SYSQIOREQ.MAR still lacks public entry integration, real CCB lookup, EXE$SNGLEQUOTA wait/commit semantics, IPL/deletion protection, IRP allocation and construction, device privilege/protection, FDT execution, DQA process I/O and completion/AST delivery. All end-to-end acceptance conditions remain incomplete.
 
 M225 implementation commit: `1607b2b76b78e570c425e22350c6179b803eac5c`.
+
+## M226 — Scheduler suspend dispatch, 23 November 2026
+
+Added `port_exe_sched_suspend` for the original executive path where a current process blocks or is deleted: it saves the live continuation while the PCB is CURRENT, marks it OTHER without putting it on a ready queue, clears scheduler ownership, then selects the highest-priority already-ready process through the existing source scheduler. Host coverage verifies the suspended PCB is not requeued, a ready higher-priority process is loaded, and invalid no-current calls are rejected. This closes a scheduler primitive needed by real wait/wake integration; `arch.c` still uses its diagnostic two-task XOR scheduler, and this helper is not yet bound to live VMS PCBs, event wakeups, IRQ rescheduling, or process activation.
+
+Verification: `make exeportcorecheck` PASS; full `make test` PASS (exit 0, suite through M49; native image rebuilt and installed as part of test dependencies); `python3 tools/validate_source_ranges.py` PASS (441/4,566 originals indexed; 28,764 partial, 50,437 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `git diff --check` PASS. No QEMU run: the modified helper remains outside the live guest scheduler. No restricted DEC source or disk image was staged.
+
+Source coverage counts unchanged. Live scheduler binding, process wake queues, actual public SYS$QIO and DQA process completion, Files-11 ACP, native INIT continuation, process image activation, SYSTEM login/DCL, DECnet and SET HOST 0 remain incomplete.
