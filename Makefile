@@ -204,7 +204,7 @@ build/vms_ramcheck.o: src/vms_ramcheck.c src/vms_ramcheck.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/vms_phys.o: src/vms_phys.c src/vms_phys.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
-build/kernel.o: src/kernel.c src/vms_ini_phv_swap.h src/vms_sys_executive_entry.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_login_interact.h src/vms_logincmd.h src/vms_login_fileio.h src/vms_login_uart.h src/vms_hpwd.h src/vms_validate.h src/vms_logintime.h src/vms_dcl_exit.h src/vms_dcl_readrec.h src/vms_dcl_initial.h src/vms_dcl_command.h src/vms_rem_protocol.h src/vms_bootio.h src/vms_boot_files11.h src/vms_vmbargs.h src/vms_vmb_rpb.h src/vms_sysmount.h src/vms_sysboot_elf.h src/vms_dcl_goto.h src/vms_ast.h src/vms_astdel.h src/vms_postef.h src/vms_mutex.h src/vms_condition.h | build
+build/kernel.o: src/kernel.c src/vms_ini_phv_swap.h src/vms_sys_executive_entry.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_login_interact.h src/vms_logincmd.h src/vms_login_fileio.h src/vms_login_uart.h src/vms_hpwd.h src/vms_validate.h src/vms_logintime.h src/vms_dcl_exit.h src/vms_dcl_readrec.h src/vms_dcl_initial.h src/vms_dcl_command.h src/vms_rem_protocol.h src/vms_bootio.h src/vms_boot_files11.h src/vms_vmbargs.h src/vms_vmb_rpb.h src/vms_sysmount.h src/vms_sysboot_elf.h src/vms_dcl_goto.h src/vms_ast.h src/vms_astdel.h src/vms_postef.h src/vms_mutex.h src/vms_condition.h src/vms_qio_post.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/vms_ini_pc_bus.o: src/vms_ini_pc_bus.c src/vms_ini_pc_bus.h src/vms_iniloa_iomap.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -772,7 +772,7 @@ files1187check: portdisk.img build/files11-acp-partial.o | build
 	./build/files1187check portdisk.img
 
 # M88: genuine, independently linked native SYS.EXE and Files-11 installation.
-build/vms_sys_executive_entry.o: src/vms_sys_executive_entry.c src/vms_sys_executive_entry.h src/vms_sysloavec.h src/vms_sysloa386.h src/vms_exe_gettim.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_ini_lockdb.h src/vms_ini_procvec.h src/vms_ini_phv_swap.h src/vms_ini_mpw.h src/vms_ini_pflvec.h src/vms_ini_syswcb.h src/vms_ini_log_templates.h src/vms_v37_dyn_tags.h src/vms_ini_syslog.h src/vms_ini_bootdev_scan.h src/vms_ini_dpt_templates.h src/vms_sys85.h src/vms_dq_bootread.h src/vms_dqddt.h src/vms_dq_crb.h src/vms_ini_devicedb.h src/vms_ioc_phys.h | build
+build/vms_sys_executive_entry.o: src/vms_sys_executive_entry.c src/vms_sys_executive_entry.h src/vms_sysloavec.h src/vms_sysloa386.h src/vms_exe_gettim.h src/vms_ini_packet_queues.h src/vms_sysboot_pktmem.h src/vms_ini_lockdb.h src/vms_ini_procvec.h src/vms_ini_phv_swap.h src/vms_ini_mpw.h src/vms_ini_pflvec.h src/vms_ini_syswcb.h src/vms_ini_log_templates.h src/vms_v37_dyn_tags.h src/vms_ini_syslog.h src/vms_ini_bootdev_scan.h src/vms_ini_dpt_templates.h src/vms_sys85.h src/vms_qio_post.h src/vms_dq_bootread.h src/vms_dqddt.h src/vms_dq_crb.h src/vms_ini_devicedb.h src/vms_ioc_phys.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/vms_sysboot_pktmem.o: src/vms_sysboot_pktmem.c src/vms_sysboot_pktmem.h src/vms_booparam.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -1334,7 +1334,7 @@ qiopostcheck: $(M121_QIO_OBJS) | build
 	./build/qiopostcheck
 
 # M122: source SYSMAR DDTAB/FUNCTAB, NLDRIVER and DEVICEDAT NL$DDT.
-$(M122_NL_DDT_OBJS): build/%.o: src/%.c src/vms_nl_ddt.h | build
+$(M122_NL_DDT_OBJS): build/%.o: src/%.c src/vms_nl_ddt.h src/vms_qio_post.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: nlddtcheck
 nlddtcheck: $(M122_NL_DDT_OBJS) | build
@@ -1342,7 +1342,7 @@ nlddtcheck: $(M122_NL_DDT_OBJS) | build
 	./build/nlddtcheck
 
 # M123: bounded source IOCIOPOST kernel end-action only; PCB/KAST absent.
-$(M123_IOPOST_OBJS): build/%.o: src/%.c src/vms_iopost_end.h | build
+$(M123_IOPOST_OBJS): build/%.o: src/%.c src/vms_iopost_end.h src/vms_qio_post.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: iopostendcheck
 iopostendcheck: $(M123_IOPOST_OBJS) | build
@@ -1359,7 +1359,7 @@ dqfdtcheck: $(M125_DQ_OBJS) | build
 	./build/dqfdtcheck
 
 # M126: one genuine privileged DQ READPBLK at the SYSBOOT/INIT boundary.
-$(M126_DQ_READ_OBJS): build/%.o: src/%.c src/vms_dq_bootread.h | build
+$(M126_DQ_READ_OBJS): build/%.o: src/%.c src/vms_dq_bootread.h src/vms_qio_post.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: dqbootreadcheck
 dqbootreadcheck: $(M126_DQ_READ_OBJS) portdisk.img | build
@@ -1394,7 +1394,7 @@ devlogcheck: $(M129_DEVLOG_OBJS) | build
 # M130-M207: source DQ DDT/FDT activation, partial DQA0 publication and
 # IOC-selected STARTIO. Full RB730 IOC/error paths, REGDUMP, MNTVER and ACP
 # remain unported.
-$(M130_DQDDT_OBJS): build/%.o: src/%.c src/vms_dqddt.h src/vms_dq_bootread.h src/vms_ini_devicedb.h src/vms_dq_crb.h | build
+$(M130_DQDDT_OBJS): build/%.o: src/%.c src/vms_dqddt.h src/vms_dq_bootread.h src/vms_ini_devicedb.h src/vms_dq_crb.h src/vms_qio_post.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: dqddtcheck
 dqddtcheck: $(M130_DQDDT_OBJS) | build
