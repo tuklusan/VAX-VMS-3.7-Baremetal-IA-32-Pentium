@@ -1,6 +1,6 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M207
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M208
 
-INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, and verify real ATA IRQ14 readback/restore; public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
+INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, and reject inconsistent published DDB/UCB/CRB backlinks; public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
 
 Active repository: tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium main
@@ -180,3 +180,12 @@ Coverage remains partial: DQDRIVER.MAR lines 634-639 are indexed to `port_dqddt_
 Verification at implementation commit `80912fedd5b6e10b6a90caacaf9ef7d239f8ba44`: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `make qemu-sysboot-m207` PASS with real DQA0 IOC-selected DDT STARTIO WRITEPBLK over ATA IRQ14, verified readback and restore, then the explicit incomplete-INIT stop. `python3 tools/checkpoint_serial_logs.py verify` PASS (66 raw transcripts); `git diff --check` PASS. Final COM1 transcript `logs/serial/qemu-m207-run-local-20261123T071545580409Z.log`, 5,029 bytes, SHA-256 `c0ab5120ca6423aaafbe894e35101503f8a229a4ea0367ca58143ab8449a1f32`. Two failed runs are retained: `...T071040833647Z.log` stopped on stale SYS object/header dependency; `...T071148975653Z.log` failed the DQA write path with root cause undetermined. Three further raw transcripts, including the final identical-hash pass, record passing runs. Runner terminates QEMU; no QEMU process remains. No login, DCL, or DECnet was observed.
 
 Candidate audit found no original DEC source files, binary images, recognized credentials/private keys or new dependencies staged. Original source checkout remains pinned at `2f5bd967bc163bdb4aa9a5e4b1f9981d9995e752`. M207 implementation commit: `80912fedd5b6e10b6a90caacaf9ef7d239f8ba44`.
+
+
+## M208 — Validate published DQA0 request backlinks, 23 November 2026
+
+Hardened the privileged DQ request preflight for post-publication operation. It now requires the UCB's CRB backlink to equal the validated DQA0 CRB address, in addition to requiring the published DDT base to match the active STARTIO context and both DDB/UCB DDT pointers. Host tests independently corrupt the UCB CRB, UCB DDT and DDB DDT pointers and verify rejection before dispatch. The guarded prepublication INIT request path remains available. This is request graph validation, not general IOC scheduling or public process QIO.
+
+Verification at implementation commit `d04ca2698fa761da70d299531553e9a57c84be93`: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0); `make qemu-sysboot-m207` PASS with actual IOC-selected DQA0 DDT WRITEPBLK, ATA IRQ14, readback and restoration; source-range validation PASS (1,957 ranges, zero unmapped functions; inventory statuses unchanged); serial manifest PASS (67 raw logs); diff whitespace check PASS. QEMU transcript `logs/serial/qemu-m207-run-local-20261123T072146092441Z.log`, 5,029 bytes, SHA-256 `c0ab5120ca6423aaafbe894e35101503f8a229a4ea0367ca58143ab8449a1f32`. No QEMU process remains. Original source checkout remains pinned; no DEC sources, binary images, secrets, or dependencies were added.
+
+M208 implementation commit: `d04ca2698fa761da70d299531553e9a57c84be93`. The guest still stops at incomplete INIT. Public SYS$QIO, Files-11 ACP, process-aware AST completion, scheduler/process image activation, SYSTEM login, DCL and DECnet Phase IV remain unfinished.
