@@ -1,10 +1,25 @@
 #include "vms_sysqio_args.h"
 #include "vms_exe_schevt.h"
 #include "vms_sys85.h"
+#include "vms_v37_pcb.h"
 
 static uint32_t load32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
            ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
+}
+static uint32_t clear_process_efn(struct port_v37_sysqio_process *process,
+    uint32_t efn,const struct port_v37_sysqio_begin_ops *ops,
+    uint32_t *service_status){
+    if(!process->source_pcb||efn>63u)
+        return port_v37_sysqio_clear_efn(efn,process->local_event_flags,
+            ops->clear_global_efn,ops->context,service_status);
+    const unsigned cluster=efn>>5u;
+    const uint32_t off=cluster?PORT_V37_PCB_EFCU:PORT_V37_PCB_EFCS;
+    uint32_t *const flags=(uint32_t *)(void *)(process->source_pcb+off);
+    (void)__atomic_fetch_and(flags,~(UINT32_C(1)<<(efn&31u)),
+                             __ATOMIC_SEQ_CST);
+    *service_status=PORT_SYS85_NORMAL;
+    return PORT_V37_SYSQIO_EF_OK;
 }
 
 /* SYS/SRC/SYSQIOREQ.MAR 239-272 and 286-290. The source entry reads the
@@ -75,14 +90,14 @@ static uint32_t begin_failure(uint32_t result,uint32_t status,
  * backed out exactly as the source does before posting SS$_EXQUOTA. */
 static int charge_io_quota(struct port_v37_sysqio_process *process,
     const struct port_v37_sysqio_begin_ops *ops,uint8_t buffered){
-    int16_t *const count=buffered?&process->buffered_io_count:
-                                  &process->direct_io_count;
-    const int32_t next=(int32_t)*count-1;
-    if(next>=0){*count=(int16_t)next;return 1;}
+    const int16_t before=port_v37_sysqio_process_io_count(process,buffered);
+    const int32_t next=(int32_t)before-1;
+    if(next>=0){port_v37_sysqio_process_set_io_count(process,buffered,
+                                                     (int16_t)next);return 1;}
     if(ops->single_io_quota&&
        ops->single_io_quota(ops->context,process->pid,buffered)&&
        next>=INT16_MIN){
-        *count=(int16_t)next;
+        port_v37_sysqio_process_set_io_count(process,buffered,(int16_t)next);
         return 1;
     }
     return 0;
@@ -104,9 +119,8 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
         return PORT_V37_SYSQIO_BEGIN_BAD;
     }
     uint32_t efn_status=0u;
-    const uint32_t efn=port_v37_sysqio_clear_efn(args.event_flag,
-        process->local_event_flags,ops->clear_global_efn,ops->context,
-        &efn_status);
+    const uint32_t efn=clear_process_efn(process,args.event_flag,ops,
+                                          &efn_status);
     if(efn!=PORT_V37_SYSQIO_EF_OK)
         return begin_failure(PORT_V37_SYSQIO_BEGIN_EFERR,efn_status,
                              &args,process,ops,service_status);
@@ -159,3 +173,4 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
     *service_status=PORT_V37_SYSQIO_BEGIN_OK;
     return PORT_V37_SYSQIO_BEGIN_OK;
 }
+
