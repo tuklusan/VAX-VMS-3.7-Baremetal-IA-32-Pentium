@@ -1055,10 +1055,29 @@
         {
           "original_lines": [
             2891,
+            4320
+          ],
+          "status": "unresolved",
+          "reason": "Original system-wide definitions before the PCB layout are unfinished"
+        },
+        {
+          "original_lines": [
+            4321,
+            4405
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_pcb.c",
+          "pc_symbol": "port_v37_sysqio_process_bind_pcb",
+          "pc_line": 23,
+          "function": "Bind SYSQIO process PID, AST/BIO/DIO quota words and local EFCS/EFCU to exact source PCB offsets; other PCB fields, live PHD/context and active scheduler remain incomplete"
+        },
+        {
+          "original_lines": [
+            4406,
             6142
           ],
           "status": "unresolved",
-          "reason": "Rest of original system-wide definitions before UAF are unfinished"
+          "reason": "Original system-wide definitions after the PCB and before UAF are unfinished"
         },
         {
           "original_lines": [
@@ -21297,7 +21316,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_decode_args",
-          "pc_line": 13,
+          "pc_line": 28,
           "function": "Fixed SYS$QIO argument-list offsets are decoded; event flag, channel, privilege, device and I/O processing remain unimplemented"
         },
         {
@@ -21316,7 +21335,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 94,
+          "pc_line": 109,
           "function": "When CCB$L_WIND bit 0 marks access/deaccess pending, require a scheduler wait callback and resume only after the pending bit clears; no live SCH$WAIT/RSN$_ASTWAIT binding yet"
         },
         {
@@ -21343,7 +21362,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 94,
+          "pc_line": 109,
           "function": "Clear EFN before channel lookup and post failure status to the requested event flag"
         },
         {
@@ -21362,7 +21381,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_preflight",
-          "pc_line": 36,
+          "pc_line": 51,
           "function": "Native CCB access-mode comparison, DQ FDT function legality and offline exceptions with VMS status mapping; access/deaccess pending CCB waits are represented by a required callback but not bound to live SCH$WAIT"
         },
         {
@@ -21400,7 +21419,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 94,
+          "pc_line": 109,
           "function": "Direct/buffered per-process I/O counter charge with single-unit quota callback and rollback on denial; IRP reservation/dispatch remain unresolved"
         },
         {
