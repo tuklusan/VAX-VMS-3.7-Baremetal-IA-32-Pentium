@@ -5,6 +5,8 @@
 #include "vms_sys85.h"
 #include "vms_exe_schevt.h"
 #include "vms_v37_dyn_tags.h"
+#include "vms_qio_irp_pool.h"
+#include "vms_ini_packet_queues.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -18,6 +20,14 @@ static uint16_t get16(const uint8_t *p){
 static uint32_t get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
            ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
+}
+struct pool_sync_state { uint32_t ipl,enters,exits; };
+static uint32_t pool_raise(void *opaque){
+    struct pool_sync_state *s=opaque;uint32_t old=s->ipl;s->ipl=4u;
+    ++s->enters;return old;
+}
+static void pool_restore(void *opaque,uint32_t old){
+    struct pool_sync_state *s=opaque;s->ipl=old;++s->exits;
 }
 struct global_ef_test { uint8_t seen;uint32_t status; };
 struct volume_access_test {
@@ -255,6 +265,48 @@ int main(void){
           &ast_status)!=PORT_V37_SYSQIO_AST_EXQUOTA||
        ast_status!=PORT_SS_EXQUOTA)
         return 36;
+    enum { QIO_POOL_BASE=0x620000u,QIO_POOL_SENTINEL=0x621000u,
+           QIO_POOL_STRIDE=144u };
+    uint8_t pool_memory[512u];
+    memset(pool_memory,0xa5,sizeof pool_memory);
+    const struct port_ini_packet_area pool_area={.memory=pool_memory,
+        .address=QIO_POOL_BASE,.available_bytes=sizeof pool_memory,
+        .count=2u,.packet_bytes=QIO_POOL_STRIDE,
+        .minimum_bytes=QIO_POOL_STRIDE,.sentinel_address=QIO_POOL_SENTINEL};
+    struct port_ini_packet_list pool={0};
+    if(port_ini_packet_init(&pool_area,&pool)!=PORT_INI_PACKETS_OK)return 45;
+    struct pool_sync_state pool_state={.ipl=1u};
+    const struct port_v37_irp_pool_sync pool_sync={&pool_state,pool_raise,
+        pool_restore};
+    struct port_v37_sysqio_irp_spec reserve_spec={.ucb_va=0x2000u,
+        .arb_va=0x3000u,.channel_index=2u,.base_priority=8u};
+    uint8_t *reserved_irp=0;uint32_t reserved_va=0;
+    proc.ast_count=1;
+    if(port_v37_sysqio_reserve_irp(&prepared,&proc,&reserve_spec,&pool,
+          &pool_sync,&reserved_irp,&reserved_va,&ast_status)!=
+          PORT_V37_SYSQIO_RESERVE_OK||ast_status!=PORT_SYS85_NORMAL||
+       reserved_va!=QIO_POOL_BASE+QIO_POOL_STRIDE||
+       reserved_irp!=pool_memory+QIO_POOL_STRIDE||pool.free_count!=1u||
+       proc.ast_count!=0||get32(reserved_irp+12u)!=proc.pid)
+        return 46;
+    /* Source AST quota failure is after allocation and must restore the
+     * same lookaside packet without consuming another AST unit. */
+    proc.ast_count=-1;
+    reserved_irp=0;reserved_va=0;
+    uint32_t reserve_status=port_v37_sysqio_reserve_irp(&prepared,&proc,
+          &reserve_spec,&pool,&pool_sync,&reserved_irp,&reserved_va,&ast_status);
+    if(reserve_status!=
+          PORT_V37_SYSQIO_RESERVE_ASTQUOTA||ast_status!=PORT_SS_EXQUOTA||
+       reserved_irp||reserved_va||pool.free_count!=1u||proc.ast_count!=-1){
+        return 47;
+    }
+    proc.ast_count=1;
+    reserve_spec.ucb_va=0u;
+    if(port_v37_sysqio_reserve_irp(&prepared,&proc,&reserve_spec,&pool,
+          &pool_sync,&reserved_irp,&reserved_va,&ast_status)!=
+          PORT_V37_SYSQIO_RESERVE_BAD||ast_status!=PORT_SYS85_BADPARAM||
+       reserved_irp||reserved_va||pool.free_count!=1u||proc.ast_count!=1)
+        return 48;
     struct port_v37_sysqio_prepared no_ast=prepared;
     no_ast.args.ast_address=0u;proc.ast_count=-1;
     if(port_v37_sysqio_check_ast_quota(&no_ast,&proc,&ast_status)!=

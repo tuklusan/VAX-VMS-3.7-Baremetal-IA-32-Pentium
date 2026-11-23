@@ -5,6 +5,8 @@
 #include "vms_dq_fdt.h"
 #include "vms_sysqio_ef.h"
 #include "vms_sysqio_iosb.h"
+#include "vms_qio_irp_pool.h"
+#include "vms_ini_packet_queues.h"
 
 /* Native decoder for the fixed SYS$QIO/EXE$QIO argument list. The argument
  * list retains the VAX AP layout: count longword followed by 12 longwords. */
@@ -99,6 +101,16 @@ struct port_v37_sysqio_irp_spec {
 uint32_t port_v37_sysqio_build_irp(const struct port_v37_sysqio_prepared *,
     struct port_v37_sysqio_process *,const struct port_v37_sysqio_irp_spec *,
     uint8_t *packet,size_t packet_bytes);
+/* Allocate and construct one source-layout IRP. On any post-allocation
+ * failure, return the packet to the same INIT lookaside queue. */
+enum { PORT_V37_SYSQIO_RESERVE_OK=1u,PORT_V37_SYSQIO_RESERVE_BAD=2u,
+       PORT_V37_SYSQIO_RESERVE_EMPTY=4u,PORT_V37_SYSQIO_RESERVE_ASTQUOTA=6u,
+       PORT_V37_SYSQIO_RESERVE_POOL=8u };
+uint32_t port_v37_sysqio_reserve_irp(
+    const struct port_v37_sysqio_prepared *,struct port_v37_sysqio_process *,
+    const struct port_v37_sysqio_irp_spec *,struct port_ini_packet_list *,
+    const struct port_v37_irp_pool_sync *,uint8_t **,uint32_t *,
+    uint32_t *service_status);
 enum { PORT_V37_SYSQIO_AST_OK=1u,PORT_V37_SYSQIO_AST_BAD=2u,
        PORT_V37_SYSQIO_AST_EXQUOTA=4u };
 uint32_t port_v37_sysqio_check_ast_quota(

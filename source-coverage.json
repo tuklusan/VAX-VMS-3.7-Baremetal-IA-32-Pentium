@@ -21197,10 +21197,29 @@
         {
           "original_lines": [
             313,
+            335
+          ],
+          "status": "unresolved",
+          "reason": "Exact failure epilogue and rollback before IRP reservation unresolved"
+        },
+        {
+          "original_lines": [
+            336,
+            345
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_reserve.c",
+          "pc_symbol": "port_v37_sysqio_reserve_irp",
+          "pc_line": 9,
+          "function": "Allocate a 136-byte standard IRP from the source INIT lookaside; map exhaustion to SS$_INSFMEM and return the allocated packet if later setup fails"
+        },
+        {
+          "original_lines": [
+            346,
             385
           ],
           "status": "unresolved",
-          "reason": "Exact failure epilogue, IRP allocation, section-window resolution and quota rollback unresolved"
+          "reason": "Source window resolution, buffered user-buffer mapping and complete I/O-quota rollback unresolved"
         },
         {
           "original_lines": [
@@ -21265,10 +21284,29 @@
         {
           "original_lines": [
             536,
+            536
+          ],
+          "status": "unresolved",
+          "reason": "EXE$ABORTIO status setup unresolved"
+        },
+        {
+          "original_lines": [
+            537,
+            540
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_reserve.c",
+          "pc_symbol": "port_v37_sysqio_reserve_irp",
+          "pc_line": 9,
+          "function": "After allocation, reject exhausted AST quota and return the allocated IRP to its source lookaside"
+        },
+        {
+          "original_lines": [
+            541,
             544
           ],
           "status": "unresolved",
-          "reason": "EXE$ABORTIO rollback, packet return and event/status post integration unresolved"
+          "reason": "Remaining EXE$ABORTIO channel IOC rollback, IOSB/event completion and process post integration unresolved"
         },
         {
           "original_lines": [
@@ -21350,7 +21388,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. The begin helper maps BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO and EXQUOTA values from VMSLIB/SRC/SSMSG.MSG V03-003. A host-tested builder fills the 136-byte standard IRP through CDRP$L_LENGTH, sets the AST quota bit and decrements modeled ASTCNT; a separate check rejects negative ASTCNT for AST requests. WRITEVBLK normalization handles source FOD/MNT/FOR state. Device access decisions preserve PHY_IO/LOG_IO bypasses and source SPL/FOD/MNT/FOR/SHR checks, selecting a callback with volume protection/UIC/ARB inputs, but no live privilege mask, protection checker, UCB/PCB or abort/event wiring is connected. The request path is not connected to a user service entry, real CCB lookup, IRP allocation, source IPL/deletion protection, diagnostic-buffer handling, driver FDT dispatch or process AST completion. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs."
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; source-ordered begin clears EFN, checks supplied channel access/FDT/offline rules, probes/clears IOSB, charges direct/buffered I/O counts and posts validation failures. The host-tested reserve helper obtains an actual source INIT IRP packet, enforces AST quota after allocation, builds the 136-byte standard IRP and returns it to the same queue on post-allocation failure. The helpers map BADPARAM, IVCHAN, NOPRIV, ILLIOFUNC, DEVOFFLINE, ACCVIO, EXQUOTA and pool exhaustion to source status values. WRITEVBLK normalization and PHY_IO/LOG_IO gates preserve source device-state decisions. However, no live user service entry, real CCB lookup, source IPL/deletion protection, channel IOC accounting, EXE$ABORTIO service post, buffered window mapping, driver FDT dispatch or process AST completion is connected. Only FINISHIOC, FINISHIO and IPL4 post request run on resident test IRPs."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

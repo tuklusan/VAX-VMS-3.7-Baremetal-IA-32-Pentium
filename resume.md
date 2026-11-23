@@ -451,3 +451,11 @@ Verification at implementation commit `0355f6a30455c4831ea1aa9fa7569eae23565a69`
 MEMORYALC.MAR lookaside allocation/return now has actual resident boot-path use, but remains partial: public SYS$QIO, dynamic nonpaged pool fallback/wait, DQA process requests and Files-11 ACP, process-aware AST/scheduler completion, INIT process activation, SYSTEM login/DCL, DECnet and SET HOST 0 remain unfinished. All end-to-end acceptance conditions remain incomplete.
 
 M235 implementation commit: `0355f6a30455c4831ea1aa9fa7569eae23565a69`.
+
+## M236 — SYS$QIO IRP reservation stage, 23 November 2026
+
+Added a source-ordered SYS$QIO reservation helper that removes a real IRP-sized packet from the INIT lookaside, checks AST quota after allocation, writes the standard 136-byte IRP using the actual packet VA, and returns packets to the same pool on AST rejection or malformed IRP construction. Pool exhaustion maps to SS$_INSFMEM. Host regression covers successful reservation and ASTCNT charge, AST-quota failure with packet return, and malformed construction with packet return. This is a tested QIO transaction stage; it is not called by a VMS system service, does not account the channel IOC, and does not dispatch DQA0 FDT or deliver process completion.
+
+Verification: `make sysqioargscheck irpalloccheck` PASS; full `make test sourcerangecheck sysexecentrycheck qiopostcheck nlddtcheck` PASS (exit 0); `make -j2 all` PASS. Source-range validation reports 1,990 ranges, zero mapped-function misses, 442/4,566 original files indexed, 29,046 partial lines, 51,123 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded and 17,016 mapped. No QEMU test was run for M236 because the isolated reservation helper is not linked into the resident SYS.EXE/QEMU path. No restricted DEC source or disk image was added.
+
+SYSQIOREQ.MAR lines 336-345 and 537-540 now map partially to the tested reservation helper. The service entry, source IPL/deletion exclusion, failure rollback and event completion, CCB IOC accounting, buffered window, device FDT invocation, public SYS$QIO dispatch and process AST completion remain unresolved. No end-to-end acceptance condition is complete.
