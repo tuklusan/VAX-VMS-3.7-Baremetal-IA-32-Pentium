@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M216
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M217
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216 rereads 64 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -263,3 +263,14 @@ Verification at implementation commit `4d35917c10c2a700e487e2aaf4fc52a02319af0d`
 Coverage records this limited FILEREAD.MAR integration and does not count it as ACP coverage. Public SYS$QIO, Files-11 ACP, process-aware AST/scheduling, native INIT completion, process image activation, DECnet Phase IV runtime initialization, SYSTEM login/DCL and genuine SET HOST 0 remain unfinished.
 
 M216 implementation commit: `4d35917c10c2a700e487e2aaf4fc52a02319af0d`.
+
+
+## M217 — Cross-sector Files-11 read through published DQA0 DDT, 23 November 2026
+
+Expanded the supervisor INIT chain reread from 64 bytes to 700 bytes at an unaligned SYS.EXE offset. This crosses a sector boundary; exactly two physical READPBLK IRPs must pass through IOC$SEARCHDEV-selected DQA0 DDT STARTIO and ATA IRQ14, and all returned bytes must match the independent cached FH2 chain read. This validates cross-sector mapped reads through the published DDT, but remains outside public SYS$QIO and ACP semantics.
+
+Verification: `make -j2 all dqddtcheck sysexecentrycheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (1,957 ranges, zero unmapped; inventory counts unchanged); serial manifest validation PASS (78 raw logs). Two real `make qemu-sysboot-m217` runs PASS. Final raw COM1 log `logs/serial/qemu-m217-run-local-20261123T143002564868Z.log`, 5,170 bytes, SHA-256 `c56c3238f189713bdb2dd893cd2f85bc3aff5bd25cfc1d06e2000019709d79a9`; prior identical run `logs/serial/qemu-m217-run-local-20261123T142815661992Z.log`. Both reach the explicit incomplete-INIT stop; no login, DCL, or DECnet initialization was observed. QEMU runners terminated.
+
+Coverage keeps FILEREAD.MAR partial and explicitly excludes ACP/public QIO from this guest path. Public SYS$QIO, Files-11 ACP, process-aware AST/scheduling, native INIT completion, process activation, DECnet runtime, SYSTEM login/DCL and genuine SET HOST 0 remain unfinished.
+
+M217 implementation commit: `ab95489ad29dec563044e5e363cf80d84001152d`.
