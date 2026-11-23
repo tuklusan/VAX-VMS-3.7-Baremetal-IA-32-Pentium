@@ -22,6 +22,7 @@
 #include "vms_iopost_swi.h"
 #include "vms_sysboot_elf.h"
 #include "vms_dq_crb.h"
+#include "vms_v37_ia32_context.h"
 
 extern const uint32_t arch_isr_table[37];
 extern uint32_t port_gdt[];
@@ -64,8 +65,42 @@ extern void arch_report_fault(uint32_t vector, uint32_t error, uint32_t eip);
 extern struct port_condition_process portlab_conditions;
 extern void arch_probe_ud2(void);
 extern void arch_probe_int3_after(void);
+extern void arch_resume_initial_frame(
+    struct port_v37_ia32_restore_frame *frame);
+extern void arch_vms_ring1_probe_entry(void);
+extern void arch_vms_ring2_probe_entry(void);
+extern void arch_vms_ring_probe_exit(void);
 
 static volatile uint32_t ticks;
+static volatile uint32_t vms_ring_probe_active;
+static volatile uint32_t vms_ring_probe_seen[3];
+static uint8_t vms_ring_probe_stack[2][512] __attribute__((aligned(16)));
+
+int arch_vms_ring_probe(void){
+    uint32_t cr3;
+    __asm__ volatile("movl %%cr3,%0":"=r"(cr3));
+    vms_ring_probe_seen[1]=vms_ring_probe_seen[2]=0u;
+    vms_ring_probe_active=1u;
+    const struct port_v37_ia32_context_seed seeds[2]={
+        {.cr3=cr3,.entry_pc=(uint32_t)(uintptr_t)arch_vms_ring1_probe_entry,
+         .initial_stack=(uint32_t)(uintptr_t)(vms_ring_probe_stack[0]+sizeof vms_ring_probe_stack[0]),
+         .eflags=2u,.code_selector=0x19u,.data_selector=0x21u,.access_mode=1u},
+        {.cr3=cr3,.entry_pc=(uint32_t)(uintptr_t)arch_vms_ring2_probe_entry,
+         .initial_stack=(uint32_t)(uintptr_t)(vms_ring_probe_stack[1]+sizeof vms_ring_probe_stack[1]),
+         .eflags=2u,.code_selector=0x2au,.data_selector=0x32u,.access_mode=2u}
+    };
+    int valid=1;
+    for(unsigned i=0u;i<2u;i++){
+        struct port_v37_ia32_restore_frame *frame=0;
+        if(port_v37_ia32_context_init(vms_ring_probe_stack[i],
+            sizeof vms_ring_probe_stack[i],&seeds[i],&frame)!=
+            PORT_V37_IA32_CONTEXT_OK){valid=0;break;}
+        arch_resume_initial_frame(frame);
+        if(vms_ring_probe_seen[i+1u]!=1u){valid=0;break;}
+    }
+    vms_ring_probe_active=0u;
+    return valid;
+}
 /* A real 8254 PIT timebase read by loaded SYSLOA386. */
 uint32_t arch_pit_ticks(void){return ticks;}
 static struct port_exe_systime exe_system_clock;
@@ -967,6 +1002,21 @@ int arch_trap(struct port_trap_frame *f) {
         return 0;
     }
     if (f->vector == 128) {
+        if(vms_ring_probe_active&&
+           (f->eax==UINT32_C(0x37510001)||f->eax==UINT32_C(0x37510002))){
+            const uint32_t mode=f->eax&0xffu;
+            const uint16_t expected_cs=mode==1u?0x19u:0x2au;
+            if((mode!=1u&&mode!=2u)||(f->cs&3u)!=mode||
+               (uint16_t)f->cs!=expected_cs){
+                arch_report_fault(f->vector,f->error,f->eip);
+                for(;;)__asm__ volatile("cli; hlt");
+            }
+            ++vms_ring_probe_seen[mode];
+            f->eip=(uint32_t)(uintptr_t)arch_vms_ring_probe_exit;
+            f->cs=0x08u;
+            f->eflags&=~UINT32_C(0x00027000);
+            return 0;
+        }
         /* DPL3 syscall gate. Only the user probe can request an EXIT.
          * Trap frames already live on the TSS-selected kernel stack. */
         if ((f->cs&3u)!=3u || !user_test_active) {

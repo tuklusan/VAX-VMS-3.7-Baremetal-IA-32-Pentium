@@ -64,6 +64,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #define WIDTH 80
 #define HEIGHT 25
 extern void arch_init(void);
+extern int arch_vms_ring_probe(void);
 extern uint32_t arch_a20_ready(void);
 extern uint32_t arch_ram_window_ready(void);
 extern uint32_t arch_ticks(void);
@@ -2761,6 +2762,11 @@ void kmain(void) {
         bootstrap_message("System initialization stopped: PC memory check failed.");
         bootstrap_halt();
     }
+    if(!arch_vms_ring_probe()){
+        bootstrap_message("IA-32 VMS CPL1/CPL2 IRET transition regression failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("IA-32 VMS executive/supervisor CPL1/CPL2 interrupt-return transitions passed.");
     /* VMB.MAR: form the real PC PFN bitmap and RPB argument cells
      * before SYSBOOT attempts to open SYS.EXE. */
     static struct port_vmb_arguments vmb_args;

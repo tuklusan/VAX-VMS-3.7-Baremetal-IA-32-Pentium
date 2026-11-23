@@ -16,6 +16,9 @@ port_gdt:
     .quad 0x00cff2000000ffff  /* 0x40 CPL3 data */
     .quad 0x0000000000000000  /* 0x48 dynamically installed 32-bit TSS */
 port_gdt_end:
+.global arch_vms_probe_saved_esp
+arch_vms_probe_saved_esp:
+    .long 0
 gdt_ptr:
     .word port_gdt_end - port_gdt - 1
     .long port_gdt
@@ -115,6 +118,8 @@ arch_isr_common:
     addl $4,%esp
     testl %eax,%eax
     jnz arch_ring3_resume
+.global arch_restore_initial_frame
+arch_restore_initial_frame:
     popl %gs
     popl %fs
     popl %es
@@ -122,6 +127,38 @@ arch_isr_common:
     popal
     addl $8,%esp          /* discard vector and (real/synthetic) error */
     iret
+
+/* Enter a seeded source-layout IA-32 frame. The matching probe exit restores
+ * this caller stack after an inner-ring INT returns through the kernel. */
+.global arch_resume_initial_frame
+arch_resume_initial_frame:
+    pushfl
+    pushl %ebp
+    pushl %ebx
+    pushl %esi
+    pushl %edi
+    movl %esp,arch_vms_probe_saved_esp
+    movl 24(%esp),%esp
+    jmp arch_restore_initial_frame
+.global arch_vms_ring_probe_exit
+arch_vms_ring_probe_exit:
+    movl arch_vms_probe_saved_esp,%esp
+    popl %edi
+    popl %esi
+    popl %ebx
+    popl %ebp
+    popfl
+    ret
+.global arch_vms_ring1_probe_entry
+arch_vms_ring1_probe_entry:
+    movl $0x37510001,%eax
+    int $0x80
+    ud2
+.global arch_vms_ring2_probe_entry
+arch_vms_ring2_probe_entry:
+    movl $0x37510002,%eax
+    int $0x80
+    ud2
 
 /* Asynchronous return from a ring-3 EXIT system call, without inventing a
  * fake CPL0 IRET frame. arch_enter_ring3 saved the kernel C-call frame. */

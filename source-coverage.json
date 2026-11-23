@@ -5852,7 +5852,7 @@
           "pc_file": "src/vms_v37_ia32_context.c",
           "pc_symbol": "port_v37_ia32_context_init",
           "pc_line": 8,
-          "function": "construct initial IA-32 IRET register frame with VMS access modes mapped to matching CPL0-CPL3; runtime context save/restore and scheduler dispatch remain unresolved"
+          "function": "construct initial IA-32 IRET register frame with matching VMS access-mode CPL; QEMU exercises CPL1/CPL2 IRET and interrupt return, while VMS process scheduler dispatch remains unresolved"
         },
         {
           "original_lines": [
@@ -10274,7 +10274,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2746,
+          "pc_line": 2747,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10312,7 +10312,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2746,
+          "pc_line": 2747,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {

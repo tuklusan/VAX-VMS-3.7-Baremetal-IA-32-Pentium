@@ -1422,7 +1422,7 @@ for original,length,ranges,note in [
        (62,67,'vms_v37_sched','port_v37_sched_resched_current','Requeue current resident PCB at the COM queue tail and set queue summary; caller context save and hardware interrupt entry remain unimplemented'),
        (68,74,None,None,'source comments and SCH$SCHED entry separator'),
        (75,96,'vms_v37_sched','port_v37_sched_select','Highest resident COM queue selection, CUR state, current PCB/priority and floating priority; native context restore/PCBB programming remain unimplemented'),
-       (97,98,'vms_v37_ia32_context','port_v37_ia32_context_init','construct initial IA-32 IRET register frame with VMS access modes mapped to matching CPL0-CPL3; runtime context save/restore and scheduler dispatch remain unresolved'),
+       (97,98,'vms_v37_ia32_context','port_v37_ia32_context_init','construct initial IA-32 IRET register frame with matching VMS access-mode CPL; QEMU exercises CPL1/CPL2 IRET and interrupt return, while VMS process scheduler dispatch remains unresolved'),
        (99,106,None,None,'source idle wait and fatal empty-queue path lack native scheduler context restoration'),
        (107,108,None,None,'assembler end')],
        'The two-task diagnostic adapter is linked in the kernel; resident VMS PCB layout, executive wait/wake queues and normal reschedule-interrupt entry remain unbound.'),
