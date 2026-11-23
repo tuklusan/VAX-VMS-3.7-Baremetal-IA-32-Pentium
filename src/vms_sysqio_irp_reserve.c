@@ -2,6 +2,8 @@
 #include "vms_exe_schevt.h"
 #include "vms_sys85.h"
 
+enum { IRP_STS=42u,IRP_STS_PHYSIO=0x0100u };
+
 /* SYSQIOREQ.MAR 339-345, 386-429 and 537-540: EXE$ALLOCIRP and IRP/ASTCNT
  * construction precede AST quota validation. On rejection this isolated
  * transaction rolls the AST charge back and returns the packet; channel IOC,
@@ -74,6 +76,7 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
         *service_status=status;
         return PORT_V37_SYSQIO_PREPARE_BEGIN;
     }
+    const int16_t ast_count_before=port_v37_sysqio_process_ast_count(process);
     uint8_t *reserved=0;uint32_t va=0;
     const uint32_t result=port_v37_sysqio_reserve_irp(&request,process,spec,
         pool,sync,&reserved,&va,&status);
@@ -88,8 +91,44 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
         *service_status=status;
         return PORT_V37_SYSQIO_PREPARE_RESERVE;
     }
+    /* SYSQIOREQ.MAR ACCESS runs after the standard IRP/AST reservation.
+     * Preserve the source order: privilege failure returns the IRP and both
+     * process charges before the request becomes visible to the caller. */
+    uint8_t physical_io=0u;
+    const uint32_t access=port_v37_sysqio_device_access(
+        request.args.function,request.channel.device->characteristics,
+        process->has_phy_io,process->has_log_io,
+        request.channel.device->volume_protection,
+        request.channel.device->owner_uic,process->arb_va,
+        request.channel.device->check_volume,
+        request.channel.device->volume_context,&physical_io,&status);
+    if(access!=PORT_V37_SYSQIO_DEVICE_OK){
+        if(request.args.ast_address)
+            port_v37_sysqio_process_set_ast_count(process,ast_count_before);
+        const uint32_t packet_bytes=(uint32_t)reserved[8u]|
+            ((uint32_t)reserved[9u]<<8);
+        const uint32_t returned=port_v37_irp_pool_free(pool,reserved,va,
+            packet_bytes,sync);
+        const int16_t count=port_v37_sysqio_process_io_count(process,
+            request.dispatch.buffered);
+        if(count<INT16_MAX)
+            port_v37_sysqio_process_set_io_count(process,
+                request.dispatch.buffered,(int16_t)(count+1));
+        if(ops->post_event)ops->post_event(ops->context,process->pid,
+            (uint8_t)request.args.event_flag,status);
+        *service_status=status;
+        *packet=0;*packet_va=0u;
+        return returned==PORT_V37_IRP_POOL_OK?
+            PORT_V37_SYSQIO_PREPARE_ACCESS:PORT_V37_SYSQIO_PREPARE_RESERVE;
+    }
+    if(physical_io){
+        const uint16_t st=(uint16_t)reserved[IRP_STS]|
+            (uint16_t)((uint16_t)reserved[IRP_STS+1u]<<8);
+        reserved[IRP_STS]=(uint8_t)(st|IRP_STS_PHYSIO);
+        reserved[IRP_STS+1u]=(uint8_t)((st|IRP_STS_PHYSIO)>>8);
+    }
+    request.dispatch.physical_io=physical_io;
     *prepared=request;*packet=reserved;*packet_va=va;
     *service_status=status;
     return PORT_V37_SYSQIO_PREPARE_OK;
 }
-
