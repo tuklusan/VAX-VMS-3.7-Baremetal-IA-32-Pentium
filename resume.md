@@ -380,3 +380,20 @@ Verification: `make -j2 all` PASS; `make exeportcorecheck` PASS; full `make test
 M227 does not finish public SYS$QIO, DQA0 process completion, Files-11 ACP, native INIT, production scheduler/process activation, SYSTEM login, DCL or DECnet. Continue by binding the executive process database and process-aware completion without weakening the source-order SYSQIO and privilege semantics.
 
 M227 implementation commit: `7101fe6a4d2965d08a71914e1b6648b5e6298c65`.
+
+## M228 — Source-layout SYS$QIO IRP construction, 23 November 2026
+
+Added a host-tested builder for SYSQIOREQ.MAR SUCCES's device-independent IRP fields. It validates the prepared request and caller-supplied reserved packet, writes PID/access mode/AST and AST parameter/window/UCB/function/EFN/priority/IOSB/channel/status, clears the translation/transfer fields, and stores ARB. Inspection of SHRLIB/SYSDEF.MDL's CDRP negative IRP fields plus positive fork fields established the standard IRP length as 136 bytes through CDRP$L_LENGTH; SYSBOOT rounds that to a 144-byte packet stride. Resident boot packet sizing and host queue fixtures now use the corrected size/stride. This helper still does not allocate a packet, account a live channel, enforce source IPL/deletion and all device checks, call the public service, dispatch the FDT, or complete a process AST. SYSQIOREQ source lines 386-429 are partial only.
+
+Verification: `make clean && make -j2 all && make test` PASS (suite through M49); `make sysqioargscheck qiopostcheck nlddtcheck dqddtcheck dqbootreadcheck dqphysicalcheck` PASS; `python3 tools/validate_source_ranges.py` PASS (1,970 ranges, 0 missing mapped functions; 441/4,566 original files indexed; 28,857 partial, 50,393 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,016 mapped); `python3 tools/checkpoint_serial_logs.py verify` PASS (83 raw logs). Real `make qemu-sysboot-m217` PASS: the guest read 700 real Files-11 SYS.EXE bytes across two sectors via IOC-selected DQA0 DDT and IRQ14, then stopped at the known incomplete-INIT boundary. No login/DCL/DECnet success is claimed; the runner terminated. Two earlier incremental-build QEMU attempts stopped at the DQ read boundary; a complete clean build passed. Failed raw logs are 1,441 bytes each with SHA-256 `d3a605a12a27a5822c0612091bcc272938355fd538971eb926d59f3af2526f4f`; successful `logs/serial/qemu-m217-run-local-20261123T154547671352Z.log` is 5,170 bytes, SHA-256 `c56c3238f189713bdb2dd893cd2f85bc3aff5bd25cfc1d06e2000019709d79a9`.
+
+M228 implementation commit: `a8faddf181e73e7e3ffae15cf8956256c0d6ed12`.
+
+## M229 — Incremental IRP ABI dependency tracking, 23 November 2026
+
+The M228 incremental QEMU failures exposed missing explicit Make dependencies for `vms_qio_post.h`, which carries the resident IRP length. Added that header dependency to kernel, resident SYS.EXE, QIO, NLA DDT, IOC post, DQ boot-read, and DQ DDT object groups. Also fixed missing `vms_dq_ioc_write.c` linkage in the DQ boot-read and physical-read host targets. Touching the IRP header rebuilt 42 dependent objects, including kernel and resident SYS.EXE.
+
+Verification: header-triggered `make -j2 all` PASS; subsequent full `make test` PASS (exit 0, through M49); the six targeted SYSQIO/QIO/DDT/DQ host checks PASS with the 136-byte ABI; source-range validation PASS with the M228 counts above; QEMU serial manifest PASS (83 raw logs). The clean-build QEMU pass is recorded under M228. No new QEMU process was started for this Make-only change. No original DEC source or binary image was staged.
+
+M228 implementation commit: `a8faddf181e73e7e3ffae15cf8956256c0d6ed12`.
+M229 implementation commit: `9009e3302dbd13e05c8251bc10ad564b30e5458b`.
