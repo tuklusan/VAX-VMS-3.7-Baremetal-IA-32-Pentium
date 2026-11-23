@@ -21107,7 +21107,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_decode_args",
-          "pc_line": 11,
+          "pc_line": 12,
           "function": "Fixed SYS$QIO argument-list offsets are decoded; event flag, channel, privilege, device and I/O processing remain unimplemented"
         },
         {
@@ -21134,7 +21134,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 73,
+          "pc_line": 93,
           "function": "Clear EFN before channel lookup and post failure status to the requested event flag"
         },
         {
@@ -21153,7 +21153,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_preflight",
-          "pc_line": 34,
+          "pc_line": 35,
           "function": "Native CCB access-mode comparison, DQ FDT function legality and offline exceptions; channel lookup and full device semantics remain unimplemented"
         },
         {
@@ -21178,10 +21178,29 @@
         {
           "original_lines": [
             293,
+            299
+          ],
+          "status": "unresolved",
+          "reason": "EXE$QIO resource-charge setup and AST-deletion IPL transition unresolved"
+        },
+        {
+          "original_lines": [
+            300,
+            312
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_args.c",
+          "pc_symbol": "port_v37_sysqio_begin",
+          "pc_line": 93,
+          "function": "Direct/buffered per-process I/O counter charge with single-unit quota callback and rollback on denial; IRP reservation/dispatch remain unresolved"
+        },
+        {
+          "original_lines": [
+            313,
             735
           ],
           "status": "unresolved",
-          "reason": "Quota charging, IRP allocation, full device access checks, dispatch and completion unresolved"
+          "reason": "Exact failure epilogue, IRP allocation/build, full device access checks, FDT action dispatch and completion unresolved"
         },
         {
           "original_lines": [
@@ -21222,7 +21241,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB and posts pre-dispatch failures. It is host-tested but not connected to a user service entry, real CCB lookup or driver dispatch. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; quotas, device access/protection, IRP allocation and process AST completion remain absent."
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets; the source-ordered begin helper clears EFN, resolves a supplied channel, checks access/FDT/offline rules, probes/clears IOSB, charges a direct/buffered process counter with a single-unit quota callback and posts failures. It is host-tested but not connected to a user service entry, real CCB lookup or driver dispatch. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; source IPL/deletion protection, exact VMS failure epilogue, device access/protection, IRP allocation and process AST completion remain absent."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

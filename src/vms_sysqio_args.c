@@ -1,4 +1,5 @@
 #include "vms_sysqio_args.h"
+#include "vms_exe_schevt.h"
 
 static uint32_t load32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
@@ -67,6 +68,25 @@ static uint32_t begin_failure(uint32_t result,uint32_t status,
     return result;
 }
 
+/* SYSQIOREQ.MAR NOIOSB/NOCNT: charge the per-process direct or buffered
+ * counter. A negative post-decrement is admitted only when the executive's
+ * single-unit quota service grants the request; otherwise the charge is
+ * backed out exactly as the source does before posting SS$_EXQUOTA. */
+static int charge_io_quota(struct port_v37_sysqio_process *process,
+    const struct port_v37_sysqio_begin_ops *ops,uint8_t buffered){
+    int16_t *const count=buffered?&process->buffered_io_count:
+                                  &process->direct_io_count;
+    const int32_t next=(int32_t)*count-1;
+    if(next>=0){*count=(int16_t)next;return 1;}
+    if(ops->single_io_quota&&
+       ops->single_io_quota(ops->context,process->pid,buffered)&&
+       next>=INT16_MIN){
+        *count=(int16_t)next;
+        return 1;
+    }
+    return 0;
+}
+
 /* SYSQIOREQ.MAR 239-292. This is the actual source-ordered service front end
  * through IOSB initialization. Driver FDT invocation and IRP submission are
  * returned to the caller as the next, still-unported stage. */
@@ -113,6 +133,9 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
             PORT_V37_SYSQIO_BEGIN_ACCVIO:PORT_V37_SYSQIO_BEGIN_BAD;
         return begin_failure(result,result,&args,process,ops,service_status);
     }
+    if(!charge_io_quota(process,ops,dispatch.buffered))
+        return begin_failure(PORT_V37_SYSQIO_BEGIN_EXQUOTA,
+            PORT_SS_EXQUOTA,&args,process,ops,service_status);
     const struct port_v37_sysqio_prepared out={args,dispatch,channel};
     *prepared=out;
     *service_status=PORT_V37_SYSQIO_BEGIN_OK;

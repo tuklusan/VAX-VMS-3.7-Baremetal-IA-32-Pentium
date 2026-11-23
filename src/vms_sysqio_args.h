@@ -52,7 +52,8 @@ enum { PORT_V37_SYSQIO_BEGIN_OK=1u,PORT_V37_SYSQIO_BEGIN_BAD=2u,
        PORT_V37_SYSQIO_BEGIN_ILLFUNC=8u,
        PORT_V37_SYSQIO_BEGIN_OFFLINE=10u,
        PORT_V37_SYSQIO_BEGIN_ACCVIO=12u,
-       PORT_V37_SYSQIO_BEGIN_EFERR=14u };
+       PORT_V37_SYSQIO_BEGIN_EFERR=14u,
+       PORT_V37_SYSQIO_BEGIN_EXQUOTA=16u };
 struct port_v37_sysqio_resolved_channel {
     const struct port_v37_sysqio_device *device;
     void *ucb;
@@ -64,13 +65,16 @@ struct port_v37_sysqio_process {
     uint8_t access_mode;
     uint8_t reserved[3];
     uint32_t local_event_flags[2];
+    int16_t buffered_io_count,direct_io_count;
 };
+typedef int (*port_v37_sysqio_single_quota_fn)(void *,uint32_t,uint8_t);
 struct port_v37_sysqio_begin_ops {
     void *context;
     port_v37_sysqio_clref_fn clear_global_efn;
     int (*lookup_channel)(void *,uint32_t,uint32_t,
         struct port_v37_sysqio_resolved_channel *);
     void (*post_event)(void *,uint32_t,uint8_t,uint32_t);
+    port_v37_sysqio_single_quota_fn single_io_quota;
     struct port_v37_sysqio_memory user_memory;
 };
 struct port_v37_sysqio_prepared {
@@ -79,8 +83,9 @@ struct port_v37_sysqio_prepared {
     struct port_v37_sysqio_resolved_channel channel;
 };
 
-/* Source-ordered EXE$QIO pre-dispatch path. It prepares the caller's request
- * for a later driver dispatcher; it does not initiate hardware I/O. */
+/* Source-ordered EXE$QIO path through IOSB and I/O quota reservation. It
+ * prepares a request for a later driver dispatcher; no IRP is allocated and
+ * no hardware I/O is initiated here. */
 uint32_t port_v37_sysqio_begin(const void *,size_t,
     struct port_v37_sysqio_process *,const struct port_v37_sysqio_begin_ops *,
     struct port_v37_sysqio_prepared *,uint32_t *service_status);
