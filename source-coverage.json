@@ -21113,10 +21113,29 @@
         {
           "original_lines": [
             124,
-            252
+            238
           ],
           "status": "unresolved",
           "reason": "Original channel lookup, local/global event handling and access-pending scheduling unresolved"
+        },
+        {
+          "original_lines": [
+            239,
+            247
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_ef.c",
+          "pc_symbol": "port_v37_sysqio_clear_efn",
+          "pc_line": 6,
+          "function": "Local EFN clear through 63 and global SCH$CLREF callback selected by the source EFN boundary"
+        },
+        {
+          "original_lines": [
+            248,
+            252
+          ],
+          "status": "unresolved",
+          "reason": "Original channel-number validation and CCB lookup unresolved"
         },
         {
           "original_lines": [
@@ -21176,7 +21195,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves the fixed 12-argument offsets, and a preflight helper checks the resolved channel access threshold, DQ FDT legality and offline exceptions. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; user SYS$QIO entry, process channel lookup, event flags, IOSB access, quotas, device access/protection, IRP allocation and process AST completion remain absent."
+      "unresolved_integration": "The native AP decoder preserves the fixed 12-argument offsets; the local/global EFN clear helper implements the source boundary; and a preflight helper checks resolved-channel access threshold, DQ FDT legality and offline exceptions. Only FINISHIOC, FINISHIO and IPL4 post request run on reserved native IRPs; user SYS$QIO entry, process channel lookup, live EFN integration, IOSB access, quotas, device access/protection, IRP allocation and process AST completion remain absent."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

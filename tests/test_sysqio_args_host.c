@@ -1,10 +1,16 @@
 #include "vms_sysqio_args.h"
+#include "vms_sysqio_ef.h"
+#include "vms_sys85.h"
 #include <stdio.h>
 #include <string.h>
 
 static void put32(uint8_t *p,uint32_t v){
     p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);
     p[2]=(uint8_t)(v>>16);p[3]=(uint8_t)(v>>24);
+}
+struct global_ef_test { uint8_t seen;uint32_t status; };
+static uint32_t clear_global(void *opaque,uint8_t efn){
+    struct global_ef_test *t=opaque;t->seen=efn;return t->status;
 }
 
 int main(void){
@@ -55,6 +61,25 @@ int main(void){
     request.function=63u;
     if(port_v37_sysqio_preflight(&request,3u,&device,&action)!=
        PORT_V37_SYSQIO_PRECHECK_ILLFUNC)return 11;
-    puts("SYS$QIO AP argument layout and fail-atomic decode PASS");
+    uint32_t local[2]={UINT32_MAX,UINT32_MAX};uint32_t service_status=0u;
+    if(port_v37_sysqio_clear_efn(0x1003u,local,clear_global,0,
+         &service_status)!=PORT_V37_SYSQIO_EF_OK||
+       local[0]!=(UINT32_MAX&~(UINT32_C(1)<<3))||local[1]!=UINT32_MAX||
+       service_status!=PORT_SYS85_NORMAL)return 12;
+    local[0]=local[1]=UINT32_MAX;
+    if(port_v37_sysqio_clear_efn(63u,local,clear_global,0,
+         &service_status)!=PORT_V37_SYSQIO_EF_OK||local[0]!=UINT32_MAX||
+       local[1]!=(UINT32_MAX&~UINT32_C(0x80000000)))
+        return 13;
+    struct global_ef_test global={0u,PORT_SYS85_NORMAL};
+    if(port_v37_sysqio_clear_efn(64u,local,clear_global,&global,
+         &service_status)!=PORT_V37_SYSQIO_EF_OK||global.seen!=64u||
+       local[0]!=UINT32_MAX||local[1]!=(UINT32_MAX&~UINT32_C(0x80000000)))
+        return 14;
+    global.status=PORT_SYS85_NOPRIV;
+    if(port_v37_sysqio_clear_efn(0x1ffu,local,clear_global,&global,
+         &service_status)!=PORT_V37_SYSQIO_EF_GLOBAL_FAILURE||
+       global.seen!=255u||service_status!=PORT_SYS85_NOPRIV)return 15;
+    puts("SYS$QIO EFN/AP/channel mode/FDT preflight cases PASS");
     return 0;
 }
