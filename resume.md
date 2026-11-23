@@ -1,6 +1,6 @@
 # Native VAX/VMS 3.7 IA-32 recovery, updated through M218
 
-INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216 rereads 64 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
+INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218/M219 add a host-tested SYS$QIO AP decoder and partial resolved-channel/FDT/offline preflight only; the public service remains unimplemented. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
 
 Active repository: tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium main
@@ -285,3 +285,12 @@ Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, suite 
 SYSQIOREQ.MAR lines 112-123 now map as partial coverage to the decoder only; the complete service remains unimplemented. Public SYS$QIO, Files-11 ACP integration, process-aware AST/scheduling and image activation, genuine SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 remain unfinished.
 
 M218 implementation commit: `d2f8fab4ee10d8c25a28a492aca3cda40c0fec9b`.
+
+
+## M219 — SYS$QIO channel/FDT preflight, 23 November 2026
+
+Extended the SYSQIOREQ helper to apply the source channel-access threshold (`CCB$B_AMOD` is `MAXACMODE+1`), classify the low six I/O function bits through the DQ FDT while retaining the full function/modifier word, and allow only DEACCESS/ACP_CONTROL through an offline device. The source coverage now marks SYSQIOREQ lines 253-283 partial. This is a preflight primitive after a caller resolves the channel; it does not perform channel lookup, event flag clearing, IOSB probing, quota charging, protection checks, IRP allocation, FDT action invocation, or completion. It is not a public SYS$QIO service.
+
+Verification: `make sysqioargscheck` PASS; full `make test` PASS (exit 0, suite reached M49); `python3 tools/validate_source_ranges.py` PASS (1,961 ranges, zero unmapped; 441/4,566 originals indexed; 28,740 partial, 50,461 unresolved, 7,799 missing, 26,217 excluded, 917 hardware-excluded, 17,065 mapped); `git diff --check` PASS. No QEMU run: the host-tested preflight is not linked into the guest image.
+
+M219 implementation commit: `2d7a360b014886af8273c1cf853be097a38b71a7`. Public SYS$QIO and all remaining process/device integration remain incomplete.
