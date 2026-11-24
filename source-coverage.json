@@ -21316,6 +21316,78 @@
       "unresolved_integration": "Original IOC$SEARCHDEV calls resident bounded SYSTEM-only LOG$TRANSLATE followed by typed DDB/UCB scan. SYS$DISK/SYS$SYSDEVICE reach unbound DQA0; the DQ DDT, IOC mutex, $ASSIGN/$QIO, process/group logical tables, full RMS and ACP remain unported."
     },
     {
+      "original_file": "SYS/SRC/SYSASSIGN.MAR",
+      "original_lines": 415,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            192
+          ],
+          "status": "unresolved",
+          "reason": "Service argument probing, caller access validation, descriptor parsing and MAXACMODE dispatch unresolved"
+        },
+        {
+          "original_lines": [
+            193,
+            195
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_ccb.c",
+          "pc_symbol": "port_v37_ccb_find_free",
+          "pc_line": 41,
+          "function": "IOC$FFCHAN scans the source byte-offset channel table and advances CHINDX; MAXACMODE integration is unresolved"
+        },
+        {
+          "original_lines": [
+            196,
+            228
+          ],
+          "status": "unresolved",
+          "reason": "I/O database lock, mailbox check, IOC$SEARCHDEV and spooled/template routing unresolved"
+        },
+        {
+          "original_lines": [
+            229,
+            265
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_ccb.c",
+          "pc_symbol": "port_v37_ccb_assign_local",
+          "pc_line": 73,
+          "function": "Local UCB owner ancestry, share/spool allocation policy, access callback and implicit PID allocation under I/O database lock"
+        },
+        {
+          "original_lines": [
+            266,
+            299
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_ccb.c",
+          "pc_symbol": "port_v37_ccb_assign_local",
+          "pc_line": 73,
+          "function": "Local CCB UCB/AMOD/STS binding and UCB reference increment; mailbox association and FOD/share mailbox handling remain unsupported"
+        },
+        {
+          "original_lines": [
+            300,
+            346
+          ],
+          "status": "unresolved",
+          "reason": "NETMBX privilege, network UCB creation, byte quota, unit initialization, mailbox validation and rollback unresolved"
+        },
+        {
+          "original_lines": [
+            347,
+            415
+          ],
+          "status": "unresolved",
+          "reason": "Remote assignment, SYS$QIO connection, completion wait and TEST_MAILBOX are not implemented"
+        }
+      ],
+      "unresolved_integration": "Native resident helper implements only the local-device ownership/access/refcount/CCB mutation after the caller supplies a resolved UCB and effective access mode. No live process CCB table, SYS$ASSIGN service vector, descriptor validation, caller-mode probing, mailbox or network assignment is wired."
+    },
+    {
       "original_file": "SYS/SRC/SYSQIOREQ.MAR",
       "original_lines": 908,
       "sections": [

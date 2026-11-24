@@ -2321,6 +2321,29 @@ result['files'].append({'original_file':'SYS/SRC/IOSUBPAGD.MAR','original_lines'
     'sections':rows,'unresolved_integration':'Original IOC$SEARCHDEV calls resident bounded SYSTEM-only LOG$TRANSLATE followed by typed DDB/UCB scan. SYS$DISK/SYS$SYSDEVICE reach unbound DQA0; the DQ DDT, IOC mutex, $ASSIGN/$QIO, process/group logical tables, full RMS and ACP remain unported.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
+# M262: SYSASSIGN.MAR local device binding only. Name descriptor probing,
+# MAXACMODE, mailbox tests/association, network UCB creation and remote
+# assignment are deliberately not represented as working services.
+assign_rows=[
+ (1,192,None,None,'Service argument probing, caller access validation, descriptor parsing and MAXACMODE dispatch unresolved','unresolved'),
+ (193,195,'src/vms_v37_ccb.c','port_v37_ccb_find_free','IOC$FFCHAN scans the source byte-offset channel table and advances CHINDX; MAXACMODE integration is unresolved','partial'),
+ (196,228,None,None,'I/O database lock, mailbox check, IOC$SEARCHDEV and spooled/template routing unresolved','unresolved'),
+ (229,265,'src/vms_v37_ccb.c','port_v37_ccb_assign_local','Local UCB owner ancestry, share/spool allocation policy, access callback and implicit PID allocation under I/O database lock','partial'),
+ (266,299,'src/vms_v37_ccb.c','port_v37_ccb_assign_local','Local CCB UCB/AMOD/STS binding and UCB reference increment; mailbox association and FOD/share mailbox handling remain unsupported','partial'),
+ (300,346,None,None,'NETMBX privilege, network UCB creation, byte quota, unit initialization, mailbox validation and rollback unresolved','unresolved'),
+ (347,415,None,None,'Remote assignment, SYS$QIO connection, completion wait and TEST_MAILBOX are not implemented','unresolved')]
+assign_sections=[]
+for lo,hi,pc,sym,description,status in assign_rows:
+    if pc:
+        lineno=line_for_symbol(pc,sym)
+        if lineno is None:missing+=1
+        assign_sections.append({'original_lines':[lo,hi],'status':status if lineno else 'missing',
+            'pc_file':pc,'pc_symbol':sym,'pc_line':lineno,'function':description})
+    else:assign_sections.append({'original_lines':[lo,hi],'status':status,'reason':description})
+result['files'].append({'original_file':'SYS/SRC/SYSASSIGN.MAR','original_lines':415,
+    'sections':assign_sections,'unresolved_integration':'Native resident helper implements only the local-device ownership/access/refcount/CCB mutation after the caller supplies a resolved UCB and effective access mode. No live process CCB table, SYS$ASSIGN service vector, descriptor validation, caller-mode probing, mailbox or network assignment is wired.'})
+assert len({f['original_file'] for f in result['files']})==len(result['files'])
+
 # M121: original SYSQIOREQ.MAR EXE$FINISHIOC only. The pending
 # IOC$GL_PSBL append is real source-format resident IRP data, but public
 # $QIO setup, IOC driver dispatch and IOPOST delivery have not been ported.
