@@ -1470,7 +1470,7 @@ $(M130_DQDDT_OBJS): build/%.o: src/%.c src/vms_dqddt.h src/vms_dq_bootread.h src
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: dqddtcheck
 dqddtcheck: $(M130_DQDDT_OBJS) | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M130_DQDDT_SRCS) $(M134_DDTRELOC_SRCS) $(M197_DQ_CRB_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M120_IOC_SRCS) $(M218_SYSQIO_SRCS) src/vms_sysassign.c src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_ini_devicedb.c $(filter-out src/vms_ini_devicedb.c,$(M118_DB_SRCS)) tests/test_dqddt_host.c -o build/dqddtcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M130_DQDDT_SRCS) $(M134_DDTRELOC_SRCS) $(M197_DQ_CRB_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M120_IOC_SRCS) $(M218_SYSQIO_SRCS) src/vms_sysassign.c src/vms_iopost_ccb.c src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_ini_devicedb.c $(filter-out src/vms_ini_devicedb.c,$(M118_DB_SRCS)) tests/test_dqddt_host.c -o build/dqddtcheck
 	./build/dqddtcheck
 
 # M131: original RELOCDRV IOC$INITDRV DPT STORE operations, no DDT bind.

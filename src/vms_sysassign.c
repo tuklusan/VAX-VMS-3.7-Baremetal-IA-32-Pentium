@@ -53,3 +53,30 @@ int port_v37_sysassign_lookup_qio_channel(void *context,uint32_t pid,
     *out=result;
     return 0;
 }
+
+uint32_t port_v37_sysassign_qio_charge(void *context,uint32_t pid,
+    uint32_t channel,uint8_t access_mode,const struct port_v37_assign_ops *ops,
+    uint16_t *outstanding){
+    struct port_v37_sysassign_qio_context *c=context;
+    if(!c||!ops||!ops->lock_io_database||!ops->unlock_io_database||
+       !outstanding||!pid||pid!=c->owner_pid||access_mode>3u||!c->ccb_base||
+       !c->assigned_ucb)return PORT_V37_CCB_BAD;
+    const uint32_t locked=ops->lock_io_database(ops->context);
+    if(!(locked&1u))return locked;
+    struct port_v37_ccb_view view={0};
+    uint32_t status=port_v37_ccb_resolve(c->ccb_base,
+        c->ccb_preceding_bytes,channel,c->maximum_channel_offset,access_mode,
+        &view);
+    if(status==PORT_V37_CCB_OK&&view.ucb!=c->assigned_ucb)
+        status=PORT_V37_CCB_IVCHAN;
+    if(status==PORT_V37_CCB_OK){
+        uint8_t *const count=view.ccb+PORT_V37_CCB_IOC;
+        const uint16_t next=(uint16_t)((uint16_t)count[0]|
+            ((uint16_t)count[1]<<8));
+        const uint16_t charged=(uint16_t)(next+1u);
+        count[0]=(uint8_t)charged;count[1]=(uint8_t)(charged>>8);
+        *outstanding=charged;
+    }
+    ops->unlock_io_database(ops->context);
+    return status;
+}

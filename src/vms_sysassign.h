@@ -41,4 +41,7 @@ struct port_v37_sysassign_qio_context {
 };
 int port_v37_sysassign_lookup_qio_channel(void *,uint32_t,uint32_t,
     struct port_v37_sysqio_resolved_channel *);
+/* SYSQIOREQ.MAR SUCCES charges CCB$W_IOC before invoking FDT actions. */
+uint32_t port_v37_sysassign_qio_charge(void *,uint32_t,uint32_t,
+    uint8_t,const struct port_v37_assign_ops *,uint16_t *);
 #endif

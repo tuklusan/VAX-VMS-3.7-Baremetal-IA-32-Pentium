@@ -7,6 +7,7 @@
 #include "vms_ini_devicedb.h"
 #include "vms_ioc_phys.h"
 #include "vms_sysqio_args.h"
+#include "vms_iopost_end.h"
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"DQ DDT failed line %u: %s\n",(unsigned)__LINE__,#x);return 1;}}while(0)
 static int mock_read(void *ctx,uint32_t lbn,uint16_t dst[256]){
     unsigned *calls=ctx;(*calls)++;
@@ -257,6 +258,21 @@ int main(void){
         port_v37_read16(qio_irp+32u)==PORT_DQ_READPBLK&&
         port_v37_read16(qio_irp+40u)==(uint16_t)(0u-assigned)&&
         (port_v37_read16(qio_irp+42u)&0x0100u)!=0u);
+    uint16_t channel_ioc=0u;uint32_t deaccess_irp=UINT32_MAX;
+    CHECK(port_v37_sysassign_qio_charge(&qio_fixture.channels,
+        qio_process.pid,assigned,qio_process.access_mode,&assign_ops,
+        &channel_ioc)==PORT_V37_CCB_OK&&
+        channel_ioc==1u&&port_v37_read16(ccb_base-16u+
+        PORT_V37_CCB_IOC)==1u);
+    CHECK(port_v37_iopost_ccb_complete(ccb_base,48u,
+        port_v37_read16(qio_irp+40u),0,&channel_ioc,&deaccess_irp)==
+        PORT_V37_IOPOST_OK&&channel_ioc==0u&&deaccess_irp==0u&&
+        port_v37_read16(ccb_base-16u+PORT_V37_CCB_IOC)==0u);
+    channel_ioc=0xaaaau;
+    CHECK(port_v37_sysassign_qio_charge(&qio_fixture.channels,
+        qio_process.pid,assigned,3u,&assign_ops,&channel_ioc)==
+        PORT_V37_CCB_NOPRIV&&channel_ioc==0xaaaau&&
+        port_v37_read16(ccb_base-16u+PORT_V37_CCB_IOC)==0u);
     CHECK(port_v37_irp_pool_free(&qio_pool,qio_irp,qio_irp_va,
         PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&qio_sync)==PORT_V37_IRP_POOL_OK);
     assigned=UINT16_MAX;
@@ -294,6 +310,6 @@ int main(void){
     CHECK(!memcmp(&before,&d,sizeof d));
     CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    puts("DQ native DDT activation, DQA0 DDB/UCB binding, IOC search and privileged READPBLK/WRITEPBLK dispatch PASS; public QIO/ACP remain unimplemented");
+    puts("DQ native DDT activation, DQA0 DDB/UCB binding, IOC search, SYSQIO IRP/CCB accounting and privileged READPBLK/WRITEPBLK dispatch PASS; public QIO/ACP remain unimplemented");
     return 0;
 }
