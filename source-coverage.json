@@ -21370,8 +21370,11 @@
             248,
             252
           ],
-          "status": "unresolved",
-          "reason": "Original channel-number validation and CCB lookup unresolved"
+          "status": "partial",
+          "pc_file": "src/vms_v37_ccb.c",
+          "pc_symbol": "port_v37_ccb_resolve",
+          "pc_line": 14,
+          "function": "Validate the source channel token, index CTL$GL_CCBBASE backward by the 16-byte CCB offset, check AMOD and return UCB/WIND/IOC fields; per-process channel table is not yet bound"
         },
         {
           "original_lines": [

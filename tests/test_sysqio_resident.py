@@ -15,6 +15,7 @@ required = {
     "port_v37_sysqio_begin",
     "port_v37_sysqio_prepare_irp",
     "port_v37_sysqio_process_bind_pcb",
+    "port_v37_ccb_resolve",
 }
 missing = sorted(required - symbols.keys())
 if missing:
