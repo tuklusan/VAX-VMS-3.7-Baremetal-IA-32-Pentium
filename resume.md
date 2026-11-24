@@ -946,3 +946,13 @@ Verification: `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck
 M285 implementation commit: `38c12a15228ac2aa692194548bd146e564dc8675`.
 
 Remaining: bind running process page maps and CTL allocations to a genuine public SYS$ASSIGN/SYS$QIO service entry; dispatch standard user IRPs through DQA0 STARTIO; Files-11 ACP; real process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M286 — Read public SYS$QIO argument lists through caller page maps, 24 November 2026
+
+Added a SYSQIO public-entry adapter that reads the caller's argument-count word, rejects undersized lists through the existing parameter validation path, validates/copies the fixed 52-byte VMS argument list through the checked user-page adapter, then invokes the source-ordered SYSQIO begin/IRP-reservation path. The DQA0 integration regression submits its AP from a translated CPL3 page and verifies an inaccessible AP returns `SS$_ACCVIO` without charging process I/O, posting an event, or reserving an IRP. Driver submission and the live system-service trap remain unbound.
+
+Verification: `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS; `make qemu-sysboot-m217` PASS through actual SYS.EXE load and the 700-byte DQA0 DDT/IRQ14 Files-11 read, then incomplete INIT stop. Coverage validation PASS: 2,035 ranges; 445/4,566 indexed; mapped 17,016, partial 29,585, unresolved 52,022, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T152758556364Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M286 implementation commit: `4e35124e889a2fb790728257a3580f582f8094ff`.
+
+Remaining: dispatch this process-bound QIO path from a live IA-32 system-service trap; submit the standard IRP through DQA0 STARTIO and real interrupt completion; implement Files-11 ACP, process-aware IOSB/event/AST delivery, full native INIT and process image activation; verify SYSTEM login, DCL, DECnet Phase IV and nested SET HOST 0 acceptance.
