@@ -1098,3 +1098,13 @@ Verification: `make iopostendcheck` PASS under UBSan; `make -j2 all sysqioreside
 M300 implementation commit: `fa66c84728fc44c8e64ea4344cac0b0147a49287`.
 
 Remaining: integrate this ownership rollback into live public SYS$QIO/DQA0 request submission and its real failure/cancel paths; construct native SVAPTE/BOFF mapping and IOLOCK restart semantics; connect real IOCIOPOST to PCB/PHD/event/AST and scheduler ownership; Files-11 ACP; full INIT/process activation; SYSTEM login/DCL; DECnet Phase IV; genuine nested SET HOST 0 acceptance.
+
+## M301 — Exercise Files-11 ACP RDHEDR through published DQA0, 24 November 2026
+
+SYS.EXE's post-publication DQA0 phase now calls the native F11B `port_f11b_read_header` on the actual SYS.EXE FID 11. FID-to-INDEXF lookup and FH2 validation use the boot volume's HOME/INDEXF data; the resulting header LBN is read through the published DQA0 DDT and CRB IRQ14 completion path, then compared byte-for-byte with the already-opened header. The guest checks the returned resident header pointer, one physical read and FID/sequence. This validates one ACP header operation in the boot path; it does not integrate ACP request queues, public SYS$QIO, or a process ACP context.
+
+Verification: `make -j2 all sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); `make qemu-sysboot-m217` PASS and emitted `INIT: Files-11 ACP RDHEDR read SYS.EXE FID 11 through DQA0 DDT/CRB IRQ14.` It then stopped at `INIT stopped: remaining original initialization dependencies incomplete.` Transcript `logs/serial/qemu-m217-run-local-20261124T203552759894Z.log`, 5,426 bytes, SHA-256 `d2ef9511c7352cd841188dcb8ba1f5269c42782572d67d58e38848b616d578ba`. QEMU terminated; no runner remains. Coverage generation, range regression and original-source range validation PASS; 2,058 ranges, 446/4,566 original files indexed, mapped 17,016, partial 29,664, unresolved 52,811, missing 7,799, excluded 26,237, hardware-excluded 917. No login, DCL, DECnet or SET HOST 0 occurred.
+
+M301 implementation commit: `211450a`.
+
+Remaining: full Files-11 ACP requests, public SYS$QIO dispatch and live DQA0 completion binding; process-aware AST and scheduler integration; full INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and genuine nested SET HOST 0 acceptance.
