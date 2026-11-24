@@ -207,7 +207,13 @@ static struct port_f11_87_fcb *create_fcb(struct port_f11_87_context *c,
     zero((uint8_t *)f,sizeof(*f));
     f->type=PORT_F11_87_FCBTYPE;f->start_vbn=1;
     uint32_t st=v2?port_f11b_init_fcb2(f,h,lbn,c->volume):port_f11a_init_fcb(f,h,lbn);
-    if(st!=PORT_F11_87_NORMAL){c->status=(uint16_t)st;return 0;}
+    if(st!=PORT_F11_87_NORMAL){
+        c->status=(uint16_t)st;
+        if(c->ops.dealloc&&
+           !(c->ops.dealloc(c->ops.context,f,sizeof(*f),PORT_F11_87_FCBTYPE)&1u))
+            c->status=PORT_F11_87_BADPARAM;
+        return 0;
+    }
     return f;
 }
 struct port_f11_87_fcb *port_f11a_create_fcb(struct port_f11_87_context *c,

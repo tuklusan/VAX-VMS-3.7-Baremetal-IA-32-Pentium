@@ -1691,7 +1691,7 @@ for orig,total,first,last,symbol in f11_87_files:
             (124,213,'src/vms_f11_acp87.c','port_f11a_update_fcb','FCB attribute refresh')])
     elif orig == 'F11B/SRC/CREFCB.B32':
         regions.extend([
-            (70,125,'src/vms_f11_acp87.c','port_f11b_create_fcb','New FCB'),
+            (70,125,'src/vms_f11_acp87.c','port_f11b_create_fcb','Allocate and materialize FCB; return the block to nonpaged pool when FH2-derived initialization fails'),
             (126,178,'src/vms_f11_acp87.c','port_f11b_update_fcb','FCB attribute refresh')])
     elif orig == 'F11B/SRC/RDHEDR.B32':
         regions.append((first,last,'src/vms_f11_acp87.c',symbol,

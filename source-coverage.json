@@ -9774,7 +9774,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_create_fcb",
-          "pc_line": 213,
+          "pc_line": 219,
           "function": "New FCB"
         },
         {
@@ -9785,7 +9785,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_update_fcb",
-          "pc_line": 221,
+          "pc_line": 227,
           "function": "FCB attribute refresh"
         },
         {
@@ -9819,8 +9819,8 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_create_fcb",
-          "pc_line": 217,
-          "function": "New FCB"
+          "pc_line": 223,
+          "function": "Allocate and materialize FCB; return the block to nonpaged pool when FH2-derived initialization fails"
         },
         {
           "original_lines": [
@@ -9830,7 +9830,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_update_fcb",
-          "pc_line": 225,
+          "pc_line": 231,
           "function": "FCB attribute refresh"
         },
         {
@@ -9864,7 +9864,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_make_pointer",
-          "pc_line": 230,
+          "pc_line": 236,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -9898,7 +9898,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_read_header",
-          "pc_line": 308,
+          "pc_line": 314,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -9932,7 +9932,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_read_header",
-          "pc_line": 311,
+          "pc_line": 317,
           "function": "Native ACP FID-to-INDEXF lookup and FH2 validation execute during real IA-32 boot; SYS.EXE header is read through published DQA0 DDT/CRB IRQ14 and materialized as a native FCB. Full ACP request queues and process callback context remain unbound."
         },
         {
@@ -9966,7 +9966,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_create_window",
-          "pc_line": 348,
+          "pc_line": 354,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10000,7 +10000,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_create_window",
-          "pc_line": 351,
+          "pc_line": 357,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10034,7 +10034,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_get_fib",
-          "pc_line": 409,
+          "pc_line": 415,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10068,7 +10068,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_get_fib",
-          "pc_line": 413,
+          "pc_line": 419,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10102,7 +10102,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_make_access",
-          "pc_line": 456,
+          "pc_line": 462,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10136,7 +10136,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_make_access",
-          "pc_line": 460,
+          "pc_line": 466,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10170,7 +10170,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_io_done",
-          "pc_line": 499,
+          "pc_line": 505,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10204,7 +10204,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_io_done",
-          "pc_line": 503,
+          "pc_line": 509,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -22011,7 +22011,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 490,
+          "pc_line": 497,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {

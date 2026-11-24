@@ -54,6 +54,7 @@ struct port_f11_87_window {
 struct port_f11_87_ops {
     void *context;
     void *(*alloc)(void *,uint32_t,uint32_t);
+    uint32_t (*dealloc)(void *,void *,uint32_t,uint32_t);
     uint32_t (*kernel_mount)(void *,uint32_t *,uint32_t);
     uint32_t (*turn_window)(void *,struct port_f11_87_window *,const uint8_t[512],
                             uint32_t,uint32_t,struct port_f11_87_window **);

@@ -381,6 +381,13 @@ static void *executive_acp_alloc(void *opaque,uint32_t bytes,uint32_t tag){
         return 0;
     return memory;
 }
+static uint32_t executive_acp_dealloc(void *opaque,void *memory,
+                                      uint32_t bytes,uint32_t tag){
+    (void)opaque;
+    if(!executive_np_pool_ready||tag!=PORT_F11_87_FCBTYPE)
+        return PORT_EXE_NP_POOL_BAD;
+    return port_exe_np_pool_free(&executive_np_pool,memory,bytes);
+}
 static uint32_t executive_postpub_f11_sector(void *,uint32_t,uint8_t[512]);
 static uint32_t executive_acp_map_vbn(void *opaque,uint32_t vbn,
                                       uint32_t *lbn){
@@ -1970,6 +1977,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             index_header,executive_f11_opened_sys.file.volume};
         const struct port_f11_87_ops acp_ops={
             .context=&acp_io,.alloc=executive_acp_alloc,
+            .dealloc=executive_acp_dealloc,
             .map_vbn=executive_acp_map_vbn,
             .read_lbn=executive_acp_read_lbn,
             .switch_volume=executive_acp_switch_volume};

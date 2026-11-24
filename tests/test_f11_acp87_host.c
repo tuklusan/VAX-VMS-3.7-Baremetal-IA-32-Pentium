@@ -9,7 +9,7 @@ static void wr16(uint8_t *p,unsigned x){p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);}
 static uint16_t rd16(const uint8_t *p){return (uint16_t)(p[0]|(uint16_t)p[1]<<8);}
 struct fake {
     uint8_t header[512];
-    unsigned allocation,turns,maps,reads,invalidated,switched,posts,dismounts,mounts;
+    unsigned allocation,deallocation,turns,maps,reads,invalidated,switched,posts,dismounts,mounts;
     uint32_t vbn,lbn;
 };
 static void *allocate(void *p,uint32_t bytes,uint32_t kind){
@@ -17,6 +17,11 @@ static void *allocate(void *p,uint32_t bytes,uint32_t kind){
     assert(kind==PORT_F11_87_FCBTYPE||kind==2u);
     m->allocation++;
     return calloc(1,bytes);
+}
+static uint32_t deallocate(void *p,void *memory,uint32_t bytes,uint32_t kind){
+    struct fake *m=p;(void)bytes;
+    assert(kind==PORT_F11_87_FCBTYPE&&memory);m->deallocation++;
+    free(memory);return 1u;
 }
 static uint32_t mount_kernel(void *p,uint32_t *bits,uint32_t mask){
     struct fake *m=p;m->mounts++;*bits|=mask;return 1u;
@@ -51,7 +56,7 @@ int main(int argc,char **argv){
     struct port_f11_87_volume vol={0};vol.index_bitmap_blocks=1;vol.cluster=1;
     vol.reserved_files=16;vol.default_window=4;
     struct port_f11_87_context c={0};c.volume=&vol;c.ops=(struct port_f11_87_ops){
-        .context=&m,.alloc=allocate,.kernel_mount=mount_kernel,
+        .context=&m,.alloc=allocate,.dealloc=deallocate,.kernel_mount=mount_kernel,
         .turn_window=turn,.map_vbn=map,
         .read_lbn=read_lbn,.switch_volume=switch_volume,.invalidate=invalidate,
         .post_io=post,.check_dismount=dismount
@@ -140,6 +145,13 @@ int main(int argc,char **argv){
     struct port_f11_87_fcb f2={0};
     assert(port_f11b_init_fcb2(&f2,m.header,22,&vol)==1u&&f2.file_blocks==3u);
     assert(f2.fid.number==fid2.number&&f2.header_lbn==22);
+    uint8_t invalid_fcb_header[512];memcpy(invalid_fcb_header,m.header,512);
+    invalid_fcb_header[1]=0u;
+    unsigned fcb_alloc_before=m.allocation,fcb_free_before=m.deallocation;
+    assert(port_f11b_create_fcb(&c,invalid_fcb_header,22)==0);
+    assert(c.status==PORT_F11_87_BADFILEHDR&&
+           m.allocation==fcb_alloc_before+1u&&
+           m.deallocation==fcb_free_before+1u);
     struct port_f11_87_fcb *new_fcb=port_f11b_create_fcb(&c,m.header,22);
     assert(new_fcb&&new_fcb->file_blocks==3u);
     assert(port_f11b_search_fcb(&vol,fid2)==0);
