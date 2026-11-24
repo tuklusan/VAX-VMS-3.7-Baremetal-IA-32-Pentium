@@ -54,7 +54,7 @@ uint32_t port_v37_lookaside_alloc(struct port_ini_packet_list *q,
     if(!q||!packet||!address||!type||!valid_sync(sync)||
        requested>UINT32_MAX-15u)return PORT_V37_IRP_POOL_BAD;
     uint32_t rounded=(requested+15u)&~15u;
-    if(!rounded||rounded!=q->packet_bytes)return PORT_V37_IRP_POOL_BAD;
+    if(!rounded||rounded>q->packet_bytes)return PORT_V37_IRP_POOL_BAD;
     *packet=0;*address=0u;
     uint32_t old_ipl=sync->raise_sync(sync->context);
     uint32_t st=queue_check(q);

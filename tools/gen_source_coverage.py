@@ -2569,7 +2569,7 @@ for first,last,path,sym,why in [
  (1,214,None,None,'Original nonpaged allocation declarations, shared pool, and general ALLOCATE machinery unresolved'),
  (215,240,'src/vms_qio_irp_pool.c','port_v37_irp_pool_alloc','IRP-sized requests dequeue a validated source INIT lookaside packet, write requested size/type, and restore synchronization IPL; nonpaged variable allocation, pool extension, resource waiting and AST-delivery return semantics remain unported'),
  (241,349,None,None,'Other ALLOC* entries, ALONPAGWAIT caller-mode wait and cleanup semantics unresolved'),
- (350,397,'src/vms_exe_np_pool.c','port_exe_np_allocate','Host-tested ALONONPAGED IRP/LRP/SRP class selection, DYN tag preservation, exact-size lookaside dequeue and variable-pool fallback; ACP runtime wiring is not yet verified'),
+ (350,397,'src/vms_exe_np_pool.c','port_exe_np_allocate','Host-tested ALONONPAGED IRP/LRP/SRP class selection, DYN tag preservation, any-fitting-slot lookaside dequeue and variable-pool fallback; ACP runtime wiring is not yet verified'),
  (398,461,None,None,'Paged-pool allocation, block splitting, mutexes and shared memory pool unresolved'),
  (462,515,'src/vms_exe_np_pool.c','port_exe_np_pool_alloc','EXE$ALLOCATE source first-fit search, aligned block selection and low-address split in the live SYS.EXE nonpaged pool; failure resource accounting and pool extension remain unresolved'),
  (516,545,'src/vms_qio_irp_pool.c','port_v37_irp_pool_free','Return an allocated source DYN$C_IRP block to the tail of its original lookaside queue with duplicate/corruption guards and synchronization, exercised after resident SYS.EXE DQA0 DDT boot reads; SRP/LRP/general pool return paths unresolved'),

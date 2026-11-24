@@ -22715,7 +22715,7 @@
           "pc_file": "src/vms_exe_np_pool.c",
           "pc_symbol": "port_exe_np_allocate",
           "pc_line": 131,
-          "function": "Host-tested ALONONPAGED IRP/LRP/SRP class selection, DYN tag preservation, exact-size lookaside dequeue and variable-pool fallback; ACP runtime wiring is not yet verified"
+          "function": "Host-tested ALONONPAGED IRP/LRP/SRP class selection, DYN tag preservation, any-fitting-slot lookaside dequeue and variable-pool fallback; ACP runtime wiring is not yet verified"
         },
         {
           "original_lines": [

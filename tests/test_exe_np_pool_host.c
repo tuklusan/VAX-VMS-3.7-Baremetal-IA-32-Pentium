@@ -50,10 +50,10 @@ int main(void){
     memset(allocation.address,0x5au,allocation.bytes);
     assert(port_exe_np_deallocate(&allocator,allocation.address,80u,10u)==
            PORT_EXE_NP_POOL_OK&&lists[0].free_count==1u);
-    assert(port_exe_np_allocate(&allocator,160u,18u,&allocation)==PORT_EXE_NP_POOL_OK&&
+    assert(port_exe_np_allocate(&allocator,144u,18u,&allocation)==PORT_EXE_NP_POOL_OK&&
            allocation.source==PORT_EXE_NP_FROM_LRP&&allocation.bytes==160u);
     memset(allocation.address,0x3cu,allocation.bytes);
-    assert(port_exe_np_deallocate(&allocator,allocation.address,160u,18u)==
+    assert(port_exe_np_deallocate(&allocator,allocation.address,144u,18u)==
            PORT_EXE_NP_POOL_OK&&lists[1].free_count==2u);
     assert(port_exe_np_allocate(&allocator,104u,7u,&allocation)==PORT_EXE_NP_POOL_OK&&
            allocation.source==PORT_EXE_NP_FROM_VARIABLE&&allocation.bytes==104u);
