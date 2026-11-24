@@ -760,3 +760,13 @@ M266 implementation commit and publication details follow.
 Remaining work: bind the completion helper to actual IOPOST process and IOSB/event/AST structures; public SYS$QIO dispatch and DQA0 process IRP queue; Files-11 ACP and deaccess integration; native INIT continuation; process image activation; genuine login/DCL and DECnet Phase IV nested SET HOST 0 acceptance.
 
 M266 implementation commit (local): `af98aa6c3cdecf52104c22eeba8b8ed7bfd3b4d8`. GitHub publication follows.
+
+## M267 — Port IOCIOPOST direct-I/O locked-page release, 24 November 2026
+
+Added a source-ordered, bounded direct-I/O buffer unlock helper for `IOCIOPOST.MAR` lines 166-210. It computes page counts from each SVAPTE, byte offset, and transfer count; traverses the root IRP's IRPE chain; and unlocks both recorded buffer regions for every extension. It preflights the full chain before calling unlock callbacks, bounds extension count, and rejects malformed addresses without partial page release. PAGIO, SWAPIO, and segmented virtual-I/O paths explicitly defer to their separate source handlers. Coverage now maps lines 166-210 partially; lines 211-971 remain unresolved. The helper is compiled into resident SYS.EXE but is not yet connected to a live process completion path.
+
+`make iopostunlockcheck` PASS: direct span rounding, two-area IRPE traversal, zero next-link termination, malformed-chain no-mutation, and deferred paged/virtual cases. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS (exit 0). Source coverage generation/validation PASS: 2,026 ranges; 445/4,566 original files indexed; mapped 17,016, partial 29,565, unresolved 52,042, missing 7,799, excluded 26,237, hardware-excluded 917. Real `make qemu-sysboot-m217` PASS for the existing 700-byte SYS.EXE chain read via IOC-selected DQA0 DDT/CRB/IRQ14, then stopped at incomplete INIT. This new unlock helper was not invoked by QEMU. Latest transcript `logs/serial/qemu-m217-run-local-20261124T135322203589Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No public SYS$QIO, login, DCL, DECnet, or SET HOST 0 occurred.
+
+M267 implementation commit (local): `6ea0c7f66e62eca5bf8b28646a24f081c6ee38ca`. GitHub publication and resume commit details follow.
+
+Remaining IOPOST work includes actual process/PHD resolution and unlock callback binding, buffered and segmented virtual completion, IOSB access fault behavior, event/AST delivery, and IRPE deallocation. Public SYS$QIO, DQA0 process I/O, Files-11 ACP, native INIT continuation, process image activation, login/DCL and DECnet acceptance remain incomplete.
