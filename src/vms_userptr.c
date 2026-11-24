@@ -37,6 +37,42 @@ int port_user_io_range_valid(const struct port_user_map *m,uint32_t base,
     }
 }
 
+int port_user_pin_io_range(const struct port_user_map *m,uint32_t base,
+                           uint32_t bytes,int writing,
+                           port_phys_page_resolver physical,void *physical_ctx,
+                           port_user_page_pin pin,port_user_page_unpin unpin,
+                           void *lock_ctx,struct port_user_page_locks *locks){
+    if(!locks||!physical||!pin||!unpin||
+       port_user_io_range_valid(m,base,bytes,writing))return PORT_USER_BAD;
+    const uint32_t last=base+bytes-1u;
+    struct port_user_page_locks acquired={{0},0};
+    for(uint32_t at=base;;){
+        const uint32_t dir=m->pde[(at>>22)&1023u];
+        const uint32_t *table=m->resolve(m->context,dir&0xfffff000u);
+        if(!table||acquired.count==PORT_USER_PIN_MAX_PAGES)goto rollback;
+        const uint32_t pte=table[(at>>12)&1023u];
+        const uint32_t frame=pte&0xfffff000u;
+        /* A valid PTE whose physical frame cannot be resolved is not
+         * lockable; do not retain a partial pin set. */
+        if(!physical(physical_ctx,frame)||pin(lock_ctx,frame))goto rollback;
+        acquired.physical[acquired.count++]=frame;
+        if((at>>12)==(last>>12))break;
+        at=(at&0xfffff000u)+4096u;
+    }
+    *locks=acquired;
+    return PORT_USER_OK;
+rollback:
+    while(acquired.count)unpin(lock_ctx,acquired.physical[--acquired.count]);
+    return PORT_USER_BAD;
+}
+
+void port_user_unpin_io_range(struct port_user_page_locks *locks,
+                              port_user_page_unpin unpin,void *context){
+    if(!locks||!unpin||locks->count>PORT_USER_PIN_MAX_PAGES)return;
+    while(locks->count)unpin(context,locks->physical[--locks->count]);
+    for(unsigned i=0;i<PORT_USER_PIN_MAX_PAGES;i++)locks->physical[i]=0;
+}
+
 /* The output contract is all-or-nothing for unmapped spans. Retain the
  * validated physical page aliases so a page-crossing copy never assumes
  * that consecutive user virtual pages are physically adjacent. */

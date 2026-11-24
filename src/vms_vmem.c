@@ -70,6 +70,7 @@ int port_vmem_release(struct port_vmem_region *r,
         if (phys && (!port_phys_is_owned(pool,phys) ||
                      (actual & ~cpu_ad_bits)!=(phys|7u)))
             return PORT_VMEM_PROTECTION;
+        if (phys&&port_phys_pin_count(pool,phys))return PORT_VMEM_LOCKED;
         if (!phys && actual!=0) return PORT_VMEM_PROTECTION;
     }
     for (uint32_t i=0;i<r->count;i++) {

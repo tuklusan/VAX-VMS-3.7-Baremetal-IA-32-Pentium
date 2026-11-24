@@ -10,6 +10,7 @@
  * The physical-page zero callback is required BEFORE a user mapping appears. */
 enum { PORT_VMEM_MAX_PAGES = 8u, PORT_VMEM_INVALID = -1,
        PORT_VMEM_OOM = -2, PORT_VMEM_PROTECTION = -3,
+       PORT_VMEM_LOCKED = -4,
        PORT_VMEM_HANDLED = 1 };
 struct port_vmem_region {
     uint32_t start;

@@ -20,6 +20,22 @@ int port_user_range_valid(const struct port_user_map *map,
  * every IA-32 page without imposing the smaller synchronous-copy bound. */
 int port_user_io_range_valid(const struct port_user_map *map,
                              uint32_t address,uint32_t size,int writing);
+/* Pin every physical page intersecting a VMS 16-bit QIO transfer. The
+ * caller owns the returned set until completion and must release it once. */
+#define PORT_USER_PIN_MAX_PAGES 17u
+typedef int (*port_user_page_pin)(void *context,uint32_t physical_page);
+typedef void (*port_user_page_unpin)(void *context,uint32_t physical_page);
+struct port_user_page_locks {
+    uint32_t physical[PORT_USER_PIN_MAX_PAGES];
+    unsigned count;
+};
+int port_user_pin_io_range(const struct port_user_map *map,uint32_t address,
+                           uint32_t size,int writing,
+                           port_phys_page_resolver physical,void *physical_context,
+                           port_user_page_pin pin,port_user_page_unpin unpin,
+                           void *lock_context,struct port_user_page_locks *locks);
+void port_user_unpin_io_range(struct port_user_page_locks *locks,
+                              port_user_page_unpin unpin,void *lock_context);
 /* Validate all user PTEs and all destination physical spans before writing
  * any byte. Works when user virtual pages are not identity-mapped. */
 int port_user_copy_to(const struct port_user_map *map, uint32_t dest,

@@ -14,6 +14,16 @@ int main(void) {
     }
     assert(port_phys_alloc(&pool)==0 && pool.high_water==PORT_PHYS_FRAMES);
     assert(port_phys_free(&pool,addr[0]+3)<0);
+    assert(port_phys_pin(&pool,addr[0])==0&&
+           port_phys_pin(&pool,addr[0])==0&&
+           port_phys_pin_count(&pool,addr[0])==2u&&
+           port_phys_free(&pool,addr[0])<0&&
+           port_phys_available(&pool)==0u);
+    assert(port_phys_unpin(&pool,addr[0])==0&&
+           port_phys_free(&pool,addr[0])<0&&
+           port_phys_unpin(&pool,addr[0])==0&&
+           port_phys_unpin(&pool,addr[0])<0&&
+           port_phys_pin_count(&pool,addr[0])==0u);
     assert(port_phys_free(&pool,addr[0])==0);
     assert(port_phys_free(&pool,addr[0])<0);
     assert(port_phys_alloc(&pool)==addr[0]);
@@ -21,6 +31,6 @@ int main(void) {
         assert(port_phys_free(&pool,addr[i])==0);
     assert(port_phys_available(&pool)==PORT_PHYS_FRAMES);
     assert(port_phys_free(&pool,PORT_PHYS_BASE-4096)<0);
-    puts("Physical frame allocator PASS: exhaust, recycle, double-free, bounds");
+    puts("Physical frame allocator PASS: exhaust, recycle, I/O pins, free guard, bounds");
     return 0;
 }

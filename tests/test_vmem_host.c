@@ -44,12 +44,18 @@ int main(void) {
     assert(port_vmem_release(&a,&pool,table0)==PORT_VMEM_PROTECTION);
     assert(pool.available==PORT_PHYS_FRAMES-4 && a.count==2);
     table0[0x311] |= 2u;
+    const uint32_t pinned=table0[0x310]&0xfffff000u;
+    assert(port_phys_pin(&pool,pinned)==0);
+    assert(port_vmem_release(&a,&pool,table0)==PORT_VMEM_LOCKED&&
+           pool.available==PORT_PHYS_FRAMES-4&&a.count==2&&
+           (table0[0x310]&0xfffff000u)==pinned);
+    assert(port_phys_unpin(&pool,pinned)==0);
     assert(port_vmem_release(&a,&pool,table0)==0);
     assert(port_vmem_release(&b,&pool,table1)==0);
     assert(pool.available==PORT_PHYS_FRAMES && table0[0x310]==0x310003u);
     assert(port_vmem_release(&a,&pool,table0)==PORT_VMEM_INVALID);
     assert(port_vmem_reserve(&a,table0,0x3ff000u,2)==PORT_VMEM_INVALID);
     assert(port_vmem_reserve(&a,table0,0x0u,1)==PORT_VMEM_INVALID);
-    printf("M48 VMem host PASS: demand-zero, IA-32 A/D, privilege-tamper reject, reclaim\n");
+    printf("M48 VMem host PASS: demand-zero, IA-32 A/D, locked-frame release guard, reclaim\n");
     return 0;
 }
