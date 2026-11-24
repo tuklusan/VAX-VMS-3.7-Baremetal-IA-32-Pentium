@@ -133,6 +133,13 @@ struct port_v37_sysqio_prepared {
     struct port_v37_sysqio_resolved_channel channel;
     /* Retained by the prepared request; post/abort ownership releases it. */
     struct port_user_page_locks transfer_pages;
+    /* IOCIOPOST runs after the issuing process may have changed page maps;
+     * retain the caller IOSB's physical page until completion as well. */
+    struct port_user_page_locks iosb_pages;
+};
+struct port_v37_sysqio_iosb_value {
+    uint16_t status,information;
+    uint32_t device_status;
 };
 
 enum { PORT_V37_SYSQIO_BUFFER_OK=1u,PORT_V37_SYSQIO_BUFFER_BAD=2u,
@@ -154,6 +161,9 @@ uint32_t port_v37_sysqio_copy_to_user_buffer(
     const struct port_v37_sysqio_prepared *,const void *,uint32_t);
 uint32_t port_v37_sysqio_copy_from_user_buffer(
     const struct port_v37_sysqio_prepared *,void *,uint32_t);
+uint32_t port_v37_sysqio_copy_iosb_to_user(
+    const struct port_v37_sysqio_prepared *,
+    const struct port_v37_sysqio_iosb_value *);
 
 /* Source SYSQIOREQ SUCCES constructs the device-independent standard IRP.
  * This builder only consumes an already reserved packet; allocation,

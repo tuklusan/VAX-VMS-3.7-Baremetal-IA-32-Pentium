@@ -60,6 +60,17 @@ static void sysqio_unpin_page(void *v,uint32_t frame){
     struct sysqio_fixture *f=v;
     if(frame==f->pinned_frame&&f->pins){--f->pins;++f->unpins;}
 }
+static int qio_iosb_probe(void *v,uint32_t address,size_t bytes){
+    struct port_exe_access *access=v;
+    return bytes<=UINT32_MAX&&port_exe_probe_write(access,address,
+        (uint32_t)bytes)?0:-1;
+}
+static int qio_iosb_clear(void *v,uint32_t address,size_t bytes){
+    struct port_exe_access *access=v;
+    uint8_t zero[PORT_V37_SYSQIO_IOSB_BYTES]={0};
+    return bytes==sizeof zero&&port_exe_write(access,address,zero,sizeof zero)?
+        0:-1;
+}
 struct qio_sync_state { uint32_t ipl; };
 static uint32_t qio_raise(void *v){
     struct qio_sync_state *s=v;uint32_t old=s->ipl;s->ipl=4u;return old;
@@ -250,6 +261,7 @@ int main(void){
     process_assign_template.arb_va=0u;
     struct assign_user_memory assign_memory={0};
     assign_memory.pde[0]=0x5007u;assign_memory.pte[1]=0x9007u;
+    assign_memory.pte[3]=0x9007u;
     assign_memory.bytes[0]=4u;assign_memory.bytes[1]=0u;
     assign_memory.bytes[2]=14u;assign_memory.bytes[3]=1u;
     assign_memory.bytes[4]=0x10u;assign_memory.bytes[5]=0x10u;
@@ -302,11 +314,12 @@ int main(void){
     sysqio_ap[7]=0x1000u;sysqio_ap[8]=512u;
     struct port_v37_sysqio_process qio_process={
         .pid=0x12340001u,.access_mode=0u,.direct_io_count=1};
-    const struct port_v37_sysqio_begin_ops qio_ops={
+    struct port_v37_sysqio_begin_ops qio_ops={
         .context=&qio_fixture,.ccb_base=ccb_base,
         .ccb_preceding_bytes=48u,.ccb_maximum_channel_offset=48u,
         .lookup_channel=port_v37_sysassign_lookup_qio_channel,
-        .post_event=sysqio_post_error};
+        .post_event=sysqio_post_error,
+        .user_memory={qio_iosb_probe,qio_iosb_clear,&assign_access}};
     struct port_v37_sysqio_prepared qio_prepared={0};
     uint32_t qio_status=0u;
     CHECK(port_v37_sysqio_begin(sysqio_ap,sizeof sysqio_ap,&qio_process,
@@ -357,12 +370,14 @@ int main(void){
     qio_process.has_phy_io=1u;
     qio_process.ast_count=1;
     memcpy(assign_memory.bytes+128u,sysqio_ap,sizeof sysqio_ap);
+    port_v37_write32(assign_memory.bytes+128u+4u*4u,0x3200u);
     port_v37_write32(assign_memory.bytes+128u+5u*4u,0x1200u);
     port_v37_write32(assign_memory.bytes+128u+7u*4u,0x1800u);
     assign_memory.pte[1]=0x9005u;
-    CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
+    const uint32_t read_only_prepare=port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
         &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
-        &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_BUFFER&&
+        &qio_irp,&qio_irp_va,&qio_status);
+    CHECK(read_only_prepare==PORT_V37_SYSQIO_PREPARE_BUFFER&&
         qio_status==PORT_SYS85_ACCVIO&&!qio_irp&&!qio_irp_va&&
         qio_process.direct_io_count==1&&qio_fixture.errors==1u&&
         qio_process.ast_count==1&&qio_pool.free_count==1u);
@@ -394,7 +409,9 @@ int main(void){
         (port_v37_read16(qio_irp+42u)&0x0100u)!=0u&&
         qio_prepared.transfer_pages.count==1u&&
         qio_prepared.transfer_pages.physical[0]==0x9000u&&
-        qio_fixture.pins==1u&&qio_fixture.unpins==0u);
+        qio_prepared.iosb_pages.count==1u&&
+        qio_prepared.iosb_pages.physical[0]==0x9000u&&
+        qio_fixture.pins==2u&&qio_fixture.unpins==1u);
     uint8_t user_read_data[512];
     for(unsigned i=0;i<sizeof user_read_data;i++)
         user_read_data[i]=(uint8_t)(i^0x5au);
@@ -402,6 +419,14 @@ int main(void){
         sizeof user_read_data)==PORT_V37_SYSQIO_BUFFER_OK&&
         !memcmp(assign_memory.bytes+0x800u,user_read_data,
                 sizeof user_read_data));
+    const struct port_v37_sysqio_iosb_value completion={1u,512u,0x12345678u};
+    assign_memory.pte[3]=0u; /* Completion must survive the caller's CR3 change. */
+    CHECK(port_v37_sysqio_copy_iosb_to_user(&qio_prepared,&completion)==
+        PORT_V37_SYSQIO_BUFFER_OK&&
+        port_v37_read16(assign_memory.bytes+0x200u)==1u&&
+        port_v37_read16(assign_memory.bytes+0x202u)==512u&&
+        port_v37_read32(assign_memory.bytes+0x204u)==0x12345678u);
+    assign_memory.pte[3]=0x9007u;
     uint16_t channel_ioc=0u;uint32_t deaccess_irp=UINT32_MAX;
     CHECK(port_v37_sysassign_qio_charge(&qio_fixture.channels,
         qio_process.pid,assigned,qio_process.access_mode,&assign_ops,
@@ -413,8 +438,9 @@ int main(void){
         PORT_V37_IOPOST_OK&&channel_ioc==0u&&deaccess_irp==0u&&
         port_v37_read16(ccb_base-16u+PORT_V37_CCB_IOC)==0u);
     port_v37_sysqio_release_user_pages(&qio_prepared);
-    CHECK(qio_prepared.transfer_pages.count==0u&&qio_fixture.pins==0u&&
-          qio_fixture.unpins==1u);
+    CHECK(qio_prepared.transfer_pages.count==0u&&
+          qio_prepared.iosb_pages.count==0u&&qio_fixture.pins==0u&&
+          qio_fixture.unpins==3u);
     channel_ioc=0xaaaau;
     CHECK(port_v37_sysassign_qio_charge(&qio_fixture.channels,
         qio_process.pid,assigned,3u,&assign_ops,&channel_ioc)==
@@ -433,7 +459,8 @@ int main(void){
         qio_status==PORT_SYS85_NORMAL&&qio_process.direct_io_count==0&&
         port_v37_read16(qio_irp+32u)==PORT_DQ_WRITEPBLK&&
         port_v37_read32(qio_irp+52u)==512u&&
-        qio_prepared.transfer_pages.count==1u&&qio_fixture.pins==1u&&
+        qio_prepared.transfer_pages.count==1u&&qio_prepared.iosb_pages.count==1u&&
+        qio_fixture.pins==2u&&
         !(port_v37_read16(qio_irp+42u)&2u));
     uint8_t user_write_data[512];
     for(unsigned i=0;i<sizeof user_write_data;i++)
@@ -444,7 +471,7 @@ int main(void){
                 sizeof user_write_data)&&user_write_data[0]==3u&&
         user_write_data[1]==10u&&user_write_data[511]==(uint8_t)(511u*7u+3u));
     port_v37_sysqio_release_user_pages(&qio_prepared);
-    CHECK(qio_fixture.pins==0u&&qio_fixture.unpins==2u);
+    CHECK(qio_fixture.pins==0u&&qio_fixture.unpins==5u);
     CHECK(port_v37_irp_pool_free(&qio_pool,qio_irp,qio_irp_va,
         PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&qio_sync)==PORT_V37_IRP_POOL_OK);
     assign_memory.pte[1]=0x9007u;

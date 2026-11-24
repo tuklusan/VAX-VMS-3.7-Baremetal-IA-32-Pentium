@@ -172,15 +172,20 @@ uint32_t port_v37_sysqio_prepare_user_irp(
         return result;
     }
     struct port_v37_sysqio_buffer buffer={0};
-    const uint32_t checked=port_v37_sysqio_check_buffer(&request,memory,
-        &buffer,&status);
     int pin_failed=0;
+    if(request.args.iosb&&!port_exe_lock_io(memory,request.args.iosb,
+        PORT_V37_SYSQIO_IOSB_BYTES,1,&request.iosb_pages)){
+        pin_failed=1;status=PORT_SYS85_ACCVIO;
+    }
+    const uint32_t checked=pin_failed?PORT_V37_SYSQIO_BUFFER_ACCVIO:
+        port_v37_sysqio_check_buffer(&request,memory,&buffer,&status);
     if((checked==PORT_V37_SYSQIO_BUFFER_OK)&&buffer.bytes){
         const int writing=buffer.direction==
             PORT_V37_SYSQIO_BUFFER_WRITE_TO_USER;
-        pin_failed=!port_exe_lock_io(memory,buffer.address,buffer.bytes,
-            writing,&request.transfer_pages);
-        if(pin_failed)status=PORT_SYS85_ACCVIO;
+        if(!port_exe_lock_io(memory,buffer.address,buffer.bytes,
+            writing,&request.transfer_pages)){
+            pin_failed=1;status=PORT_SYS85_ACCVIO;
+        }
     }
     if((checked!=PORT_V37_SYSQIO_BUFFER_OK&&
         checked!=PORT_V37_SYSQIO_BUFFER_NONE)||pin_failed){
@@ -191,6 +196,8 @@ uint32_t port_v37_sysqio_prepare_user_irp(
             ((uint32_t)reserved[9u]<<8);
         const uint32_t returned=port_v37_irp_pool_free(pool,reserved,va,
             bytes,sync);
+        port_user_unpin_io_range(&request.transfer_pages);
+        port_user_unpin_io_range(&request.iosb_pages);
         if(returned!=PORT_V37_IRP_POOL_OK){
             *service_status=PORT_SYS85_BADPARAM;
             *packet=reserved;*packet_va=va;
@@ -215,5 +222,8 @@ uint32_t port_v37_sysqio_prepare_user_irp(
 
 void port_v37_sysqio_release_user_pages(
     struct port_v37_sysqio_prepared *request){
-    if(request)port_user_unpin_io_range(&request->transfer_pages);
+    if(request){
+        port_user_unpin_io_range(&request->transfer_pages);
+        port_user_unpin_io_range(&request->iosb_pages);
+    }
 }

@@ -128,6 +128,26 @@ uint32_t port_v37_sysqio_copy_from_user_buffer(
         PORT_V37_SYSQIO_BUFFER_OK:PORT_V37_SYSQIO_BUFFER_ACCVIO;
 }
 
+/* Async completion writes the eight-byte SYS$QIO status block after the
+ * caller may have been descheduled. Use retained physical pages, never the
+ * stale user VA under whichever CR3 happens to be current. */
+uint32_t port_v37_sysqio_copy_iosb_to_user(
+    const struct port_v37_sysqio_prepared *request,
+    const struct port_v37_sysqio_iosb_value *value){
+    if(!request||!value)return PORT_V37_SYSQIO_BUFFER_BAD;
+    if(!request->args.iosb)return PORT_V37_SYSQIO_BUFFER_NONE;
+    if(!request->iosb_pages.count)return PORT_V37_SYSQIO_BUFFER_ACCVIO;
+    uint8_t bytes[PORT_V37_SYSQIO_IOSB_BYTES]={
+        (uint8_t)value->status,(uint8_t)(value->status>>8),
+        (uint8_t)value->information,(uint8_t)(value->information>>8),
+        (uint8_t)value->device_status,(uint8_t)(value->device_status>>8),
+        (uint8_t)(value->device_status>>16),
+        (uint8_t)(value->device_status>>24)};
+    return port_user_copy_to_pinned(&request->iosb_pages,
+        request->args.iosb,bytes,sizeof bytes)==PORT_USER_OK?
+        PORT_V37_SYSQIO_BUFFER_OK:PORT_V37_SYSQIO_BUFFER_ACCVIO;
+}
+
 static uint32_t begin_failure(uint32_t result,uint32_t status,
     const struct port_v37_sysqio_args *args,
     const struct port_v37_sysqio_process *process,

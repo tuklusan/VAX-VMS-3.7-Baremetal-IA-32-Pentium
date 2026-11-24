@@ -21475,7 +21475,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 192,
+          "pc_line": 212,
           "function": "When CCB$L_WIND bit 0 marks access/deaccess pending, require a scheduler wait callback and resume only after the pending bit clears; no live SCH$WAIT/RSN$_ASTWAIT binding yet"
         },
         {
@@ -21505,7 +21505,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 192,
+          "pc_line": 212,
           "function": "Clear EFN before channel lookup and post failure status to the requested event flag"
         },
         {
@@ -21565,7 +21565,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 192,
+          "pc_line": 212,
           "function": "Direct/buffered per-process I/O counter charge with single-unit quota callback and rollback on denial; IRP reservation/dispatch remain unresolved"
         },
         {
@@ -21588,7 +21588,7 @@
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_user_irp",
           "pc_line": 136,
-          "function": "Allocate/build the standard IRP, check transfer-buffer access in caller memory, and on ACCVIO return the packet and restore I/O/AST charges before posting the event; page locking and DDT submission remain unresolved"
+          "function": "Allocate/build the standard IRP, pin the caller IOSB and transfer pages for asynchronous access, and on ACCVIO return the packet, release acquired pins, restore I/O/AST charges and post the event; DDT submission, completion delivery and IOPOST-owned unlock remain unresolved"
         },
         {
           "original_lines": [
