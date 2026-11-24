@@ -2395,15 +2395,16 @@ result['files'].append({'original_file':'SYS/SRC/SYSQIOREQ.MAR',
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M123: IOCIOPOST kernel-end-action subset executed in real SYS.EXE.
-# Read/write process paths, PCB counters, buffer-release, IOSB delivery,
-# ASTs, paged/swap I/O and real IPL interrupt dispatch remain unresolved.
+# Process paths, PCB counters, IOSB delivery, ASTs, paged/swap I/O and real
+# IPL interrupt dispatch remain unresolved.
 iopost_rows=[
  (1,114,None,None,'DEC headers, VAX registers, priority table and original declarations','unresolved'),
  (115,144,'src/vms_sys_executive_entry.c','executive_iopost_irq_entry','Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST','partial'),
  (145,155,'src/vms_iopost_pop.c','port_v37_iopost_pop','First-in/first-out REMQUE and sentinel restoration, now called through x86 CPL0 IDT 0x90','partial'),
  (156,159,'src/vms_iopost_kernel_end.c','port_v37_iopost_kernel_end','Whitelisted native privileged end action; other VAX branch and kernel ABI unresolved','partial'),
  (160,165,'src/vms_iopost_service.c','port_v37_iopost_service','Kernel address branch for source IRP PID, IA-32 supervisor aperture replacing VAX high-bit test; PCB lookup unresolved','partial'),
- (166,971,None,None,'Source original direct/buffered/paging postprocessing, PCB quotas, buffer/page unlock, kernel AST and virtual segmentation unported','unresolved'),
+ (166,210,'src/vms_iopost_unlock.c','port_v37_iopost_unlock_direct','DIRECT I/O path computes locked pages from byte offset/count and unlocks both buffer areas in each bounded IRPE chain; paging/swap and segmented virtual requests remain deferred','partial'),
+ (211,971,None,None,'Remaining original buffered/paging postprocessing, PCB quotas, kernel AST and virtual segmentation unported','unresolved'),
  (972,1000,'src/vms_iopost_ccb.c','port_v37_iopost_ccb_complete','DIRPOST sign-extends the IRP negative CCB byte offset, decrements CCB$W_IOC, and on idle transfers the queued deaccess IRP to an IOC$WAKACP callback; live SYS$QIO completion is not connected','partial'),
  (1001,1015,'src/vms_iopost_dirpost.c','port_v37_iopost_dirpost','DIRPOST process I/O accounting, source callback for guarded two-longword IOSB store, SCH$POSTEF and AST-quota QAST versus IRP release selection; no live PCB/PHD, IOSB, event, AST or lookaside binding','partial'),
  (1016,1113,None,None,'DIRPOST IRPE deallocation chain, system-buffer move/PROBEW, IOSB access-fault path, and remaining paging/segmented I/O completion unported','unresolved')]

@@ -21774,10 +21774,21 @@
         {
           "original_lines": [
             166,
+            210
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_unlock.c",
+          "pc_symbol": "port_v37_iopost_unlock_direct",
+          "pc_line": 38,
+          "function": "DIRECT I/O path computes locked pages from byte offset/count and unlocks both buffer areas in each bounded IRPE chain; paging/swap and segmented virtual requests remain deferred"
+        },
+        {
+          "original_lines": [
+            211,
             971
           ],
           "status": "unresolved",
-          "reason": "Source original direct/buffered/paging postprocessing, PCB quotas, buffer/page unlock, kernel AST and virtual segmentation unported"
+          "reason": "Remaining original buffered/paging postprocessing, PCB quotas, kernel AST and virtual segmentation unported"
         },
         {
           "original_lines": [
