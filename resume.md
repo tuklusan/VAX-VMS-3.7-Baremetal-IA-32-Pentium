@@ -1058,3 +1058,13 @@ Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargs
 M296 coverage commit: `ba4bda0abcacde0b183614dd3a9a2e3044b5c871`.
 
 Remaining: native SVAPTE/BOFF mappings and IOLOCK semantics; live SYS$QIO service dispatch into DQA0 STARTIO and real process-aware completion; Files-11 ACP, full INIT, scheduling/process image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0 acceptance.
+
+## M297 — Retain caller IOSB pages for asynchronous completion, 24 November 2026
+
+SYS$QIO caller preparation now pins the optional eight-byte IOSB before transfer-buffer pinning and retains both page-lock sets with the prepared request. Any IOSB or transfer pin failure returns the reserved IRP, releases every acquired pin, restores I/O/AST charges and posts SS$_ACCVIO. Added a completion helper that writes status, transferred byte count and device status through the pinned physical alias, independent of the current user page map. Host DQA0 integration invalidates the IOSB PTE before completion, verifies the eight output bytes still land in its pinned frame, and checks all pins release. This helper is not called by a live IOCIOPOST path; public SYS$QIO service dispatch, DQA0 queue submission, IOSB/event/AST process completion and completion-owned unlock remain unimplemented.
+
+Verification: `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); `make qemu-sysboot-m217` PASS through the actual 700-byte SYS.EXE Files-11 chain read across two DQA0 DDT/IRQ14 sectors, then incomplete INIT stop. No login, DCL, DECnet or SET HOST 0 occurred. Coverage generator/range regression and source-range validator PASS: 2,058 ranges, zero missing mapped functions, 446/4,566 original files indexed; mapped 17,016, partial 29,664, unresolved 52,811, missing 7,799, excluded 26,237, hardware-excluded 917. No additional functional original-source lines were upgraded. QEMU COM1 transcript `logs/serial/qemu-m217-run-local-20261124T164211830378Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`; an earlier same-command run is also retained. Only native source, coverage metadata and serial evidence were included; no DEC source or binary image.
+
+M297 implementation commit: `6b046c279e702e1b7f0f72e8be60abe6a71fdd11`.
+
+Remaining: live SYS$QIO dispatch and DQA0 STARTIO submission; actual IOCIOPOST IOSB/event/AST delivery and one-owner pin release; native Files-11 ACP, INIT, scheduling/process image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0 acceptance.
