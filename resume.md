@@ -758,3 +758,5 @@ Host regression `make iopostendcheck` PASS: verifies completion ordering and fie
 M266 implementation commit and publication details follow.
 
 Remaining work: bind the completion helper to actual IOPOST process and IOSB/event/AST structures; public SYS$QIO dispatch and DQA0 process IRP queue; Files-11 ACP and deaccess integration; native INIT continuation; process image activation; genuine login/DCL and DECnet Phase IV nested SET HOST 0 acceptance.
+
+M266 implementation commit (local): `af98aa6c3cdecf52104c22eeba8b8ed7bfd3b4d8`. GitHub publication follows.
