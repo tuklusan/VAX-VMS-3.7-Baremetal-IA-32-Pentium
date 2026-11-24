@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M259
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M260
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -687,7 +687,7 @@ Corrected M257 after tracing the original SHRLIB/SYSMAR.MAR IFPRIV macro: it der
 
 Verification: make sysqioargscheck PASS; make -j2 all test sysqioresidentcheck sysexecentrycheck PASS (exit 0); source coverage generation/validation PASS (2,015 ranges, 0 errors; 444/4,566 original files indexed); git diff --check PASS. Real make qemu-sysboot-m217 PASS for the 700-byte Files-11 DQA0 read via IRQ14, then stopped at incomplete INIT. Transcript logs/serial/qemu-m217-run-local-20261124T011108781544Z.log, 5,350 bytes, SHA-256 8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c. No login, public SYS$QIO, DCL, DECnet or SET HOST 0 occurred.
 
-M258 implementation commit (local): 9daf386cd7fe8bfb18b63ebfaf08592435f97e93. GitHub publication commits and final resume record follow.
+M258 implementation commit (local): 9daf386cd7fe8bfb18b63ebfaf08592435f97e93. Publication details follow.
 
 M258 GitHub main publication commits: SYSQIO process ABI 745a9c363a142a98af83bd19f9b5ba728b54d5f7; PHD-based privilege binding 8094cad758353d22f5590053f003ac786dd35693; PCB layout cleanup 1771d1f62ecf5b0e538583084069043488377d25; PHD privilege definitions fe8d861e6e13992c05aa7514784d7310d8cf25a7; host tests 26e83c245b817dbf6b01118f745c259eb7fe23a6; coverage generator 365654a15ed8eaa2c1e8ef0152aace4c984d531e; coverage 4742fa0c0441ff4f4587cd611586044a888695df; serial manifest 2a9728996f083b27a55af4406f56ff826fa6be77; QEMU transcript 48eaa1656786a93a4bbea72fb6ab10d0e97470db. All file blob IDs were verified against local Git objects. The M257 resume publication at e3ab8c817ded3319f7f9efa09458ca5d48bf1e0d was superseded by this corrected record.
 
@@ -697,6 +697,14 @@ The SYSQIO PCB/PHD binder now rejects a PHD VA that differs from PCB$L_PHD witho
 
 Verification: make sysqioargscheck PASS; make -j2 all test sysqioresidentcheck sysexecentrycheck PASS (exit 0); real make qemu-sysboot-m217 PASS through the existing 700-byte Files-11 read via DQA0 DDT/IRQ14 and stopped at incomplete INIT; git diff --check PASS. Transcript logs/serial/qemu-m217-run-local-20261124T011535282173Z.log, 5,350 bytes, SHA-256 8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c.
 
-M259 implementation commit (local): 49c4e5e81ca9080b977a3b3c1244212ed47a4c78. GitHub publication and resume records follow.
+M259 implementation commit (local): 49c4e5e81ca9080b977a3b3c1244212ed47a4c78. Publication details follow.
 
-M259 GitHub main publication commits: PHD address validation 0e0233e1b5a2f8ace1ec7a4c107e250e4abf60cf; host test 26209fec2778681d513f7465217d8052629de83a; serial manifest dd13473b9f51103ca213fbae1397b9a5362979d8; QEMU transcript 11eec1d34b02f0c2cd2d6b0d8ec2082135bb41f8. Each published blob was checked against the corresponding local Git blob. Final M259 resume publication follows.
+M259 GitHub main publication commits: PHD address validation 0e0233e1b5a2f8ace1ec7a4c107e250e4abf60cf; host test 26209fec2778681d513f7465217d8052629de83a; serial manifest dd13473b9f51103ca213fbae1397b9a5362979d8; QEMU transcript 11eec1d34b02f0c2cd2d6b0d8ec2082135bb41f8. Each published blob was checked against the corresponding local Git blob. M259 resume publication: 44d162e7fd246601945c748241d97d9b81b89a8f.
+
+## M260 — Correct DQA0 functional coverage records, 23 November 2026
+
+Updated stale DQDRIVER, boot UCB, and system logical-name coverage descriptions to reflect the current published native DQA0 DDT/CRB and its physical READPBLK/WRITEPBLK routing through IOC$SEARCHDEV and bounded IRQ14 FIFOs. ACP, other DQ FDT actions, public process I/O, RB730 behavior, and process completion remain incomplete. No runtime behavior changed.
+
+Verification: source coverage generation/validation PASS (2,015 ranges, 0 errors; 444/4,566 original files indexed; 17,016 mapped, 29,402 partial, 51,790 unresolved, 7,799 missing, 26,237 excluded, 917 hardware-excluded); git diff --check PASS. Runtime evidence remains the M259 QEMU transcript above; M260 did not run QEMU.
+
+M260 local coverage commits: 6697d7b240ad75db71443ef2e24731b48fb9a219; bf363c4a40117921559003fbfc86d1b13c2aa71e. GitHub publication and final resume record follow.
