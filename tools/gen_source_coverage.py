@@ -2327,7 +2327,9 @@ assert len({f['original_file'] for f in result['files']})==len(result['files'])
 assign_rows=[
  (1,192,None,None,'Service argument probing, caller access validation, descriptor parsing and MAXACMODE dispatch unresolved','unresolved'),
  (193,195,'src/vms_v37_ccb.c','port_v37_ccb_find_free','IOC$FFCHAN scans the source byte-offset channel table and advances CHINDX; MAXACMODE integration is unresolved','partial'),
- (196,228,None,None,'I/O database lock, mailbox check, IOC$SEARCHDEV and spooled/template routing unresolved','unresolved'),
+ (196,210,None,None,'Mailbox TEST_MAILBOX, spooled/template and error routing unresolved','unresolved'),
+ (211,212,'src/vms_sysassign.c','port_v37_sysassign_local','Local physical IOC$SEARCHDEV is composed with the source CCB assignment helper; descriptor probing and public service-vector binding remain unresolved','partial'),
+ (213,228,None,None,'DEVICE FOUND branch routing for spooled/network/template UCBs and caller privilege checks unresolved','unresolved'),
  (229,265,'src/vms_v37_ccb.c','port_v37_ccb_assign_local','Local UCB owner ancestry, share/spool allocation policy, access callback and implicit PID allocation under I/O database lock','partial'),
  (266,299,'src/vms_v37_ccb.c','port_v37_ccb_assign_local','Local CCB UCB/AMOD/STS binding and UCB reference increment; mailbox association and FOD/share mailbox handling remain unsupported','partial'),
  (300,346,None,None,'NETMBX privilege, network UCB creation, byte quota, unit initialization, mailbox validation and rollback unresolved','unresolved'),

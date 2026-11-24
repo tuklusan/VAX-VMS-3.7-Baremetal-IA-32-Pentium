@@ -3,6 +3,7 @@
 #include <string.h>
 #include "vms_dqddt.h"
 #include "vms_dqddt_ioc_bind.h"
+#include "vms_sysassign.h"
 #include "vms_ini_devicedb.h"
 #include "vms_ioc_phys.h"
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"DQ DDT failed line %u: %s\n",(unsigned)__LINE__,#x);return 1;}}while(0)
@@ -16,6 +17,14 @@ static int mock_write(void *ctx,uint32_t lbn,const uint16_t src[256]){
     return lbn==7u&&src[0]==0x55aau&&src[255]==0xaa55u?0:-1;
 }
 static void mock_irq(void){}
+static uint32_t assign_lock(void *v){(void)v;return 1u;}
+static void assign_unlock(void *v){(void)v;}
+static uint32_t assign_related(void *v,uint32_t owner,uint32_t pid){
+    (void)v;return owner==pid?1u:0u;
+}
+static uint32_t assign_access(void *v,uint32_t arb,const uint8_t *ucb,size_t n){
+    (void)v;(void)ucb;(void)n;return arb?1u:0u;
+}
 int main(void){
     enum {BASE=0x00370000u,START=0x00324120u,RET=0x00324104u};
     const uint32_t action=(uint32_t)(uintptr_t)port_dqddt_bootread;
@@ -158,6 +167,30 @@ int main(void){
         (uint32_t)(uintptr_t)db,&info,"DQA0",4u,&found)==PORT_V37_IOC_OK);
     CHECK(found.ddb==info.ddb[0]&&found.ucb==info.ucb[0]&&
         found.unit==0u&&found.driver_bound);
+    uint8_t ccb_storage[64]={0};uint8_t *ccb_base=ccb_storage+48u;
+    uint16_t high_water=0u,assigned=UINT16_MAX;
+    const struct port_v37_assign_ops assign_ops={0,assign_lock,assign_unlock,
+        assign_related,assign_access};
+    const struct port_v37_sysassign_local_request assign_request={
+        .device_database=db,.device_database_bytes=sizeof db_words,
+        .device_database_base=(uint32_t)(uintptr_t)db,.devices=&info,
+        .device_name="DQA0",.device_name_bytes=4u,.ccb_base=ccb_base,
+        .ccb_preceding_bytes=48u,.channel_count=3u,
+        .high_water_channel=&high_water,.process_pid=0x12340001u,
+        .arb_va=0x0034c000u,.effective_max_acmode=2u,
+        .assign_ops=&assign_ops};
+    CHECK(port_v37_sysassign_local(&assign_request,&assigned)==PORT_V37_CCB_OK);
+    CHECK(assigned==16u&&high_water==16u&&
+        port_v37_read32(ccb_base-16u+PORT_V37_CCB_UCB)==info.ucb[0]&&
+        (ccb_base-16u)[PORT_V37_CCB_AMOD]==3u);
+    struct port_v37_ccb_view assigned_view={0};
+    CHECK(port_v37_ccb_resolve(ccb_base,48u,assigned,48u,0u,
+        &assigned_view)==PORT_V37_CCB_OK&&assigned_view.ucb==info.ucb[0]);
+    assigned=UINT16_MAX;
+    struct port_v37_sysassign_local_request missing_assign=assign_request;
+    missing_assign.device_name="ZZZ0";
+    CHECK(port_v37_sysassign_local(&missing_assign,&assigned)==
+        PORT_V37_IOC_NO_SUCH&&assigned==0u);
     port_v37_write16(irp+PORT_V37_IRP_FUNC,PORT_DQ_READPBLK);
     port_v37_write32(irp+PORT_V37_IRP_MEDIA,9u);
     port_v37_write32(irp+PORT_V37_IRP_IOST2,0u);

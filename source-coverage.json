@@ -21341,10 +21341,29 @@
         {
           "original_lines": [
             196,
+            210
+          ],
+          "status": "unresolved",
+          "reason": "Mailbox TEST_MAILBOX, spooled/template and error routing unresolved"
+        },
+        {
+          "original_lines": [
+            211,
+            212
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysassign.c",
+          "pc_symbol": "port_v37_sysassign_local",
+          "pc_line": 3,
+          "function": "Local physical IOC$SEARCHDEV is composed with the source CCB assignment helper; descriptor probing and public service-vector binding remain unresolved"
+        },
+        {
+          "original_lines": [
+            213,
             228
           ],
           "status": "unresolved",
-          "reason": "I/O database lock, mailbox check, IOC$SEARCHDEV and spooled/template routing unresolved"
+          "reason": "DEVICE FOUND branch routing for spooled/network/template UCBs and caller privilege checks unresolved"
         },
         {
           "original_lines": [

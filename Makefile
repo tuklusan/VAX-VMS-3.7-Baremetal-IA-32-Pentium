@@ -839,6 +839,8 @@ M119_CON_SRCS=src/vms_con_port.c src/vms_con_xoff.c src/vms_con_xon.c src/vms_co
 M119_CON_OBJS=$(patsubst src/%.c,build/%.o,$(M119_CON_SRCS))
 M120_IOC_SRCS=$(wildcard src/vms_ioc_*.c)
 M120_IOC_OBJS=$(patsubst src/%.c,build/%.o,$(M120_IOC_SRCS))
+M272_SYSASSIGN_SRCS=src/vms_sysassign.c
+M272_SYSASSIGN_OBJS=$(patsubst src/%.c,build/%.o,$(M272_SYSASSIGN_SRCS))
 M121_QIO_SRCS=$(wildcard src/vms_qio_*.c)
 M121_QIO_OBJS=$(patsubst src/%.c,build/%.o,$(M121_QIO_SRCS))
 # M218/M250/M251: native SYSQIO transaction helpers, now bound to the
@@ -1022,8 +1024,8 @@ f11channelcheck: $(M192_CHAN_OBJS) | build
 	./build/f11channelcheck
 build/vms_v37_pcb.o: src/vms_v37_pcb.c src/vms_v37_pcb.h src/vms_v37_dyn_tags.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
-build/sys.exe: build/vms_sys_executive_entry.o build/vms_v37_pcb.o build/vms_ini_syswcb.o build/vms_ini_pflvec.o build/vms_ini_mpw.o build/vms_ini_phv_swap.o build/vms_ini_procvec.o build/vms_ini_lockdb.o build/vms_sysboot_pktmem.o build/vms_ini_packet_queues.o build/vms_ini_log_templates.o build/vms_ini_syslog.o build/vms_ini_bootdev_scan.o build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/vms_ini_dpt_nl.o build/vms_ini_dpt_op.o $(M118_DB_OBJS) $(M119_CON_OBJS) $(M120_IOC_OBJS) $(M121_QIO_OBJS) $(M218_SYSQIO_OBJS) $(M122_NL_DDT_OBJS) $(M123_IOPOST_OBJS) $(M125_DQ_OBJS) $(M126_DQ_READ_OBJS) $(M127_FIN_OBJS) $(M128_LOG_OBJS) $(M129_DEVLOG_OBJS) $(M130_DQDDT_OBJS) $(M131_RELOC_OBJS) $(M134_DDTRELOC_OBJS) $(M137_INDEX_OBJS) $(M138_MFD_OBJS) $(M139_DIR_OBJS) $(M140_IMAGE_OBJS) $(M144_AUX_OBJS) $(M146_RANGE_OBJS) $(M149_BOOTPATH_OBJS) $(M149_BOOTDIR_OBJS) $(M152_CHAIN_OBJS) $(M160_CURSOR_OBJS) $(M168_IOC_OBJS) $(M184_F11_IOC_OBJS) $(M192_CHAN_OBJS) $(M197_DQ_CRB_OBJS) build/vms_boot_files11.o build/vms_bootio.o build/executive-partial.o sys_native.ld
-	$(LD) -m elf_i386 -T sys_native.ld -o $@ build/vms_sys_executive_entry.o build/vms_v37_pcb.o build/vms_ini_syswcb.o build/vms_ini_pflvec.o build/vms_ini_mpw.o build/vms_ini_phv_swap.o build/vms_ini_procvec.o build/vms_ini_lockdb.o build/vms_sysboot_pktmem.o build/vms_ini_packet_queues.o build/vms_ini_log_templates.o build/vms_ini_syslog.o build/vms_ini_bootdev_scan.o build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/vms_ini_dpt_nl.o build/vms_ini_dpt_op.o $(M118_DB_OBJS) $(M119_CON_OBJS) $(M120_IOC_OBJS) $(M121_QIO_OBJS) $(M122_NL_DDT_OBJS) $(M123_IOPOST_OBJS) $(M125_DQ_OBJS) $(M126_DQ_READ_OBJS) $(M127_FIN_OBJS) $(M128_LOG_OBJS) $(M129_DEVLOG_OBJS) $(M130_DQDDT_OBJS) $(M131_RELOC_OBJS) $(M134_DDTRELOC_OBJS) $(M137_INDEX_OBJS) $(M138_MFD_OBJS) $(M139_DIR_OBJS) $(M140_IMAGE_OBJS) $(M144_AUX_OBJS) $(M146_RANGE_OBJS) $(M149_BOOTPATH_OBJS) $(M149_BOOTDIR_OBJS) $(M152_CHAIN_OBJS) $(M160_CURSOR_OBJS) $(M168_IOC_OBJS) $(M184_F11_IOC_OBJS) $(M192_CHAN_OBJS) $(M197_DQ_CRB_OBJS) build/vms_boot_files11.o build/vms_bootio.o build/executive-partial.o
+build/sys.exe: build/vms_sys_executive_entry.o build/vms_v37_pcb.o build/vms_ini_syswcb.o build/vms_ini_pflvec.o build/vms_ini_mpw.o build/vms_ini_phv_swap.o build/vms_ini_procvec.o build/vms_ini_lockdb.o build/vms_sysboot_pktmem.o build/vms_ini_packet_queues.o build/vms_ini_log_templates.o build/vms_ini_syslog.o build/vms_ini_bootdev_scan.o build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/vms_ini_dpt_nl.o build/vms_ini_dpt_op.o $(M118_DB_OBJS) $(M119_CON_OBJS) $(M120_IOC_OBJS) $(M121_QIO_OBJS) $(M218_SYSQIO_OBJS) $(M272_SYSASSIGN_OBJS) $(M122_NL_DDT_OBJS) $(M123_IOPOST_OBJS) $(M125_DQ_OBJS) $(M126_DQ_READ_OBJS) $(M127_FIN_OBJS) $(M128_LOG_OBJS) $(M129_DEVLOG_OBJS) $(M130_DQDDT_OBJS) $(M131_RELOC_OBJS) $(M134_DDTRELOC_OBJS) $(M137_INDEX_OBJS) $(M138_MFD_OBJS) $(M139_DIR_OBJS) $(M140_IMAGE_OBJS) $(M144_AUX_OBJS) $(M146_RANGE_OBJS) $(M149_BOOTPATH_OBJS) $(M149_BOOTDIR_OBJS) $(M152_CHAIN_OBJS) $(M160_CURSOR_OBJS) $(M168_IOC_OBJS) $(M184_F11_IOC_OBJS) $(M192_CHAN_OBJS) $(M197_DQ_CRB_OBJS) build/vms_boot_files11.o build/vms_bootio.o build/executive-partial.o sys_native.ld
+	$(LD) -m elf_i386 -T sys_native.ld -o $@ build/vms_sys_executive_entry.o build/vms_v37_pcb.o build/vms_ini_syswcb.o build/vms_ini_pflvec.o build/vms_ini_mpw.o build/vms_ini_phv_swap.o build/vms_ini_procvec.o build/vms_ini_lockdb.o build/vms_sysboot_pktmem.o build/vms_ini_packet_queues.o build/vms_ini_log_templates.o build/vms_ini_syslog.o build/vms_ini_bootdev_scan.o build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/vms_ini_dpt_nl.o build/vms_ini_dpt_op.o $(M118_DB_OBJS) $(M119_CON_OBJS) $(M120_IOC_OBJS) $(M121_QIO_OBJS) $(M272_SYSASSIGN_OBJS) $(M122_NL_DDT_OBJS) $(M123_IOPOST_OBJS) $(M125_DQ_OBJS) $(M126_DQ_READ_OBJS) $(M127_FIN_OBJS) $(M128_LOG_OBJS) $(M129_DEVLOG_OBJS) $(M130_DQDDT_OBJS) $(M131_RELOC_OBJS) $(M134_DDTRELOC_OBJS) $(M137_INDEX_OBJS) $(M138_MFD_OBJS) $(M139_DIR_OBJS) $(M140_IMAGE_OBJS) $(M144_AUX_OBJS) $(M146_RANGE_OBJS) $(M149_BOOTPATH_OBJS) $(M149_BOOTDIR_OBJS) $(M152_CHAIN_OBJS) $(M160_CURSOR_OBJS) $(M168_IOC_OBJS) $(M184_F11_IOC_OBJS) $(M192_CHAN_OBJS) $(M197_DQ_CRB_OBJS) build/vms_boot_files11.o build/vms_bootio.o build/executive-partial.o
 build/vms_sysboot_elf.o: src/vms_sysboot_elf.c src/vms_sysboot_elf.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/install_sys_image: tools/install_sys_image.c src/vms_boot_files11.c src/vms_bootio.c src/vms_f11_home.c | build
@@ -1364,6 +1366,8 @@ inidpttemplatecheck: build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/
 # A prelinked DDB/UCB match remains UNBOUND until real $ASSIGN/$QIO and DDT.
 build/vms_ioc_%.o: src/vms_ioc_%.c src/vms_ioc_phys.h src/vms_ini_devicedb.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
+build/vms_sysassign.o: src/vms_sysassign.c src/vms_sysassign.h src/vms_ioc_phys.h src/vms_v37_ccb.h | build
+	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: iocphyscheck
 iocphyscheck: $(M120_IOC_OBJS) | build
 	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M120_IOC_SRCS) $(M118_DB_SRCS) tests/test_ioc_phys_host.c -o build/iocphyscheck
@@ -1466,7 +1470,7 @@ $(M130_DQDDT_OBJS): build/%.o: src/%.c src/vms_dqddt.h src/vms_dq_bootread.h src
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: dqddtcheck
 dqddtcheck: $(M130_DQDDT_OBJS) | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M130_DQDDT_SRCS) $(M134_DDTRELOC_SRCS) $(M197_DQ_CRB_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M120_IOC_SRCS) src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c src/vms_ini_devicedb.c $(filter-out src/vms_ini_devicedb.c,$(M118_DB_SRCS)) tests/test_dqddt_host.c -o build/dqddtcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc $(M130_DQDDT_SRCS) $(M134_DDTRELOC_SRCS) $(M197_DQ_CRB_SRCS) $(M126_DQ_READ_SRCS) $(M125_DQ_SRCS) $(M120_IOC_SRCS) src/vms_sysassign.c src/vms_v37_ccb.c src/vms_dq_ioc_write.c src/vms_qio_irp_prepare.c src/vms_ini_devicedb.c $(filter-out src/vms_ini_devicedb.c,$(M118_DB_SRCS)) tests/test_dqddt_host.c -o build/dqddtcheck
 	./build/dqddtcheck
 
 # M131: original RELOCDRV IOC$INITDRV DPT STORE operations, no DDT bind.
