@@ -1068,7 +1068,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_pcb.c",
           "pc_symbol": "port_v37_sysqio_process_bind_pcb",
-          "pc_line": 23,
+          "pc_line": 26,
           "function": "Bind SYSQIO process PID, AST/BIO/DIO quota words and local EFCS/EFCU to exact source PCB offsets; other PCB fields, live PHD/context and active scheduler remain incomplete"
         },
         {
@@ -21532,7 +21532,7 @@
           "pc_file": "src/vms_sysqio_device_access.c",
           "pc_symbol": "port_v37_sysqio_device_access",
           "pc_line": 7,
-          "function": "Source PHY_IO/LOG_IO privilege gates and physical/logical volume checks are now invoked by SYSQIO after IRP/AST reservation; a denial returns the packet and restores PCB I/O/AST quota before posting NOPRIV"
+          "function": "Source PCB PRIV bits now populate PHY_IO/LOG_IO state (PHY_IO implies LOG_IO); device privilege and volume checks run after IRP/AST reservation. Access denial rolls back packet and PCB quotas. Live PCB/UCB binding and service dispatch remain incomplete"
         },
         {
           "original_lines": [
@@ -21589,7 +21589,7 @@
           "pc_file": "src/vms_sysqio_device_access.c",
           "pc_symbol": "port_v37_sysqio_device_access",
           "pc_line": 7,
-          "function": "Source LOG_IO bypass and SPL/FOD/MNT/FOR/SHR gates before logical volume access callback"
+          "function": "Source PCB LOG_IO/PHY_IO bits and SPL/FOD/MNT/FOR/SHR gates select volume access callback; real live UCB security binding remains incomplete"
         },
         {
           "original_lines": [
