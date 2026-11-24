@@ -809,6 +809,14 @@ Hardened the M270 IRPE preflight and release helper against repeated extension a
 
 M271 implementation commit: `8b9ea2f6ada07f15381c64360611d1c59358f7d1`. Published to `origin/main`; resume update follows.
 
+## M272 — Preserve DQ FUNCTAB modifier semantics, 24 November 2026
+
+Corrected the native DQ DDT action lookup to select the FDT/ DDT entry from the original six-bit `IO$_` function number while retaining upper modifier bits in the full IRP function word. This matches the source FUNCTAB indexing rule; only READPBLK/WRITEPBLK have native private action slots, and the guarded physical bootread/write handlers still reject unsupported modified requests.
+
+`make dqddtcheck` PASS with modifier-bit READPBLK/WRITEPBLK lookup cases. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS for 700 SYS.EXE bytes through published DQA0 DDT/CRB and IRQ14, then the known incomplete INIT stop. Modifier lookup was host-tested only. Coverage generation/validation PASS, 2,030 ranges with inventory counts unchanged. Transcript `logs/serial/qemu-m217-run-local-20261124T142046860315Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. Public SYS$QIO, ACP, SYSTEM login, DCL, DECnet and SET HOST 0 remain incomplete.
+
+M272 implementation commit and publication details follow.
+
 Remaining: wire positive-PID completions to live IPL$_IOPOST using the real native PCB vector, PHD/page-map resolution and scheduler KAST queue; add buffered/paging/virtual paths and DIRPOST IOSB/event/AST/IRPE handling; implement real public SYS$QIO and Files-11 ACP; finish INIT and process activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0.
 
 M269 implementation commit (local): `7ec6ea951cc41cfdd9ffb1f25120467f6d632f24`. GitHub publication follows.

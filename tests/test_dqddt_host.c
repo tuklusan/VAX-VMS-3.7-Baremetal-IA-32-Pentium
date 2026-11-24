@@ -48,6 +48,10 @@ int main(void){
           (write_action|UINT32_C(0x80000000)));
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_READPBLK)==PORT_DQDDT_NATIVE);
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_WRITEPBLK)==PORT_DQDDT_NATIVE);
+    CHECK(port_dqddt_function(&d,&fdt,
+        (uint16_t)(PORT_DQ_READPBLK|0x0100u))==PORT_DQDDT_NATIVE);
+    CHECK(port_dqddt_function(&d,&fdt,
+        (uint16_t)(PORT_DQ_WRITEPBLK|0x8000u))==PORT_DQDDT_NATIVE);
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_WRITELBLK)==PORT_DQDDT_UNBOUND);
     CHECK(port_dqddt_function(&d,&fdt,PORT_DQ_READVBLK)==PORT_DQDDT_UNBOUND);
     CHECK(port_dqddt_function(&d,&fdt,63u)==PORT_DQDDT_BAD);
