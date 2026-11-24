@@ -56,6 +56,22 @@ uint32_t port_v37_sysqio_process_bind_pcb(uint8_t *pcb,size_t bytes,
     return PORT_V37_SYSQIO_PCB_OK;
 }
 
+uint32_t port_v37_sysqio_process_bind_channels(
+    struct port_v37_sysqio_process *process,uint8_t *ccb_base,
+    size_t preceding_bytes,uint16_t channel_count){
+    if(!process||!process->source_pcb||
+       process->source_pcb_bytes<PORT_V37_PCB_BYTES||!process->pid||
+       !ccb_base||((uintptr_t)ccb_base&3u)||!channel_count||
+       (size_t)channel_count>preceding_bytes/PORT_V37_CCB_BYTES||
+       (size_t)channel_count*PORT_V37_CCB_BYTES>UINT16_MAX)
+        return PORT_V37_SYSQIO_PCB_BAD;
+    process->ccb_base=ccb_base;
+    process->ccb_preceding_bytes=preceding_bytes;
+    process->ccb_channel_count=channel_count;
+    process->ccb_high_water=0u;
+    return PORT_V37_SYSQIO_PCB_OK;
+}
+
 static int16_t pcb_count(const uint8_t *p){
     return signed16(load16(p));
 }

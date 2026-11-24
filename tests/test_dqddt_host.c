@@ -5,6 +5,9 @@
 #include "vms_dqddt_ioc_bind.h"
 #include "vms_sysassign.h"
 #include "vms_exe_io.h"
+#include "vms_v37_pcb.h"
+#include "vms_v37_phd.h"
+#include "vms_v37_dyn_tags.h"
 #include "vms_ini_devicedb.h"
 #include "vms_ioc_phys.h"
 #include "vms_sysqio_args.h"
@@ -196,6 +199,24 @@ int main(void){
         found.unit==0u&&found.driver_bound);
     uint8_t ccb_storage[64]={0};uint8_t *ccb_base=ccb_storage+48u;
     uint16_t high_water=0u,assigned=UINT16_MAX;
+    _Alignas(4) uint8_t assign_pcb[PORT_V37_PCB_BYTES]={0};
+    _Alignas(4) uint8_t assign_phd[PORT_V37_PHD_PRIVMSK_BYTES]={0};
+    port_v37_write16(assign_pcb+PORT_V37_PCB_SIZE,PORT_V37_PCB_BYTES);
+    assign_pcb[PORT_V37_PCB_BTYPE]=PORT_V37_DYN_PCB;
+    port_v37_write32(assign_pcb+PORT_V37_PCB_PID,0x12340001u);
+    port_v37_write32(assign_pcb+PORT_V37_PCB_PHD,0x0034b000u);
+    port_v37_write32(assign_pcb+PORT_V37_PCB_ARB,0x0034c000u);
+    struct port_v37_sysqio_process assign_process={0};
+    CHECK(port_v37_sysqio_process_bind_pcb(assign_pcb,sizeof assign_pcb,
+        assign_phd,sizeof assign_phd,0x0034b000u,2u,&assign_process)==
+            PORT_V37_SYSQIO_PCB_OK);
+    CHECK(port_v37_sysqio_process_bind_channels(&assign_process,ccb_base,
+        48u,3u)==PORT_V37_SYSQIO_PCB_OK);
+    CHECK(port_v37_sysqio_process_bind_channels(&assign_process,ccb_base,
+        16u,2u)==PORT_V37_SYSQIO_PCB_BAD&&
+        assign_process.ccb_base==ccb_base&&
+        assign_process.ccb_channel_count==3u&&
+        assign_process.ccb_preceding_bytes==48u);
     const struct port_v37_assign_ops assign_ops={0,assign_lock,assign_unlock,
         assign_related,assign_access};
     const struct port_v37_sysassign_local_request assign_request={
@@ -206,6 +227,14 @@ int main(void){
         .high_water_channel=&high_water,.process_pid=0x12340001u,
         .arb_va=0x0034c000u,.effective_max_acmode=0u,
         .assign_ops=&assign_ops};
+    struct port_v37_sysassign_local_request process_assign_template=
+        assign_request;
+    process_assign_template.ccb_base=0;
+    process_assign_template.ccb_preceding_bytes=0u;
+    process_assign_template.channel_count=0u;
+    process_assign_template.high_water_channel=0;
+    process_assign_template.process_pid=0u;
+    process_assign_template.arb_va=0u;
     struct assign_user_memory assign_memory={0};
     assign_memory.pde[0]=0x5007u;assign_memory.pte[1]=0x9007u;
     assign_memory.bytes[0]=4u;assign_memory.bytes[1]=0u;
@@ -219,11 +248,13 @@ int main(void){
     port_exe_user_access_init(&assign_access,&assign_binding,&assign_map,
         assign_page,&assign_memory);
     const struct port_v37_sysassign_descriptor_request assign_descriptor={
-        &assign_request,&assign_access,0x1000u,2u,0u};
+        &process_assign_template,&assign_access,0x1000u,2u,0u,
+        &assign_process};
     CHECK(port_v37_sysassign_descriptor_service(&assign_descriptor,0x1040u)==
         PORT_V37_CCB_OK);
     assigned=port_v37_read16(assign_memory.bytes+64u);
-    CHECK(assigned==16u&&high_water==16u&&
+    CHECK(assigned==16u&&high_water==0u&&
+        assign_process.ccb_high_water==16u&&
         port_v37_read32(ccb_base-16u+PORT_V37_CCB_UCB)==info.ucb[0]&&
         (ccb_base-16u)[PORT_V37_CCB_AMOD]==3u);
     memcpy(assign_memory.bytes+16u,"DQB0",4u);
@@ -234,23 +265,22 @@ int main(void){
     CHECK(port_v37_sysassign_descriptor_service(&assign_descriptor,0x1040u)==
         PORT_SS_IVDEVNAM&&port_v37_read16(assign_memory.bytes+64u)==0u);
     memcpy(assign_memory.bytes+16u,"DQA0",4u);
-    struct port_v37_sysassign_local_request exhausted_request=assign_request;
-    exhausted_request.channel_count=1u;
-    struct port_v37_sysassign_descriptor_request exhausted_descriptor=
-        assign_descriptor;
-    exhausted_descriptor.local=&exhausted_request;
     assign_memory.bytes[64]=0xffu;assign_memory.bytes[65]=0xffu;
-    CHECK(port_v37_sysassign_descriptor_service(&exhausted_descriptor,
+    assign_process.ccb_channel_count=1u;
+    CHECK(port_v37_sysassign_descriptor_service(&assign_descriptor,
         0x1040u)==PORT_SS_NOIOCHAN&&
         port_v37_read16(assign_memory.bytes+64u)==0u);
+    assign_process.ccb_channel_count=3u;
     struct port_v37_ccb_view assigned_view={0};
     CHECK(port_v37_ccb_resolve(ccb_base,48u,assigned,48u,0u,
         &assigned_view)==PORT_V37_CCB_OK&&assigned_view.ucb==info.ucb[0]);
     struct port_v37_sysqio_device qio_device={
         .fdt=&fdt,.fdt_bytes=sizeof fdt,.online=1u};
     struct sysqio_fixture qio_fixture={.channels={
-        .ccb_base=ccb_base,.ccb_preceding_bytes=48u,
-        .maximum_channel_offset=48u,.owner_pid=0x12340001u,
+        .ccb_base=assign_process.ccb_base,
+        .ccb_preceding_bytes=assign_process.ccb_preceding_bytes,
+        .maximum_channel_offset=assign_process.ccb_high_water,
+        .owner_pid=assign_process.pid,
         .device_database=db,.device_database_bytes=sizeof db_words,
         .device_database_base=(uint32_t)(uintptr_t)db,
         .assigned_ucb=info.ucb[0],.device=&qio_device}};
@@ -372,6 +402,6 @@ int main(void){
     CHECK(!memcmp(&before,&d,sizeof d));
     CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    puts("DQ native DDT activation, translated SYSASSIGN descriptor/channel output, DQA0 IOC/CCB, SYSQIO IRP/CCB accounting and privileged READPBLK/WRITEPBLK dispatch PASS; public QIO/ACP remain unimplemented");
+    puts("DQ native DDT activation, PCB-bound SYSASSIGN CCBs, translated descriptors/channel output, DQA0 IOC and SYSQIO IRP accounting PASS; public QIO/ACP remain unimplemented");
     return 0;
 }

@@ -1369,7 +1369,7 @@ inidpttemplatecheck: build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/
 # A prelinked DDB/UCB match remains UNBOUND until real $ASSIGN/$QIO and DDT.
 build/vms_ioc_%.o: src/vms_ioc_%.c src/vms_ioc_phys.h src/vms_ini_devicedb.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
-build/vms_sysassign.o: src/vms_sysassign.c src/vms_sysassign.h src/vms_ioc_phys.h src/vms_v37_ccb.h | build
+build/vms_sysassign.o: src/vms_sysassign.c src/vms_sysassign.h src/vms_ioc_phys.h src/vms_v37_ccb.h src/vms_sysqio_args.h src/vms_v37_pcb.h src/vms_exe_io.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: iocphyscheck
 iocphyscheck: $(M120_IOC_OBJS) | build

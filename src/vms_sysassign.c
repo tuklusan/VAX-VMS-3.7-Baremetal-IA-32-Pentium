@@ -1,5 +1,6 @@
 #include "vms_sysassign.h"
 #include "vms_exe_io.h"
+#include "vms_v37_pcb.h"
 
 enum { ASSIGN_STAGE_VALIDATE,ASSIGN_STAGE_SEARCH,ASSIGN_STAGE_CCB };
 static uint32_t sysassign_local(
@@ -64,6 +65,25 @@ uint32_t port_v37_sysassign_descriptor(
        !port_exe_read(r->memory,address,name,length))
         return PORT_SS_ACCVIO;
     struct port_v37_sysassign_local_request local=*r->local;
+    if(r->process){
+        const struct port_v37_sysqio_process *const process=r->process;
+        if(!process->source_pcb||
+           process->source_pcb_bytes<PORT_V37_PCB_BYTES||!process->pid||
+           port_v37_read32(process->source_pcb+PORT_V37_PCB_PID)!=
+               process->pid||!process->ccb_base||
+           !process->ccb_channel_count||
+           (size_t)process->ccb_channel_count>
+               process->ccb_preceding_bytes/PORT_V37_CCB_BYTES||
+           process->ccb_high_water>
+               process->ccb_channel_count*PORT_V37_CCB_BYTES)
+            return PORT_V37_CCB_BAD;
+        local.ccb_base=process->ccb_base;
+        local.ccb_preceding_bytes=process->ccb_preceding_bytes;
+        local.channel_count=process->ccb_channel_count;
+        local.high_water_channel=&r->process->ccb_high_water;
+        local.process_pid=process->pid;
+        local.arb_va=process->arb_va;
+    }
     const uint8_t requested=(uint8_t)(r->requested_access_mode&3u);
     local.effective_max_acmode=requested>r->caller_access_mode?
         requested:r->caller_access_mode;

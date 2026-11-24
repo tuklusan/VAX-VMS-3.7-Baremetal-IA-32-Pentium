@@ -21335,7 +21335,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_descriptor_service",
-          "pc_line": 85,
+          "pc_line": 105,
           "function": "Probes and clears channel output before descriptor reads and publishes the assigned channel only after success; tested through translated IA-32 pages, but no live process map is bound"
         },
         {
@@ -21354,8 +21354,8 @@
           "status": "partial",
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_descriptor",
-          "pc_line": 43,
-          "function": "Returns source IVLOGNAM/ACCVIO for invalid length/pointer, maps stage-qualified IOC/CCB errors to IVDEVNAM/NOSUCHDEV/NOIOCHAN/NOPRIV/DEVALLOC, copies descriptor/name through checked caller-mode page translations, and applies MAXACMODE=max(requested,current); live process context remains unresolved"
+          "pc_line": 44,
+          "function": "Returns source IVLOGNAM/ACCVIO for invalid length/pointer, maps stage-qualified IOC/CCB errors to IVDEVNAM/NOSUCHDEV/NOIOCHAN/NOPRIV/DEVALLOC, copies descriptor/name through checked caller-mode page translations, applies MAXACMODE=max(requested,current), and uses source-PCB-bound process CCB state when supplied"
         },
         {
           "original_lines": [
@@ -21384,7 +21384,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_local",
-          "pc_line": 38,
+          "pc_line": 39,
           "function": "Local physical IOC$SEARCHDEV is composed with the source CCB assignment helper; public service-vector binding remains unresolved"
         },
         {
@@ -21434,7 +21434,7 @@
           "reason": "Remote assignment, SYS$QIO connection, completion wait and TEST_MAILBOX are not implemented"
         }
       ],
-      "unresolved_integration": "Native helpers probe/clear/write channel output through the translated caller-memory adapter, parse a VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. A host integration test maps descriptor/name/output through IA-32 PTEs, and the adapter is resident in SYS.EXE, but no live process-map/CCB binding or public SYS$ASSIGN service entry invokes the path. Mailbox handling, network UCB creation and remote assignment remain unresolved."
+      "unresolved_integration": "Native helpers probe/clear/write channel output through the translated caller-memory adapter, parse a VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. The resident path can bind the process PID/ARB from a source PCB and its CCB table/high-water state from a process CTL allocation; a host integration test exercises that binding and mapped user pointers. No running scheduler process supplies its page map or CTL allocation to a public SYS$ASSIGN service entry. Mailbox handling, network UCB creation and remote assignment remain unresolved."
     },
     {
       "original_file": "SYS/SRC/SYSQIOREQ.MAR",
@@ -21513,7 +21513,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_lookup_qio_channel",
-          "pc_line": 102,
+          "pc_line": 122,
           "function": "Resolve the source channel token from a PID-bound CCB table, verify the assigned UCB and bind its native DQ FDT/device view; local DQA0 SYS$ASSIGN helper composes IOC$SEARCHDEV with CCB ownership/refcount. Public service-vector dispatch remains absent"
         },
         {

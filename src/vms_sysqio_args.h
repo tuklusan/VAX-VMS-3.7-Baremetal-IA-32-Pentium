@@ -85,11 +85,18 @@ struct port_v37_sysqio_process {
     size_t source_pcb_bytes;
     uint8_t *source_phd;
     size_t source_phd_bytes;
+    /* Per-process CTL$GL_CCBBASE/CTL$GW_CHINDX state. The table bytes are
+     * owned by the process address-space/CTL allocator supplied by INIT. */
+    uint8_t *ccb_base;
+    size_t ccb_preceding_bytes;
+    uint16_t ccb_channel_count,ccb_high_water;
 };
 enum { PORT_V37_SYSQIO_PCB_OK=1u,PORT_V37_SYSQIO_PCB_BAD=2u,
        PORT_V37_SYSQIO_PCB_DIRECT=0u,PORT_V37_SYSQIO_PCB_BUFFERED=1u };
 uint32_t port_v37_sysqio_process_bind_pcb(uint8_t *,size_t,uint8_t *,size_t,
     uint32_t,uint8_t,struct port_v37_sysqio_process *);
+uint32_t port_v37_sysqio_process_bind_channels(
+    struct port_v37_sysqio_process *,uint8_t *,size_t,uint16_t);
 int16_t port_v37_sysqio_process_io_count(
     const struct port_v37_sysqio_process *,uint8_t);
 void port_v37_sysqio_process_set_io_count(

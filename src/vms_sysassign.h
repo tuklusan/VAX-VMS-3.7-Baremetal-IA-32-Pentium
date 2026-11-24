@@ -29,6 +29,9 @@ struct port_v37_sysassign_descriptor_request {
     const struct port_exe_access *memory;
     uint32_t device_name_descriptor;
     uint8_t caller_access_mode,requested_access_mode;
+    /* When present, source PCB identity and CTL CCB state override the
+     * standalone fixture fields in local. */
+    struct port_v37_sysqio_process *process;
 };
 /* SYSASSIGN.MAR entry: clear channel, read the source string descriptor,
  * maximize the requested mode, then enter the native local assignment path. */
