@@ -66,6 +66,11 @@ uint32_t port_v37_sysqio_build_irp(
     put16(candidate+IRP_BOFF,0u);
     put32(candidate+IRP_BCNT,0u);
     put32(candidate+PORT_V37_IRP_ARB,spec->arb_va);
+    /* SYSQIOFDT.MAR EXE$ONEPARM stores P1 in IRP$L_MEDIA before queuing.
+     * Keep that FDT action in the standard packet so DQ SEEK receives P1
+     * through the same IRP field used by its original driver. */
+    if(request->dispatch.action_class==PORT_DQ_FDT_ONE)
+        put32(candidate+PORT_V37_IRP_MEDIA,request->args.parameter[0]);
     if(request->args.ast_address){
         /* VMS DECW semantics without signed C overflow. */
         const int16_t ast_count=port_v37_sysqio_process_ast_count(process);

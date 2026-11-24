@@ -387,6 +387,17 @@ int main(void){
     if(port_v37_irp_pool_free(&pool,reserved_irp,reserved_va,
           PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
         return 49;
+    struct port_v37_sysqio_prepared one_parameter=prepared;
+    one_parameter.dispatch.action_class=PORT_DQ_FDT_ONE;
+    one_parameter.args.parameter[0]=0x12345678u;
+    uint8_t one_parameter_irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES];
+    struct port_v37_sysqio_irp_spec one_parameter_spec=reserve_spec;
+    one_parameter_spec.packet_va=0x4000u;
+    if(port_v37_sysqio_build_irp(&one_parameter,&proc,&one_parameter_spec,
+          one_parameter_irp,sizeof one_parameter_irp)!=
+          PORT_V37_SYSQIO_IRP_BUILD_OK||
+       get32(one_parameter_irp+PORT_V37_IRP_MEDIA)!=0x12345678u)
+        return 67;
     uint8_t *prepared_irp=0;uint32_t prepared_va=0u;
     struct port_v37_sysqio_prepared integrated={0};
     proc.direct_io_count=1;proc.ast_count=1;rig.posts=0u;
