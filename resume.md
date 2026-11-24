@@ -916,3 +916,13 @@ Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; `make qemu-
 M282 implementation commit: `99e06bce6bdee75880d77936ed665e246e867e38`.
 
 Remaining: live public SYS$ASSIGN/SYS$QIO service dispatch and process context; DQA0 STARTIO submission; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M283 — Translate SYSASSIGN IOC errors to VMS service statuses, 24 November 2026
+
+Added public-boundary status translation for invalid physical device names (`SS$_IVDEVNAM`) and absent devices (`SS$_NOSUCHDEV`), rather than returning private IOC parser/search codes. Host integration verifies both through mapped descriptor/name/channel pages and confirms output channel clearing on failure. Other incomplete routes, including logical/network, mailbox, no-channel and process/service dispatch, remain open.
+
+Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS through SYS.EXE load and the real 700-byte DQA0 DDT/IRQ14 Files-11 read, then incomplete INIT stop. Coverage validation PASS: 2,035 ranges; 445/4,566 indexed; mapped 17,016, partial 29,580, unresolved 52,027, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T151215272158Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login, DCL, DECnet or SET HOST 0 occurred.
+
+M283 implementation commit: `e213a540203065eda1658ea474bbab9aac16a9e4`.
+
+Remaining: public SYS$ASSIGN/SYS$QIO dispatch with live process context; DQA0 STARTIO submission; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
