@@ -4,6 +4,7 @@
 #include "vms_dqddt.h"
 #include "vms_dqddt_ioc_bind.h"
 #include "vms_sysassign.h"
+#include "vms_exe_io.h"
 #include "vms_ini_devicedb.h"
 #include "vms_ioc_phys.h"
 #include "vms_sysqio_args.h"
@@ -265,7 +266,13 @@ int main(void){
     bad_descriptor=assign_descriptor;bad_channel=UINT16_MAX;
     assign_memory.bytes[0]=64u;
     CHECK(port_v37_sysassign_descriptor(&bad_descriptor,&bad_channel)==
-        PORT_V37_IOC_BAD&&bad_channel==0u);
+        PORT_SS_IVLOGNAM&&bad_channel==0u);
+    assign_memory.bytes[0]=4u;assign_memory.bytes[4]=0u;
+    assign_memory.bytes[5]=0u;assign_memory.bytes[6]=0u;
+    assign_memory.bytes[7]=0u;bad_channel=UINT16_MAX;
+    CHECK(port_v37_sysassign_descriptor(&assign_descriptor,&bad_channel)==
+        PORT_SS_ACCVIO&&bad_channel==0u);
+    assign_memory.bytes[4]=0x10u;assign_memory.bytes[5]=0x10u;
     assign_memory.bytes[0]=4u;
     /* Exercise the complete host-side route through standard IRP reservation
      * using the channel created above. Hardware submission remains separate. */

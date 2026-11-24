@@ -48,8 +48,8 @@ uint32_t port_v37_sysassign_descriptor(
     const uint32_t address=(uint32_t)descriptor[4]|
         ((uint32_t)descriptor[5]<<8)|((uint32_t)descriptor[6]<<16)|
         ((uint32_t)descriptor[7]<<24);
-    if(!length||length>PORT_V37_IOC_NAME_MAX||!address)
-        return PORT_V37_IOC_BAD;
+    if(!length||length>PORT_V37_IOC_NAME_MAX)return PORT_SS_IVLOGNAM;
+    if(!address)return PORT_SS_ACCVIO;
     char name[PORT_V37_IOC_NAME_MAX];
     if(!port_exe_probe_read(r->memory,address,length)||
        !port_exe_read(r->memory,address,name,length))

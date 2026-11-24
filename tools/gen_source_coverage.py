@@ -2328,7 +2328,7 @@ assign_rows=[
  (1,180,None,None,'System-service argument and mailbox-descriptor handling remain unresolved','unresolved'),
  (181,182,'src/vms_sysassign.c','port_v37_sysassign_descriptor_service','Probes and clears channel output before descriptor reads; its caller-memory adapter is tested through translated IA-32 pages, but no live process map is bound','partial'),
  (183,187,None,None,'Mailbox descriptor copy and TEST_MAILBOX remain unresolved','unresolved'),
- (188,194,'src/vms_sysassign.c','port_v37_sysassign_descriptor','Rejects missing/invalid descriptor inputs, reads the 8-byte VMS descriptor and counted name through checked caller-mode page translations, and applies MAXACMODE=max(requested,current); live per-process context remains unresolved','partial'),
+ (188,194,'src/vms_sysassign.c','port_v37_sysassign_descriptor','Returns source IVLOGNAM for zero/oversize counted names and ACCVIO for inaccessible pointers, copies descriptor/name through checked caller-mode page translations, and applies MAXACMODE=max(requested,current); live per-process context remains unresolved','partial'),
  (195,195,'src/vms_v37_ccb.c','port_v37_ccb_find_free','IOC$FFCHAN scans the source byte-offset channel table and advances CHINDX after descriptor access-mode maximization','partial'),
  (196,210,None,None,'Mailbox TEST_MAILBOX, spooled/template and error routing unresolved','unresolved'),
  (211,212,'src/vms_sysassign.c','port_v37_sysassign_local','Local physical IOC$SEARCHDEV is composed with the source CCB assignment helper; public service-vector binding remains unresolved','partial'),

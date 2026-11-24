@@ -21355,7 +21355,7 @@
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_descriptor",
           "pc_line": 34,
-          "function": "Rejects missing/invalid descriptor inputs, reads the 8-byte VMS descriptor and counted name through checked caller-mode page translations, and applies MAXACMODE=max(requested,current); live per-process context remains unresolved"
+          "function": "Returns source IVLOGNAM for zero/oversize counted names and ACCVIO for inaccessible pointers, copies descriptor/name through checked caller-mode page translations, and applies MAXACMODE=max(requested,current); live per-process context remains unresolved"
         },
         {
           "original_lines": [
