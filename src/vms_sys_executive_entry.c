@@ -31,6 +31,7 @@
 #include "vms_f11_channel.h"
 #include "vms_qio_post.h"
 #include "vms_qio_irp_pool.h"
+#include "vms_exe_np_pool.h"
 #include "vms_nl_ddt.h"
 #include "vms_iopost_end.h"
 #include "vms_sysboot_elf.h"
@@ -54,6 +55,8 @@ static uint32_t executive_packet_ready;
 /* INIT's later nonpaged records occupy only the free low end of the
  * actual SYS.EXE supervisor RAM; no boot monitor array stands in for it. */
 static uint32_t executive_free_npages;
+static struct port_exe_np_pool executive_np_pool;
+static uint32_t executive_np_pool_ready;
 
 /* The single-CPU IA-32 executive maps source DSBINT/ENBINT synchronization
  * to preserving and restoring the caller's interrupt-enable state. */
@@ -368,12 +371,15 @@ struct executive_acp_io_context {
     const uint8_t *index_header;
     uint16_t volume;
 };
-static struct port_f11_87_fcb executive_acp_sys_fcb;
 static void *executive_acp_alloc(void *opaque,uint32_t bytes,uint32_t tag){
     (void)opaque;
-    if(bytes!=sizeof(executive_acp_sys_fcb)||tag!=PORT_F11_87_FCBTYPE)
+    void *memory=0;uint32_t allocated=0u;
+    if(!executive_np_pool_ready||tag!=PORT_F11_87_FCBTYPE||
+       bytes<sizeof(struct port_f11_87_fcb)||
+       port_exe_np_pool_alloc(&executive_np_pool,bytes,&memory,&allocated)!=
+           PORT_EXE_NP_POOL_OK||allocated<sizeof(struct port_f11_87_fcb))
         return 0;
-    return &executive_acp_sys_fcb;
+    return memory;
 }
 static uint32_t executive_postpub_f11_sector(void *,uint32_t,uint8_t[512]);
 static uint32_t executive_acp_map_vbn(void *opaque,uint32_t vbn,
@@ -944,6 +950,18 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
                executive_sysdevlog,sizeof executive_sysdevlog,&settings,
                &executive_syslog)!=PORT_INI_SYSLOG_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
+        uint64_t pool_offset=(uint64_t)used+
+                             executive_syslog.consumed_bytes;
+        pool_offset=(pool_offset+7u)&~UINT64_C(7);
+        if(size>sizeof executive_packet_pages||pool_offset>size||
+           size-pool_offset<sizeof(struct port_exe_np_free))
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        const uint32_t pool_bytes=((size-(uint32_t)pool_offset)&~7u);
+        if(port_exe_np_pool_init(&executive_np_pool,
+               executive_packet_pages+(uint32_t)pool_offset,pool_bytes,
+               &executive_qio_pool_sync)!=PORT_EXE_NP_POOL_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        executive_np_pool_ready=1u;
         executive_syslog_ready=1u;
         p->result->syslog=&executive_syslog;
         p->result->logical_table[0]=executive_syslog.logical_table[0];
@@ -1978,7 +1996,12 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         struct port_f11_87_fcb *acp_sys_fcb=
             port_f11b_create_fcb(&acp_context,acp_sys_header,
                                  acp_header_lbn);
-        if(acp_sys_fcb!=&executive_acp_sys_fcb||
+        const uintptr_t pool_start=(uintptr_t)executive_np_pool.base;
+        const uintptr_t pool_end=pool_start+executive_np_pool.bytes;
+        if(!acp_sys_fcb||(uintptr_t)acp_sys_fcb<pool_start||
+           (uintptr_t)acp_sys_fcb>pool_end-sizeof(*acp_sys_fcb)||
+           executive_np_pool.allocations!=1u||
+           port_exe_np_pool_check(&executive_np_pool)!=PORT_EXE_NP_POOL_OK||
            acp_sys_fcb->header_lbn!=acp_header_lbn||
            acp_sys_fcb->fid.number!=sys_fid.number||
            acp_sys_fcb->fid.sequence!=sys_fid.sequence||

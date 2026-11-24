@@ -22011,7 +22011,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 484,
+          "pc_line": 490,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -22686,10 +22686,21 @@
         {
           "original_lines": [
             398,
-            515
+            461
           ],
           "status": "unresolved",
           "reason": "Paged-pool allocation, block splitting, mutexes and shared memory pool unresolved"
+        },
+        {
+          "original_lines": [
+            462,
+            515
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_np_pool.c",
+          "pc_symbol": "port_exe_np_pool_alloc",
+          "pc_line": 51,
+          "function": "EXE$ALLOCATE source first-fit search, aligned block selection and low-address split in the live SYS.EXE nonpaged pool; failure resource accounting and pool extension remain unresolved"
         },
         {
           "original_lines": [
@@ -22705,10 +22716,29 @@
         {
           "original_lines": [
             546,
+            617
+          ],
+          "status": "unresolved",
+          "reason": "Paged deallocation and nonpaged lookaside selection/return paths unresolved"
+        },
+        {
+          "original_lines": [
+            618,
+            641
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_np_pool.c",
+          "pc_symbol": "port_exe_np_pool_free",
+          "pc_line": 75,
+          "function": "EXE$DEALLOCATE maintains the sorted free list and coalesces adjacent blocks under restored IPL synchronization; fatal bugcheck delivery and source resource wakeup remain unresolved"
+        },
+        {
+          "original_lines": [
+            642,
             919
           ],
           "status": "unresolved",
-          "reason": "Paged deallocation, allocator coalescing, shared-pool return, queue synchronization and pool extension unresolved"
+          "reason": "Paged/shared pool return, queue synchronization and pool extension unresolved"
         }
       ],
       "unresolved_integration": "The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. It has no fallback nonpaged allocator, pool extension, resource wait, public user SYS$QIO integration, or source-wide SRP/LRP/allocation behavior."
