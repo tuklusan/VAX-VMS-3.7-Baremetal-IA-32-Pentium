@@ -4165,6 +4165,7 @@ void kmain(void) {
         dq_publish_result.dq_acp_np_allocations!=1u)||
        (dq_publish_result.dq_acp_alloc_source!=PORT_EXE_NP_FROM_VARIABLE&&
         dq_publish_result.dq_acp_np_allocations!=0u)||
+       dq_publish_result.dq_acp_failed_fcb_reclaimed!=1u||
        dq_publish_result.dq_acp_file_blocks==0u||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
@@ -4179,6 +4180,7 @@ void kmain(void) {
     char acp_source_message[]="INIT: ACP FCB source=0";
     acp_source_message[21]=(char)('0'+dq_publish_result.dq_acp_alloc_source);
     bootstrap_message(acp_source_message);
+    bootstrap_message("INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,

@@ -1692,7 +1692,7 @@ for orig,total,first,last,symbol in f11_87_files:
             (124,213,'src/vms_f11_acp87.c','port_f11a_update_fcb','FCB attribute refresh')])
     elif orig == 'F11B/SRC/CREFCB.B32':
         regions.extend([
-            (70,125,'src/vms_f11_acp87.c','port_f11b_create_fcb','Allocate and materialize FCB; return the block to nonpaged pool when FH2-derived initialization fails'),
+            (70,125,'src/vms_f11_acp87.c','port_f11b_create_fcb','Allocate and materialize FCB; on failed FH2 initialization return the block through source-addressed EXE$DEANONPAGED, verified in QEMU to restore its SRP lookaside entry'),
             (126,178,'src/vms_f11_acp87.c','port_f11b_update_fcb','FCB attribute refresh')])
     elif orig == 'F11B/SRC/DEACCS.B32':
         regions.append((first,last,'src/vms_f11_acp87.c',symbol,
@@ -2573,7 +2573,7 @@ for first,last,path,sym,why in [
  (398,461,None,None,'Paged-pool allocation, block splitting, mutexes and shared memory pool unresolved'),
  (462,515,'src/vms_exe_np_pool.c','port_exe_np_pool_alloc','EXE$ALLOCATE source first-fit search, aligned block selection and low-address split in the live SYS.EXE nonpaged pool; failure resource accounting and pool extension remain unresolved'),
  (516,545,'src/vms_qio_irp_pool.c','port_v37_irp_pool_free','Return an allocated source DYN$C_IRP block to the tail of its original lookaside queue with duplicate/corruption guards and synchronization, exercised after resident SYS.EXE DQA0 DDT boot reads; SRP/LRP/general pool return paths unresolved'),
- (546,617,'src/vms_exe_np_pool.c','port_exe_np_deallocate','Host-tested nonpaged IRP/LRP/SRP lookaside return or variable-block release by address and DYN tag; resident ACP runtime wiring is not yet verified and paged-pool return remains unresolved'),
+ (546,617,'src/vms_exe_np_pool.c','port_exe_np_deallocate','Source-addressed nonpaged IRP/LRP/SRP lookaside return or variable-block release by DYN tag; QEMU verifies failed Files-11 ACP FCB initialization returns the SRP packet, while paged-pool return remains unresolved'),
  (618,641,'src/vms_exe_np_pool.c','port_exe_np_pool_free','EXE$DEALLOCATE maintains the sorted free list and coalesces adjacent blocks under restored IPL synchronization; fatal bugcheck delivery and source resource wakeup remain unresolved'),
  (642,919,None,None,'Paged/shared pool return, queue synchronization and pool extension unresolved')]:
     if path is None:memalc_sections.append({'original_lines':[first,last],'status':'unresolved','reason':why})

@@ -9820,7 +9820,7 @@
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_create_fcb",
           "pc_line": 223,
-          "function": "Allocate and materialize FCB; return the block to nonpaged pool when FH2-derived initialization fails"
+          "function": "Allocate and materialize FCB; on failed FH2 initialization return the block through source-addressed EXE$DEANONPAGED, verified in QEMU to restore its SRP lookaside entry"
         },
         {
           "original_lines": [
@@ -22756,7 +22756,7 @@
           "pc_file": "src/vms_exe_np_pool.c",
           "pc_symbol": "port_exe_np_deallocate",
           "pc_line": 195,
-          "function": "Host-tested nonpaged IRP/LRP/SRP lookaside return or variable-block release by address and DYN tag; resident ACP runtime wiring is not yet verified and paged-pool return remains unresolved"
+          "function": "Source-addressed nonpaged IRP/LRP/SRP lookaside return or variable-block release by DYN tag; QEMU verifies failed Files-11 ACP FCB initialization returns the SRP packet, while paged-pool return remains unresolved"
         },
         {
           "original_lines": [

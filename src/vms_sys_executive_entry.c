@@ -2043,6 +2043,29 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            acp_sys_fcb->fid.volume!=sys_fid.volume||
            acp_sys_fcb->file_blocks==0u)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
+        struct port_ini_packet_list *fcb_queue=0;
+        switch(executive_acp_allocation_source){
+        case PORT_EXE_NP_FROM_IRP:fcb_queue=&executive_irps;break;
+        case PORT_EXE_NP_FROM_LRP:fcb_queue=&executive_lrps;break;
+        case PORT_EXE_NP_FROM_SRP:fcb_queue=&executive_srps;break;
+        default:break;
+        }
+        const uint32_t queue_free_before=fcb_queue?fcb_queue->free_count:0u;
+        const uint32_t pool_allocations_before=executive_np_pool.allocations;
+        const uint32_t fcb_source=executive_acp_allocation_source;
+        uint8_t invalid_fcb_header[512];
+        for(unsigned i=0u;i<sizeof invalid_fcb_header;i++)
+            invalid_fcb_header[i]=acp_sys_header[i];
+        invalid_fcb_header[1]=0u;
+        if(port_f11b_create_fcb(&acp_context,invalid_fcb_header,
+              acp_header_lbn)!=0||
+           acp_context.status!=PORT_F11_87_BADFILEHDR||
+           executive_acp_allocation_source!=fcb_source||
+           (fcb_queue&&fcb_queue->free_count!=queue_free_before)||
+           executive_np_pool.allocations!=pool_allocations_before||
+           port_exe_np_pool_check(&executive_np_pool)!=PORT_EXE_NP_POOL_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        p->result->dq_acp_failed_fcb_reclaimed=1u;
         p->result->dq_ddt_published=1u;
         p->result->dqa_ioc_status=PORT_V37_IOC_OK;
         p->result->dqa_ioc_ddb=found.ddb;
