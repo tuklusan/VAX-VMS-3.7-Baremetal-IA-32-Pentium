@@ -1048,3 +1048,13 @@ Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargs
 Coverage inventory unchanged at 446/4,566 originals indexed and 2,058 ranges; no additional original source lines are claimed covered by the transfer helpers.
 
 M295 implementation commit: `104055b9e5e2c1fe21c2edb681160d596734f165`.
+
+## M296 — Map SYSQIO page pinning coverage, 24 November 2026
+
+Updated the generated original-source coverage for SYSQIOFDT READ and WRITE buffer-lock selection (lines 249-253). The native preparation path pins all translated IA-32 transfer pages after IRP reservation and rolls back failures; the record remains partial because it does not construct VMS SVAPTE/BOFF mappings, implement IOLOCK fault/restart behavior, submit a live DQA0 QIO, or complete through IOCIOPOST. No additional functional coverage is claimed beyond M293-M295.
+
+Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` completed with all targets passing; `python3 tools/gen_source_coverage.py` PASS (2,058 ranges, zero missing mapped functions); `python3 tests/test_coverage_ranges.py` PASS; `python3 tools/validate_source_ranges.py` PASS. Counts: 446/4,566 indexed original files; mapped 17,016; partial 29,664; unresolved 52,811; missing 7,799; excluded 26,237; hardware-excluded 917. This metadata-only coverage correction did not require a QEMU run; latest real QEMU remains M217 at `logs/serial/qemu-m217-run-local-20261124T162454064223Z.log`, confirming the 700-byte SYS.EXE Files-11 chain read and incomplete INIT stop. No login, DCL, DECnet or SET HOST 0 observed.
+
+M296 coverage commit: `ba4bda0abcacde0b183614dd3a9a2e3044b5c871`.
+
+Remaining: native SVAPTE/BOFF mappings and IOLOCK semantics; live SYS$QIO service dispatch into DQA0 STARTIO and real process-aware completion; Files-11 ACP, full INIT, scheduling/process image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0 acceptance.
