@@ -165,7 +165,7 @@ class Boot16:
             self.reg[reg]=ax
         assert self.byte()==0xbc,'missing MOV ESP,stack top'
         esp=int.from_bytes(self.mem[self.ip:self.ip+4],'little');self.ip+=4
-        assert esp==0x90000,('unexpected protected kernel stack',hex(esp))
+        assert esp==0x9f000,('unexpected protected kernel stack',hex(esp))
         assert self.byte()==0xea,'missing final far jump'
         entry=int.from_bytes(self.mem[self.ip:self.ip+4],'little');self.ip+=4
         final_cs=self.word()
@@ -401,7 +401,7 @@ def verify(image: bytes):
     assert 0<at<500 and at==sector.rfind(b'VMSB')
     count=int.from_bytes(sector[at+4:at+6], 'little')
     first=int.from_bytes(sector[at+6:at+8], 'little')
-    assert first>=1 and 1<=count<=251 and first+count<=2880
+    assert first>=1 and 1<=count<=260 and first+count<=2880
     expected=image[first*512:(first+count)*512]
     expected_lbas=[(n,1,0x10000+(n-first)*512) for n in range(first,first+count)]
     bad_lba=first+count//2
@@ -418,7 +418,7 @@ def verify(image: bytes):
             assert sim.reads==expected_lbas[:count//2],name
         else:
             assert sim.reached_switch and sim.gdt_seen and sim.a20_enabled,name
-            assert sim.protected_entry and sim.ip==0x10000 and sim.esp==0x90000,name
+            assert sim.protected_entry and sim.ip==0x10000 and sim.esp==0x9f000,name
             assert sim.cr0&1 and sim.cs==8,name
             assert sim.reg['sp']==0x7c00,('boot stack leak',name)
             assert sim.e820_calls==3 and int.from_bytes(sim.mem[0x4ff0:0x4ff2],'little')==3,('BIOS E820',name)

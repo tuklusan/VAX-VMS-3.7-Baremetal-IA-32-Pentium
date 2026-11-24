@@ -127,10 +127,20 @@ arch_isr_common:
     jmp arch_ring3_resume
 .global arch_restore_initial_frame
 arch_restore_initial_frame:
+    /* C handlers run with kernel data selectors. If arch_trap changed the
+     * return CS to CPL0 (for example, the ring probe's kernel trampoline),
+     * retain those selectors instead of reloading the interrupted lower-
+     * privilege DS/ES/FS/GS into a kernel return frame. */
+    testb $3,60(%esp)      /* saved CS: GS/FS/ES/DS prefix + frame offset 44 */
+    jz .Lskip_saved_segments
     popl %gs
     popl %fs
     popl %es
     popl %ds
+    jmp .Lsegments_restored
+.Lskip_saved_segments:
+    addl $16,%esp
+.Lsegments_restored:
     popal
     addl $8,%esp          /* discard vector and (real/synthetic) error */
     iret

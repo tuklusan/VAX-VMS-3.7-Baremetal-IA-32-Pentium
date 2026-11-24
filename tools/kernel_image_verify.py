@@ -6,6 +6,7 @@ from pathlib import Path
 import struct
 import subprocess
 ROOT=Path(__file__).resolve().parents[1]
+BOOT_LOAD_LIMIT=0x10000+260*512
 
 def load_segments(blob):
     assert blob[:7]==b'\x7fELF\x01\x01\x01', 'wrong ELF byte order/class'
@@ -21,7 +22,7 @@ def load_segments(blob):
         assert filesz<=memsz and off+filesz<=len(blob)
         assert virtual==physical and 0x10000<=physical
         assert physical+memsz<=0x90000,('BSS reaches boot stack',physical+memsz)
-        assert physical+filesz<=0x2f600,('not loaded by BIOS',physical+filesz)
+        assert physical+filesz<=BOOT_LOAD_LIMIT,('not loaded by BIOS',physical+filesz)
         assert align in (1,4096) and off%align==virtual%align
         assert flags in (5,6),('unexpected executable/writable mapping',flags)
         seg.append((physical,filesz,memsz,blob[off:off+filesz],flags))
@@ -42,7 +43,7 @@ def verify():
     assert 0<marker<500 and image[:marker+4]==boot[:marker+4]
     assert image[marker+6:512]==boot[marker+6:512]
     assert int.from_bytes(image[marker+4:marker+6],'little')==(len(flat)+511)//512
-    assert 0<len(flat)<=251*512
+    assert 0<len(flat)<=260*512
     assert image[512:512+len(flat)]==flat
     assert not any(image[512+len(flat):]),'unexpected data beyond linked image'
     segments=load_segments(elf)

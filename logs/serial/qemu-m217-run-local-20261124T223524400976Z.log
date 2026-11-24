@@ -1,0 +1,4 @@
+GDT[2]: 0000FFFF 00CF9300
+
+Fault details: vector 0x0000000D error 0x0000C52C EIP 0x00028D5F
+*** x86 fault:

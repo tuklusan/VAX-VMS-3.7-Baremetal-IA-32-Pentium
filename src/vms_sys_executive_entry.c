@@ -219,17 +219,26 @@ static uint32_t executive_f11_native_sector(void *opaque,uint32_t lbn,
     uint8_t *irp=executive_f11_range_irp.bytes;
     if(port_v37_irp_prepare(irp,PORT_V37_IRP_SIZE,
          (uint32_t)(uintptr_t)irp,
-         ctx->ucb,PORT_DQ_READPBLK)!=PORT_V37_QIO_OK)
+         ctx->ucb,PORT_DQ_READPBLK)!=PORT_V37_QIO_OK){
+        executive_f11_range_io.ucb_io_count=UINT32_C(0xe001);
         return PORT_DQ_DIR_MAP;
+    }
     port_v37_write16(irp+42u,PORT_DQ_PHYSIO);
     port_v37_write16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
     port_v37_write32(irp+PORT_V37_IRP_MEDIA,lbn);
     ctx->native.irp=irp;
     ctx->native.sector=executive_f11_range_sector.words;
-    if(port_dq_bootread_execute_physical(&ctx->native,
-             &executive_f11_range_io,lbn)!=PORT_DQ_BOOTREAD_OK||
-       executive_f11_range_io.ucb_io_count!=ctx->previous_count+ctx->reads+1u)
+    uint32_t read_status=port_dq_bootread_execute_physical(&ctx->native,
+             &executive_f11_range_io,lbn);
+    if(read_status!=PORT_DQ_BOOTREAD_OK){
+        executive_f11_range_io.ucb_io_count=UINT32_C(0xe000)|read_status;
         return PORT_DQ_DIR_MAP;
+    }
+    if(executive_f11_range_io.ucb_io_count!=ctx->previous_count+ctx->reads+1u){
+        executive_f11_range_io.ucb_io_count=UINT32_C(0xd000)|
+                 (executive_f11_range_io.ucb_io_count&0x0fffu);
+        return PORT_DQ_DIR_MAP;
+    }
     for(unsigned i=0u;i<512u;i++)
         out[i]=((const uint8_t *)executive_f11_range_sector.words)[i];
     ctx->reads++;
@@ -1377,8 +1386,15 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             (const uint8_t *)executive_dq_mfd_sector.words,
             executive_f11_native_sector,&pathctx,1u};
         uint32_t path_done=0u;
-        if(port_f11_boot_open(&volume,"SYSEXE.DIR",10u,
-             "SYS.EXE",7u,1u,&executive_f11_opened_sys)!=PORT_F11_PATH_OK||
+        uint32_t path_open_status=port_f11_boot_open(&volume,"SYSEXE.DIR",10u,
+             "SYS.EXE",7u,1u,&executive_f11_opened_sys);
+        if(path_open_status!=PORT_F11_PATH_OK){
+            p->result->signature=UINT32_C(0xb3000000)|
+                ((pathctx.previous_count&0xffu)<<16)|
+                (executive_f11_range_io.ucb_io_count&0xffffu);
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        }
+        if(
            executive_f11_opened_sys.file.number!=11u||
            executive_f11_opened_sys.file.sequence!=11u||
            executive_f11_opened_sys.file_header_lbn!=image_header_lbn||

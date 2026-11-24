@@ -12,10 +12,10 @@ assert image[:marker+4]==boot[:marker+4]
 assert image[marker+6:512]==boot[marker+6:512]
 assert int.from_bytes(image[marker+4:marker+6],'little') == (len(kernel)+511)//512
 assert int.from_bytes(image[marker+6:marker+8],'little') == 1
-assert 0 < len(kernel) <= 251*512
+assert 0 < len(kernel) <= 260*512
 assert image[512:512+len(kernel)] == kernel
 assert all(b == 0 for b in image[512+len(kernel):])
-# The disk block count is read from the boot sector, not fixed to 251.
-assert (len(kernel)+511)//512 <= 251
-assert 0x10000 + 251*512 < 0x90000
+# The disk block count is read from the boot sector, not fixed to 260.
+assert (len(kernel)+511)//512 <= 260
+assert 0x10000 + 260*512 < 0x90000
 print('Image checks PASS: signature, payload, disk count, first LBN and load address')

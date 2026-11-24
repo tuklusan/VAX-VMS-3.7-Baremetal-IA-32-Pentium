@@ -1,0 +1,37 @@
+IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.
+SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.
+SYSBOOT: Files-11 SYS.EXE native image loaded.
+INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.
+SYSBOOT: Files-11 SYSLOA386.EXE native image loaded.
+INIT: SYS.EXE linked live SYSLOA386 processor vectors.
+SYSBOOT: Files-11 INILOA.EXE native image loaded.
+ATA reads=00000001 LBA=00000000
+INIT: INILOA IOMAP executed on real IA-32 boot adapter.
+INIT: loaded SYS.EXE built lock ID, resource hash and deadlock bitmap tables.
+INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.
+INIT: loaded SYS.EXE initialized process header vector and swapper PTE records.
+INIT: loaded SYS.EXE initialized modified-page writer PTE/index map.
+INIT: loaded SYS.EXE allocated unbound pagefile pointer vector.
+INIT: loaded SYS.EXE recorded real IA-32 TSS privilege stack and lock depth.
+INIT: loaded SYS.EXE compacted real Files-11 SYS.EXE BOO$ WCB map.
+INIT: SYS.EXE staged MB/NL/OP DPT headers (driver images not linked).
+INIT: loaded SYS.EXE executed original NLDRIVER read/write FDT (IOC pending).
+INIT: SYS.EXE staged original DYN$C_LOG=11 records (logical service pending).
+INIT: SYS.EXE selected registered ATA boot adapter (DDB/UCB pending).
+INIT: SYS.EXE staged DQDRIVER 12 source FDT masks (disk DDT and ACP unbound).
+INIT: SYS.EXE linked NL$DDT DDTAB/FUNCTAB to NLA0 (other drivers absent).
+INIT: entering resident DQ boot READPBLK phase.
+INIT DQ request=0008DE2C callback=00013335 IO=0008D874
+ATA reads=00000021 LBA=0000003F
+ATA reads=00000041 LBA=0000005F
+ATA reads=00000061 LBA=0000007F
+ATA reads=00000081 LBA=0000009F
+ATA reads=000000A1 LBA=000000BF
+ATA reads=000000C1 LBA=000000DF
+ATA reads=000000E1 LBA=000000FF
+ATA reads=00000101 LBA=0000011F
+ATA reads=00000121 LBA=00000193
+CR2=0xFFFFFFAC
+
+Fault details: vector 0x0000000E error 0x00000000 EIP 0x00347292
+*** x86 fault:

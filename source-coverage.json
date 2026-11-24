@@ -3238,7 +3238,7 @@
           "status": "mapped",
           "pc_file": "src/boot.s",
           "pc_symbol": "stage2_magic",
-          "pc_line": 194,
+          "pc_line": 197,
           "function": "boot file size, first LBN and kernel destination"
         },
         {
@@ -10327,7 +10327,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2749,
+          "pc_line": 2758,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10365,7 +10365,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2749,
+          "pc_line": 2758,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -22045,7 +22045,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 511,
+          "pc_line": 520,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {

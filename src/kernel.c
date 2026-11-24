@@ -410,6 +410,8 @@ static void show_conditions(void) {
     puts(" EIP=0x"); hex32(portlab_conditions.last.eip); putc('\n');
 }
 void arch_report_fault(uint32_t vector, uint32_t error, uint32_t eip) {
+    if(vector==14u){uint32_t cr2;__asm__ volatile("mov %%cr2,%0":"=r"(cr2));
+        puts("CR2=0x");hex32(cr2);putc('\n');}
     if(vector==13u){
         extern uint32_t port_gdt[];
         puts("GDT[2]: ");hex32(port_gdt[4]);puts(" ");
@@ -2738,7 +2740,8 @@ static int bootstrap_executive_clear(void *unused,uint32_t phys,uint32_t size){
  * boot IDE and COM1 drivers. Disk probing reads the real Files-11 volume. */
 static int native_ini_ata_read(void *ctx,uint32_t lba,uint16_t words[256]){
     (void)ctx;
-    return port_ata_x86_read28(lba,words);
+    const int rc=port_ata_x86_read28(lba,words);
+    return rc;
 }
 static int native_ini_uart_ready(void *ctx){
     (void)ctx;
@@ -3452,7 +3455,8 @@ void kmain(void) {
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&dq_bootread_result,
         .phase=PORT_SYS_EXEC_INIT_DQ_BOOTREAD,.dq_boot_io=&dq_boot_io};
     struct port_f11_home actual_dq_home={0};
-    if(loaded_sys(&dq_bootread_request)!=PORT_SYS_EXEC_NORMAL ||
+    uint32_t dq_bootread_status=loaded_sys(&dq_bootread_request);
+    if(dq_bootread_status!=PORT_SYS_EXEC_NORMAL ||
        dq_bootread_result.signature!=PORT_SYS_EXEC_DQ_BOOTREAD_TAG ||
        !dq_bootread_result.dq_bootread ||
        !dq_bootread_result.dq_bootread_sector ||
@@ -3472,6 +3476,8 @@ void kmain(void) {
        port_f11_home_read((const uint8_t *)dq_bootread_result.dq_bootread_sector,
                          512u,1u,&actual_dq_home)!=PORT_F11_HOME_OK ||
        actual_dq_home.home_lbn!=1u || actual_dq_home.cluster==0u){
+        puts("INIT: SYS.EXE DQ phase result=");
+        hex32(dq_bootread_result.signature);putc('\n');
         bootstrap_message("INIT: resident DQ physical boot READPBLK failed.");
         bootstrap_halt();
     }

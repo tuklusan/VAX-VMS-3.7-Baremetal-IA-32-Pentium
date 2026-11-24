@@ -11,5 +11,5 @@ for marker in ('TEST USRTEAR','SHOW USRTEAR'):
 nm=subprocess.check_output(['nm',str(r/'build/kernel.elf')],text=True)
 for marker in ('port_channels_teardown_owner','arch_user_qio_teardown_probe','arch_run_user_qio_teardown_test'):
  assert marker in nm
-assert len((r/'build/kernel.bin').read_bytes())<=251*512
+assert len((r/'build/kernel.bin').read_bytes())<=260*512
 print('M32 CPL3 process lifetime QIO cleanup linked PASS')

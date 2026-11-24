@@ -1,0 +1,25 @@
+IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.
+SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.
+SYSBOOT: Files-11 SYS.EXE native image loaded.
+INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.
+SYSBOOT: Files-11 SYSLOA386.EXE native image loaded.
+INIT: SYS.EXE linked live SYSLOA386 processor vectors.
+SYSBOOT: Files-11 INILOA.EXE native image loaded.
+INIT: INILOA IOMAP executed on real IA-32 boot adapter.
+INIT: loaded SYS.EXE built lock ID, resource hash and deadlock bitmap tables.
+INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.
+INIT: loaded SYS.EXE initialized process header vector and swapper PTE records.
+INIT: loaded SYS.EXE initialized modified-page writer PTE/index map.
+INIT: loaded SYS.EXE allocated unbound pagefile pointer vector.
+INIT: loaded SYS.EXE recorded real IA-32 TSS privilege stack and lock depth.
+INIT: loaded SYS.EXE compacted real Files-11 SYS.EXE BOO$ WCB map.
+INIT: SYS.EXE staged MB/NL/OP DPT headers (driver images not linked).
+INIT: loaded SYS.EXE executed original NLDRIVER read/write FDT (IOC pending).
+INIT: SYS.EXE staged original DYN$C_LOG=11 records (logical service pending).
+INIT: SYS.EXE selected registered ATA boot adapter (DDB/UCB pending).
+INIT: SYS.EXE staged DQDRIVER 12 source FDT masks (disk DDT and ACP unbound).
+INIT: SYS.EXE linked NL$DDT DDTAB/FUNCTAB to NLA0 (other drivers absent).
+CR2=0xFFFFFFAC
+
+Fault details: vector 0x0000000E error 0x00000000 EIP 0x00347292
+*** x86 fault:

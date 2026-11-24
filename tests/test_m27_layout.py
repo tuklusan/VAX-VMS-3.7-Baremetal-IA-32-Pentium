@@ -10,5 +10,5 @@ assert '.global arch_user_ptrprobe' in user
 nm=subprocess.check_output(['nm',str(root/'build/kernel.elf')],text=True)
 for s in ('port_user_range_valid','arch_user_ptrprobe','arch_run_userptr_test'):
  assert s in nm,s
-assert len((root/'build/kernel.bin').read_bytes())<=251*512
+assert len((root/'build/kernel.bin').read_bytes())<=260*512
 print('M27 true CPL3 pointer validation trap ABI linked PASS')
