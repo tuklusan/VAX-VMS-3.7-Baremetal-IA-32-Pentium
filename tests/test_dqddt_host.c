@@ -386,6 +386,21 @@ int main(void){
         port_v37_read16(ccb_base-16u+PORT_V37_CCB_IOC)==0u);
     CHECK(port_v37_irp_pool_free(&qio_pool,qio_irp,qio_irp_va,
         PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&qio_sync)==PORT_V37_IRP_POOL_OK);
+    /* SYSQIOFDT WRITE reads from the caller buffer. A read-only mapping is
+     * valid for this source action even though the preceding READ rejected
+     * it as a destination. */
+    port_v37_write32(assign_memory.bytes+128u+3u*4u,PORT_DQ_WRITEPBLK);
+    assign_memory.pte[1]=0x9005u;qio_process.direct_io_count=1;
+    CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
+        &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
+        &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_OK&&
+        qio_status==PORT_SYS85_NORMAL&&qio_process.direct_io_count==0&&
+        port_v37_read16(qio_irp+32u)==PORT_DQ_WRITEPBLK&&
+        port_v37_read32(qio_irp+52u)==512u&&
+        !(port_v37_read16(qio_irp+42u)&2u));
+    CHECK(port_v37_irp_pool_free(&qio_pool,qio_irp,qio_irp_va,
+        PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&qio_sync)==PORT_V37_IRP_POOL_OK);
+    assign_memory.pte[1]=0x9007u;
     assigned=UINT16_MAX;
     struct port_v37_sysassign_local_request missing_assign=assign_request;
     missing_assign.device_name="ZZZ0";
@@ -421,6 +436,6 @@ int main(void){
     CHECK(!memcmp(&before,&d,sizeof d));
     CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    puts("DQ native DDT activation, PCB-bound SYSASSIGN CCBs, translated descriptors/channel output, DQA0 IOC and SYSQIO IRP accounting PASS; public QIO/ACP remain unimplemented");
+    puts("DQ native DDT activation, PCB-bound SYSASSIGN CCBs, translated descriptors, DQA0 IOC, SYSQIO READ/WRITE buffer access and IRP accounting PASS; public dispatch/ACP remain unimplemented");
     return 0;
 }
