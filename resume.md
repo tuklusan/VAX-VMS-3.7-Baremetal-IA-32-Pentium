@@ -886,3 +886,13 @@ Verification: `make -j2 all test sysexecentrycheck` PASS; `make qemu-sysboot-m21
 M279 implementation commit: `2c14bf089100d7805f15c6950c6312b8f7704d2c`.
 
 Remaining: bind live process memory and CCB storage to SYS$ASSIGN; wire public SYS$QIO and real DQA0 STARTIO; implement Files-11 ACP; connect process-aware IOPOST/AST scheduling; finish native INIT and image activation; verify SYSTEM login, DCL, DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M280 — Link caller-memory translation into resident SYS.EXE, 24 November 2026
+
+Linked the M279 executive caller-memory adapter into resident SYS.EXE, reusing its existing page-map copy primitives without duplicate symbols. Extended the resident image check to require the adapter and checked read/write translation entry points. This makes the helper resident, but no live process page-map resolver or SYS$ASSIGN/SYS$QIO dispatch invokes it yet.
+
+Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; resident-symbol check PASS; `make qemu-sysboot-m217` PASS through actual SYS.EXE loading and 700-byte DQA0 DDT/IRQ14 Files-11 read, then incomplete INIT stop. Coverage validation PASS: 2,035 ranges; 445/4,566 indexed; mapped 17,016, partial 29,580, unresolved 52,027, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T150246205469Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M280 implementation commit: `b8bd1524e07b1324c52e01c0354dfef7fb4347e0`.
+
+Remaining: connect live process memory/CCB context to the resident public SYS$ASSIGN vector; implement public SYS$QIO dispatch and real DQA0 STARTIO; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
