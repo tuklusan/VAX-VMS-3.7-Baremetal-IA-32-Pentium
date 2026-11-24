@@ -770,3 +770,15 @@ Added a source-ordered, bounded direct-I/O buffer unlock helper for `IOCIOPOST.M
 M267 implementation commit (local): `6ea0c7f66e62eca5bf8b28646a24f081c6ee38ca`. GitHub publication and resume commit details follow.
 
 Remaining IOPOST work includes actual process/PHD resolution and unlock callback binding, buffered and segmented virtual completion, IOSB access fault behavior, event/AST delivery, and IRPE deallocation. Public SYS$QIO, DQA0 process I/O, Files-11 ACP, native INIT continuation, process image activation, login/DCL and DECnet acceptance remain incomplete.
+
+## M268 — Port IOCIOPOST DIRPOST PHD accounting, 24 November 2026
+
+Added a native PHD counter primitive for `IOCIOPOST.MAR` DIRPOST lines 972-975. It selects `PHD$L_DIOCNT` or adjacent `PHD$L_BIOCNT` from the buffered-I/O selector and increments the source 32-bit counter with wrap behavior. Offsets are derived from the original `SYSDEFMP.MDL` PHD layout and checked against the existing PHD layout constants. The caller must still resolve `SCH$GL_CURPCB` to its live PHD; this primitive does not resolve process IDs and is not yet wired into IOPOST.
+
+`make iopostaccountcheck iopostendcheck` PASS; M267's `make iopostunlockcheck` PASS. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS (exit 0), including the IOPOST account/unlock regressions. Coverage generation and validation PASS: 2,028 ranges; 445/4,566 original files indexed; mapped 17,016, partial 29,551, unresolved 52,056, missing 7,799, excluded 26,237, hardware-excluded 917. Real `make qemu-sysboot-m217` PASS: 700-byte Files-11 SYS.EXE chain read through IOC-selected DQA0 DDT/CRB/IRQ14, then halted at the documented incomplete INIT boundary. PHD accounting was not exercised by the guest. Transcript `logs/serial/qemu-m217-run-local-20261124T135615688213Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No public SYS$QIO, login, DCL, DECnet or SET HOST 0 occurred.
+
+M268 implementation commit and publication details follow.
+
+Remaining: resolve current process PHD and connect direct-I/O unlock/accounting to real IOPOST; port measurement and diagnostic buffer processing; finish IOSB/POSTEF/AST/IRPE release integration; implement public SYS$QIO and Files-11 ACP; continue native INIT and activate real VMS process images. End-to-end DECnet Phase IV and nested SYSTEM/DCL SET HOST 0 acceptance remains unmet.
+
+M268 implementation commit (local): `4f2af3da19b51805e23974e75390ba1601749b5b`. GitHub publication follows.
