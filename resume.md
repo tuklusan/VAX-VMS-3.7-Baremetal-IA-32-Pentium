@@ -698,3 +698,5 @@ The SYSQIO PCB/PHD binder now rejects a PHD VA that differs from PCB$L_PHD witho
 Verification: make sysqioargscheck PASS; make -j2 all test sysqioresidentcheck sysexecentrycheck PASS (exit 0); real make qemu-sysboot-m217 PASS through the existing 700-byte Files-11 read via DQA0 DDT/IRQ14 and stopped at incomplete INIT; git diff --check PASS. Transcript logs/serial/qemu-m217-run-local-20261124T011535282173Z.log, 5,350 bytes, SHA-256 8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c.
 
 M259 implementation commit (local): 49c4e5e81ca9080b977a3b3c1244212ed47a4c78. GitHub publication and resume records follow.
+
+M259 GitHub main publication commits: PHD address validation 0e0233e1b5a2f8ace1ec7a4c107e250e4abf60cf; host test 26209fec2778681d513f7465217d8052629de83a; serial manifest dd13473b9f51103ca213fbae1397b9a5362979d8; QEMU transcript 11eec1d34b02f0c2cd2d6b0d8ec2082135bb41f8. Each published blob was checked against the corresponding local Git blob. Final M259 resume publication follows.
