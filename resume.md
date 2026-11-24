@@ -815,7 +815,7 @@ Corrected the native DQ DDT action lookup to select the FDT/ DDT entry from the 
 
 `make dqddtcheck` PASS with modifier-bit READPBLK/WRITEPBLK lookup cases. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS for 700 SYS.EXE bytes through published DQA0 DDT/CRB and IRQ14, then the known incomplete INIT stop. Modifier lookup was host-tested only. Coverage generation/validation PASS, 2,030 ranges with inventory counts unchanged. Transcript `logs/serial/qemu-m217-run-local-20261124T142046860315Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. Public SYS$QIO, ACP, SYSTEM login, DCL, DECnet and SET HOST 0 remain incomplete.
 
-M272 implementation commit and publication details follow.
+M272 implementation commit: `27eee971f2532f87ee10899478d7d21a2a88f025`. Published to `origin/main`; resume update follows.
 
 Remaining: wire positive-PID completions to live IPL$_IOPOST using the real native PCB vector, PHD/page-map resolution and scheduler KAST queue; add buffered/paging/virtual paths and DIRPOST IOSB/event/AST/IRPE handling; implement real public SYS$QIO and Files-11 ACP; finish INIT and process activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0.
 
