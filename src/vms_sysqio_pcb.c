@@ -28,7 +28,8 @@ uint32_t port_v37_sysqio_process_bind_pcb(uint8_t *pcb,size_t bytes,
        !load32(pcb+PORT_V37_PCB_PID))
         return PORT_V37_SYSQIO_PCB_BAD;
     const struct port_v37_sysqio_process out={
-        .pid=load32(pcb+PORT_V37_PCB_PID),.access_mode=access_mode,
+        .pid=load32(pcb+PORT_V37_PCB_PID),
+        .arb_va=load32(pcb+PORT_V37_PCB_ARB),.access_mode=access_mode,
         .buffered_io_count=signed16(load16(pcb+PORT_V37_PCB_BIOCNT)),
         .direct_io_count=signed16(load16(pcb+PORT_V37_PCB_DIOCNT)),
         .ast_count=signed16(load16(pcb+PORT_V37_PCB_ASTCNT)),

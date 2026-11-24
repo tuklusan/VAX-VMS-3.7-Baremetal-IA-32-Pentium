@@ -21452,7 +21452,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_irp",
-          "pc_line": 58,
+          "pc_line": 60,
           "function": "Join service begin with standard IRP/AST reservation; on reservation failure restore direct/buffered process I/O count and post the service error event; channel IOC and driver dispatch remain unresolved"
         },
         {
@@ -21463,7 +21463,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_reserve_irp",
-          "pc_line": 9,
+          "pc_line": 11,
           "function": "Allocate a 136-byte standard IRP from the source INIT lookaside; map exhaustion to SS$_INSFMEM and return the allocated packet if later setup fails"
         },
         {
@@ -21532,7 +21532,7 @@
           "pc_file": "src/vms_sysqio_device_access.c",
           "pc_symbol": "port_v37_sysqio_device_access",
           "pc_line": 7,
-          "function": "Source PHY_IO/LOG_IO privilege gates, physical/logical volume-check selection, owner/UIC/ARB inputs and NOPRIV handling; live privilege-mask/ACL callback binding unresolved"
+          "function": "Source PHY_IO/LOG_IO privilege gates and physical/logical volume checks are now invoked by SYSQIO after IRP/AST reservation; a denial returns the packet and restores PCB I/O/AST quota before posting NOPRIV"
         },
         {
           "original_lines": [
@@ -21550,7 +21550,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_reserve_irp",
-          "pc_line": 9,
+          "pc_line": 11,
           "function": "After allocation, reject exhausted AST quota and return the allocated IRP to its source lookaside"
         },
         {
@@ -21567,10 +21567,10 @@
             547
           ],
           "status": "partial",
-          "pc_file": "src/vms_sysqio_device_access.c",
-          "pc_symbol": "port_v37_sysqio_device_access",
-          "pc_line": 7,
-          "function": "Set the IRP physical-I/O decision for physical function codes after access is granted"
+          "pc_file": "src/vms_sysqio_irp_reserve.c",
+          "pc_symbol": "port_v37_sysqio_prepare_irp",
+          "pc_line": 60,
+          "function": "After the source access check, set IRP$M_PHYSIO in the reserved standard IRP only when the original privilege/device policy grants physical I/O"
         },
         {
           "original_lines": [

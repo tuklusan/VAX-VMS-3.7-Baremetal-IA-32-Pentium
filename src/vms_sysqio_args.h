@@ -27,6 +27,8 @@ struct port_v37_sysqio_args {
 uint32_t port_v37_sysqio_decode_args(const void *argument_list,
     size_t accessible_bytes,struct port_v37_sysqio_args *decoded);
 
+typedef uint32_t (*port_v37_sysqio_volume_check_fn)(void *,uint8_t,
+    uint16_t,uint32_t,uint32_t);
 enum { PORT_V37_SYSQIO_PRECHECK_OK=1u,
        PORT_V37_SYSQIO_PRECHECK_BAD=2u,
        PORT_V37_SYSQIO_PRECHECK_NOPRIV=4u,
@@ -36,10 +38,15 @@ struct port_v37_sysqio_device {
     const struct port_dq_fdt *fdt;
     size_t fdt_bytes;
     uint8_t online;
+    uint8_t reserved[3];
+    uint32_t characteristics,owner_uic;
+    uint16_t volume_protection,reserved2;
+    port_v37_sysqio_volume_check_fn check_volume;
+    void *volume_context;
 };
 struct port_v37_sysqio_dispatch {
     uint16_t full_function;
-    uint8_t function_code,buffered,action_class;
+    uint8_t function_code,buffered,action_class,physical_io;
 };
 
 /* SYSQIOREQ.MAR channel access, FDT legality and offline-device checks.
@@ -67,8 +74,9 @@ struct port_v37_sysqio_resolved_channel {
 };
 struct port_v37_sysqio_process {
     uint32_t pid;
+    uint32_t arb_va;
     uint8_t access_mode;
-    uint8_t reserved[3];
+    uint8_t has_phy_io,has_log_io,reserved;
     uint32_t local_event_flags[2];
     int16_t buffered_io_count,direct_io_count;
     int16_t ast_count;
@@ -149,8 +157,6 @@ enum { PORT_V37_SYSQIO_ACCESS_PHYSICAL=1u,
        PORT_V37_SYSQIO_ACCESS_LOGICAL=2u,
        PORT_V37_SYSQIO_DEVICE_OK=1u,PORT_V37_SYSQIO_DEVICE_BAD=2u,
        PORT_V37_SYSQIO_DEVICE_NOPRIV=4u };
-typedef uint32_t (*port_v37_sysqio_volume_check_fn)(void *,uint8_t,
-    uint16_t,uint32_t,uint32_t);
 uint32_t port_v37_sysqio_device_access(uint16_t function,
     uint32_t device_characteristics,uint8_t has_phy_io,uint8_t has_log_io,
     uint16_t volume_protection,uint32_t owner_uic,uint32_t arb_va,
@@ -180,7 +186,8 @@ uint32_t port_v37_sysqio_begin(const void *,size_t,
  * posts the service error; driver dispatch and submission remain outstanding. */
 enum { PORT_V37_SYSQIO_PREPARE_OK=1u,PORT_V37_SYSQIO_PREPARE_BEGIN=2u,
        PORT_V37_SYSQIO_PREPARE_RESERVE=4u,
-       PORT_V37_SYSQIO_PREPARE_WAIT=6u };
+       PORT_V37_SYSQIO_PREPARE_WAIT=6u,
+       PORT_V37_SYSQIO_PREPARE_ACCESS=8u };
 uint32_t port_v37_sysqio_prepare_irp(const void *,size_t,
     struct port_v37_sysqio_process *,const struct port_v37_sysqio_begin_ops *,
     const struct port_v37_sysqio_irp_spec *,struct port_ini_packet_list *,
