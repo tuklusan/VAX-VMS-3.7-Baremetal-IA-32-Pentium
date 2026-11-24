@@ -68,17 +68,17 @@ int main(void) {
     assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,1)==PORT_USER_BAD);
     assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,0)==PORT_USER_OK);
     assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX+1u,0)==PORT_USER_BAD);
-    struct port_user_page_locks locks={{0},0};
+    struct port_user_page_locks locks={0};
     assert(port_user_pin_io_range(&m,0x1002,UINT16_MAX,0,physical,0,
                                   pin,unpin,0,&locks)==PORT_USER_OK);
     assert(locks.count==17u&&pin_counts[2]==1u&&pin_counts[18]==1u);
-    port_user_unpin_io_range(&locks,unpin,0);
+    port_user_unpin_io_range(&locks);
     assert(locks.count==0u&&pin_counts[2]==0u&&pin_counts[18]==0u);
-    locks.physical[0]=0xabcdef00u;locks.count=1u;
+    locks.physical[0]=0xabcdef00u;
     pin_calls=0;fail_pin_call=4;
     assert(port_user_pin_io_range(&m,0x1002,UINT16_MAX,0,physical,0,
                                   pin,unpin,0,&locks)==PORT_USER_BAD);
-    assert(locks.count==1u&&locks.physical[0]==0xabcdef00u);
+    assert(locks.count==0u&&locks.physical[0]==0xabcdef00u);
     for(unsigned i=0;i<32;i++)assert(pin_counts[i]==0u);
     fail_pin_call=0;
     puts("M293 user pointer access, crossings, IO page pin rollback PASS");

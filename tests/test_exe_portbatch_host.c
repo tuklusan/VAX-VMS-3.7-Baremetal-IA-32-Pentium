@@ -103,7 +103,7 @@ static uint32_t inspect(void *c,uint32_t va,uint8_t mode,
 }
 int main(void) {
     struct test t={0};
-    const struct port_exe_access memory={&t,rd,wr,can,can};
+    const struct port_exe_access memory={&t,rd,wr,can,can,0};
     struct port_exe_stack_bounds st={.previous_mode=2};
     uint32_t new_stk[2]={0x4000u,0x8000u};
     poke(&t,128u,new_stk,8u);

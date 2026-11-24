@@ -42,10 +42,10 @@ int port_user_pin_io_range(const struct port_user_map *m,uint32_t base,
                            port_phys_page_resolver physical,void *physical_ctx,
                            port_user_page_pin pin,port_user_page_unpin unpin,
                            void *lock_ctx,struct port_user_page_locks *locks){
-    if(!locks||!physical||!pin||!unpin||
+    if(!locks||locks->count||!physical||!pin||!unpin||
        port_user_io_range_valid(m,base,bytes,writing))return PORT_USER_BAD;
     const uint32_t last=base+bytes-1u;
-    struct port_user_page_locks acquired={{0},0};
+    struct port_user_page_locks acquired={{0},0,unpin,lock_ctx};
     for(uint32_t at=base;;){
         const uint32_t dir=m->pde[(at>>22)&1023u];
         const uint32_t *table=m->resolve(m->context,dir&0xfffff000u);
@@ -66,11 +66,12 @@ rollback:
     return PORT_USER_BAD;
 }
 
-void port_user_unpin_io_range(struct port_user_page_locks *locks,
-                              port_user_page_unpin unpin,void *context){
-    if(!locks||!unpin||locks->count>PORT_USER_PIN_MAX_PAGES)return;
-    while(locks->count)unpin(context,locks->physical[--locks->count]);
+void port_user_unpin_io_range(struct port_user_page_locks *locks){
+    if(!locks||!locks->release||locks->count>PORT_USER_PIN_MAX_PAGES)return;
+    while(locks->count)locks->release(locks->release_context,
+                                      locks->physical[--locks->count]);
     for(unsigned i=0;i<PORT_USER_PIN_MAX_PAGES;i++)locks->physical[i]=0;
+    locks->release=0;locks->release_context=0;
 }
 
 /* The output contract is all-or-nothing for unmapped spans. Retain the

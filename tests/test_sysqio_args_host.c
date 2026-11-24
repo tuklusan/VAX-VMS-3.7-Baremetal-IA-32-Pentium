@@ -440,7 +440,7 @@ int main(void){
         return 71;
     struct transfer_access_test transfer_test={.read_ok=1,.write_ok=1};
     const struct port_exe_access transfer_access={&transfer_test,0,0,
-        probe_transfer_read,probe_transfer_write};
+        probe_transfer_read,probe_transfer_write,0};
     struct port_v37_sysqio_buffer transfer_buffer={0};
     if(port_v37_sysqio_check_buffer(&read_request,&transfer_access,
           &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_OK||

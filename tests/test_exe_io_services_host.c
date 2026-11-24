@@ -29,7 +29,7 @@ int main(void){
  struct rig r={0};
  struct port_exe_device device={.name="DQA0:",.owner_uic=0x10001};
  r.device=&device;
- struct port_exe_access mem={&r,read_user,write_user,probe,probe};
+ struct port_exe_access mem={&r,read_user,write_user,probe,probe,0};
  struct port_exe_device *devices[1]={&device};
  struct port_exe_device_ops dv={.context=&r,.memory=&mem,.devices=devices,.device_count=1,.lock_io=lock_io,.unlock_io=unlock_io,.find=find,.check_read_access=allowed,.driver_cancel=driver_release};
  struct port_exe_dev_request req={.access_mode=2};

@@ -244,7 +244,8 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
     if(!charge_io_quota(process,ops,dispatch.buffered))
         return begin_failure(PORT_V37_SYSQIO_BEGIN_EXQUOTA,
             PORT_SS_EXQUOTA,&args,process,ops,service_status);
-    const struct port_v37_sysqio_prepared out={args,dispatch,channel};
+    const struct port_v37_sysqio_prepared out={
+        .args=args,.dispatch=dispatch,.channel=channel};
     *prepared=out;
     *service_status=PORT_V37_SYSQIO_BEGIN_OK;
     return PORT_V37_SYSQIO_BEGIN_OK;

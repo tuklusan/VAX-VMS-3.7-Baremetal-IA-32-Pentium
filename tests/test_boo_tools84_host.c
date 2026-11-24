@@ -25,7 +25,7 @@ static int readchar(void *p,uint8_t *c){struct rig *r=p;if(r->pos>=r->count)retu
 static int writechar(void *p,uint8_t c){struct rig *r=p;assert(r->sequence<128);r->output[r->sequence++]=c;return 1;}
 int main(void){
  struct rig r={0};
- struct port_exe_access mem={&r,memread,memwrite,probe,probe};
+ struct port_exe_access mem={&r,memread,memwrite,probe,probe,0};
  uint8_t d[8]={7,0,0,0,100,0,0,0};assert(memwrite(&r,32,d,8));
  assert(memwrite(&r,100,"SYS.EXE",7));
  struct port_boo_actimage_ops ai={&r,&mem,mode,stack,rundown,activate};

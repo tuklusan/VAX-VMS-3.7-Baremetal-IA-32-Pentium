@@ -131,6 +131,8 @@ struct port_v37_sysqio_prepared {
     struct port_v37_sysqio_args args;
     struct port_v37_sysqio_dispatch dispatch;
     struct port_v37_sysqio_resolved_channel channel;
+    /* Retained by the prepared request; post/abort ownership releases it. */
+    struct port_user_page_locks transfer_pages;
 };
 
 enum { PORT_V37_SYSQIO_BUFFER_OK=1u,PORT_V37_SYSQIO_BUFFER_BAD=2u,
@@ -223,13 +225,17 @@ uint32_t port_v37_sysqio_prepare_irp(const void *,size_t,
     const struct port_v37_irp_pool_sync *,struct port_v37_sysqio_prepared *,
     uint8_t **,uint32_t *,uint32_t *service_status);
 /* Public-entry adapter: copy the fixed VMS AP list, reserve the source-layout
- * IRP, and check the caller's transfer-buffer access. An access fault returns
- * the private IRP and process quota charges; successful preparation still
- * requires page locking/SVAPTE setup and native DDT submission. */
+ * IRP, check transfer access, and pin mapped transfer frames. Failures return
+ * the private IRP and quota charges; preparation still requires native
+ * SVAPTE setup, DDT submission, and completion/abort unlock integration. */
 uint32_t port_v37_sysqio_prepare_user_irp(
     const struct port_exe_access *,uint32_t,
     struct port_v37_sysqio_process *,const struct port_v37_sysqio_begin_ops *,
     const struct port_v37_sysqio_irp_spec *,struct port_ini_packet_list *,
     const struct port_v37_irp_pool_sync *,struct port_v37_sysqio_prepared *,
     uint8_t **,uint32_t *,uint32_t *service_status);
+/* Release a successfully prepared transfer range exactly once, on completion
+ * or an abort path after ownership has transferred to the driver. */
+void port_v37_sysqio_release_user_pages(
+    struct port_v37_sysqio_prepared *);
 #endif

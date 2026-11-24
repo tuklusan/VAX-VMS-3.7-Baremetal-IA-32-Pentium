@@ -16,7 +16,7 @@ static void locked(void *ctx){((struct rig *)ctx)->locked++;}
 static void unlocked(void *ctx){((struct rig *)ctx)->unlocked++;}
 int main(void){
  struct rig r={0};
- struct port_exe_access mem={&r,read_user,write_user,probe,probe};
+ struct port_exe_access mem={&r,read_user,write_user,probe,probe,0};
  struct port_exe_setime_ops ops={&r,&mem,rtc_read,rtc_write,checked,save,locked,unlocked};
  struct port_exe_systime clock={0};
  uint64_t old,now;

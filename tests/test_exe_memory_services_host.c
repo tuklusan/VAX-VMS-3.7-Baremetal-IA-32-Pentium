@@ -23,7 +23,7 @@ static uint32_t freepage(void *p){((struct rig *)p)->freed++;return 1;}
 static uint32_t wait_resource(void *p,uint32_t cause){(void)p;(void)cause;return 1;}
 int main(void){
  struct rig rig={0};
- struct port_exe_access mem={&rig,read_user,write_user,probe,probe};
+ struct port_exe_access mem={&rig,read_user,write_user,probe,probe,0};
  struct port_exe_setprt_ops op={&rig,&mem,get_page,set_page,fault_page,dec_section,invalidate,lock,unlock};
  int32_t quota=3;
  struct port_exe_setprt_request rq={.input_range=100,.return_range=112,.old_protection=124,.requested_mode=0,.protection=6};

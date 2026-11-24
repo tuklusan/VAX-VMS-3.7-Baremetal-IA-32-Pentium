@@ -174,8 +174,16 @@ uint32_t port_v37_sysqio_prepare_user_irp(
     struct port_v37_sysqio_buffer buffer={0};
     const uint32_t checked=port_v37_sysqio_check_buffer(&request,memory,
         &buffer,&status);
-    if(checked!=PORT_V37_SYSQIO_BUFFER_OK&&
-       checked!=PORT_V37_SYSQIO_BUFFER_NONE){
+    int pin_failed=0;
+    if((checked==PORT_V37_SYSQIO_BUFFER_OK)&&buffer.bytes){
+        const int writing=buffer.direction==
+            PORT_V37_SYSQIO_BUFFER_WRITE_TO_USER;
+        pin_failed=!port_exe_lock_io(memory,buffer.address,buffer.bytes,
+            writing,&request.transfer_pages);
+        if(pin_failed)status=PORT_SYS85_ACCVIO;
+    }
+    if((checked!=PORT_V37_SYSQIO_BUFFER_OK&&
+        checked!=PORT_V37_SYSQIO_BUFFER_NONE)||pin_failed){
         /* prepare_irp charged I/O and AST quotas and owns a private packet.
          * The access-fault path mirrors EXE$ABORTIO: return the packet and
          * restore both process charges before posting the event flag. */
@@ -203,4 +211,9 @@ uint32_t port_v37_sysqio_prepare_user_irp(
     *prepared=request;*packet=reserved;*packet_va=va;
     *service_status=status;
     return PORT_V37_SYSQIO_PREPARE_OK;
+}
+
+void port_v37_sysqio_release_user_pages(
+    struct port_v37_sysqio_prepared *request){
+    if(request)port_user_unpin_io_range(&request->transfer_pages);
 }

@@ -34,6 +34,9 @@ static uint32_t assign_access(void *v,uint32_t arb,const uint8_t *ucb,size_t n){
 struct sysqio_fixture {
     struct port_v37_sysassign_qio_context channels;
     unsigned errors;
+    unsigned pins,unpins;
+    uint32_t pinned_frame;
+    int fail_pin;
 };
 struct assign_user_memory {
     uint32_t pde[1024],pte[1024];
@@ -48,6 +51,15 @@ static uint8_t *assign_page(void *v,uint32_t address){
 static void sysqio_post_error(void *v,uint32_t pid,uint8_t efn,uint32_t status){
     struct sysqio_fixture *f=v;(void)pid;(void)efn;(void)status;f->errors++;
 }
+static int sysqio_pin_page(void *v,uint32_t frame){
+    struct sysqio_fixture *f=v;
+    if(f->fail_pin)return -1;
+    ++f->pins;f->pinned_frame=frame;return 0;
+}
+static void sysqio_unpin_page(void *v,uint32_t frame){
+    struct sysqio_fixture *f=v;
+    if(frame==f->pinned_frame&&f->pins){--f->pins;++f->unpins;}
+}
 struct qio_sync_state { uint32_t ipl; };
 static uint32_t qio_raise(void *v){
     struct qio_sync_state *s=v;uint32_t old=s->ipl;s->ipl=4u;return old;
@@ -57,6 +69,7 @@ static void qio_restore(void *v,uint32_t old){
 }
 int main(void){
     enum {BASE=0x00370000u,START=0x00324120u,RET=0x00324104u};
+    struct sysqio_fixture qio_fixture={0};
     const uint32_t action=(uint32_t)(uintptr_t)port_dqddt_bootread;
     const uint32_t write_action=(uint32_t)(uintptr_t)port_dqddt_bootwrite;
     struct port_dq_fdt fdt={0};
@@ -245,8 +258,9 @@ int main(void){
         assign_table,&assign_memory};
     struct port_exe_access assign_access;
     struct port_exe_user_access assign_binding;
-    port_exe_user_access_init(&assign_access,&assign_binding,&assign_map,
-        assign_page,&assign_memory);
+    port_exe_user_access_init_pinned(&assign_access,&assign_binding,
+        &assign_map,assign_page,&assign_memory,sysqio_pin_page,
+        sysqio_unpin_page,&qio_fixture);
     const struct port_v37_sysassign_descriptor_request assign_descriptor={
         &process_assign_template,&assign_access,0x1000u,2u,0u,
         &assign_process};
@@ -276,7 +290,7 @@ int main(void){
         &assigned_view)==PORT_V37_CCB_OK&&assigned_view.ucb==info.ucb[0]);
     struct port_v37_sysqio_device qio_device={
         .fdt=&fdt,.fdt_bytes=sizeof fdt,.online=1u};
-    struct sysqio_fixture qio_fixture={.channels={
+    qio_fixture=(struct sysqio_fixture){.channels={
         .ccb_base=assign_process.ccb_base,
         .ccb_preceding_bytes=assign_process.ccb_preceding_bytes,
         .maximum_channel_offset=assign_process.ccb_high_water,
@@ -358,17 +372,28 @@ int main(void){
         &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_BEGIN&&
         qio_status==PORT_SYS85_ACCVIO&&!qio_irp&&!qio_irp_va&&
         qio_process.direct_io_count==1&&qio_fixture.errors==1u);
+    qio_fixture.fail_pin=1;
+    CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
+        &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
+        &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_BUFFER&&
+        qio_status==PORT_SYS85_ACCVIO&&!qio_irp&&!qio_irp_va&&
+        qio_process.direct_io_count==1&&qio_process.ast_count==1&&
+        qio_fixture.errors==2u&&qio_pool.free_count==1u);
+    qio_fixture.fail_pin=0;
     CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
         &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
         &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_OK);
-    CHECK(qio_process.direct_io_count==0&&qio_fixture.errors==1u&&
+    CHECK(qio_process.direct_io_count==0&&qio_fixture.errors==2u&&
         qio_irp==qio_pool_memory&&qio_irp_va==0x00380000u&&
         port_v37_read32(qio_irp+12u)==qio_process.pid&&
         port_v37_read32(qio_irp+28u)==info.ucb[0]&&
         port_v37_read16(qio_irp+32u)==PORT_DQ_READPBLK&&
         port_v37_read32(qio_irp+52u)==512u&&
         port_v37_read16(qio_irp+40u)==(uint16_t)(0u-assigned)&&
-        (port_v37_read16(qio_irp+42u)&0x0100u)!=0u);
+        (port_v37_read16(qio_irp+42u)&0x0100u)!=0u&&
+        qio_prepared.transfer_pages.count==1u&&
+        qio_prepared.transfer_pages.physical[0]==0x9000u&&
+        qio_fixture.pins==1u&&qio_fixture.unpins==0u);
     uint16_t channel_ioc=0u;uint32_t deaccess_irp=UINT32_MAX;
     CHECK(port_v37_sysassign_qio_charge(&qio_fixture.channels,
         qio_process.pid,assigned,qio_process.access_mode,&assign_ops,
@@ -379,6 +404,9 @@ int main(void){
         port_v37_read16(qio_irp+40u),0,&channel_ioc,&deaccess_irp)==
         PORT_V37_IOPOST_OK&&channel_ioc==0u&&deaccess_irp==0u&&
         port_v37_read16(ccb_base-16u+PORT_V37_CCB_IOC)==0u);
+    port_v37_sysqio_release_user_pages(&qio_prepared);
+    CHECK(qio_prepared.transfer_pages.count==0u&&qio_fixture.pins==0u&&
+          qio_fixture.unpins==1u);
     channel_ioc=0xaaaau;
     CHECK(port_v37_sysassign_qio_charge(&qio_fixture.channels,
         qio_process.pid,assigned,3u,&assign_ops,&channel_ioc)==
@@ -397,7 +425,10 @@ int main(void){
         qio_status==PORT_SYS85_NORMAL&&qio_process.direct_io_count==0&&
         port_v37_read16(qio_irp+32u)==PORT_DQ_WRITEPBLK&&
         port_v37_read32(qio_irp+52u)==512u&&
+        qio_prepared.transfer_pages.count==1u&&qio_fixture.pins==1u&&
         !(port_v37_read16(qio_irp+42u)&2u));
+    port_v37_sysqio_release_user_pages(&qio_prepared);
+    CHECK(qio_fixture.pins==0u&&qio_fixture.unpins==2u);
     CHECK(port_v37_irp_pool_free(&qio_pool,qio_irp,qio_irp_va,
         PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&qio_sync)==PORT_V37_IRP_POOL_OK);
     assign_memory.pte[1]=0x9007u;

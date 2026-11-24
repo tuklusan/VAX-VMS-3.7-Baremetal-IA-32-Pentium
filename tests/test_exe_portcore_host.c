@@ -65,7 +65,7 @@ int main(void) {
     c.has_cmkrnl=0;c.previous_mode=0;
     assert(port_exe_cmkrnl(&c,4,55,&exec)==1u);
 
-    struct port_exe_access user={&t,read_mem,write_mem,probe,probe};
+    struct port_exe_access user={&t,read_mem,write_mem,probe,probe,0};
     struct port_exe_bad_service bad={&t,badcall};
     struct port_exe_change_handlers h={.previous_mode=3,
         .supervisor=10,.user=20,.compatibility=30};

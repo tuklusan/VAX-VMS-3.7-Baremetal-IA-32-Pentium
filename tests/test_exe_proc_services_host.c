@@ -52,7 +52,7 @@ int main(void){
     assert(port_exe_wfland(&waitp,0,1u<<4,&wo)==1);
     assert(port_exe_wflor(&waitp,129,1,&wo)==PORT_SS_ILLEFC);
     assert(port_exe_wflor(&waitp,64,1,&wo)==PORT_SS_UNASEFC);
-    struct port_exe_access mem={&s,r,w,cr,cr};
+    struct port_exe_access mem={&s,r,w,cr,cr,0};
     struct port_exe_exit_handlers lists={0};
     struct port_exe_dclexh_ops dco={&mem,&s,NULL};
     uint32_t first[4]={0,0x1234,0x55,400};
