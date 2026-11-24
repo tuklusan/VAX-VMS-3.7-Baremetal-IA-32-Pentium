@@ -21803,8 +21803,11 @@
             249,
             250
           ],
-          "status": "unresolved",
-          "reason": "Read/modify buffer-lock routine selection remains unported"
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_reserve.c",
+          "pc_symbol": "port_v37_sysqio_prepare_user_irp",
+          "pc_line": 136,
+          "function": "Pins all translated IA-32 pages for a READ destination after IRP reservation and rolls back on failure; VMS SVAPTE/BOFF mapping, IOLOCK restart/fault semantics and live submission remain unresolved"
         },
         {
           "original_lines": [
@@ -21822,8 +21825,11 @@
             252,
             253
           ],
-          "status": "unresolved",
-          "reason": "Write buffer-lock routine selection remains unported"
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_reserve.c",
+          "pc_symbol": "port_v37_sysqio_prepare_user_irp",
+          "pc_line": 136,
+          "function": "Pins all translated IA-32 pages for a WRITE source after IRP reservation and rolls back on failure; VMS SVAPTE/BOFF mapping, IOLOCK restart/fault semantics and live submission remain unresolved"
         },
         {
           "original_lines": [
