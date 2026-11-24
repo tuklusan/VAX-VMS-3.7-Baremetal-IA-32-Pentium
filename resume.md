@@ -782,3 +782,15 @@ M268 implementation commit and publication details follow.
 Remaining: resolve current process PHD and connect direct-I/O unlock/accounting to real IOPOST; port measurement and diagnostic buffer processing; finish IOSB/POSTEF/AST/IRPE release integration; implement public SYS$QIO and Files-11 ACP; continue native INIT and activate real VMS process images. End-to-end DECnet Phase IV and nested SYSTEM/DCL SET HOST 0 acceptance remains unmet.
 
 M268 implementation commit (local): `4f2af3da19b51805e23974e75390ba1601749b5b`. GitHub publication follows.
+
+## M269 — Port IOCIOPOST positive-PID direct completion route, 24 November 2026
+
+Added the process branch after the negative-PID kernel end-action route. It extracts the source PID process index, resolves the PCB through the source `INI_PSTATE` process vector, checks the full PCB PID sequence to reject recycled slots, increments the source 16-bit `PCB$W_DIOCNT`, invokes the M267 direct page-unlock path, and queues the completion KAST through a scheduler callback. Failed preflight/deferred paths restore the PCB count. Buffered, paging, swap and segmented virtual completions remain deferred. This route is resident-linked and host-tested; the live IPL$_IOPOST worker still only drains bootstrap kernel end-action IRPs, so no real process request currently invokes it.
+
+`make iopostprocesscheck iopostunlockcheck iopostaccountcheck iopostendcheck` PASS. Process-route regression verifies source PCB-vector resolution, PID sequence rejection, 16-bit counter wrap, direct-buffer unlock, KAST handoff, and no mutation for buffered/virtual/stale-PID requests. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS (exit 0). Source coverage generation/validation PASS: 2,029 ranges; 445/4,566 original files indexed; mapped 17,016, partial 29,551, unresolved 52,056, missing 7,799, excluded 26,237, hardware-excluded 917. Real `make qemu-sysboot-m217` PASS through the existing 700-byte SYS.EXE Files-11 chain read via IOC-selected DQA0 DDT/CRB/IRQ14; it then stopped at incomplete INIT. The new positive-PID route was not exercised in QEMU. Transcript `logs/serial/qemu-m217-run-local-20261124T140106829178Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No public SYS$QIO, SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M269 implementation commit and publication details follow.
+
+Remaining: wire positive-PID completions to live IPL$_IOPOST using the real native PCB vector, PHD/page-map resolution and scheduler KAST queue; add buffered/paging/virtual paths and DIRPOST IOSB/event/AST/IRPE handling; implement real public SYS$QIO and Files-11 ACP; finish INIT and process activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0.
+
+M269 implementation commit (local): `7ec6ea951cc41cfdd9ffb1f25120467f6d632f24`. GitHub publication follows.
