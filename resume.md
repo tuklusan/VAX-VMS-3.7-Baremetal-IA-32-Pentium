@@ -936,3 +936,13 @@ Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; `make qemu-
 M284 implementation commit: `6293df505891713d066cc1838b3d786bc35daff0`.
 
 Remaining: public SYS$ASSIGN/SYS$QIO dispatch and live process context; actual DQA0 STARTIO from user IRPs; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M285 — Bind SYSASSIGN channels to source-PCB process state, 24 November 2026
+
+Added per-process CTL channel-table/high-water fields to the source-PCB-bound SYSQIO process view and a validated channel-state binder. SYSASSIGN descriptor handling now derives PID, ARB, CCB base, channel capacity and high-water storage from that bound process when supplied, overriding standalone request fields. The integration regression creates a native PCB/PHD process, binds its CCB table, deliberately clears the request's duplicate CCB/PID/ARB fields, and assigns DQA0 through the process-owned state. It also verifies invalid table rebinding is atomic and channel exhaustion updates the process high-water semantics correctly. The scheduler still does not supply a live process CTL allocation or dispatch public SYS$ASSIGN.
+
+Verification: `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS; `make qemu-sysboot-m217` PASS through resident SYS.EXE load and the 700-byte DQA0 DDT/IRQ14 Files-11 read, then incomplete INIT stop; coverage validation PASS: 2,035 ranges; 445/4,566 indexed; mapped 17,016, partial 29,580, unresolved 52,027, missing 7,799, excluded 26,237, hardware-excluded 917. Transcripts: `logs/serial/qemu-m217-run-local-20261124T152152518212Z.log` and `logs/serial/qemu-m217-run-local-20261124T152331029638Z.log`, each 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M285 implementation commit: `38c12a15228ac2aa692194548bd146e564dc8675`.
+
+Remaining: bind running process page maps and CTL allocations to a genuine public SYS$ASSIGN/SYS$QIO service entry; dispatch standard user IRPs through DQA0 STARTIO; Files-11 ACP; real process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
