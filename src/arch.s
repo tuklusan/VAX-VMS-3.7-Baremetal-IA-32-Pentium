@@ -154,6 +154,14 @@ arch_resume_initial_frame:
 .global arch_vms_ring_probe_exit
 arch_vms_ring_probe_exit:
     movl arch_vms_probe_saved_esp,%esp
+    /* IRET returned through the ring-2 frame, so the user data selectors
+     * remain loaded even though CS is back at CPL0. Restore the caller's
+     * flat kernel data segments before resuming its C frame. */
+    movw $0x10,%ax
+    movw %ax,%ds
+    movw %ax,%es
+    movw %ax,%fs
+    movw %ax,%gs
     popl %edi
     popl %esi
     popl %ebx

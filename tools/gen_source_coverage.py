@@ -1700,6 +1700,9 @@ for orig,total,first,last,symbol in f11_87_files:
     elif orig == 'F11B/SRC/RDHEDR.B32':
         regions.append((first,last,'src/vms_f11_acp87.c',symbol,
             'Native ACP FID-to-INDEXF lookup and FH2 validation execute during real IA-32 boot; SYS.EXE header is read through published DQA0 DDT/CRB IRQ14 and materialized as a native FCB. Full ACP request queues and process callback context remain unbound.'))
+    elif orig == 'F11B/SRC/GETFIB.B32':
+        regions.append((first,last,'src/vms_f11_acp87.c',symbol,
+            'Native GETFIB returns and guest-checks the real SYS.EXE FID from its allocated WCB during QEMU boot. User FIB/AP mapping, request dispatch and process completion remain unbound.'))
     else:
         regions.append((first,last,'src/vms_f11_acp87.c',symbol,
                         'Native Files-11 ACP routine'))

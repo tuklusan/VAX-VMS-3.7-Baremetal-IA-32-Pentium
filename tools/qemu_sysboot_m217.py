@@ -101,6 +101,7 @@ def main():
         b'INIT: SYS.EXE DQA0 write FIFO completed two ordered DDT WRITEPBLK IRPs; read FIFO posted two READPBLK IRPs via IRQ14, readback and restore verified.',
         b'INIT stopped: remaining original initialization dependencies incomplete.']
     failures=[
+        b'*** x86 fault:',
         b'SYSBOOT: SYS.EXE retrieval map invalid.',
         b'-F-Unable to locate SYS.EXE',
         b'-F-Unable to locate usable SYSLOA386.EXE',

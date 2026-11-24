@@ -203,6 +203,7 @@ struct port_sys_exec_result {
     uint32_t dq_acp_alloc_source,dq_acp_np_allocations;
     uint32_t dq_acp_failed_fcb_reclaimed;
     uint32_t dq_acp_readonly_wcb_closed;
+    uint32_t dq_acp_fib_identified_sys_file;
     uint16_t dq_acp_file,dq_acp_sequence,dq_acp_volume;
     /* DEVICEDAT DDB/UCB pointer graph; DQA0 is partially DDT/CRB bound. */
     const struct port_v37_device_result *device_db;

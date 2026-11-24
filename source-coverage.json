@@ -10069,7 +10069,7 @@
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_get_fib",
           "pc_line": 434,
-          "function": "Native Files-11 ACP routine"
+          "function": "Native GETFIB returns and guest-checks the real SYS.EXE FID from its allocated WCB during QEMU boot. User FIB/AP mapping, request dispatch and process completion remain unbound."
         },
         {
           "original_lines": [

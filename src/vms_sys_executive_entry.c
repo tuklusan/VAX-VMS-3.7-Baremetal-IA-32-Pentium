@@ -2064,6 +2064,20 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         acp_window->allocation_owned=1u;
         acp_window->allocation_base=acp_window;
         acp_window->allocation_bytes=sizeof(*acp_window);
+        uint8_t acp_fib_input[PORT_F11_87_FIBLEN]={0};
+        struct port_f11_87_fib_result acp_fib_result={0};
+        struct port_f11_87_context fib_context=acp_context;
+        fib_context.window=acp_window;
+        if(port_f11b_get_fib(&fib_context,acp_fib_input,
+              sizeof acp_fib_input,PORT_F11_87_IO_ACPCONTROL,
+              &acp_fib_result)!=PORT_F11_87_NORMAL||
+           acp_fib_result.length!=PORT_F11_87_FIBLEN||
+           port_v37_read16(acp_fib_result.bytes+4u)!=sys_fid.number||
+           port_v37_read16(acp_fib_result.bytes+6u)!=sys_fid.sequence||
+           port_v37_read16(acp_fib_result.bytes+8u)!=sys_fid.volume||
+           (acp_fib_result.bytes[23]&0x80u)||fib_context.cleanup_directory)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        p->result->dq_acp_fib_identified_sys_file=1u;
         struct port_f11_87_window *writeback=0;
         if(port_f11b_make_access(&acp_context,acp_sys_fcb,acp_window,
                                  &writeback)!=PORT_F11_87_NORMAL||

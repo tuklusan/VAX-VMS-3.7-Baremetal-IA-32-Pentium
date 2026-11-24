@@ -410,8 +410,14 @@ static void show_conditions(void) {
     puts(" EIP=0x"); hex32(portlab_conditions.last.eip); putc('\n');
 }
 void arch_report_fault(uint32_t vector, uint32_t error, uint32_t eip) {
-    puts("\n*** x86 fault: vector 0x"); hex32(vector);
+    if(vector==13u){
+        extern uint32_t port_gdt[];
+        puts("GDT[2]: ");hex32(port_gdt[4]);puts(" ");
+        hex32(port_gdt[5]);putc('\n');
+    }
+    puts("\nFault details: vector 0x"); hex32(vector);
     puts(" error 0x"); hex32(error); puts(" EIP 0x"); hex32(eip); putc('\n');
+    puts("*** x86 fault:\n");
 }
 static int decnet_hello_send(void) {
     const struct port_decnet_router_entry *router=
@@ -4167,6 +4173,7 @@ void kmain(void) {
         dq_publish_result.dq_acp_np_allocations!=0u)||
        dq_publish_result.dq_acp_failed_fcb_reclaimed!=1u||
        dq_publish_result.dq_acp_readonly_wcb_closed!=1u||
+       dq_publish_result.dq_acp_fib_identified_sys_file!=1u||
        dq_publish_result.dq_acp_file_blocks==0u||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
@@ -4183,6 +4190,7 @@ void kmain(void) {
     bootstrap_message(acp_source_message);
     bootstrap_message("INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.");
     bootstrap_message("INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.");
+    bootstrap_message("INIT: ACP GETFIB returned the resident SYS.EXE FID from its allocated WCB.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,

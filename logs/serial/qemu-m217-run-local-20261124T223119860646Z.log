@@ -1,0 +1,6 @@
+IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.
+SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.
+GDT[2]: 0000FFFF 00CF9300
+
+Fault details: vector 0x0000000D error 0x00000010 EIP 0x00028D52
+*** x86 fault:
