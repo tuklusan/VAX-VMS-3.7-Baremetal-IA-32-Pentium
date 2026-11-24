@@ -28,11 +28,15 @@ uint32_t port_v37_sysqio_build_irp(
     struct port_v37_sysqio_process *process,
     const struct port_v37_sysqio_irp_spec *spec,
     uint8_t *packet,size_t packet_bytes){
+    const uint32_t source_channel=request?
+        (request->args.channel&UINT32_C(0x0000fff0)):0u;
     if(!request||!process||!spec||!packet||!process->pid||
        process->access_mode>3u||packet_bytes<PORT_V37_SYSQIO_IRP_STANDARD_BYTES||
        packet_bytes>UINT16_MAX||(spec->packet_va&3u)||!spec->packet_va||
        (spec->ucb_va&3u)||!spec->ucb_va||(spec->arb_va&3u)||
-       (spec->window_va&3u)||spec->channel_index==0u||
+       (spec->window_va&3u)||source_channel==0u||
+       spec->channel_index!=source_channel||
+       spec->channel_index==0u||
        spec->channel_index>UINT16_MAX||
        (spec->channel_index%PORT_V37_CCB_BYTES)!=0u||
        spec->base_priority>31u||

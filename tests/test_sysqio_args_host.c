@@ -120,13 +120,13 @@ static void post_event(void *opaque,uint32_t pid,uint8_t efn,uint32_t status){
 int main(void){
     _Alignas(4) uint8_t ap[PORT_V37_SYSQIO_LIST_BYTES+4u]={0};
     put32(ap,PORT_V37_SYSQIO_REQUIRED_ARGS);
-    const uint32_t values[12]={3u,0x12340002u,0xffff0031u,0x1000u,
+    const uint32_t values[12]={3u,0x12340020u,0xffff0031u,0x1000u,
         0x2000u,0xaabbccddu,1u,2u,3u,4u,5u,6u};
     for(unsigned i=0;i<12u;i++)put32(ap+4u+4u*i,values[i]);
     struct port_v37_sysqio_args out;
     memset(&out,0xa5,sizeof out);
     if(port_v37_sysqio_decode_args(ap,sizeof ap,&out)!=PORT_V37_SYSQIO_ARGS_OK||
-       out.event_flag!=3u||out.channel!=0x12340002u||out.function!=0x31u||
+       out.event_flag!=3u||out.channel!=0x12340020u||out.function!=0x31u||
        out.iosb!=0x1000u||out.ast_address!=0x2000u||
        out.ast_parameter!=0xaabbccddu)
         return 1;
@@ -205,7 +205,7 @@ int main(void){
        PORT_V37_SYSQIO_IOSB_OK||mem.probes||mem.clears)return 20;
     device.online=1u;
     struct begin_rig rig={.device=&device,.ucb=(void *)(uintptr_t)0x2000u,
-        .expected_pid=7u,.expected_channel=0x12340002u};
+        .expected_pid=7u,.expected_channel=0x12340020u};
     struct port_v37_sysqio_process proc={.pid=7u,.access_mode=3u,
         .has_phy_io=1u,
         .local_event_flags={UINT32_MAX,UINT32_MAX}};
@@ -273,7 +273,7 @@ int main(void){
        begin_status!=PORT_SYS85_IVCHAN||rig.posts!=1u||rig.lookups||
        proc.direct_io_count!=1)
         return 63;
-    put32(ap+8u,0x12340002u);
+    put32(ap+8u,0x12340020u);
     rig.window=1u;rig.posts=0u;rig.waits=0u;proc.direct_io_count=1;
     mem.probes=mem.clears=0u;
     memset(&prepared,0x5a,sizeof prepared);untouched=prepared;
@@ -537,6 +537,11 @@ int main(void){
     if(port_v37_sysqio_build_irp(&prepared,&proc,&bad_spec,irp,sizeof irp)!=
          PORT_V37_SYSQIO_IRP_BUILD_BAD||irp[0]!=0x5au)
         return 70;
+    struct port_v37_sysqio_prepared mismatched_channel=prepared;
+    mismatched_channel.args.channel=0x12340030u;
+    if(port_v37_sysqio_build_irp(&mismatched_channel,&proc,&ispec,irp,
+          sizeof irp)!=PORT_V37_SYSQIO_IRP_BUILD_BAD||irp[0]!=0x5au)
+        return 71;
     uint16_t normalized=0xaaaau;uint8_t check_ast=0xaau;
     uint32_t access_status=0xfeedu;
     if(port_v37_sysqio_normalize_write(0x0fb0u,0u,0u,&normalized,
