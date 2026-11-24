@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M275
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M276
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -848,3 +848,13 @@ Coverage for SYSQIOREQ remains partial; its integration note now records the hos
 Remaining: live public SYS$QIO dispatch and channel IOC accounting; DQ STARTIO submission with real IRP and IRQ completion; Files-11 ACP and AST path; native INIT continuation/process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
 
 M275 implementation commit: `ba06b28ca92d8d1eab5dde42424cea59aa49b039`.
+
+## M276 — SYSQIO CCB accounting through IOPOST completion, 24 November 2026
+
+Added PID- and access-mode-bound SYSQIO channel accounting under the native I/O database lock. The host route now builds the source standard IRP, increments its assigned CCB's `CCB$W_IOC`, then feeds the IRP's negative channel index through the source DIRPOST completion helper and verifies the count returns to zero. A caller beyond the assigned access limit is rejected without changing the count. The charge/completion pair is host-tested only; the IRP is not submitted to the DQA0 driver and no live service or AST is delivered.
+
+Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make dqddtcheck` PASS with SYSQIO/IOPOST CCB accounting and access denial; `make qemu-sysboot-m217` PASS through the real 700-byte Files-11 SYS.EXE DQA0 DDT/CRB/IRQ14 read then incomplete INIT stop. Source coverage generation/validation PASS: 2,032 ranges; 445/4,566 indexed; mapped 17,016, partial 29,573, unresolved 52,034, missing 7,799, excluded 26,237, hardware-excluded 917. Serial transcript `logs/serial/qemu-m217-run-local-20261124T144254406496Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No public $QIO, login, DCL, DECnet or SET HOST 0 occurred.
+
+M276 implementation commit: `7640afd87f94036fce3095d643e247de0fcce972`.
+
+Remaining: public SYS$QIO entry, IPL/deletion protection and EXE$ABORTIO; real DQ FDT/STARTIO submission with user buffer locking and asynchronous IRQ completion; ACP, process-aware AST delivery, PHD/native contexts, INIT continuation/process activation, SYSTEM login/DCL, DECnet Phase IV and nested SET HOST 0 acceptance.
