@@ -388,8 +388,13 @@ int main(void){
           PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
         return 49;
     struct port_v37_sysqio_prepared one_parameter=prepared;
-    one_parameter.dispatch.action_class=PORT_DQ_FDT_ONE;
+    one_parameter.args.function=PORT_DQ_SEEK;
     one_parameter.args.parameter[0]=0x12345678u;
+    if(port_v37_sysqio_preflight(&one_parameter.args,proc.access_mode,4u,
+          &device,&one_parameter.dispatch)!=PORT_V37_SYSQIO_PRECHECK_OK||
+       one_parameter.dispatch.action_class!=PORT_DQ_FDT_ONE||
+       one_parameter.dispatch.function_code!=PORT_DQ_SEEK)
+        return 70;
     uint8_t one_parameter_irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES];
     struct port_v37_sysqio_irp_spec one_parameter_spec=reserve_spec;
     one_parameter_spec.packet_va=0x4000u;
