@@ -6,6 +6,7 @@
 #include "vms_sysassign.h"
 #include "vms_ini_devicedb.h"
 #include "vms_ioc_phys.h"
+#include "vms_sysqio_args.h"
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"DQ DDT failed line %u: %s\n",(unsigned)__LINE__,#x);return 1;}}while(0)
 static int mock_read(void *ctx,uint32_t lbn,uint16_t dst[256]){
     unsigned *calls=ctx;(*calls)++;
@@ -31,6 +32,13 @@ struct sysqio_fixture {
 };
 static void sysqio_post_error(void *v,uint32_t pid,uint8_t efn,uint32_t status){
     struct sysqio_fixture *f=v;(void)pid;(void)efn;(void)status;f->errors++;
+}
+struct qio_sync_state { uint32_t ipl; };
+static uint32_t qio_raise(void *v){
+    struct qio_sync_state *s=v;uint32_t old=s->ipl;s->ipl=4u;return old;
+}
+static void qio_restore(void *v,uint32_t old){
+    ((struct qio_sync_state *)v)->ipl=old;
 }
 int main(void){
     enum {BASE=0x00370000u,START=0x00324120u,RET=0x00324104u};
@@ -220,6 +228,37 @@ int main(void){
         qio_process.direct_io_count==0&&qio_fixture.errors==0u);
     CHECK(port_v37_sysassign_lookup_qio_channel(&qio_fixture.channels,
         0x12340002u,assigned,&qio_prepared.channel)!=0);
+    /* Exercise the complete host-side route through standard IRP reservation
+     * using the channel created above. Hardware submission remains separate. */
+    uint8_t qio_pool_memory[512u]={0};
+    const struct port_ini_packet_area qio_pool_area={
+        .memory=qio_pool_memory,.address=0x00380000u,
+        .available_bytes=sizeof qio_pool_memory,.count=1u,
+        .packet_bytes=144u,.minimum_bytes=144u,
+        .sentinel_address=0x00381000u};
+    struct port_ini_packet_list qio_pool={0};
+    CHECK(port_ini_packet_init(&qio_pool_area,&qio_pool)==PORT_INI_PACKETS_OK);
+    struct qio_sync_state qio_sync_state={.ipl=1u};
+    const struct port_v37_irp_pool_sync qio_sync={
+        &qio_sync_state,qio_raise,qio_restore};
+    const struct port_v37_sysqio_irp_spec qio_spec={
+        .ucb_va=info.ucb[0],.arb_va=0x0034c000u,
+        .channel_index=assigned,.base_priority=8u};
+    uint8_t *qio_irp=0;uint32_t qio_irp_va=0u;
+    qio_process.direct_io_count=1;
+    qio_process.has_phy_io=1u;
+    CHECK(port_v37_sysqio_prepare_irp(sysqio_ap,sizeof sysqio_ap,
+        &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
+        &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_OK);
+    CHECK(qio_process.direct_io_count==0&&qio_fixture.errors==0u&&
+        qio_irp==qio_pool_memory&&qio_irp_va==0x00380000u&&
+        port_v37_read32(qio_irp+12u)==qio_process.pid&&
+        port_v37_read32(qio_irp+28u)==info.ucb[0]&&
+        port_v37_read16(qio_irp+32u)==PORT_DQ_READPBLK&&
+        port_v37_read16(qio_irp+40u)==(uint16_t)(0u-assigned)&&
+        (port_v37_read16(qio_irp+42u)&0x0100u)!=0u);
+    CHECK(port_v37_irp_pool_free(&qio_pool,qio_irp,qio_irp_va,
+        PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&qio_sync)==PORT_V37_IRP_POOL_OK);
     assigned=UINT16_MAX;
     struct port_v37_sysassign_local_request missing_assign=assign_request;
     missing_assign.device_name="ZZZ0";
