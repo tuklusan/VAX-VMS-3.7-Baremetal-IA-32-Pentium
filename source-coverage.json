@@ -10327,7 +10327,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2748,
+          "pc_line": 2749,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10365,7 +10365,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2748,
+          "pc_line": 2749,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -22045,7 +22045,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 497,
+          "pc_line": 507,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -22715,7 +22715,7 @@
           "pc_file": "src/vms_exe_np_pool.c",
           "pc_symbol": "port_exe_np_allocate",
           "pc_line": 131,
-          "function": "Host-tested ALONONPAGED IRP/LRP/SRP class selection, DYN tag preservation, any-fitting-slot lookaside dequeue and variable-pool fallback; ACP runtime wiring is not yet verified"
+          "function": "Source IRP/LRP/SRP class selection, DYN tag preservation, any-fitting-slot lookaside dequeue and variable-pool fallback; resident SYS.EXE ACP FCB creation now allocates through this path and QEMU verified an SRP result; general users, pool extension, resource waiting and AST-delivery semantics remain unresolved"
         },
         {
           "original_lines": [

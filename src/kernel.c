@@ -60,6 +60,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #include "vms_dq_ioc_write.h"
 #include "vms_f11_acp87.h"
 #include "vms_ioc_phys.h"
+#include "vms_exe_np_pool.h"
 
 #define VGA ((volatile uint16_t *)0xB8000)
 #define WIDTH 80
@@ -4159,6 +4160,11 @@ void kmain(void) {
        (uintptr_t)dq_publish_result.dq_acp_fcb<PORT_SYS_ELF_START||
        (uintptr_t)dq_publish_result.dq_acp_fcb>
           PORT_SYS_ELF_LIMIT-sizeof(struct port_f11_87_fcb)||
+       dq_publish_result.dq_acp_alloc_source>PORT_EXE_NP_FROM_SRP||
+       (dq_publish_result.dq_acp_alloc_source==PORT_EXE_NP_FROM_VARIABLE&&
+        dq_publish_result.dq_acp_np_allocations!=1u)||
+       (dq_publish_result.dq_acp_alloc_source!=PORT_EXE_NP_FROM_VARIABLE&&
+        dq_publish_result.dq_acp_np_allocations!=0u)||
        dq_publish_result.dq_acp_file_blocks==0u||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
@@ -4170,7 +4176,9 @@ void kmain(void) {
     }
     bootstrap_message("INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).");
     bootstrap_message("INIT: Files-11 FH2 chain read 700 SYS.EXE bytes across two sectors through IOC-selected DQA0 DDT/IRQ14.");
-    bootstrap_message("INIT: Files-11 ACP RDHEDR/F11B allocated SYS.EXE FID 11 FCB from native EXE$ALONONPAGED pool via DQA0 DDT/CRB IRQ14.");
+    char acp_source_message[]="INIT: ACP FCB source=0";
+    acp_source_message[21]=(char)('0'+dq_publish_result.dq_acp_alloc_source);
+    bootstrap_message(acp_source_message);
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,
