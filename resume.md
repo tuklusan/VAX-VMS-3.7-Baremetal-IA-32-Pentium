@@ -1108,3 +1108,13 @@ Verification: `make -j2 all sysqioresidentcheck v37ccbcheck sysqioargscheck syse
 M301 implementation commit: `211450a`.
 
 Remaining: full Files-11 ACP requests, public SYS$QIO dispatch and live DQA0 completion binding; process-aware AST and scheduler integration; full INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and genuine nested SET HOST 0 acceptance.
+
+## M302 — Materialize SYS.EXE FCB in the guest ACP path, 24 November 2026
+
+Extended the real boot-time F11B ACP operation beyond header retrieval: the verified SYS.EXE FH2 now passes through `port_f11b_create_fcb` using the resident FCB allocator, then the guest verifies FID, sequence, volume, header LBN and nonzero Files-11 allocation. The resulting FCB lives in SYS.EXE resident storage. This is one ACP open component; it does not provide ACP request queueing, UCB-backed VCB lifetime, window management, or public SYS$QIO integration.
+
+Verification: `make -j2 all sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); QEMU `make qemu-sysboot-m217` PASS and emitted `INIT: Files-11 ACP RDHEDR/F11B FCB opened SYS.EXE FID 11 through DQA0 DDT/CRB IRQ14.` It then stopped at the existing incomplete INIT boundary. Transcript `logs/serial/qemu-m217-run-local-20261124T203842336736Z.log`, 5,437 bytes, SHA-256 `860a8ae069bc779100a3b61f2d5e964140aa69ea54a66f2d755a94fc8e6e4c26`. QEMU exited; no runner remains. Coverage generator, range regression and source-range validation PASS; source inventory unchanged at 2,058 ranges and 446/4,566 indexed originals. No SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M302 implementation commit: `6b8b2ebbfa238e1c4bf5a076f0f0088f166e1e82`.
+
+Remaining: make ACP state and requests persistent across VMS channels/processes; connect real SYS$QIO dispatch to DQA0 STARTIO and IOCIOPOST; implement native INIT's remaining dependencies, scheduling and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
