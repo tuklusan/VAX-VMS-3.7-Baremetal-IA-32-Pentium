@@ -21793,10 +21793,21 @@
         {
           "original_lines": [
             1001,
+            1015
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_dirpost.c",
+          "pc_symbol": "port_v37_iopost_dirpost",
+          "pc_line": 11,
+          "function": "DIRPOST process I/O accounting, source callback for guarded two-longword IOSB store, SCH$POSTEF and AST-quota QAST versus IRP release selection; no live PCB/PHD, IOSB, event, AST or lookaside binding"
+        },
+        {
+          "original_lines": [
+            1016,
             1113
           ],
           "status": "unresolved",
-          "reason": "DIRPOST IOSB protection/store, SCH$POSTEF, AST quota/SCH$QAST, IRP/IRPE release and source error paths remain unported"
+          "reason": "DIRPOST IRPE deallocation chain, system-buffer move/PROBEW, IOSB access-fault path, and remaining paging/segmented I/O completion unported"
         }
       ],
       "unresolved_integration": "Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. This is not a VAX IPL implementation or a real user I/O/AST. All process postprocessing remains unported."
