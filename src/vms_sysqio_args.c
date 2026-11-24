@@ -103,6 +103,34 @@ static int charge_io_quota(struct port_v37_sysqio_process *process,
     return 0;
 }
 
+/* Use an explicitly supplied compatibility hook for host fixtures, or the
+ * source CTL$GL_CCBBASE index and UCB resolver on the native service path. */
+static uint32_t resolve_channel(const struct port_v37_sysqio_begin_ops *ops,
+    uint32_t pid,uint32_t token,uint8_t mode,
+    struct port_v37_sysqio_resolved_channel *out){
+    if(ops->lookup_channel)
+        return ops->lookup_channel(ops->context,pid,token,out)==0&&
+            out->device&&out->ucb?PORT_V37_SYSQIO_BEGIN_OK:
+                                  PORT_V37_SYSQIO_BEGIN_IVCHAN;
+    if(!ops->ccb_base||!ops->lookup_ucb||
+       !ops->ccb_maximum_channel_offset)
+        return PORT_V37_SYSQIO_BEGIN_IVCHAN;
+    struct port_v37_ccb_view view={0};
+    const uint32_t status=port_v37_ccb_resolve(ops->ccb_base,
+        ops->ccb_preceding_bytes,token,ops->ccb_maximum_channel_offset,
+        mode,&view);
+    if(status==PORT_V37_CCB_NOPRIV)return PORT_V37_SYSQIO_BEGIN_NOPRIV;
+    if(status!=PORT_V37_CCB_OK)return PORT_V37_SYSQIO_BEGIN_IVCHAN;
+    struct port_v37_sysqio_resolved_channel resolved={0};
+    if(ops->lookup_ucb(ops->context,pid,view.ucb,&resolved)!=0||
+       !resolved.device||!resolved.ucb)
+        return PORT_V37_SYSQIO_BEGIN_IVCHAN;
+    resolved.window=view.window;
+    resolved.ccb_access_limit=view.access_limit;
+    *out=resolved;
+    return PORT_V37_SYSQIO_BEGIN_OK;
+}
+
 /* SYSQIOREQ.MAR 239-292. This is the actual source-ordered service front end
  * through IOSB initialization. Driver FDT invocation and IRP submission are
  * returned to the caller as the next, still-unported stage. */
@@ -111,7 +139,9 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
     const struct port_v37_sysqio_begin_ops *ops,
     struct port_v37_sysqio_prepared *prepared,uint32_t *service_status){
     if(!process||!process->pid||process->access_mode>3u||!ops||
-       !ops->lookup_channel||!ops->post_event||!prepared||!service_status)
+       (!ops->lookup_channel&&(!ops->ccb_base||!ops->lookup_ucb||
+          !ops->ccb_maximum_channel_offset))||!ops->post_event||
+       !prepared||!service_status)
         return PORT_V37_SYSQIO_BEGIN_BAD;
     struct port_v37_sysqio_args args={0};
     if(port_v37_sysqio_decode_args(ap,ap_bytes,&args)!=PORT_V37_SYSQIO_ARGS_OK){
@@ -125,16 +155,29 @@ uint32_t port_v37_sysqio_begin(const void *ap,size_t ap_bytes,
         return begin_failure(PORT_V37_SYSQIO_BEGIN_EFERR,efn_status,
                              &args,process,ops,service_status);
     struct port_v37_sysqio_resolved_channel channel={0};
-    if(ops->lookup_channel(ops->context,process->pid,args.channel,&channel)!=0||
-       !channel.device||!channel.ucb)
-        return begin_failure(PORT_V37_SYSQIO_BEGIN_IVCHAN,
-            PORT_SYS85_IVCHAN,&args,process,ops,service_status);
+    uint32_t lookup=resolve_channel(ops,process->pid,args.channel,
+                                    process->access_mode,&channel);
+    if(lookup!=PORT_V37_SYSQIO_BEGIN_OK){
+        const uint32_t status=lookup==PORT_V37_SYSQIO_BEGIN_NOPRIV?
+            PORT_SYS85_NOPRIV:PORT_SYS85_IVCHAN;
+        return begin_failure(lookup,status,&args,process,ops,service_status);
+    }
     /* SYSQIOREQ.MAR DACSPND waits on SCH$GQ_MWAIT with RSN$_ASTWAIT while
      * access/deaccess owns CCB$L_WIND bit 0. Never dispatch through a CCB in
      * that transient state; callers without a scheduler binding must retry. */
     if(channel.window&1u){
         if(!ops->wait_channel)return PORT_V37_SYSQIO_BEGIN_WAIT;
         ops->wait_channel(ops->context,process->pid,args.channel,&channel);
+        if(!ops->lookup_channel){
+            lookup=resolve_channel(ops,process->pid,args.channel,
+                                   process->access_mode,&channel);
+            if(lookup!=PORT_V37_SYSQIO_BEGIN_OK){
+                const uint32_t status=lookup==PORT_V37_SYSQIO_BEGIN_NOPRIV?
+                    PORT_SYS85_NOPRIV:PORT_SYS85_IVCHAN;
+                return begin_failure(lookup,status,&args,process,ops,
+                                     service_status);
+            }
+        }
         if((channel.window&1u)||!channel.device||!channel.ucb)
             return PORT_V37_SYSQIO_BEGIN_WAIT;
     }
