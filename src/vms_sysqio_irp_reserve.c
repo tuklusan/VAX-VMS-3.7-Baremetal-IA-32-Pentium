@@ -132,3 +132,36 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
     *service_status=status;
     return PORT_V37_SYSQIO_PREPARE_OK;
 }
+
+uint32_t port_v37_sysqio_prepare_user_irp(
+    const struct port_exe_access *memory,uint32_t ap_address,
+    struct port_v37_sysqio_process *process,
+    const struct port_v37_sysqio_begin_ops *ops,
+    const struct port_v37_sysqio_irp_spec *spec,
+    struct port_ini_packet_list *pool,
+    const struct port_v37_irp_pool_sync *sync,
+    struct port_v37_sysqio_prepared *prepared,uint8_t **packet,
+    uint32_t *packet_va,uint32_t *service_status){
+    if(!service_status||!packet||!packet_va)return PORT_V37_SYSQIO_PREPARE_BEGIN;
+    *packet=0;*packet_va=0u;*service_status=PORT_SYS85_BADPARAM;
+    if(!memory||!ap_address||!process||!ops||!spec||!pool||!sync||!prepared)
+        return PORT_V37_SYSQIO_PREPARE_BEGIN;
+    _Alignas(4) uint8_t ap[PORT_V37_SYSQIO_LIST_BYTES]={0};
+    if(!port_exe_probe_read(memory,ap_address,4u)||
+       !port_exe_read(memory,ap_address,ap,4u)){
+        *service_status=PORT_SYS85_ACCVIO;
+        return PORT_V37_SYSQIO_PREPARE_BEGIN;
+    }
+    const uint32_t count=(uint32_t)ap[0]|((uint32_t)ap[1]<<8)|
+        ((uint32_t)ap[2]<<16)|((uint32_t)ap[3]<<24);
+    if(count<PORT_V37_SYSQIO_REQUIRED_ARGS)
+        return port_v37_sysqio_prepare_irp(ap,4u,process,ops,spec,pool,sync,
+            prepared,packet,packet_va,service_status);
+    if(!port_exe_probe_read(memory,ap_address,sizeof ap)||
+       !port_exe_read(memory,ap_address,ap,sizeof ap)){
+        *service_status=PORT_SYS85_ACCVIO;
+        return PORT_V37_SYSQIO_PREPARE_BEGIN;
+    }
+    return port_v37_sysqio_prepare_irp(ap,sizeof ap,process,ops,spec,pool,
+        sync,prepared,packet,packet_va,service_status);
+}

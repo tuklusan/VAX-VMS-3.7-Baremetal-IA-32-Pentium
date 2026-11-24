@@ -8,6 +8,7 @@
 #include "vms_qio_irp_pool.h"
 #include "vms_ini_packet_queues.h"
 #include "vms_v37_ccb.h"
+#include "vms_exe_access.h"
 
 /* Native decoder for the fixed SYS$QIO/EXE$QIO argument list. The argument
  * list retains the VAX AP layout: count longword followed by 12 longwords. */
@@ -200,6 +201,14 @@ enum { PORT_V37_SYSQIO_PREPARE_OK=1u,PORT_V37_SYSQIO_PREPARE_BEGIN=2u,
        PORT_V37_SYSQIO_PREPARE_WAIT=6u,
        PORT_V37_SYSQIO_PREPARE_ACCESS=8u };
 uint32_t port_v37_sysqio_prepare_irp(const void *,size_t,
+    struct port_v37_sysqio_process *,const struct port_v37_sysqio_begin_ops *,
+    const struct port_v37_sysqio_irp_spec *,struct port_ini_packet_list *,
+    const struct port_v37_irp_pool_sync *,struct port_v37_sysqio_prepared *,
+    uint8_t **,uint32_t *,uint32_t *service_status);
+/* Public-entry adapter: copy the fixed VMS AP list from the current
+ * caller's translated address space before entering SYSQIOREQ processing. */
+uint32_t port_v37_sysqio_prepare_user_irp(
+    const struct port_exe_access *,uint32_t,
     struct port_v37_sysqio_process *,const struct port_v37_sysqio_begin_ops *,
     const struct port_v37_sysqio_irp_spec *,struct port_ini_packet_list *,
     const struct port_v37_irp_pool_sync *,struct port_v37_sysqio_prepared *,

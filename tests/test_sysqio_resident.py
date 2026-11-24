@@ -18,6 +18,7 @@ required = {
     "port_v37_ccb_resolve",
     "port_v37_ccb_find_free",
     "port_v37_ccb_assign_local",
+    "port_v37_sysqio_prepare_user_irp",
     "port_exe_user_access_init",
     "port_user_range_valid",
     "port_user_copy_from",

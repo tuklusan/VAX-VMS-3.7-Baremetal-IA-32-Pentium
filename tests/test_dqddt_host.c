@@ -340,7 +340,13 @@ int main(void){
     uint8_t *qio_irp=0;uint32_t qio_irp_va=0u;
     qio_process.direct_io_count=1;
     qio_process.has_phy_io=1u;
-    CHECK(port_v37_sysqio_prepare_irp(sysqio_ap,sizeof sysqio_ap,
+    memcpy(assign_memory.bytes+128u,sysqio_ap,sizeof sysqio_ap);
+    CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x2000u,
+        &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
+        &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_BEGIN&&
+        qio_status==PORT_SYS85_ACCVIO&&!qio_irp&&!qio_irp_va&&
+        qio_process.direct_io_count==1&&qio_fixture.errors==0u);
+    CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
         &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
         &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_OK);
     CHECK(qio_process.direct_io_count==0&&qio_fixture.errors==0u&&

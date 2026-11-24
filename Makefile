@@ -1369,7 +1369,7 @@ inidpttemplatecheck: build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/
 # A prelinked DDB/UCB match remains UNBOUND until real $ASSIGN/$QIO and DDT.
 build/vms_ioc_%.o: src/vms_ioc_%.c src/vms_ioc_phys.h src/vms_ini_devicedb.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
-build/vms_sysassign.o: src/vms_sysassign.c src/vms_sysassign.h src/vms_ioc_phys.h src/vms_v37_ccb.h src/vms_sysqio_args.h src/vms_v37_pcb.h src/vms_exe_io.h | build
+build/vms_sysassign.o: src/vms_sysassign.c src/vms_sysassign.h src/vms_ioc_phys.h src/vms_v37_ccb.h src/vms_sysqio_args.h src/vms_exe_access.h src/vms_userptr.h src/vms_v37_pcb.h src/vms_exe_io.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: iocphyscheck
 iocphyscheck: $(M120_IOC_OBJS) | build
@@ -1378,7 +1378,7 @@ iocphyscheck: $(M120_IOC_OBJS) | build
 
 # M121: source SYSQIOREQ.MAR EXE$FINISHIOC to IOC post queue, used
 # by NLDRIVER.MAR; this is not a user $QIO/AST delivery interface.
-$(M121_QIO_OBJS): build/%.o: src/%.c src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_ini_packet_queues.h src/vms_sysqio_args.h src/vms_v37_pcb.h src/vms_v37_ccb.h src/vms_dq_fdt.h | build
+$(M121_QIO_OBJS): build/%.o: src/%.c src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_ini_packet_queues.h src/vms_sysqio_args.h src/vms_exe_access.h src/vms_userptr.h src/vms_v37_pcb.h src/vms_v37_ccb.h src/vms_dq_fdt.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: qiopostcheck
 qiopostcheck: $(M121_QIO_OBJS) | build
