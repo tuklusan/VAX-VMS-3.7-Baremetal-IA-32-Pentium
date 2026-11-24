@@ -1068,3 +1068,13 @@ Verification: `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck
 M297 implementation commit: `6b046c279e702e1b7f0f72e8be60abe6a71fdd11`.
 
 Remaining: live SYS$QIO dispatch and DQA0 STARTIO submission; actual IOCIOPOST IOSB/event/AST delivery and one-owner pin release; native Files-11 ACP, INIT, scheduling/process image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0 acceptance.
+
+## M298 — Add retained SYSQIO completion path to DIRPOST, 24 November 2026
+
+IOCIOPOST DIRPOST now accepts an optional prepared SYSQIO completion pair. It validates PID/IRP/IOSB ownership before changing PHD accounting or CCB state, then invokes completion after CCB decrement and before POSTEF, matching source order. The completion callback can write the IOSB through M297's retained physical pages and release transfer/IOSB pins; requests using the existing guarded user-copy callback remain compatible. Host regressions prove invalid ownership defers without accounting/CCB mutation, and valid completion receives the IRP identity, caller mode, IOST1/IOST2 and runs before event posting. The callback is not bound to a live queue or scheduler; public SYS$QIO dispatch and process-aware completion remain incomplete.
+
+Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); `make iopostendcheck` PASS under UBSan; source coverage generation/range validation PASS (2,058 ranges, zero missing mapped functions); `make qemu-sysboot-m217` PASS through the actual 700-byte SYS.EXE Files-11 chain read across two DQA0 DDT/IRQ14 sectors, then incomplete INIT stop. No login/DCL/DECnet/SET HOST 0 observed. Coverage inventory unchanged: 446/4,566 originals indexed; mapped 17,016, partial 29,664, unresolved 52,811, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T164659383508Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`.
+
+M298 implementation commit: `1c6a6c00186b325f705bcb8115d1f08618188b3d`.
+
+Remaining: bind retained SYSQIO state to actual DQA0 submission and running IOCIOPOST; real PCB/PHD accounting, event/AST scheduling and single-owner pin release; Files-11 ACP, full INIT and process image activation; SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0 acceptance.
