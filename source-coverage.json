@@ -21972,7 +21972,7 @@
           "pc_file": "src/vms_dq_ioc_run.c",
           "pc_symbol": "port_dq_ioc_run",
           "pc_line": 4,
-          "function": "Resident DQ IOC FIFO now services one private READPBLK through native ATA IRQ14 and the attached CRB; source RB730 ISR/recovery, active DQA DDT dispatch and process-aware/public completion remain unresolved"
+          "function": "Resident DQ IOC FIFO services private READPBLK through native ATA IRQ14 and attached CRB; published DQA DDT routes physical PBLK actions into bounded FIFOs. Source RB730 ISR/recovery and process-aware/public completion remain unresolved"
         },
         {
           "original_lines": [
