@@ -71,7 +71,11 @@ uint32_t port_v37_sysassign_descriptor_service(
        !port_exe_write(r->memory,channel_output,output,sizeof output))
         return PORT_SS_ACCVIO;
     uint16_t channel=0u;
-    const uint32_t status=port_v37_sysassign_descriptor(r,&channel);
+    uint32_t status=port_v37_sysassign_descriptor(r,&channel);
+    /* Translate the private IOC parser/search results at the SYSASSIGN
+     * service boundary; do not expose native helper codes to callers. */
+    if(status==PORT_V37_IOC_BAD)status=PORT_SS_IVDEVNAM;
+    else if(status==PORT_V37_IOC_NO_SUCH)status=PORT_SS_NOSUCHDEV;
     if(!(status&1u))return status;
     output[0]=(uint8_t)channel;output[1]=(uint8_t)(channel>>8);
     if(!port_exe_write(r->memory,channel_output,output,sizeof output))

@@ -21336,7 +21336,7 @@
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_descriptor_service",
           "pc_line": 65,
-          "function": "Probes and clears channel output before descriptor reads; its caller-memory adapter is tested through translated IA-32 pages, but no live process map is bound"
+          "function": "Probes/clears channel output and maps internal IOC invalid-name/not-found results to SS$_IVDEVNAM/NOSUCHDEV; tested through translated IA-32 pages, but no live process map is bound"
         },
         {
           "original_lines": [
@@ -21513,7 +21513,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_lookup_qio_channel",
-          "pc_line": 82,
+          "pc_line": 86,
           "function": "Resolve the source channel token from a PID-bound CCB table, verify the assigned UCB and bind its native DQ FDT/device view; local DQA0 SYS$ASSIGN helper composes IOC$SEARCHDEV with CCB ownership/refcount. Public service-vector dispatch remains absent"
         },
         {

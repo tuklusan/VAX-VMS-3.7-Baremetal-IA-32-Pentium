@@ -226,6 +226,14 @@ int main(void){
     CHECK(assigned==16u&&high_water==16u&&
         port_v37_read32(ccb_base-16u+PORT_V37_CCB_UCB)==info.ucb[0]&&
         (ccb_base-16u)[PORT_V37_CCB_AMOD]==3u);
+    memcpy(assign_memory.bytes+16u,"DQB0",4u);
+    assign_memory.bytes[64]=0xffu;assign_memory.bytes[65]=0xffu;
+    CHECK(port_v37_sysassign_descriptor_service(&assign_descriptor,0x1040u)==
+        PORT_SS_NOSUCHDEV&&port_v37_read16(assign_memory.bytes+64u)==0u);
+    memcpy(assign_memory.bytes+16u,"DQ?0",4u);
+    CHECK(port_v37_sysassign_descriptor_service(&assign_descriptor,0x1040u)==
+        PORT_SS_IVDEVNAM&&port_v37_read16(assign_memory.bytes+64u)==0u);
+    memcpy(assign_memory.bytes+16u,"DQA0",4u);
     struct port_v37_ccb_view assigned_view={0};
     CHECK(port_v37_ccb_resolve(ccb_base,48u,assigned,48u,0u,
         &assigned_view)==PORT_V37_CCB_OK&&assigned_view.ucb==info.ucb[0]);
