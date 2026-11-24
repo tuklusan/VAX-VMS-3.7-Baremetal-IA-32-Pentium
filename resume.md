@@ -1139,3 +1139,13 @@ Verification: `make files1187check exenppoolcheck all sysexecentrycheck` PASS (e
 M304 implementation commit: `a2762279d44c327fb2c396a132d9d0934f536bb7`.
 
 Remaining: successful ACP FCB/window teardown and channel request processing; public SYS$QIO dispatch to live DQA0 STARTIO/IOCIOPOST; complete INIT/PHD/context activation and SYSTEM/DCL; DECnet Phase IV and end-to-end SET HOST 0 second-login/LOGOUT acceptance.
+
+## M305 — Close read-only Files-11 ACP accesses, 24 November 2026
+
+Added the no-update F11B DEACCESS path for a single allocated WCB: it validates ACP ownership and counters, unlinks the window from the FCB queue, decrements access/no-writer/no-truncate and VCB transaction counts, clears process ACP context and returns the WCB to the native nonpaged pool. CREWIN records the allocation base and size and reclaims its block on failed window setup. The host ACP regression verifies successful read-only deaccess and that a write access is rejected as incomplete without changing ownership. DEACCS write/attribute, expiration, truncate, delete, spool, multi-segment window and full cleanup paths are not implemented; this close helper is not yet connected to a running VMS process ACP request.
+
+Verification: `make -j2 all test exenppoolcheck files1187check sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); `files1187check` PASS; coverage generation/range regression/source validator PASS, 2,064 ranges and 447/4,566 original files indexed (mapped 17,255; partial 29,742; unresolved 52,733; missing 7,799; excluded 26,310; hardware-excluded 917). `make qemu-sysboot-m217` PASS as boot regression through ACP SYS.EXE FCB allocation and real DQA0 DDT/CRB IRQ14, then the existing incomplete INIT stop. Transcript `logs/serial/qemu-m217-run-local-20261124T205638496094Z.log`, 5,469 bytes, SHA-256 `5b905642cec14dc790b891654ba216c65126f2aeca4d76183c609a78576076cb`. QEMU exited; no runner remains. No login, DCL, DECnet or SET HOST 0 occurred.
+
+M305 implementation commit: `1fee5f1ec973dfc5861a1880019933d38ca10d7c`.
+
+Remaining: complete DEACCESS semantics and integrate process ACP requests; public SYS$QIO dispatch into DQA0 STARTIO/IOCIOPOST; native INIT and SYSTEM PHD/page map/context activation; SYSTEM login/DCL; DECnet Phase IV and real nested SET HOST 0 acceptance.
