@@ -18,6 +18,10 @@ required = {
     "port_v37_ccb_resolve",
     "port_v37_ccb_find_free",
     "port_v37_ccb_assign_local",
+    "port_exe_user_access_init",
+    "port_user_range_valid",
+    "port_user_copy_from",
+    "port_user_copy_to",
 }
 missing = sorted(required - symbols.keys())
 if missing:
@@ -26,4 +30,4 @@ non_text = sorted(name for name in required if symbols[name].upper() not in ("T"
 if non_text:
     raise SystemExit("SYS.EXE SYSQIO entry points are not resident text: " +
                      ", ".join(non_text))
-print("Resident SYS.EXE contains SYSQIO transaction and source CCB assignment helpers; live service dispatch remains incomplete")
+print("Resident SYS.EXE contains SYSQIO, source CCB, and translated caller-memory helpers; live service dispatch remains incomplete")
