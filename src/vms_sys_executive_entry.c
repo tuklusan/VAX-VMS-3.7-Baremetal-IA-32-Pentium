@@ -2047,14 +2047,9 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            acp_sys_fcb->fid.volume!=sys_fid.volume||
            acp_sys_fcb->file_blocks==0u)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        struct port_ini_packet_list *fcb_queue=0;
-        switch(executive_acp_allocation_source){
-        case PORT_EXE_NP_FROM_IRP:fcb_queue=&executive_irps;break;
-        case PORT_EXE_NP_FROM_LRP:fcb_queue=&executive_lrps;break;
-        case PORT_EXE_NP_FROM_SRP:fcb_queue=&executive_srps;break;
-        default:break;
-        }
-        const uint32_t queue_free_before=fcb_queue?fcb_queue->free_count:0u;
+        const uint32_t irp_free_before=executive_irps.free_count;
+        const uint32_t lrp_free_before=executive_lrps.free_count;
+        const uint32_t srp_free_before=executive_srps.free_count;
         const uint32_t pool_allocations_before=executive_np_pool.allocations;
         const uint32_t fcb_source=executive_acp_allocation_source;
         struct port_f11_87_window *acp_window=executive_acp_alloc(
@@ -2088,7 +2083,9 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            acp_context.primary||acp_context.window||
            acp_context.cleanup_deaccess||
            executive_acp_allocation_source!=fcb_source||
-           (fcb_queue&&fcb_queue->free_count!=queue_free_before)||
+           executive_irps.free_count!=irp_free_before||
+           executive_lrps.free_count!=lrp_free_before||
+           executive_srps.free_count!=srp_free_before||
            executive_np_pool.allocations!=pool_allocations_before||
            port_exe_np_pool_check(&executive_np_pool)!=PORT_EXE_NP_POOL_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -2102,7 +2099,9 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
               acp_header_lbn)!=0||
            acp_context.status!=PORT_F11_87_BADFILEHDR||
            executive_acp_allocation_source!=fcb_source||
-           (fcb_queue&&fcb_queue->free_count!=queue_free_before)||
+           executive_irps.free_count!=irp_free_before||
+           executive_lrps.free_count!=lrp_free_before||
+           executive_srps.free_count!=srp_free_before||
            executive_np_pool.allocations!=pool_allocations_before||
            port_exe_np_pool_check(&executive_np_pool)!=PORT_EXE_NP_POOL_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
