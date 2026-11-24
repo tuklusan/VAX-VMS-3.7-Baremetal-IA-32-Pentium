@@ -1770,7 +1770,7 @@ for first,last,path,symbol,purpose,status in init_parts:
             'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':purpose})
 result['files'].append({'original_file':'SYS/SRC/INIT.MAR',
     'original_lines':1906,'sections':parts,
-    'unresolved_integration':'Source FIN_DATABASE names are staged only after a verified real ATA Files-11 read, but LOG$TRANSLATE/IOC disk DDT and ACP are not live. Other INIT operations, SYSTEM login, DCL and DECnet remain missing.'})
+    'unresolved_integration':'Source FIN_DATABASE names are staged only after a verified real ATA Files-11 read. SYS$DISK/SYS$SYSDEVICE translation is still confined to the bootstrap path; the later native DQA DDT binds only physical PBLK actions, with public channels and ACP absent. Other INIT operations, SYSTEM login, DCL and DECnet remain missing.'})
 
 # M238: PDAT.MAR GENPCB source layout and the static system PCB template.
 pdat_rows=[
@@ -2193,7 +2193,7 @@ devicedat_ranges=[
  (155,175,'src/vms_ini_devicedb.c','port_v37_ddb_base','Original counted DDB name, linked-list fields and DYN type; no live DDT','partial'),
  (176,205,'src/vms_ini_devicedb.c','port_v37_devices_prelink','IOC$GL_DEVLIST head and DDB source order; ADP and DPT lists not yet registered','partial'),
  (206,208,'src/vms_ini_ddb_boot.c','port_v37_ddb_boot','Boot DDB with F11 ACP identifier and NULL DDT before device driver link','partial'),
- (209,230,'src/vms_ini_ucb_boot.c','port_v37_ucb_boot','Boot disk UCB fields, 30 original extension longwords; real disk DDT and CRB unresolved','partial'),
+ (209,230,'src/vms_ini_ucb_boot.c','port_v37_ucb_boot','Boot disk UCB fields and 30 original extension longwords; DQA DDT/CRB are bound later for physical PBLK only, while full driver behavior and ACP remain unresolved','partial'),
  (231,234,'src/vms_ini_ddb_opa.c','port_v37_ddb_opa','OPA generic DDB, source counted OPERATOR name; no class DDT','partial'),
  (235,263,'src/vms_ini_ucb_opa.c','port_v37_ucb_opa','OPA0 UCB layout, 320-byte source size, online template and line size; class and port vectors missing','partial'),
  (264,353,None,None,'Original console CRB, IDB, VAX interrupts and PC UART adaptation still need original-value derivation','unresolved'),
@@ -2396,8 +2396,8 @@ assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M125/M193: DQ FUNCTAB masks and native primary ATA IRQ14 transfer completion.
 # The first two masks specify legal/buffered I/O and the ten remaining
-# rows identify source ACP/EXE action classes. Native action addresses and
-# bounded ATA transfer are partial; RB730 controller and Files-11 ACP remain.
+# rows identify source ACP/EXE action classes. Native DDT actions are bound
+# for physical READPBLK/WRITEPBLK only; RB730 and Files-11 ACP remain.
 dq_fdt_rows=[
  (1,391,None,None,'Original RB730 declarations and hardware definitions unresolved'),
  (392,437,'src/vms_dqddt_stage_init.c','port_dqddt_stage_init','DPTAB source unit defaults staged only; original UBA/CRB device initialization absent'),
@@ -2440,7 +2440,7 @@ for first,last,path,symbol,detail in dq_fdt_rows:
              'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':detail})
 result['files'].append({'original_file':'DRIVER/SRC/DQDRIVER.MAR',
     'original_lines':2189,'sections':dq_fdt_sections,
-    'unresolved_integration':'Native primary ATA IRQ14 is routed through a SYSDEF.MDL-shaped CRB attached to the DQA UCB; resident SYS.EXE validates staged DQ DDT/FDT and completes one private READPBLK through the native DQ IOC FIFO. DQA DDB DDT/action slots, original RB730 behavior, public process IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented.'})
+    'unresolved_integration':'Native primary ATA IRQ14 is routed through a SYSDEF.MDL-shaped CRB attached to the DQA UCB. Resident SYS.EXE relocates and publishes a native DQA DDT/FDT into DDB/UCB; IOC$SEARCHDEV selects it for physical READPBLK/WRITEPBLK through bounded private IOC FIFOs and actual IRQ14. Other DQ FDT actions, original RB730 controller behavior, public process IOC/$QIO, Files-11 ACP and process AST completion remain unimplemented.'})
 # M131: original RELOCDRV.MAR LOCATE/EXECUTE and IOC$INITDRV,
 # limited to bounded source DQ DPT_STORE on isolated DDB/UCB copies.
 # Real CRB/IDB/port/relocation of DQ action pointers remain unresolved.
@@ -2491,7 +2491,7 @@ for first,last,path,sym,why in [
            'pc_file':path,'pc_symbol':sym,'pc_line':ln,'function':why})
 result['files'].append({'original_file':'SYS/SRC/LOGNAMSUB.MAR',
     'original_lines':424,'sections':lognam_sections,
-    'unresolved_integration':'Private bounded two-entry resident SYSTEM bootstrap table can resolve SYS$DISK/SYS$SYSDEVICE. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic create/delete, access control, and disk DDT/ACP are absent.'})
+    'unresolved_integration':'Private bounded two-entry resident SYSTEM bootstrap table can resolve SYS$DISK/SYS$SYSDEVICE. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic create/delete, access control, public channel I/O and Files-11 ACP are absent; published DQA DDT supports physical PBLK only.'})
 
 # M234: source MEMORYALC IRP allocation from and return to the lookaside list.
 memalc_sections=[]
