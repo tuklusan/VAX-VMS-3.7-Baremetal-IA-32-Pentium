@@ -926,3 +926,13 @@ Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; `make qemu-
 M283 implementation commit: `e213a540203065eda1658ea474bbab9aac16a9e4`.
 
 Remaining: public SYS$ASSIGN/SYS$QIO dispatch with live process context; DQA0 STARTIO submission; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M284 — Qualify SYSASSIGN status mapping by failing stage, 24 November 2026
+
+Fixed an ambiguity in the M283 translation: private IOC and CCB enums reuse numeric values, so translating a status by number alone could turn `SS$_ACCVIO` into `SS$_NOSUCHDEV`. The local path now reports whether failure occurred during validation, IOC search, or CCB binding; the descriptor front end translates only statuses from the matching stage. Added a channel-exhaustion case verifying `SS$_NOIOCHAN` and output clearing, alongside prior invalid-name and missing-device cases.
+
+Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS through SYS.EXE load and the 700-byte DQA0 DDT/IRQ14 Files-11 read, then incomplete INIT stop. Coverage validation PASS: 2,035 ranges; 445/4,566 indexed; mapped 17,016, partial 29,580, unresolved 52,027, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T151554417523Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login/DCL/DECnet/SET HOST 0.
+
+M284 implementation commit: `6293df505891713d066cc1838b3d786bc35daff0`.
+
+Remaining: public SYS$ASSIGN/SYS$QIO dispatch and live process context; actual DQA0 STARTIO from user IRPs; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
