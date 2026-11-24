@@ -25,6 +25,8 @@ uint32_t port_v37_iopost_irpe_plan(const uint8_t *irp,size_t irp_bytes,
     uint32_t next=read32(irp+IRP_EXTEND);
     if(!next||(next&3u))return PORT_V37_IOPOST_BAD;
     for(uint8_t i=0u;i<maximum;i++){
+        for(uint8_t j=0u;j<plan.count;j++)
+            if(plan.address[j]==next)return PORT_V37_IOPOST_BAD;
         const uint8_t *extension=0;size_t bytes=0u;
         if(resolve(context,next,&extension,&bytes)!=0||!extension||
            bytes<PORT_V37_IRPE_BYTES||((uintptr_t)extension&3u))
@@ -50,6 +52,8 @@ uint32_t port_v37_iopost_irpe_release(
     for(uint8_t i=0u;i<plan->count;i++){
         if(!plan->address[i]||(plan->address[i]&3u))
             return PORT_V37_IOPOST_BAD;
+        for(uint8_t j=0u;j<i;j++)
+            if(plan->address[j]==plan->address[i])return PORT_V37_IOPOST_BAD;
     }
     for(uint8_t i=0u;i<plan->count;i++)
         free_irpe(context,pid,plan->address[i]);

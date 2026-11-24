@@ -801,6 +801,14 @@ M270 implementation commit: `71e5d5c3d606c6243eaa8957e27f106adeeb26fd`. Publishe
 
 Remaining: bind process postprocessing and IRPE lookaside callbacks to live structures; port system-buffer move/PROBEW, buffered/paging/virtual completion and IOSB access-fault behavior; connect real public SYS$QIO and Files-11 ACP; continue native INIT and process image activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0 acceptance.
 
+## M271 — Reject cyclic IOCIOPOST IRPE chains, 24 November 2026
+
+Hardened the M270 IRPE preflight and release helper against repeated extension addresses. A self-loop or longer cycle now fails before DIRPOST mutates accounting, CCB state, IOSB/event state, or deallocates any packet; the release callback also rejects externally supplied duplicate plans before freeing anything. This prevents cyclic IRPE corruption from causing repeated deallocation.
+
+`make iopostendcheck` PASS with new self-cycle and duplicate-release atomicity cases. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS for the existing 700-byte SYS.EXE read through DQA0 DDT/IRQ14, then incomplete INIT stop. Coverage generation/validation PASS (2,030 ranges; counts unchanged). QEMU did not invoke the IRPE completion helper. Transcript `logs/serial/qemu-m217-run-local-20261124T141647296893Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login, DCL, DECnet or SET HOST 0 occurred.
+
+M271 implementation commit and publication details follow.
+
 Remaining: wire positive-PID completions to live IPL$_IOPOST using the real native PCB vector, PHD/page-map resolution and scheduler KAST queue; add buffered/paging/virtual paths and DIRPOST IOSB/event/AST/IRPE handling; implement real public SYS$QIO and Files-11 ACP; finish INIT and process activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0.
 
 M269 implementation commit (local): `7ec6ea951cc41cfdd9ffb1f25120467f6d632f24`. GitHub publication follows.

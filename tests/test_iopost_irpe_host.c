@@ -33,6 +33,12 @@ int test_iopost_irpe(void){
     memset(&plan,0xa5,sizeof plan);r.calls=0;
     CHECK(port_v37_iopost_irpe_plan(irp,sizeof irp,resolve,&r,1u,&plan)==PORT_V37_IOPOST_BAD);
     CHECK(port_v37_iopost_irpe_plan(irp,sizeof irp,0,0,0u,&plan)==PORT_V37_IOPOST_IRPE_DEFER);
+    port_v37_write32(first+PORT_V37_IRPE_EXTEND,0x1000u);
+    CHECK(port_v37_iopost_irpe_plan(irp,sizeof irp,resolve,&r,2u,&plan)==PORT_V37_IOPOST_BAD);
+    plan.count=2u;plan.address[0]=0x1000u;plan.address[1]=0x1000u;
+    CHECK(port_v37_iopost_irpe_release(&plan,release,&r,0x10007u)==PORT_V37_IOPOST_BAD);
+    CHECK(r.calls==0u);
+    port_v37_write32(first+PORT_V37_IRPE_EXTEND,0x2000u);
     port_v37_write32(irp+PORT_V37_IRP_EXTEND,0u);
     CHECK(port_v37_iopost_irpe_plan(irp,sizeof irp,resolve,&r,2u,&plan)==PORT_V37_IOPOST_BAD);
     port_v37_write16(irp+PORT_V37_IRP_STS,0u);
