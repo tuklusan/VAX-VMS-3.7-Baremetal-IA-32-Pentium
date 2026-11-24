@@ -807,7 +807,7 @@ Hardened the M270 IRPE preflight and release helper against repeated extension a
 
 `make iopostendcheck` PASS with new self-cycle and duplicate-release atomicity cases. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS for the existing 700-byte SYS.EXE read through DQA0 DDT/IRQ14, then incomplete INIT stop. Coverage generation/validation PASS (2,030 ranges; counts unchanged). QEMU did not invoke the IRPE completion helper. Transcript `logs/serial/qemu-m217-run-local-20261124T141647296893Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login, DCL, DECnet or SET HOST 0 occurred.
 
-M271 implementation commit and publication details follow.
+M271 implementation commit: `8b9ea2f6ada07f15381c64360611d1c59358f7d1`. Published to `origin/main`; resume update follows.
 
 Remaining: wire positive-PID completions to live IPL$_IOPOST using the real native PCB vector, PHD/page-map resolution and scheduler KAST queue; add buffered/paging/virtual paths and DIRPOST IOSB/event/AST/IRPE handling; implement real public SYS$QIO and Files-11 ACP; finish INIT and process activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0.
 
