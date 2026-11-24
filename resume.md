@@ -866,3 +866,13 @@ Added the source entry stage that probes and copies the caller's 8-byte VMS stri
 Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make dqddtcheck` PASS; `make qemu-sysboot-m217` PASS through the real 700-byte SYS.EXE Files-11 read over published DQA0 DDT/CRB/IRQ14 then incomplete INIT stop. Coverage generation/validation PASS: 2,033 ranges; 445/4,566 files indexed; mapped 17,016, partial 29,578, unresolved 52,029, missing 7,799, excluded 26,237, hardware-excluded 917. QEMU transcript `logs/serial/qemu-m217-run-local-20261124T145100251421Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login/DCL/DECnet/SET HOST 0.
 
 M277 implementation commit: `ad480415dd7358d93c4fce2b5b79a0f0b827f28d`.
+
+## M278 — Probe and publish SYS$ASSIGN channel output, 24 November 2026
+
+Added a host-tested service boundary that probes and clears the caller-supplied 16-bit channel output before descriptor processing, then writes the assigned channel only after successful local DQA0 assignment. The test verifies successful output and that an inaccessible descriptor leaves the channel output cleared. Caller memory is still an abstract interface; this is not wired to live process address translation or a public SYS$ASSIGN system-service vector. Mailbox, network, and remote assignments remain unresolved.
+
+Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make dqddtcheck` PASS; one `make qemu-sysboot-m217` PASS through the actual 700-byte SYS.EXE Files-11 read via DQA0 DDT/CRB/IRQ14, then the known incomplete INIT stop. Coverage generation/validation PASS: 2,035 ranges; 445/4,566 original files indexed; mapped 17,016, partial 29,580, unresolved 52,027, missing 7,799, excluded 26,237, hardware-excluded 917. QEMU transcript `logs/serial/qemu-m217-run-local-20261124T145457597414Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No SYSTEM login, DCL, DECnet, or SET HOST 0 occurred.
+
+M278 implementation commit: `03fe4b8448b8b4ee30d91e0b4caae9260336fc59`.
+
+Remaining: live SYS$ASSIGN dispatch and process CCB storage; public SYS$QIO service-vector entry and DQA0 STARTIO submission; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
