@@ -1,6 +1,7 @@
 #ifndef VMS_EXE_ACCESS_H
 #define VMS_EXE_ACCESS_H
 #include <stdint.h>
+#include "vms_userptr.h"
 /* Caller-mode page checks use the running process's native page tables. */
 struct port_exe_access {
     void *context;
@@ -9,6 +10,17 @@ struct port_exe_access {
     int (*can_read)(void *,uint32_t,uint32_t);
     int (*can_write)(void *,uint32_t,uint32_t);
 };
+/* Bind executive caller-mode copies to a process page map. The physical
+ * resolver returns kernel aliases; it must not expose user virtual pointers. */
+struct port_exe_user_access {
+    const struct port_user_map *map;
+    port_phys_page_resolver physical;
+    void *physical_context;
+};
+void port_exe_user_access_init(struct port_exe_access *,
+                              struct port_exe_user_access *,
+                              const struct port_user_map *,
+                              port_phys_page_resolver,void *);
 static inline int port_exe_addr_ok(uint32_t addr,uint32_t bytes) {
     return !bytes || addr<=UINT32_MAX-(bytes-1u);
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "vms_userptr.h"
+#include "vms_exe_access.h"
 static uint32_t pd[1024],pt0[1024],pt1[1024];
 static uint8_t p0[4096],p1[4096];
 static const uint32_t *lookup(void *ctx,uint32_t p){
@@ -19,6 +20,17 @@ int main(void){
  assert(port_user_copy_from(&m,buf,0x1ff0,32,phys,0)==0);
  assert(!memcmp(buf,p0+4080,16));assert(!memcmp(buf+16,p1,16));
  assert(buf[32]==0x77);
+ struct port_exe_access exe;struct port_exe_user_access binding;
+ port_exe_user_access_init(&exe,&binding,&m,phys,0);
+ assert(port_exe_probe_read(&exe,0x1ff0,32));
+ memset(buf,0,sizeof buf);assert(port_exe_read(&exe,0x1ff0,buf,32));
+ assert(!memcmp(buf,p0+4080,16)&&!memcmp(buf+16,p1,16));
+ pt0[2]=0x9000|7;
+ assert(port_exe_probe_write(&exe,0x1ff0,32));
+ memset(buf,0x5a,32);assert(port_exe_write(&exe,0x1ff0,buf,32));
+ assert(p0[4080]==0x5a&&p1[15]==0x5a);
+ pt0[2]=0x9000|5;
+ assert(!port_exe_probe_write(&exe,0x2000,32));
  /* Read-only page can be copied in, not written to. */
  memset(buf,0x77,sizeof(buf));
  assert(port_user_copy_from(&m,buf,0x2000,32,phys,0)==0);
