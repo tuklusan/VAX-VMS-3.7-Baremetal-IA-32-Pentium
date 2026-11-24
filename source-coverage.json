@@ -21475,7 +21475,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 212,
+          "pc_line": 192,
           "function": "When CCB$L_WIND bit 0 marks access/deaccess pending, require a scheduler wait callback and resume only after the pending bit clears; no live SCH$WAIT/RSN$_ASTWAIT binding yet"
         },
         {
@@ -21505,7 +21505,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 212,
+          "pc_line": 192,
           "function": "Clear EFN before channel lookup and post failure status to the requested event flag"
         },
         {
@@ -21546,7 +21546,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_iosb.c",
           "pc_symbol": "port_v37_sysqio_clear_iosb",
-          "pc_line": 5,
+          "pc_line": 6,
           "function": "Nullable IOSB, full 8-byte write probe before atomic two-longword clear; caller memory copy wiring remains unresolved"
         },
         {
@@ -21565,7 +21565,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 212,
+          "pc_line": 192,
           "function": "Direct/buffered per-process I/O counter charge with single-unit quota callback and rollback on denial; IRP reservation/dispatch remain unresolved"
         },
         {
@@ -21588,7 +21588,7 @@
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_user_irp",
           "pc_line": 136,
-          "function": "Allocate/build the standard IRP, pin the caller IOSB and transfer pages for asynchronous access, and on ACCVIO return the packet, release acquired pins, restore I/O/AST charges and post the event; DDT submission, completion delivery and IOPOST-owned unlock remain unresolved"
+          "function": "Allocate/build the standard IRP, pin the caller IOSB and transfer pages, and on ACCVIO return the packet, release acquired pins, restore I/O/AST charges and post the event; the tested pending registry can take ownership keyed by PID/IRP before dispatch, but live DDT submission remains absent"
         },
         {
           "original_lines": [
@@ -21765,7 +21765,7 @@
           "reason": "Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved"
         }
       ],
-      "unresolved_integration": "The native AP decoder preserves fixed argument offsets, and the caller-memory entry helper validates/copies the full argument list through IA-32 page translations before invoking SYSQIOREQ preparation; the host regression also verifies an inaccessible AP fails with ACCVIO before charging I/O. Source-ordered begin clears EFN, checks channel access/FDT/offline rules, probes/clears IOSB, charges direct/buffered I/O counts and posts validation failures. The reserve helper obtains a source INIT IRP packet, enforces AST quota, builds the 136-byte standard IRP and returns it on post-allocation failure. WRITEVBLK normalization and PHY_IO/LOG_IO gates preserve source device-state decisions. The regression composes PCB-bound SYS$ASSIGN CCB state, IOC$SEARCHDEV, SYSQIOREQ preflight, translated AP reads, lookaside allocation and standard IRP construction, then accounts CCB$W_IOC and DIRPOST decrement. No live system-service trap dispatch, source IPL/deletion protection, EXE$ABORTIO service post, buffered window mapping, driver FDT submission or process AST completion is connected."
+      "unresolved_integration": "The native AP decoder preserves fixed argument offsets, and the caller-memory entry helper validates/copies the full argument list through IA-32 page translations before invoking SYSQIOREQ preparation; the host regression also verifies an inaccessible AP fails with ACCVIO before charging I/O. Source-ordered begin clears EFN, checks channel access/FDT/offline rules, probes/clears IOSB, charges direct/buffered I/O counts and posts validation failures. The reserve helper obtains a source INIT IRP packet, enforces AST quota, builds the 136-byte standard IRP and returns it on post-allocation failure. WRITEVBLK normalization and PHY_IO/LOG_IO gates preserve source device-state decisions. A bounded PID/IRP pending table can take ownership of the prepared IOSB and pinned transfer pages and is exercised through the DIRPOST callback, but no live system-service trap dispatch or DQA0 queue submission is connected; source IPL/deletion protection, EXE$ABORTIO service post, buffered window mapping and process AST scheduling remain incomplete."
     },
     {
       "original_file": "SYS/SRC/SYSQIOFDT.MAR",
@@ -22116,7 +22116,7 @@
           "pc_file": "src/vms_iopost_dirpost.c",
           "pc_symbol": "port_v37_iopost_dirpost",
           "pc_line": 12,
-          "function": "DIRPOST process I/O accounting and ordered completion; optional pinned SYSQIO callback validates ownership before accounting and writes IOSB/releases retained pages before SCH$POSTEF, while live process, IOSB, event, AST and lookaside binding remain absent"
+          "function": "DIRPOST process I/O accounting and ordered completion; PID/IRP pending registry validates ownership before accounting, then copies IOSB through retained pages and releases pins before SCH$POSTEF; live scheduler and process binding remain absent"
         },
         {
           "original_lines": [
@@ -22138,7 +22138,7 @@
           "reason": "System-buffer move/PROBEW, IOSB access-fault path, and remaining paging/segmented I/O completion unported"
         }
       ],
-      "unresolved_integration": "Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. This is not a VAX IPL implementation or a real user I/O/AST. All process postprocessing remains unported."
+      "unresolved_integration": "Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. Host integration tests connect DIRPOST to a bounded PID/IRP SYSQIO pending registry for IOSB copy and pinned-page release. This is not yet called by a live DQA0 user request, does not bind a running process scheduler or event/AST queues, and is not a VAX IPL implementation."
     },
     {
       "original_file": "DRIVER/SRC/DQDRIVER.MAR",

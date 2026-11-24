@@ -1404,7 +1404,7 @@ $(M123_IOPOST_OBJS): build/%.o: src/%.c src/vms_iopost_end.h src/vms_qio_post.h 
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: iopostendcheck
 iopostendcheck: $(M123_IOPOST_OBJS) | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M123_IOPOST_SRCS) $(M122_NL_DDT_SRCS) $(M121_QIO_SRCS) $(M120_IOC_SRCS) $(M118_DB_SRCS) src/vms_ini_procvec.c src/vms_sys85.c src/vms_rtl85.c src/vms_rtl85_tables.c tests/test_iopost_irpe_host.c tests/test_iopost_end_host.c -o build/iopostendcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M123_IOPOST_SRCS) $(M122_NL_DDT_SRCS) $(M121_QIO_SRCS) $(M120_IOC_SRCS) $(M118_DB_SRCS) src/vms_ini_procvec.c src/vms_sysqio_iosb.c src/vms_sysqio_pending.c src/vms_userptr.c src/vms_sys85.c src/vms_rtl85.c src/vms_rtl85_tables.c tests/test_iopost_irpe_host.c tests/test_iopost_end_host.c -o build/iopostendcheck
 	./build/iopostendcheck
 
 .PHONY: iopostunlockcheck

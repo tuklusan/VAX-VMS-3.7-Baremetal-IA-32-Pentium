@@ -3,6 +3,7 @@
 #include <string.h>
 #include "vms_iopost_end.h"
 #include "vms_nl_ddt.h"
+#include "vms_sysqio_pending.h"
 #define CHECK(x) do { if(!(x)) {fprintf(stderr,"IOPOST end FAIL %d: %s\n",__LINE__,#x);return 1;} }while(0)
 int test_iopost_irpe(void);
 struct irq {uint32_t count,level;};
@@ -16,6 +17,7 @@ struct dirpost_rig {
     uint8_t buffered;
     uint8_t reject_pinned;
     uint32_t pinned_validations,pinned_completions;
+    struct port_v37_sysqio_pending *pending;
     uint8_t *irpe;
     uint32_t irpe_freed;
 };
@@ -42,16 +44,16 @@ static void dirpost_iosb(void *v,uint32_t iosb,uint8_t mode,
 static int dirpost_validate_pinned(void *v,uint32_t pid,uint32_t irp_va,
     uint32_t iosb,uint8_t mode){
     struct dirpost_rig *r=v;r->pinned_validations++;
-    if(r->reject_pinned||pid!=0x10007u||irp_va!=0x00347000u||
-       iosb!=0x00401000u||mode!=2u)return -1;
-    return 0;
+    if(!r->pending||r->reject_pinned)return -1;
+    return port_v37_sysqio_pending_validate(r->pending,pid,irp_va,iosb,mode);
 }
 static uint32_t dirpost_complete_pinned(void *v,uint32_t pid,uint32_t irp_va,
     uint32_t iosb,uint8_t mode,uint32_t status,uint32_t secondary){
     struct dirpost_rig *r=v;r->order++;r->pinned_completions++;
     r->pid=pid;r->irp_va=irp_va;r->iosb=iosb;r->iosb_mode=mode;
     r->status=status;r->secondary=secondary;
-    return PORT_V37_IOPOST_OK;
+    return r->pending?port_v37_sysqio_pending_complete(r->pending,pid,
+        irp_va,iosb,mode,status,secondary):PORT_V37_IOPOST_BAD;
 }
 static void dirpost_event(void *v,uint32_t pid,uint8_t efn){
     struct dirpost_rig *r=v;r->order++;r->pid=pid;r->efn=efn;
@@ -62,6 +64,25 @@ static void dirpost_ast(void *v,uint32_t pid,uint32_t irp_va){
 static void dirpost_free(void *v,uint32_t pid,uint32_t irp_va){
     struct dirpost_rig *r=v;r->order++;r->pid=pid;r->irp_va=irp_va;
 }
+struct pending_memory {
+    uint32_t pde[1024],pte[1024];
+    uint8_t page[4096];
+    uint32_t pins,unpins;
+};
+static const uint32_t *pending_table(void *v,uint32_t phys){
+    struct pending_memory *m=v;return phys==0x5000u?m->pte:0;
+}
+static uint8_t *pending_page(void *v,uint32_t phys){
+    struct pending_memory *m=v;return phys==0x9000u?m->page:0;
+}
+static int pending_pin(void *v,uint32_t phys){
+    struct pending_memory *m=v;if(phys!=0x9000u)return -1;m->pins++;return 0;
+}
+static void pending_unpin(void *v,uint32_t phys){
+    struct pending_memory *m=v;if(phys==0x9000u&&m->pins){m->pins--;m->unpins++;}
+}
+static uint32_t pending_raise(void *v){(void)v;return 0u;}
+static void pending_restore(void *v,uint32_t old){(void)v;(void)old;}
 int main(void){
     CHECK(test_iopost_irpe()==0);
     _Alignas(4) uint8_t ccb_bytes[64]={0};
@@ -146,22 +167,56 @@ int main(void){
     pinned_ops.validate_user_qio=dirpost_validate_pinned;
     pinned_ops.complete_user_qio=dirpost_complete_pinned;
     dirpost.order=0u;dirpost.irp_va=0u;dirpost.pinned_validations=0u;
-    dirpost.pinned_completions=0u;dirpost.reject_pinned=1u;
+    dirpost.pinned_completions=0u;dirpost.reject_pinned=0u;
+    struct pending_memory pending_mem={0};
+    pending_mem.pde[0]=0x5007u;
+    pending_mem.pte[2]=pending_mem.pte[3]=0x9007u;
+    const struct port_user_map pending_map={pending_mem.pde,
+        pending_table,&pending_mem};
+    const struct port_v37_irp_pool_sync pending_sync={
+        0u,pending_raise,pending_restore};
+    struct port_v37_sysqio_pending pending={0};
+    port_v37_sysqio_pending_init(&pending,&pending_sync);
+    struct port_v37_sysqio_prepared pending_request={0};
+    pending_request.args.iosb=0x2000u;
+    pending_request.args.parameter[0]=0x3000u;
+    pending_request.args.parameter[1]=512u;
+    pending_request.dispatch.action_class=PORT_DQ_FDT_READ;
+    CHECK(port_user_pin_io_range(&pending_map,0x2000u,8u,1,
+        pending_page,&pending_mem,pending_pin,pending_unpin,&pending_mem,
+        &pending_request.iosb_pages)==PORT_USER_OK&&
+      port_user_pin_io_range(&pending_map,0x3000u,512u,1,
+        pending_page,&pending_mem,pending_pin,pending_unpin,&pending_mem,
+        &pending_request.transfer_pages)==PORT_USER_OK&&pending_mem.pins==2u);
+    port_v37_write32(dirpost_irp+36u,0x2000u);
+    dirpost_irp[10u]=PORT_V37_DYN_IRP;
+    dirpost.pending=&pending;
+    CHECK(port_v37_sysqio_pending_track(&pending,0x10007u,0x00347000u,
+        dirpost_irp,sizeof dirpost_irp,&pending_request)==
+        PORT_V37_SYSQIO_PENDING_OK&&pending_mem.pins==2u&&
+        pending_request.iosb_pages.count==0u&&
+        pending_request.transfer_pages.count==0u);
     port_v37_write16(dirpost_irp+40u,(uint16_t)(0u-32u));
     port_v37_write16(ccb+PORT_V37_CCB_IOC,2u);
+    port_v37_write32(dirpost_irp+36u,0x2004u);
     CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
           0x00347000u,&pinned_ops)==PORT_V37_IOPOST_DIRPOST_DEFER);
     CHECK(dirpost.order==0u&&dirpost.pinned_validations==1u&&
           dirpost.pinned_completions==0u&&
-          port_v37_read16(ccb+PORT_V37_CCB_IOC)==2u);
-    dirpost.reject_pinned=0u;
+          port_v37_read16(ccb+PORT_V37_CCB_IOC)==2u&&pending_mem.pins==2u);
+    port_v37_write32(dirpost_irp+36u,0x2000u);
     CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
           0x00347000u,&pinned_ops)==PORT_V37_IOPOST_OK);
     CHECK(dirpost.order==4u&&dirpost.pinned_validations==2u&&
-          dirpost.pinned_completions==1u&&dirpost.iosb==0x00401000u&&
+          dirpost.pinned_completions==1u&&dirpost.iosb==0x2000u&&
           dirpost.iosb_mode==2u&&dirpost.status==1u&&
           dirpost.secondary==512u&&dirpost.efn==7u&&
-          port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u);
+          port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u&&
+          port_v37_read16(pending_mem.page)==1u&&
+          port_v37_read16(pending_mem.page+2u)==0u&&
+          port_v37_read32(pending_mem.page+4u)==512u&&
+          pending_mem.pins==0u&&pending_mem.unpins==2u);
+    dirpost.pending=0;
     dirpost.order=0u;port_v37_write16(dirpost_irp+40u,0u);
     port_v37_write16(ccb+PORT_V37_CCB_IOC,2u);
     CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
