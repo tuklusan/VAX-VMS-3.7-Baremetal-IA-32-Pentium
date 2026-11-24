@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M291
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M292
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -978,6 +978,16 @@ Coverage remains 446/4,566 original files indexed; 2,058 ranges; mapped 17,016 l
 M291 implementation commit: `9c13bc24396fdab26a0e127d38b43a84726eca61`.
 
 Remaining priority: native page locking with rollback and correct IA-32 IRP buffer mapping, then actual DQA0 DDT STARTIO submission and interrupt completion. Public system-service vector dispatch, Files-11 ACP, process-aware IOSB/event/AST delivery, native INIT/process activation, SYSTEM login/DCL, DECnet Phase IV and genuine nested SET HOST 0 remain incomplete.
+
+## M292 — Verify SYSQIO write-buffer permissions, 24 November 2026
+
+Extended the source-integrated SYSQIO host regression to check the WRITE direction after the READ access-fault rollback. The same read-only translated user page is rejected as a READ destination and accepted as a WRITE source; the prepared WRITEPBLK IRP retains its 512-byte BCNT and has no READ status bit. This confirms the two VMS access modes through caller-memory preparation without claiming page locking or DQA0 submission.
+
+Verification: `make dqddtcheck` PASS under AddressSanitizer and UndefinedBehaviorSanitizer. This was a host regression-only change; no QEMU run was needed. The last real QEMU boot remains M217, which verified the 700-byte Files-11 chain read over DQA0 IRQ14 and stopped at incomplete INIT (log and SHA-256 recorded in M291). Coverage counts and implementation are unchanged from M291. `git diff --check` PASS.
+
+M292 test commit: `abeea001210827c22b915523b34fcff7f6950545`.
+
+Remaining priority: implement native page locking and restart/rollback semantics, populate the native buffer mapping in the IRP, then connect to DQA0 STARTIO and process-aware completion. Public system-service vector dispatch, Files-11 ACP, native INIT/process activation, SYSTEM login/DCL, DECnet Phase IV and genuine nested SET HOST 0 remain incomplete.
 
 ## M289 — Populate SYSQIO read/write standard IRP fields, 24 November 2026
 
