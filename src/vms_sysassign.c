@@ -29,3 +29,27 @@ uint32_t port_v37_sysassign_local(
     if(status==PORT_V37_CCB_OK)*channel=assigned;
     return status;
 }
+
+int port_v37_sysassign_lookup_qio_channel(void *context,uint32_t pid,
+    uint32_t channel,struct port_v37_sysqio_resolved_channel *out){
+    struct port_v37_sysassign_qio_context *c=context;
+    if(!c||!out||!pid||pid!=c->owner_pid||!c->owner_pid||
+       !c->ccb_base||!c->device_database||!c->device||
+       !c->assigned_ucb||c->device_database_base!=
+           (uint32_t)(uintptr_t)c->device_database||
+       c->assigned_ucb<c->device_database_base)return -1;
+    struct port_v37_ccb_view view={0};
+    if(port_v37_ccb_resolve(c->ccb_base,c->ccb_preceding_bytes,channel,
+          c->maximum_channel_offset,0u,&view)!=PORT_V37_CCB_OK||
+       view.ucb!=c->assigned_ucb)return -1;
+    const uint32_t offset=view.ucb-c->device_database_base;
+    if(offset>c->device_database_bytes||
+       PORT_V37_UCB_FIXED_BYTES>c->device_database_bytes-offset)
+        return -1;
+    const struct port_v37_sysqio_resolved_channel result={
+        .device=c->device,
+        .ucb=(void *)(uintptr_t)(c->device_database+offset),
+        .window=view.window,.ccb_access_limit=view.access_limit};
+    *out=result;
+    return 0;
+}

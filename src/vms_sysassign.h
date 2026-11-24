@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "vms_ioc_phys.h"
 #include "vms_v37_ccb.h"
+#include "vms_sysqio_args.h"
 
 /* Local SYS$ASSIGN front end through physical IOC$SEARCHDEV and the source
  * CCB/owner path. Descriptor probing/translation, MAXACMODE calculation,
@@ -25,4 +26,19 @@ struct port_v37_sysassign_local_request {
 };
 uint32_t port_v37_sysassign_local(
     const struct port_v37_sysassign_local_request *,uint16_t *channel);
+
+/* Bind a process's assigned source CCB table to SYSQIOREQ channel lookup.
+ * The device description is supplied for the selected UCB by the caller. */
+struct port_v37_sysassign_qio_context {
+    uint8_t *ccb_base;
+    size_t ccb_preceding_bytes;
+    uint16_t maximum_channel_offset;
+    uint32_t owner_pid;
+    const uint8_t *device_database;
+    size_t device_database_bytes;
+    uint32_t device_database_base,assigned_ucb;
+    const struct port_v37_sysqio_device *device;
+};
+int port_v37_sysassign_lookup_qio_channel(void *,uint32_t,uint32_t,
+    struct port_v37_sysqio_resolved_channel *);
 #endif

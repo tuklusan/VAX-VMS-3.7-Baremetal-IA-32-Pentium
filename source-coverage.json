@@ -21481,10 +21481,10 @@
             252
           ],
           "status": "partial",
-          "pc_file": "src/vms_v37_ccb.c",
-          "pc_symbol": "port_v37_ccb_resolve",
-          "pc_line": 14,
-          "function": "SYSQIO begin resolves the source channel token backward from CTL$GL_CCBBASE, checks AMOD, then calls the live UCB/device resolver; no native SYS$ASSIGN allocator supplies this table yet"
+          "pc_file": "src/vms_sysassign.c",
+          "pc_symbol": "port_v37_sysassign_lookup_qio_channel",
+          "pc_line": 33,
+          "function": "Resolve the source channel token from a PID-bound CCB table, verify the assigned UCB and bind its native DQ FDT/device view; local DQA0 SYS$ASSIGN helper composes IOC$SEARCHDEV with CCB ownership/refcount. Public service-vector dispatch remains absent"
         },
         {
           "original_lines": [
@@ -21495,7 +21495,7 @@
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_preflight",
           "pc_line": 51,
-          "function": "Native CCB access-mode comparison, DQ FDT function legality and offline exceptions with VMS status mapping; access/deaccess pending CCB waits are represented by a required callback but not bound to live SCH$WAIT"
+          "function": "Host integration now passes an IOC$SEARCHDEV-assigned DQA0 CCB through channel lookup into CCB AMOD/FDT checks. Native access-mode comparison, DQ FDT legality and offline exceptions are implemented; wait callback is not bound to live SCH$WAIT"
         },
         {
           "original_lines": [

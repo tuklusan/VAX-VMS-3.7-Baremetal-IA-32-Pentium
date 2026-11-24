@@ -825,6 +825,14 @@ Added a source-ordered local assignment front end that searches the actual nativ
 
 M273 implementation commit: `eec283ff286c4c63111228a04b6c42b48dc6e066`. Published to `origin/main`; resume update follows.
 
+## M274 — Bind assigned CCB lookup into SYSQIOREQ preflight, 24 November 2026
+
+Added a PID-bound adapter from the assigned source CCB table to `SYSQIOREQ`'s channel resolver. It checks the caller PID, resolves the VMS channel token with CCB access-mode data, requires the CCB's UCB to match the selected DQA0 device, bounds the UCB against the native device database, and returns the associated DQ FDT for service preflight. The host integration now performs IOC$SEARCHDEV → local SYS$ASSIGN CCB creation → SYSQIOREQ EFN/channel/FDT preflight and verifies the direct-I/O quota charge. This stops at preflight; public service-vector dispatch, IRP submission to DQ STARTIO, real process PCB/PHD binding, completion and AST delivery remain incomplete.
+
+`make dqddtcheck` PASS with the integrated assignment-to-QIO-begin sequence, PID mismatch rejection, and CCB/FDT binding. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS through the actual 700-byte SYS.EXE DQA0 DDT/CRB/IRQ14 read, then the documented incomplete INIT stop. M274 service-preflight integration was host-tested only. Source coverage validation PASS: 2,032 ranges; 445/4,566 indexed; mapped 17,016, partial 29,573, unresolved 52,034, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T143338945563Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login, DCL or DECnet acceptance occurred.
+
+M274 implementation commit and publication details follow.
+
 Remaining: wire positive-PID completions to live IPL$_IOPOST using the real native PCB vector, PHD/page-map resolution and scheduler KAST queue; add buffered/paging/virtual paths and DIRPOST IOSB/event/AST/IRPE handling; implement real public SYS$QIO and Files-11 ACP; finish INIT and process activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0.
 
 M269 implementation commit (local): `7ec6ea951cc41cfdd9ffb1f25120467f6d632f24`. GitHub publication follows.

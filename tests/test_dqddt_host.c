@@ -25,6 +25,13 @@ static uint32_t assign_related(void *v,uint32_t owner,uint32_t pid){
 static uint32_t assign_access(void *v,uint32_t arb,const uint8_t *ucb,size_t n){
     (void)v;(void)ucb;(void)n;return arb?1u:0u;
 }
+struct sysqio_fixture {
+    struct port_v37_sysassign_qio_context channels;
+    unsigned errors;
+};
+static void sysqio_post_error(void *v,uint32_t pid,uint8_t efn,uint32_t status){
+    struct sysqio_fixture *f=v;(void)pid;(void)efn;(void)status;f->errors++;
+}
 int main(void){
     enum {BASE=0x00370000u,START=0x00324120u,RET=0x00324104u};
     const uint32_t action=(uint32_t)(uintptr_t)port_dqddt_bootread;
@@ -186,6 +193,33 @@ int main(void){
     struct port_v37_ccb_view assigned_view={0};
     CHECK(port_v37_ccb_resolve(ccb_base,48u,assigned,48u,0u,
         &assigned_view)==PORT_V37_CCB_OK&&assigned_view.ucb==info.ucb[0]);
+    struct port_v37_sysqio_device qio_device={
+        .fdt=&fdt,.fdt_bytes=sizeof fdt,.online=1u};
+    struct sysqio_fixture qio_fixture={.channels={
+        .ccb_base=ccb_base,.ccb_preceding_bytes=48u,
+        .maximum_channel_offset=48u,.owner_pid=0x12340001u,
+        .device_database=db,.device_database_bytes=sizeof db_words,
+        .device_database_base=(uint32_t)(uintptr_t)db,
+        .assigned_ucb=info.ucb[0],.device=&qio_device}};
+    uint32_t sysqio_ap[13]={12u,1u,assigned,PORT_DQ_READPBLK,0u};
+    struct port_v37_sysqio_process qio_process={
+        .pid=0x12340001u,.access_mode=0u,.direct_io_count=1};
+    const struct port_v37_sysqio_begin_ops qio_ops={
+        .context=&qio_fixture,.ccb_base=ccb_base,
+        .ccb_preceding_bytes=48u,.ccb_maximum_channel_offset=48u,
+        .lookup_channel=port_v37_sysassign_lookup_qio_channel,
+        .post_event=sysqio_post_error};
+    struct port_v37_sysqio_prepared qio_prepared={0};
+    uint32_t qio_status=0u;
+    CHECK(port_v37_sysqio_begin(sysqio_ap,sizeof sysqio_ap,&qio_process,
+        &qio_ops,&qio_prepared,&qio_status)==PORT_V37_SYSQIO_BEGIN_OK);
+    CHECK(qio_status==PORT_V37_SYSQIO_BEGIN_OK&&
+        qio_prepared.channel.ucb==(void *)(db+(info.ucb[0]-
+            (uint32_t)(uintptr_t)db))&&
+        qio_prepared.dispatch.function_code==PORT_DQ_READPBLK&&
+        qio_process.direct_io_count==0&&qio_fixture.errors==0u);
+    CHECK(port_v37_sysassign_lookup_qio_channel(&qio_fixture.channels,
+        0x12340002u,assigned,&qio_prepared.channel)!=0);
     assigned=UINT16_MAX;
     struct port_v37_sysassign_local_request missing_assign=assign_request;
     missing_assign.device_name="ZZZ0";
