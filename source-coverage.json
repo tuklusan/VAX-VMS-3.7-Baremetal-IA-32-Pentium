@@ -21793,6 +21793,25 @@
         {
           "original_lines": [
             972,
+            975
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_account.c",
+          "pc_symbol": "port_v37_iopost_account_phd",
+          "pc_line": 17,
+          "function": "DIRPOST selects PHD$L_DIOCNT or BIOCNT from the IRP buffered bit and increments the source 32-bit accounting counter; the caller must resolve SCH$GL_CURPCB PHD"
+        },
+        {
+          "original_lines": [
+            976,
+            989
+          ],
+          "status": "unresolved",
+          "reason": "Optional I/O measurement and diagnostic-buffer move/probe/free path remain unresolved"
+        },
+        {
+          "original_lines": [
+            990,
             1000
           ],
           "status": "partial",

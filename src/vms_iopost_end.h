@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "vms_qio_post.h"
 #include "vms_v37_ccb.h"
+#include "vms_v37_phd.h"
 /* SYS/SRC/IOCIOPOST.MAR 115-165. The original kernel end action
  * recognises a negative VAX system-space address in IRP$L_PID; native
  * IA-32 uses the checked supervisor-only SYS.EXE mapping instead.
@@ -79,4 +80,6 @@ struct port_v37_iopost_unlock_ops {
  * require their separate source paths and are rejected without mutation. */
 uint32_t port_v37_iopost_unlock_direct(uint8_t *,size_t,
     const struct port_v37_iopost_unlock_ops *);
+/* IOCIOPOST.MAR DIRPOST PHD$L_DIOCNT/BIOCNT accounting, before CCB posting. */
+uint32_t port_v37_iopost_account_phd(uint8_t *,size_t,uint8_t);
 #endif

@@ -1405,7 +1405,12 @@ iopostunlockcheck: $(M123_IOPOST_OBJS) | build
 	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_iopost_unlock.c tests/test_iopost_unlock_host.c -o build/iopostunlockcheck
 	./build/iopostunlockcheck
 
-test: iopostendcheck iopostunlockcheck
+.PHONY: iopostaccountcheck
+iopostaccountcheck: $(M123_IOPOST_OBJS) | build
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_iopost_account.c tests/test_iopost_account_host.c -o build/iopostaccountcheck
+	./build/iopostaccountcheck
+
+test: iopostendcheck iopostunlockcheck iopostaccountcheck
 
 # M125: source 12 DQDRIVER.MAR FDT function masks (guest staged only;
 # original RB730/ACP/CRB and native ATA controller bindings remain absent).

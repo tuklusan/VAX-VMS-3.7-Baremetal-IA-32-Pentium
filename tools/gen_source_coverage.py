@@ -2405,7 +2405,9 @@ iopost_rows=[
  (160,165,'src/vms_iopost_service.c','port_v37_iopost_service','Kernel address branch for source IRP PID, IA-32 supervisor aperture replacing VAX high-bit test; PCB lookup unresolved','partial'),
  (166,210,'src/vms_iopost_unlock.c','port_v37_iopost_unlock_direct','DIRECT I/O path computes locked pages from byte offset/count and unlocks both buffer areas in each bounded IRPE chain; paging/swap and segmented virtual requests remain deferred','partial'),
  (211,971,None,None,'Remaining original buffered/paging postprocessing, PCB quotas, kernel AST and virtual segmentation unported','unresolved'),
- (972,1000,'src/vms_iopost_ccb.c','port_v37_iopost_ccb_complete','DIRPOST sign-extends the IRP negative CCB byte offset, decrements CCB$W_IOC, and on idle transfers the queued deaccess IRP to an IOC$WAKACP callback; live SYS$QIO completion is not connected','partial'),
+ (972,975,'src/vms_iopost_account.c','port_v37_iopost_account_phd','DIRPOST selects PHD$L_DIOCNT or BIOCNT from the IRP buffered bit and increments the source 32-bit accounting counter; the caller must resolve SCH$GL_CURPCB PHD','partial'),
+ (976,989,None,None,'Optional I/O measurement and diagnostic-buffer move/probe/free path remain unresolved','unresolved'),
+ (990,1000,'src/vms_iopost_ccb.c','port_v37_iopost_ccb_complete','DIRPOST sign-extends the IRP negative CCB byte offset, decrements CCB$W_IOC, and on idle transfers the queued deaccess IRP to an IOC$WAKACP callback; live SYS$QIO completion is not connected','partial'),
  (1001,1015,'src/vms_iopost_dirpost.c','port_v37_iopost_dirpost','DIRPOST process I/O accounting, source callback for guarded two-longword IOSB store, SCH$POSTEF and AST-quota QAST versus IRP release selection; no live PCB/PHD, IOSB, event, AST or lookaside binding','partial'),
  (1016,1113,None,None,'DIRPOST IRPE deallocation chain, system-buffer move/PROBEW, IOSB access-fault path, and remaining paging/segmented I/O completion unported','unresolved')]
 rows=[]
