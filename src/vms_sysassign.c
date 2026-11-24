@@ -1,8 +1,10 @@
 #include "vms_sysassign.h"
 #include "vms_exe_io.h"
 
-uint32_t port_v37_sysassign_local(
-    const struct port_v37_sysassign_local_request *r,uint16_t *channel){
+enum { ASSIGN_STAGE_VALIDATE,ASSIGN_STAGE_SEARCH,ASSIGN_STAGE_CCB };
+static uint32_t sysassign_local(
+    const struct port_v37_sysassign_local_request *r,uint16_t *channel,
+    unsigned *stage){
     if(!channel)return PORT_V37_CCB_BAD;
     *channel=0u; /* SYSASSIGN clears the caller's channel before lookup. */
     if(!r||!r->device_database||!r->devices||!r->device_name||
@@ -11,6 +13,7 @@ uint32_t port_v37_sysassign_local(
        !r->assign_ops||
        r->device_database_base!=(uint32_t)(uintptr_t)r->device_database)
         return PORT_V37_CCB_BAD;
+    if(stage)*stage=ASSIGN_STAGE_SEARCH;
     struct port_v37_ioc_result found={0};
     const uint32_t search=port_v37_ioc_searchdev(r->device_database,
         r->device_database_bytes,r->device_database_base,r->devices,
@@ -22,6 +25,7 @@ uint32_t port_v37_sysassign_local(
        PORT_V37_UCB_FIXED_BYTES>r->device_database_bytes-offset)
         return PORT_V37_CCB_BAD;
     uint8_t *ucb=(uint8_t *)(uintptr_t)r->device_database+offset;
+    if(stage)*stage=ASSIGN_STAGE_CCB;
     uint16_t assigned=0u;
     const uint32_t status=port_v37_ccb_assign_local(r->ccb_base,
         r->ccb_preceding_bytes,r->channel_count,r->high_water_channel,ucb,
@@ -29,6 +33,11 @@ uint32_t port_v37_sysassign_local(
         r->effective_max_acmode,r->mailbox_ucb,r->assign_ops,&assigned);
     if(status==PORT_V37_CCB_OK)*channel=assigned;
     return status;
+}
+
+uint32_t port_v37_sysassign_local(
+    const struct port_v37_sysassign_local_request *r,uint16_t *channel){
+    return sysassign_local(r,channel,0);
 }
 
 uint32_t port_v37_sysassign_descriptor(
@@ -59,7 +68,18 @@ uint32_t port_v37_sysassign_descriptor(
     local.effective_max_acmode=requested>r->caller_access_mode?
         requested:r->caller_access_mode;
     local.device_name=name;local.device_name_bytes=length;
-    return port_v37_sysassign_local(&local,channel);
+    unsigned stage=ASSIGN_STAGE_VALIDATE;
+    uint32_t status=sysassign_local(&local,channel,&stage);
+    if(stage==ASSIGN_STAGE_SEARCH){
+        if(status==PORT_V37_IOC_BAD)return PORT_SS_IVDEVNAM;
+        if(status==PORT_V37_IOC_NO_SUCH)return PORT_SS_NOSUCHDEV;
+    }else if(stage==ASSIGN_STAGE_CCB){
+        if(status==PORT_V37_CCB_NOCHANNEL)return PORT_SS_NOIOCHAN;
+        if(status==PORT_V37_CCB_NOPRIV||
+           status==PORT_V37_ASSIGN_NOPRIV)return PORT_SS_NOPRIV;
+        if(status==PORT_V37_ASSIGN_DEVALLOC)return PORT_SS_DEVALLOC;
+    }
+    return status;
 }
 
 uint32_t port_v37_sysassign_descriptor_service(
@@ -71,11 +91,7 @@ uint32_t port_v37_sysassign_descriptor_service(
        !port_exe_write(r->memory,channel_output,output,sizeof output))
         return PORT_SS_ACCVIO;
     uint16_t channel=0u;
-    uint32_t status=port_v37_sysassign_descriptor(r,&channel);
-    /* Translate the private IOC parser/search results at the SYSASSIGN
-     * service boundary; do not expose native helper codes to callers. */
-    if(status==PORT_V37_IOC_BAD)status=PORT_SS_IVDEVNAM;
-    else if(status==PORT_V37_IOC_NO_SUCH)status=PORT_SS_NOSUCHDEV;
+    const uint32_t status=port_v37_sysassign_descriptor(r,&channel);
     if(!(status&1u))return status;
     output[0]=(uint8_t)channel;output[1]=(uint8_t)(channel>>8);
     if(!port_exe_write(r->memory,channel_output,output,sizeof output))

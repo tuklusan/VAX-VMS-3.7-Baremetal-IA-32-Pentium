@@ -234,6 +234,15 @@ int main(void){
     CHECK(port_v37_sysassign_descriptor_service(&assign_descriptor,0x1040u)==
         PORT_SS_IVDEVNAM&&port_v37_read16(assign_memory.bytes+64u)==0u);
     memcpy(assign_memory.bytes+16u,"DQA0",4u);
+    struct port_v37_sysassign_local_request exhausted_request=assign_request;
+    exhausted_request.channel_count=1u;
+    struct port_v37_sysassign_descriptor_request exhausted_descriptor=
+        assign_descriptor;
+    exhausted_descriptor.local=&exhausted_request;
+    assign_memory.bytes[64]=0xffu;assign_memory.bytes[65]=0xffu;
+    CHECK(port_v37_sysassign_descriptor_service(&exhausted_descriptor,
+        0x1040u)==PORT_SS_NOIOCHAN&&
+        port_v37_read16(assign_memory.bytes+64u)==0u);
     struct port_v37_ccb_view assigned_view={0};
     CHECK(port_v37_ccb_resolve(ccb_base,48u,assigned,48u,0u,
         &assigned_view)==PORT_V37_CCB_OK&&assigned_view.ucb==info.ucb[0]);
