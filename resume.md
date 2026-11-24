@@ -1118,3 +1118,14 @@ Verification: `make -j2 all sysqioresidentcheck v37ccbcheck sysqioargscheck syse
 M302 implementation commit: `6b8b2ebbfa238e1c4bf5a076f0f0088f166e1e82`.
 
 Remaining: make ACP state and requests persistent across VMS channels/processes; connect real SYS$QIO dispatch to DQA0 STARTIO and IOCIOPOST; implement native INIT's remaining dependencies, scheduling and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M303 — Implement the resident nonpaged first-fit allocator, 24 November 2026
+
+Ported the variable nonpaged-pool allocation core from MEMORYALC: source-ordered free blocks, eight-byte rounding, first-fit search, low-address splitting, sorted return and adjacent-block coalescing. The allocator uses the executive's existing IPL-preserving synchronization contract. SYS.EXE initializes it over the actual free tail of its resident nonpaged area after INIT's fixed records and logical-name records; F11B now obtains its SYS.EXE FCB from this pool. The live port still lacks SRP/LRP/general ALONONPAGED lookaside fallback, paged pool, pool extension, resource waits/wakeup and ACP deallocation binding.
+
+Verification: `make -j2 all exenppoolcheck sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); allocator host regression PASS under ASan/UBSan for alignment, first-fit split, allocation ordering, sorted coalescing, duplicate-free rejection, range checks and IPL restoration. Coverage generator/range test/source validator PASS: 2,061 ranges; 446/4,566 indexed originals; mapped 17,016, partial 29,742, unresolved 52,733, missing 7,799, excluded 26,237, hardware-excluded 917. `make -j2 all` PASS and real `make qemu-sysboot-m217` PASS; serial confirms `INIT: Files-11 ACP RDHEDR/F11B allocated SYS.EXE FID 11 FCB from native EXE$ALONONPAGED pool via DQA0 DDT/CRB IRQ14.` Boot then stops at the known incomplete INIT boundary. Transcript `logs/serial/qemu-m217-run-local-20261124T204827125237Z.log`, 5,469 bytes, SHA-256 `5b905642cec14dc790b891654ba216c65126f2aeca4d76183c609a78576076cb`. QEMU exited; no runner remains. No login, DCL, DECnet or SET HOST 0 occurred.
+
+M303 implementation commit: `891b9e2871f4beb01743fcc291a6cb9f477fa51a`.
+M303 boot-evidence commit: `a8c3f40b89467648960e7a35df0e6c9bfdf974d9`.
+
+Remaining: connect public SYS$QIO to DQA0 STARTIO and completion; finish ACP channel/window/deaccess and release paths; port remaining INIT memory/paging/PHD/context dependencies and activate SYSTEM/DCL; start DECnet Phase IV and verify genuine SET HOST 0 second login and LOGOUT end-to-end.
