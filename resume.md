@@ -896,3 +896,13 @@ Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; resident-sy
 M280 implementation commit: `b8bd1524e07b1324c52e01c0354dfef7fb4347e0`.
 
 Remaining: connect live process memory/CCB context to the resident public SYS$ASSIGN vector; implement public SYS$QIO dispatch and real DQA0 STARTIO; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M281 — Exercise SYS$ASSIGN through translated IA-32 caller pages, 24 November 2026
+
+Replaced the SYSASSIGN host fixture's abstract byte callbacks with the production executive user-page adapter. The integrated test now places the VMS string descriptor, counted device name, and channel result in a mapped IA-32 user page, executes output probe/clear and descriptor/name copies through page translation, and preserves failed-descriptor output clearing. Source coverage now records this precise translated-page integration. It remains a host invocation of resident helper code; the live process map/CCB and public SYS$ASSIGN entry are not wired.
+
+Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; DQA0 SYSASSIGN→CCB→SYSQIO preflight host regression PASS; `make qemu-sysboot-m217` PASS through actual SYS.EXE load and 700-byte DQA0 DDT/IRQ14 Files-11 read, then incomplete INIT stop. Coverage validation PASS: 2,035 ranges; 445/4,566 indexed; mapped 17,016, partial 29,580, unresolved 52,027, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T150603291318Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login, DCL, DECnet or SET HOST 0 occurred.
+
+M281 implementation commit: `dcc9ad21a08636b09048032648998e14e1f340bb`.
+
+Remaining: actual public SYS$ASSIGN/SYS$QIO service dispatch with live process map and CCB; DQ STARTIO request submission; Files-11 ACP; real process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
