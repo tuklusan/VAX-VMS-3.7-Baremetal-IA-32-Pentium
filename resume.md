@@ -956,3 +956,13 @@ Verification: `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck
 M286 implementation commit: `4e35124e889a2fb790728257a3580f582f8094ff`.
 
 Remaining: dispatch this process-bound QIO path from a live IA-32 system-service trap; submit the standard IRP through DQA0 STARTIO and real interrupt completion; implement Files-11 ACP, process-aware IOSB/event/AST delivery, full native INIT and process image activation; verify SYSTEM login, DCL, DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M287 — Preserve SYSQIOFDT one-parameter IRP field, 24 November 2026
+
+The standard SYSQIO IRP builder now applies the original `EXE$ONEPARM` FDT action by copying P1 to `IRP$L_MEDIA`; the host regression verifies the field value in the generated standard IRP. Added an explicit SYSQIOFDT coverage record: lines 177–179 are partial, all other lines remain unresolved. This does not provide live FDT dispatch or DQA0 submission.
+
+Verification: the named build/test goals `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS; an extra chained goal `coverage-validate` does not exist in Makefile and returned a make error. `python3 tools/gen_source_coverage.py` PASS (2,038 ranges, 446/4,566 original files indexed, no missing mapped functions); `python3 tests/test_coverage_ranges.py` PASS. Coverage totals: mapped 17,016; partial 29,588; unresolved 52,887; missing 7,799; excluded 26,237; hardware-excluded 917. `make qemu-sysboot-m217` PASS through SYS.EXE load and the actual 700-byte DQA0 DDT/IRQ14 Files-11 read, then incomplete INIT stop. Transcript `logs/serial/qemu-m217-run-local-20261124T153304693602Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M287 implementation commit: `265d50d9144f8db9aec6c1b599bfee900ab3b0a1`.
+
+Remaining: live system-service trap dispatch; transfer-buffer page locking and proper IRP SVAPTE/BCNT setup; DQA0 STARTIO submission and real interrupt completion; Files-11 ACP; process-aware IOSB/event/AST delivery; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
