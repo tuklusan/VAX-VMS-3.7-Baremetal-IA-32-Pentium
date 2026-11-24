@@ -791,6 +791,16 @@ Added the process branch after the negative-PID kernel end-action route. It extr
 
 M269 implementation commit and publication details follow.
 
+## M270 — Port IOCIOPOST IRPE deallocation chain, 24 November 2026
+
+Added a bounded IRPE chain planner for IOCIOPOST.MAR lines 1015-1035 and integrated its release ordering into DIRPOST. The planner resolves and validates each extension record before DIRPOST mutates process accounting/CCB state; release callbacks run after IOSB/POSTEF and before AST queueing or root IRP release, matching the source order. Missing live resolver/lookaside bindings defer. Malformed, unaligned, unresolved, or over-limit chains fail without partial DIRPOST mutation. The helper has explicit limits of 32 IRPE records. System-buffer MOVBUF/PROBEW and subsequent buffered/paging/segmented paths remain unresolved.
+
+`make iopostendcheck` PASS, including two-record chain traversal/release ordering, over-limit rejection, missing-resolver defer, null-root rejection, and DIRPOST event → IRPE free → AST ordering. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS (exit 0). Source coverage generation and validation PASS: 2,030 ranges; 445/4,566 original files indexed; mapped 17,016, partial 29,571, unresolved 52,036, missing 7,799, excluded 26,237, hardware-excluded 917. `make qemu-sysboot-m217` PASS for the actual 700-byte SYS.EXE Files-11 DQA0 DDT/CRB/IRQ14 read; native INIT still halts at the documented incomplete boundary. M270 completion callbacks were not invoked by the guest. Transcript `logs/serial/qemu-m217-run-local-20261124T140728620382Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No public SYS$QIO, SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M270 implementation commit: `71e5d5c3d606c6243eaa8957e27f106adeeb26fd`. Published to `origin/main`; resume update follows.
+
+Remaining: bind process postprocessing and IRPE lookaside callbacks to live structures; port system-buffer move/PROBEW, buffered/paging/virtual completion and IOSB access-fault behavior; connect real public SYS$QIO and Files-11 ACP; continue native INIT and process image activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0 acceptance.
+
 Remaining: wire positive-PID completions to live IPL$_IOPOST using the real native PCB vector, PHD/page-map resolution and scheduler KAST queue; add buffered/paging/virtual paths and DIRPOST IOSB/event/AST/IRPE handling; implement real public SYS$QIO and Files-11 ACP; finish INIT and process activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0.
 
 M269 implementation commit (local): `7ec6ea951cc41cfdd9ffb1f25120467f6d632f24`. GitHub publication follows.
