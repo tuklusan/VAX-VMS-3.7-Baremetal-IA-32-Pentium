@@ -4,6 +4,7 @@
 #include "vms_iopost_end.h"
 #include "vms_nl_ddt.h"
 #define CHECK(x) do { if(!(x)) {fprintf(stderr,"IOPOST end FAIL %d: %s\n",__LINE__,#x);return 1;} }while(0)
+int test_iopost_irpe(void);
 struct irq {uint32_t count,level;};
 static void interrupt(void *v,uint8_t level){struct irq *p=v;p->count++;p->level=level;}
 struct acp_wake {uint32_t calls,irp,ucb;};
@@ -13,7 +14,17 @@ static void wake_acp(void *v,uint32_t irp,uint32_t ucb){
 struct dirpost_rig {
     uint32_t order,pid,efn,irp_va,iosb,iosb_mode,status,secondary;
     uint8_t buffered;
+    uint8_t *irpe;
+    uint32_t irpe_freed;
 };
+static int dirpost_resolve_irpe(void *v,uint32_t va,const uint8_t **p,size_t *n){
+    struct dirpost_rig *r=v;if(va!=0x1000u)return -1;
+    *p=r->irpe;*n=PORT_V37_IRPE_BYTES;return 0;
+}
+static void dirpost_free_irpe(void *v,uint32_t pid,uint32_t va){
+    struct dirpost_rig *r=v;r->order++;r->irpe_freed=va;
+    if(pid!=0x10007u||va!=0x1000u)r->order=99u;
+}
 static void dirpost_account(void *v,uint32_t pid,uint8_t buffered){
     struct dirpost_rig *r=v;r->order++;r->pid=pid;r->buffered=buffered;
 }
@@ -36,6 +47,7 @@ static void dirpost_free(void *v,uint32_t pid,uint32_t irp_va){
     struct dirpost_rig *r=v;r->order++;r->pid=pid;r->irp_va=irp_va;
 }
 int main(void){
+    CHECK(test_iopost_irpe()==0);
     _Alignas(4) uint8_t ccb_bytes[64]={0};
     uint8_t *const ccb_base=ccb_bytes+48u;
     uint8_t *const ccb=ccb_base-32u;
@@ -81,28 +93,32 @@ int main(void){
     dirpost_irp[11u]=0x43u;
     dirpost_irp[34u]=7u;
     port_v37_write16(dirpost_irp+40u,(uint16_t)(0u-32u));
-    port_v37_write16(dirpost_irp+42u,1u);
+    port_v37_write16(dirpost_irp+42u,0x801u);
+    port_v37_write32(dirpost_irp+84u,0x1000u);
     port_v37_write32(dirpost_irp+56u,0x00000001u);
     port_v37_write32(dirpost_irp+60u,512u);
     port_v37_write16(ccb+PORT_V37_CCB_IOC,1u);
     port_v37_write32(ccb+PORT_V37_CCB_DIRP,0x5678u);
     port_v37_write32(ccb+PORT_V37_CCB_UCB,0x1234u);
-    struct dirpost_rig dirpost={0};
+    _Alignas(4) uint8_t dirpost_irpe[PORT_V37_IRPE_BYTES]={0};
+    struct dirpost_rig dirpost={.irpe=dirpost_irpe};
     const struct port_v37_iopost_dirpost_ops dirpost_ops={
         .context=&dirpost,.account_io=dirpost_account,
         .ccb={&dirpost,dirpost_wake},.ccb_base=ccb_base,
         .ccb_preceding_bytes=48u,.store_iosb_if_writable=dirpost_iosb,
         .post_event=dirpost_event,.queue_ast=dirpost_ast,
-        .free_irp=dirpost_free};
+        .free_irp=dirpost_free,.resolve_irpe=dirpost_resolve_irpe,
+        .free_irpe=dirpost_free_irpe,.maximum_extensions=2u};
     CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
           0x00347000u,&dirpost_ops)==PORT_V37_IOPOST_OK);
-    CHECK(dirpost.order==5u&&dirpost.pid==0x10007u&&dirpost.buffered&&
+    CHECK(dirpost.order==6u&&dirpost.pid==0x10007u&&dirpost.buffered&&
           dirpost.iosb==0x00401000u&&dirpost.iosb_mode==3u&&
           dirpost.status==1u&&dirpost.secondary==512u&&dirpost.efn==7u&&
-          dirpost.irp_va==0x00347000u&&
+          dirpost.irp_va==0x00347000u&&dirpost.irpe_freed==0x1000u&&
           port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u&&
           port_v37_read32(ccb+PORT_V37_CCB_DIRP)==0u);
     dirpost.order=0u;dirpost.irp_va=0u;dirpost_irp[11u]=2u;
+    port_v37_write16(dirpost_irp+42u,1u);
     port_v37_write16(ccb+PORT_V37_CCB_IOC,2u);
     port_v37_write32(ccb+PORT_V37_CCB_DIRP,0u);
     CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,

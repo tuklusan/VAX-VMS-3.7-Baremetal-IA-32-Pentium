@@ -18,10 +18,13 @@ enum {PORT_V37_IOPOST_OK=1u,PORT_V37_IOPOST_BAD=2u,
       PORT_V37_IOPOST_DIRPOST_DEFER=14u,
       PORT_V37_IOPOST_UNLOCK_DEFER=16u,
       PORT_V37_IOPOST_PROCESS_DEFER=18u,
+      PORT_V37_IOPOST_IRPE_DEFER=20u,
       PORT_V37_IOPOST_LOG_CAP=2u,PORT_V37_IRP_PID=12u,
       PORT_V37_IRP_AST=16u,PORT_V37_IRP_WIND=24u,
       PORT_V37_IRP_EXTEND=84u,
-      PORT_V37_IRP_IOSB=36u,PORT_V37_IRP_STS=42u};
+      PORT_V37_IRP_IOSB=36u,PORT_V37_IRP_STS=42u,
+      PORT_V37_IRPE_EXTEND=84u,PORT_V37_IRPE_STS=42u,
+      PORT_V37_IRPE_BYTES=88u,PORT_V37_IOPOST_MAX_IRPES=32u};
 struct port_v37_iopost_endlog {
     uint32_t completed;
     uint32_t irp_va[PORT_V37_IOPOST_LOG_CAP];
@@ -53,6 +56,18 @@ typedef void (*port_v37_iopost_iosb_fn)(void *,uint32_t,uint8_t,
     uint32_t,uint32_t);
 typedef void (*port_v37_iopost_event_fn)(void *,uint32_t,uint8_t);
 typedef void (*port_v37_iopost_packet_fn)(void *,uint32_t,uint32_t);
+typedef int (*port_v37_iopost_resolve_irpe_fn)(void *,uint32_t,
+    const uint8_t **,size_t *);
+struct port_v37_iopost_irpe_plan {
+    uint32_t address[PORT_V37_IOPOST_MAX_IRPES];
+    uint8_t count;
+};
+uint32_t port_v37_iopost_irpe_plan(const uint8_t *,size_t,
+    port_v37_iopost_resolve_irpe_fn,void *,uint8_t,
+    struct port_v37_iopost_irpe_plan *);
+uint32_t port_v37_iopost_irpe_release(
+    const struct port_v37_iopost_irpe_plan *,port_v37_iopost_packet_fn,
+    void *,uint32_t);
 struct port_v37_iopost_dirpost_ops {
     void *context;
     port_v37_iopost_account_fn account_io;
@@ -63,14 +78,15 @@ struct port_v37_iopost_dirpost_ops {
     port_v37_iopost_event_fn post_event;
     port_v37_iopost_packet_fn queue_ast;
     port_v37_iopost_packet_fn free_irp;
+    port_v37_iopost_resolve_irpe_fn resolve_irpe;
+    port_v37_iopost_packet_fn free_irpe;
+    uint8_t maximum_extensions;
 };
 /* IOCIOPOST.MAR DIRPOST's process-context common completion through
  * SCH$POSTEF and the SCH$QAST/deallocation choice. Callbacks bind the live
  * PHD, guarded IOSB store, event/AST queues and IRP lookaside. */
 uint32_t port_v37_iopost_dirpost(uint8_t *,size_t,uint32_t,
     const struct port_v37_iopost_dirpost_ops *);
-typedef int (*port_v37_iopost_resolve_irpe_fn)(void *,uint32_t,
-    const uint8_t **,size_t *);
 typedef void (*port_v37_iopost_unlock_pages_fn)(void *,uint32_t,uint32_t);
 struct port_v37_iopost_unlock_ops {
     void *context;

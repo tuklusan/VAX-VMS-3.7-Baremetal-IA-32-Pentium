@@ -3,6 +3,7 @@
 enum { IRP_RMOD=11u,IRP_PID=12u,IRP_AST=16u,IRP_ASTPRM=20u,
        IRP_IOSB=36u,IRP_CHAN=40u,IRP_STS=42u,IRP_EFN=34u,
        IRP_IOST1=56u,IRP_IOST2=60u,IRP_RMOD_QUOTA=0x40u,
+       IRP_M_EXTEND=1u<<11,
        IRP_STS_BUFIO=1u };
 
 /* Source DIRPOST 972-1015. The process AST context supplies PHD accounting;
@@ -20,9 +21,18 @@ uint32_t port_v37_iopost_dirpost(uint8_t *irp,size_t irp_bytes,
     const uint8_t buffered=(uint8_t)((port_v37_read16(irp+IRP_STS)&
                                       IRP_STS_BUFIO)!=0u);
     const uint8_t quota_ast=(uint8_t)((irp[IRP_RMOD]&IRP_RMOD_QUOTA)!=0u);
+    struct port_v37_iopost_irpe_plan irpe_plan={0};
     if(!pid||(iosb&&!ops->store_iosb_if_writable)||
        (quota_ast&&!ast)||
        (quota_ast&&!ops->queue_ast)||(!quota_ast&&!ops->free_irp))
+        return PORT_V37_IOPOST_DIRPOST_DEFER;
+    const uint32_t irpe_status=port_v37_iopost_irpe_plan(irp,irp_bytes,
+        ops->resolve_irpe,ops->context,ops->maximum_extensions,&irpe_plan);
+    if(irpe_status!=PORT_V37_IOPOST_OK)
+        return irpe_status==PORT_V37_IOPOST_IRPE_DEFER?
+            PORT_V37_IOPOST_DIRPOST_DEFER:PORT_V37_IOPOST_BAD;
+    if((port_v37_read16(irp+IRP_STS)&IRP_M_EXTEND)&&
+       irpe_plan.count&&!ops->free_irpe)
         return PORT_V37_IOPOST_DIRPOST_DEFER;
     const uint16_t channel=port_v37_read16(irp+IRP_CHAN);
     if(channel<UINT16_C(0x8000))return PORT_V37_IOPOST_BAD;
@@ -48,6 +58,9 @@ uint32_t port_v37_iopost_dirpost(uint8_t *irp,size_t irp_bytes,
     if(iosb)ops->store_iosb_if_writable(ops->context,iosb,request_mode,
         port_v37_read32(irp+IRP_IOST1),port_v37_read32(irp+IRP_IOST2));
     ops->post_event(ops->context,pid,irp[IRP_EFN]);
+    if(port_v37_iopost_irpe_release(&irpe_plan,ops->free_irpe,
+                                    ops->context,pid)!=PORT_V37_IOPOST_OK)
+        return PORT_V37_IOPOST_BAD;
     if(quota_ast)ops->queue_ast(ops->context,pid,irp_va);
     else ops->free_irp(ops->context,pid,irp_va);
     return PORT_V37_IOPOST_OK;
