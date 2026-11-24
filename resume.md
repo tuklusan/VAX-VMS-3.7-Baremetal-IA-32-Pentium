@@ -1129,3 +1129,13 @@ M303 implementation commit: `891b9e2871f4beb01743fcc291a6cb9f477fa51a`.
 M303 boot-evidence commit: `a8c3f40b89467648960e7a35df0e6c9bfdf974d9`.
 
 Remaining: connect public SYS$QIO to DQA0 STARTIO and completion; finish ACP channel/window/deaccess and release paths; port remaining INIT memory/paging/PHD/context dependencies and activate SYSTEM/DCL; start DECnet Phase IV and verify genuine SET HOST 0 second login and LOGOUT end-to-end.
+
+## M304 — Reclaim failed Files-11 FCB allocations, 24 November 2026
+
+Added an ACP deallocation callback and made F11A/F11B FCB construction return its nonpaged allocation when FH2-derived FCB initialization fails. SYS.EXE binds the callback to the resident variable-pool coalescing routine. The host ACP regression corrupts the header map start, confirms FCB initialization fails, and confirms the allocated block is returned; the normal live SYS.EXE open still obtains its FCB from the resident pool. Successful FCB deaccess and window teardown remain incomplete.
+
+Verification: `make files1187check exenppoolcheck all sysexecentrycheck` PASS (exit 0); Files-11 ACP regression PASS and the native pool regression passes under ASan/UBSan. `make qemu-sysboot-m217` PASS through ACP FCB allocation from the real SYS.EXE nonpaged pool and DQA0 DDT/CRB IRQ14; boot then stops at incomplete INIT. Transcript `logs/serial/qemu-m217-run-local-20261124T205054652300Z.log`, 5,469 bytes, SHA-256 `5b905642cec14dc790b891654ba216c65126f2aeca4d76183c609a78576076cb`. Coverage generator/range test/source validator PASS; 2,061 ranges, 446/4,566 indexed originals, mapped 17,016, partial 29,742, unresolved 52,733, missing 7,799, excluded 26,237, hardware-excluded 917. No SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M304 implementation commit: `a2762279d44c327fb2c396a132d9d0934f536bb7`.
+
+Remaining: successful ACP FCB/window teardown and channel request processing; public SYS$QIO dispatch to live DQA0 STARTIO/IOCIOPOST; complete INIT/PHD/context activation and SYSTEM/DCL; DECnet Phase IV and end-to-end SET HOST 0 second-login/LOGOUT acceptance.
