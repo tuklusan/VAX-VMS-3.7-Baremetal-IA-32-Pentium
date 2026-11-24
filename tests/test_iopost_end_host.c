@@ -216,6 +216,26 @@ int main(void){
           port_v37_read16(pending_mem.page+2u)==0u&&
           port_v37_read32(pending_mem.page+4u)==512u&&
           pending_mem.pins==0u&&pending_mem.unpins==2u);
+    pending_request=(struct port_v37_sysqio_prepared){0};
+    pending_request.args.iosb=0x2000u;
+    pending_request.args.parameter[0]=0x3000u;
+    pending_request.args.parameter[1]=512u;
+    pending_request.dispatch.action_class=PORT_DQ_FDT_READ;
+    CHECK(port_user_pin_io_range(&pending_map,0x2000u,8u,1,
+        pending_page,&pending_mem,pending_pin,pending_unpin,&pending_mem,
+        &pending_request.iosb_pages)==PORT_USER_OK&&
+      port_user_pin_io_range(&pending_map,0x3000u,512u,1,
+        pending_page,&pending_mem,pending_pin,pending_unpin,&pending_mem,
+        &pending_request.transfer_pages)==PORT_USER_OK&&pending_mem.pins==2u);
+    port_v37_write32(dirpost_irp+12u,0x10008u);
+    CHECK(port_v37_sysqio_pending_track(&pending,0x10008u,0x00347000u,
+        dirpost_irp,sizeof dirpost_irp,&pending_request)==
+        PORT_V37_SYSQIO_PENDING_OK&&pending_mem.pins==2u);
+    CHECK(port_v37_sysqio_pending_abort(&pending,0x10008u,0x00347000u,
+        0x2000u,2u)==PORT_V37_SYSQIO_PENDING_OK&&pending_mem.pins==0u&&
+        pending_mem.unpins==4u&&
+        port_v37_sysqio_pending_abort(&pending,0x10008u,0x00347000u,
+        0x2000u,2u)==PORT_V37_SYSQIO_PENDING_NOTFOUND);
     dirpost.pending=0;
     dirpost.order=0u;port_v37_write16(dirpost_irp+40u,0u);
     port_v37_write16(ccb+PORT_V37_CCB_IOC,2u);

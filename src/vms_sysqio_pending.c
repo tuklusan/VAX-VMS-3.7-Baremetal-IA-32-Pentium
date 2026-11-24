@@ -90,6 +90,29 @@ uint32_t port_v37_sysqio_pending_track(struct port_v37_sysqio_pending *table,
     return PORT_V37_SYSQIO_PENDING_OK;
 }
 
+uint32_t port_v37_sysqio_pending_abort(struct port_v37_sysqio_pending *table,
+    uint32_t pid,uint32_t irp_va,uint32_t iosb,uint8_t mode){
+    if(!table||!table->sync.raise_sync||!table->sync.restore_ipl||!pid||
+       !irp_va)return PORT_V37_SYSQIO_PENDING_BAD;
+    const uint32_t old=enter(table);
+    struct port_v37_sysqio_pending_entry *owned=0;
+    for(unsigned i=0u;i<PORT_V37_SYSQIO_PENDING_DEPTH;i++){
+        struct port_v37_sysqio_pending_entry *entry=&table->entries[i];
+        if(entry->state==1u&&entry->pid==pid&&entry->irp_va==irp_va&&
+           entry->request.args.iosb==iosb&&entry->request_mode==mode){
+            owned=entry;break;
+        }
+    }
+    if(!owned){leave(table,old);return PORT_V37_SYSQIO_PENDING_NOTFOUND;}
+    owned->state=2u;
+    struct port_v37_sysqio_prepared request=owned->request;
+    *owned=(struct port_v37_sysqio_pending_entry){0};
+    leave(table,old);
+    port_user_unpin_io_range(&request.transfer_pages);
+    port_user_unpin_io_range(&request.iosb_pages);
+    return PORT_V37_SYSQIO_PENDING_OK;
+}
+
 int port_v37_sysqio_pending_validate(void *opaque,uint32_t pid,
     uint32_t irp_va,uint32_t iosb,uint8_t mode){
     struct port_v37_sysqio_pending *table=opaque;

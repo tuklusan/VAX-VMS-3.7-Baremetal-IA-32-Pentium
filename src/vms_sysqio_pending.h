@@ -23,6 +23,10 @@ void port_v37_sysqio_pending_init(struct port_v37_sysqio_pending *,
 uint32_t port_v37_sysqio_pending_track(struct port_v37_sysqio_pending *,
     uint32_t,uint32_t,const uint8_t *,size_t,
     struct port_v37_sysqio_prepared *);
+/* Roll back a request whose DDT submission failed before it became active.
+ * Only a tracked, not-yet-completing owner can release the retained pins. */
+uint32_t port_v37_sysqio_pending_abort(struct port_v37_sysqio_pending *,
+    uint32_t,uint32_t,uint32_t,uint8_t);
 /* These callbacks bind directly to DIRPOST's optional retained-QIO path. */
 int port_v37_sysqio_pending_validate(void *,uint32_t,uint32_t,uint32_t,
     uint8_t);
