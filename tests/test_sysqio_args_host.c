@@ -340,7 +340,7 @@ int main(void){
     memset(irp,0xa5,sizeof irp);
     const struct port_v37_sysqio_irp_spec ispec={
         .packet_va=0x4000u,.ucb_va=0x2000u,.arb_va=0x3000u,
-        .window_va=0u,.channel_index=2u,.base_priority=8u};
+        .window_va=0u,.channel_index=32u,.base_priority=8u};
     if(port_v37_sysqio_build_irp(&prepared,&proc,&ispec,irp,sizeof irp)!=
          PORT_V37_SYSQIO_IRP_BUILD_OK||
        get16(irp+8u)!=PORT_V37_SYSQIO_IRP_STANDARD_BYTES||
@@ -349,7 +349,7 @@ int main(void){
        get32(irp+20u)!=0xaabbccddu||get32(irp+24u)!=0u||
        get32(irp+28u)!=0x2000u||get16(irp+32u)!=0x31u||
        irp[34u]!=3u||irp[35u]!=8u||get32(irp+36u)!=0x1000u||
-       get16(irp+40u)!=2u||get16(irp+42u)!=0u||
+       get16(irp+40u)!=(uint16_t)(0u-32u)||get16(irp+42u)!=0u||
        get32(irp+44u)!=0u||get16(irp+48u)!=0u||
        get32(irp+52u)!=0u||get32(irp+PORT_V37_IRP_ARB)!=0x3000u||
        irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES]!=0xa5u){
@@ -374,7 +374,7 @@ int main(void){
     const struct port_v37_irp_pool_sync pool_sync={&pool_state,pool_raise,
         pool_restore};
     struct port_v37_sysqio_irp_spec reserve_spec={.ucb_va=0x2000u,
-        .arb_va=0x3000u,.channel_index=2u,.base_priority=8u};
+        .arb_va=0x3000u,.channel_index=32u,.base_priority=8u};
     uint8_t *reserved_irp=0;uint32_t reserved_va=0;
     proc.ast_count=1;
     if(port_v37_sysqio_reserve_irp(&prepared,&proc,&reserve_spec,&pool,
@@ -529,6 +529,14 @@ int main(void){
     if(port_v37_sysqio_build_irp(&prepared,&proc,&bad_spec,irp,sizeof irp)!=
          PORT_V37_SYSQIO_IRP_BUILD_BAD||irp[0]!=0x5au||irp[sizeof irp-1u]!=0x5au)
         return 29;
+    bad_spec=ispec;bad_spec.channel_index=33u;
+    if(port_v37_sysqio_build_irp(&prepared,&proc,&bad_spec,irp,sizeof irp)!=
+         PORT_V37_SYSQIO_IRP_BUILD_BAD||irp[0]!=0x5au)
+        return 69;
+    bad_spec=ispec;bad_spec.channel_index=0u;
+    if(port_v37_sysqio_build_irp(&prepared,&proc,&bad_spec,irp,sizeof irp)!=
+         PORT_V37_SYSQIO_IRP_BUILD_BAD||irp[0]!=0x5au)
+        return 70;
     uint16_t normalized=0xaaaau;uint8_t check_ast=0xaau;
     uint32_t access_status=0xfeedu;
     if(port_v37_sysqio_normalize_write(0x0fb0u,0u,0u,&normalized,

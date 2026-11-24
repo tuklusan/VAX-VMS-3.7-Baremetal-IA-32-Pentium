@@ -133,6 +133,7 @@ enum { PORT_V37_SYSQIO_IRP_BUILD_OK=1u,
        PORT_V37_SYSQIO_IRP_BUILD_BAD=2u,
        PORT_V37_SYSQIO_IRP_STANDARD_BYTES=136u };
 struct port_v37_sysqio_irp_spec {
+    /* channel_index is the positive CCB byte offset (16-byte units). */
     uint32_t packet_va,ucb_va,arb_va,window_va,channel_index;
     uint8_t base_priority;
     uint8_t reserved[3];

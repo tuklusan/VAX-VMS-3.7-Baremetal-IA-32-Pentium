@@ -32,7 +32,9 @@ uint32_t port_v37_sysqio_build_irp(
        process->access_mode>3u||packet_bytes<PORT_V37_SYSQIO_IRP_STANDARD_BYTES||
        packet_bytes>UINT16_MAX||(spec->packet_va&3u)||!spec->packet_va||
        (spec->ucb_va&3u)||!spec->ucb_va||(spec->arb_va&3u)||
-       (spec->window_va&3u)||spec->channel_index>UINT16_MAX||
+       (spec->window_va&3u)||spec->channel_index==0u||
+       spec->channel_index>UINT16_MAX||
+       (spec->channel_index%PORT_V37_CCB_BYTES)!=0u||
        spec->base_priority>31u||
        request->args.function!=request->dispatch.full_function)
         return PORT_V37_SYSQIO_IRP_BUILD_BAD;
@@ -50,7 +52,11 @@ uint32_t port_v37_sysqio_build_irp(
     candidate[IRP_EFN]=(uint8_t)request->args.event_flag;
     candidate[IRP_PRI]=spec->base_priority;
     put32(candidate+IRP_IOSB,request->args.iosb);
-    put16(candidate+IRP_CHAN,(uint16_t)spec->channel_index);
+    /* SYSQIOREQ.VCHAN negates the byte-offset channel index in R9.
+     * IRP$W_CHAN therefore holds the negative CCB offset; IOCIOPOST
+     * sign-extends it and adds it to CTL$GL_CCBBASE. */
+    put16(candidate+IRP_CHAN,
+          (uint16_t)(0u-(uint16_t)spec->channel_index));
     put16(candidate+IRP_STS,request->dispatch.buffered?IRP_STS_BUFIO:0u);
     put32(candidate+IRP_SVAPTE,0u);
     put16(candidate+IRP_BOFF,0u);

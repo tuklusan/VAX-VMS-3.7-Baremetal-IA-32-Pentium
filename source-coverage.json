@@ -21555,7 +21555,7 @@
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
           "pc_line": 26,
-          "function": "Build the source-layout 136-byte standard IRP through CDRP$L_LENGTH, including ARB/fork fields and conditional ACB quota flag plus ASTCNT charge, after caller packet allocation; native channel accounting and driver dispatch remain unbound"
+          "function": "Build source-layout 136-byte standard IRP with source negative byte-offset IRP$W_CHAN encoding, ARB/fork fields and conditional ACB quota flag plus ASTCNT charge; native channel accounting and driver dispatch remain unbound"
         },
         {
           "original_lines": [
