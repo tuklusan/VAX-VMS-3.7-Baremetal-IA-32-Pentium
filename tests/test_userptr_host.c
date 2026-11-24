@@ -68,10 +68,24 @@ int main(void) {
     assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,1)==PORT_USER_BAD);
     assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,0)==PORT_USER_OK);
     assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX+1u,0)==PORT_USER_BAD);
+    t0[2]=0x7000u|7u; /* translated I/O pages need not be physically adjacent */
     struct port_user_page_locks locks={0};
     assert(port_user_pin_io_range(&m,0x1002,UINT16_MAX,0,physical,0,
                                   pin,unpin,0,&locks)==PORT_USER_OK);
     assert(locks.count==17u&&pin_counts[2]==1u&&pin_counts[18]==1u);
+    uint8_t io_data[600],roundtrip[600];
+    for(unsigned i=0;i<sizeof io_data;i++)io_data[i]=(uint8_t)(i*13u);
+    assert(port_user_copy_to_pinned(&locks,0x1ffeu,io_data,
+                                    sizeof io_data)==PORT_USER_OK);
+    assert(pages[2][4094]==io_data[0]&&pages[2][4095]==io_data[1]&&
+           locks.physical[1]==0x7000u&&pages[7][0]==io_data[2]&&
+           port_user_copy_from_pinned(&locks,roundtrip,0x1ffeu,
+                                      sizeof roundtrip)==PORT_USER_OK&&
+           __builtin_memcmp(io_data,roundtrip,sizeof io_data)==0);
+    assert(port_user_copy_to_pinned(&locks,0x1001u,io_data,1u)==PORT_USER_BAD);
+    uint8_t untouched[4]={1u,2u,3u,4u};
+    assert(port_user_copy_from_pinned(&locks,untouched,0x11000u,4u)==
+           PORT_USER_BAD&&untouched[0]==1u&&untouched[3]==4u);
     port_user_unpin_io_range(&locks);
     assert(locks.count==0u&&pin_counts[2]==0u&&pin_counts[18]==0u);
     locks.physical[0]=0xabcdef00u;
@@ -81,6 +95,6 @@ int main(void) {
     assert(locks.count==0u&&locks.physical[0]==0xabcdef00u);
     for(unsigned i=0;i<32;i++)assert(pin_counts[i]==0u);
     fail_pin_call=0;
-    puts("M293 user pointer access, crossings, IO page pin rollback PASS");
+    puts("M295 user pointer pinned I/O copy, crossings and rollback PASS");
     return 0;
 }

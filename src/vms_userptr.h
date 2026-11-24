@@ -28,6 +28,9 @@ typedef void (*port_user_page_unpin)(void *context,uint32_t physical_page);
 struct port_user_page_locks {
     uint32_t physical[PORT_USER_PIN_MAX_PAGES];
     unsigned count;
+    uint32_t virtual_base,transfer_base,transfer_bytes;
+    port_phys_page_resolver physical_resolver;
+    void *physical_context;
     port_user_page_unpin release;
     void *release_context;
 };
@@ -37,6 +40,12 @@ int port_user_pin_io_range(const struct port_user_map *map,uint32_t address,
                            port_user_page_pin pin,port_user_page_unpin unpin,
                            void *lock_context,struct port_user_page_locks *locks);
 void port_user_unpin_io_range(struct port_user_page_locks *locks);
+/* Async I/O completion/source staging through the pinned physical aliases;
+ * the current CR3 and original user VA are not consulted for translation. */
+int port_user_copy_to_pinned(const struct port_user_page_locks *,uint32_t,
+                             const void *,uint32_t);
+int port_user_copy_from_pinned(const struct port_user_page_locks *,void *,
+                               uint32_t,uint32_t);
 /* Validate all user PTEs and all destination physical spans before writing
  * any byte. Works when user virtual pages are not identity-mapped. */
 int port_user_copy_to(const struct port_user_map *map, uint32_t dest,

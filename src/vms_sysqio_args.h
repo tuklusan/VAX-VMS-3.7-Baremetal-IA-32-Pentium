@@ -150,6 +150,10 @@ struct port_v37_sysqio_buffer {
 uint32_t port_v37_sysqio_check_buffer(
     const struct port_v37_sysqio_prepared *,const struct port_exe_access *,
     struct port_v37_sysqio_buffer *,uint32_t *service_status);
+uint32_t port_v37_sysqio_copy_to_user_buffer(
+    const struct port_v37_sysqio_prepared *,const void *,uint32_t);
+uint32_t port_v37_sysqio_copy_from_user_buffer(
+    const struct port_v37_sysqio_prepared *,void *,uint32_t);
 
 /* Source SYSQIOREQ SUCCES constructs the device-independent standard IRP.
  * This builder only consumes an already reserved packet; allocation,

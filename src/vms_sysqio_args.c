@@ -106,6 +106,28 @@ uint32_t port_v37_sysqio_check_buffer(
     return PORT_V37_SYSQIO_BUFFER_OK;
 }
 
+uint32_t port_v37_sysqio_copy_to_user_buffer(
+    const struct port_v37_sysqio_prepared *request,const void *source,
+    uint32_t bytes){
+    if(!request||request->dispatch.action_class!=PORT_DQ_FDT_READ||
+       !bytes||bytes>(uint16_t)request->args.parameter[1])
+        return PORT_V37_SYSQIO_BUFFER_BAD;
+    return port_user_copy_to_pinned(&request->transfer_pages,
+        request->args.parameter[0],source,bytes)==PORT_USER_OK?
+        PORT_V37_SYSQIO_BUFFER_OK:PORT_V37_SYSQIO_BUFFER_ACCVIO;
+}
+
+uint32_t port_v37_sysqio_copy_from_user_buffer(
+    const struct port_v37_sysqio_prepared *request,void *destination,
+    uint32_t bytes){
+    if(!request||request->dispatch.action_class!=PORT_DQ_FDT_WRITE||
+       !bytes||bytes>(uint16_t)request->args.parameter[1])
+        return PORT_V37_SYSQIO_BUFFER_BAD;
+    return port_user_copy_from_pinned(&request->transfer_pages,destination,
+        request->args.parameter[0],bytes)==PORT_USER_OK?
+        PORT_V37_SYSQIO_BUFFER_OK:PORT_V37_SYSQIO_BUFFER_ACCVIO;
+}
+
 static uint32_t begin_failure(uint32_t result,uint32_t status,
     const struct port_v37_sysqio_args *args,
     const struct port_v37_sysqio_process *process,

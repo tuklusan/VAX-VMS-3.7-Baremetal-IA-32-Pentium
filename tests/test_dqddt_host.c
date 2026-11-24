@@ -358,6 +358,7 @@ int main(void){
     qio_process.ast_count=1;
     memcpy(assign_memory.bytes+128u,sysqio_ap,sizeof sysqio_ap);
     port_v37_write32(assign_memory.bytes+128u+5u*4u,0x1200u);
+    port_v37_write32(assign_memory.bytes+128u+7u*4u,0x1800u);
     assign_memory.pte[1]=0x9005u;
     CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
         &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
@@ -394,6 +395,13 @@ int main(void){
         qio_prepared.transfer_pages.count==1u&&
         qio_prepared.transfer_pages.physical[0]==0x9000u&&
         qio_fixture.pins==1u&&qio_fixture.unpins==0u);
+    uint8_t user_read_data[512];
+    for(unsigned i=0;i<sizeof user_read_data;i++)
+        user_read_data[i]=(uint8_t)(i^0x5au);
+    CHECK(port_v37_sysqio_copy_to_user_buffer(&qio_prepared,user_read_data,
+        sizeof user_read_data)==PORT_V37_SYSQIO_BUFFER_OK&&
+        !memcmp(assign_memory.bytes+0x800u,user_read_data,
+                sizeof user_read_data));
     uint16_t channel_ioc=0u;uint32_t deaccess_irp=UINT32_MAX;
     CHECK(port_v37_sysassign_qio_charge(&qio_fixture.channels,
         qio_process.pid,assigned,qio_process.access_mode,&assign_ops,
@@ -427,6 +435,14 @@ int main(void){
         port_v37_read32(qio_irp+52u)==512u&&
         qio_prepared.transfer_pages.count==1u&&qio_fixture.pins==1u&&
         !(port_v37_read16(qio_irp+42u)&2u));
+    uint8_t user_write_data[512];
+    for(unsigned i=0;i<sizeof user_write_data;i++)
+        assign_memory.bytes[0x800u+i]=(uint8_t)(i*7u+3u);
+    CHECK(port_v37_sysqio_copy_from_user_buffer(&qio_prepared,
+        user_write_data,sizeof user_write_data)==PORT_V37_SYSQIO_BUFFER_OK&&
+        !memcmp(assign_memory.bytes+0x800u,user_write_data,
+                sizeof user_write_data)&&user_write_data[0]==3u&&
+        user_write_data[1]==10u&&user_write_data[511]==(uint8_t)(511u*7u+3u));
     port_v37_sysqio_release_user_pages(&qio_prepared);
     CHECK(qio_fixture.pins==0u&&qio_fixture.unpins==2u);
     CHECK(port_v37_irp_pool_free(&qio_pool,qio_irp,qio_irp_va,

@@ -45,7 +45,14 @@ int port_user_pin_io_range(const struct port_user_map *m,uint32_t base,
     if(!locks||locks->count||!physical||!pin||!unpin||
        port_user_io_range_valid(m,base,bytes,writing))return PORT_USER_BAD;
     const uint32_t last=base+bytes-1u;
-    struct port_user_page_locks acquired={{0},0,unpin,lock_ctx};
+    struct port_user_page_locks acquired={0};
+    acquired.virtual_base=base&0xfffff000u;
+    acquired.transfer_base=base;
+    acquired.transfer_bytes=bytes;
+    acquired.physical_resolver=physical;
+    acquired.physical_context=physical_ctx;
+    acquired.release=unpin;
+    acquired.release_context=lock_ctx;
     for(uint32_t at=base;;){
         const uint32_t dir=m->pde[(at>>22)&1023u];
         const uint32_t *table=m->resolve(m->context,dir&0xfffff000u);
@@ -66,11 +73,59 @@ rollback:
     return PORT_USER_BAD;
 }
 
+static int copy_pinned(const struct port_user_page_locks *locks,
+                       uint32_t address,void *buffer,uint32_t bytes,
+                       int to_user){
+    if(!locks||!buffer||!locks->physical_resolver||!locks->count||
+       locks->count>PORT_USER_PIN_MAX_PAGES||!bytes||
+       address<locks->transfer_base||
+       address>UINT32_MAX-(bytes-1u)||
+       address-locks->transfer_base>locks->transfer_bytes||
+       bytes>locks->transfer_bytes-(address-locks->transfer_base))
+        return PORT_USER_BAD;
+    struct span { uint8_t *page,*buffer;uint32_t offset,size; } spans[
+        PORT_USER_PIN_MAX_PAGES];
+    uint32_t at=address,left=bytes;
+    unsigned count=0u;
+    while(left){
+        const uint32_t index=(at-locks->virtual_base)>>12;
+        if(index>=locks->count||count>=PORT_USER_PIN_MAX_PAGES)
+            return PORT_USER_BAD;
+        uint8_t *page=locks->physical_resolver(locks->physical_context,
+                                               locks->physical[index]);
+        if(!page)return PORT_USER_BAD;
+        const uint32_t offset=at&4095u;
+        uint32_t n=4096u-offset;
+        if(n>left)n=left;
+        spans[count++]=(struct span){page,(uint8_t *)buffer+(at-address),
+                                     offset,n};
+        at+=n;left-=n;
+    }
+    for(unsigned i=0;i<count;i++)
+        for(uint32_t j=0;j<spans[i].size;j++)
+            if(to_user)spans[i].page[spans[i].offset+j]=spans[i].buffer[j];
+            else spans[i].buffer[j]=spans[i].page[spans[i].offset+j];
+    return PORT_USER_OK;
+}
+
+int port_user_copy_to_pinned(const struct port_user_page_locks *locks,
+                             uint32_t address,const void *source,
+                             uint32_t bytes){
+    return copy_pinned(locks,address,(void *)source,bytes,1);
+}
+int port_user_copy_from_pinned(const struct port_user_page_locks *locks,
+                               void *destination,uint32_t address,
+                               uint32_t bytes){
+    return copy_pinned(locks,address,destination,bytes,0);
+}
+
 void port_user_unpin_io_range(struct port_user_page_locks *locks){
     if(!locks||!locks->release||locks->count>PORT_USER_PIN_MAX_PAGES)return;
     while(locks->count)locks->release(locks->release_context,
                                       locks->physical[--locks->count]);
     for(unsigned i=0;i<PORT_USER_PIN_MAX_PAGES;i++)locks->physical[i]=0;
+    locks->virtual_base=locks->transfer_base=locks->transfer_bytes=0;
+    locks->physical_resolver=0;locks->physical_context=0;
     locks->release=0;locks->release_context=0;
 }
 
