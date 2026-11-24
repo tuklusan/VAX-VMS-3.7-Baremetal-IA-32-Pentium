@@ -831,7 +831,7 @@ Added a PID-bound adapter from the assigned source CCB table to `SYSQIOREQ`'s ch
 
 `make dqddtcheck` PASS with the integrated assignment-to-QIO-begin sequence, PID mismatch rejection, and CCB/FDT binding. Full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS through the actual 700-byte SYS.EXE DQA0 DDT/CRB/IRQ14 read, then the documented incomplete INIT stop. M274 service-preflight integration was host-tested only. Source coverage validation PASS: 2,032 ranges; 445/4,566 indexed; mapped 17,016, partial 29,573, unresolved 52,034, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T143338945563Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login, DCL or DECnet acceptance occurred.
 
-M274 implementation commit and publication details follow.
+M274 implementation commit: `b3f618c56ef14f7aa354b560f863ca437b48f28a`. Published to `origin/main`; resume update follows.
 
 Remaining: wire positive-PID completions to live IPL$_IOPOST using the real native PCB vector, PHD/page-map resolution and scheduler KAST queue; add buffered/paging/virtual paths and DIRPOST IOSB/event/AST/IRPE handling; implement real public SYS$QIO and Files-11 ACP; finish INIT and process activation; verify DECnet Phase IV and nested SYSTEM/DCL SET HOST 0.
 
