@@ -162,6 +162,45 @@ uint32_t port_v37_sysqio_prepare_user_irp(
         *service_status=PORT_SYS85_ACCVIO;
         return PORT_V37_SYSQIO_PREPARE_BEGIN;
     }
-    return port_v37_sysqio_prepare_irp(ap,sizeof ap,process,ops,spec,pool,
-        sync,prepared,packet,packet_va,service_status);
+    struct port_v37_sysqio_prepared request={0};
+    uint8_t *reserved=0;uint32_t va=0u;uint32_t status=PORT_SYS85_BADPARAM;
+    const int16_t ast_before=port_v37_sysqio_process_ast_count(process);
+    const uint32_t result=port_v37_sysqio_prepare_irp(ap,sizeof ap,process,
+        ops,spec,pool,sync,&request,&reserved,&va,&status);
+    if(result!=PORT_V37_SYSQIO_PREPARE_OK){
+        *service_status=status;
+        return result;
+    }
+    struct port_v37_sysqio_buffer buffer={0};
+    const uint32_t checked=port_v37_sysqio_check_buffer(&request,memory,
+        &buffer,&status);
+    if(checked!=PORT_V37_SYSQIO_BUFFER_OK&&
+       checked!=PORT_V37_SYSQIO_BUFFER_NONE){
+        /* prepare_irp charged I/O and AST quotas and owns a private packet.
+         * The access-fault path mirrors EXE$ABORTIO: return the packet and
+         * restore both process charges before posting the event flag. */
+        const uint32_t bytes=(uint32_t)reserved[8u]|
+            ((uint32_t)reserved[9u]<<8);
+        const uint32_t returned=port_v37_irp_pool_free(pool,reserved,va,
+            bytes,sync);
+        if(returned!=PORT_V37_IRP_POOL_OK){
+            *service_status=PORT_SYS85_BADPARAM;
+            *packet=reserved;*packet_va=va;
+            return PORT_V37_SYSQIO_PREPARE_RESERVE;
+        }
+        if(request.args.ast_address)
+            port_v37_sysqio_process_set_ast_count(process,ast_before);
+        const int16_t io=port_v37_sysqio_process_io_count(process,
+            request.dispatch.buffered);
+        if(io<INT16_MAX)
+            port_v37_sysqio_process_set_io_count(process,
+                request.dispatch.buffered,(int16_t)(io+1));
+        if(ops->post_event)ops->post_event(ops->context,process->pid,
+            (uint8_t)request.args.event_flag,status);
+        *service_status=status;
+        return PORT_V37_SYSQIO_PREPARE_BUFFER;
+    }
+    *prepared=request;*packet=reserved;*packet_va=va;
+    *service_status=status;
+    return PORT_V37_SYSQIO_PREPARE_OK;
 }

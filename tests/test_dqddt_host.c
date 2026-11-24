@@ -285,6 +285,7 @@ int main(void){
         .device_database_base=(uint32_t)(uintptr_t)db,
         .assigned_ucb=info.ucb[0],.device=&qio_device}};
     uint32_t sysqio_ap[13]={12u,1u,assigned,PORT_DQ_READPBLK,0u};
+    sysqio_ap[7]=0x1000u;sysqio_ap[8]=512u;
     struct port_v37_sysqio_process qio_process={
         .pid=0x12340001u,.access_mode=0u,.direct_io_count=1};
     const struct port_v37_sysqio_begin_ops qio_ops={
@@ -340,20 +341,32 @@ int main(void){
     uint8_t *qio_irp=0;uint32_t qio_irp_va=0u;
     qio_process.direct_io_count=1;
     qio_process.has_phy_io=1u;
+    qio_process.ast_count=1;
     memcpy(assign_memory.bytes+128u,sysqio_ap,sizeof sysqio_ap);
+    port_v37_write32(assign_memory.bytes+128u+5u*4u,0x1200u);
+    assign_memory.pte[1]=0x9005u;
+    CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
+        &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
+        &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_BUFFER&&
+        qio_status==PORT_SYS85_ACCVIO&&!qio_irp&&!qio_irp_va&&
+        qio_process.direct_io_count==1&&qio_fixture.errors==1u&&
+        qio_process.ast_count==1&&qio_pool.free_count==1u);
+    assign_memory.pte[1]=0x9007u;
+    port_v37_write32(assign_memory.bytes+128u+5u*4u,0u);
     CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x2000u,
         &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
         &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_BEGIN&&
         qio_status==PORT_SYS85_ACCVIO&&!qio_irp&&!qio_irp_va&&
-        qio_process.direct_io_count==1&&qio_fixture.errors==0u);
+        qio_process.direct_io_count==1&&qio_fixture.errors==1u);
     CHECK(port_v37_sysqio_prepare_user_irp(&assign_access,0x1080u,
         &qio_process,&qio_ops,&qio_spec,&qio_pool,&qio_sync,&qio_prepared,
         &qio_irp,&qio_irp_va,&qio_status)==PORT_V37_SYSQIO_PREPARE_OK);
-    CHECK(qio_process.direct_io_count==0&&qio_fixture.errors==0u&&
+    CHECK(qio_process.direct_io_count==0&&qio_fixture.errors==1u&&
         qio_irp==qio_pool_memory&&qio_irp_va==0x00380000u&&
         port_v37_read32(qio_irp+12u)==qio_process.pid&&
         port_v37_read32(qio_irp+28u)==info.ucb[0]&&
         port_v37_read16(qio_irp+32u)==PORT_DQ_READPBLK&&
+        port_v37_read32(qio_irp+52u)==512u&&
         port_v37_read16(qio_irp+40u)==(uint16_t)(0u-assigned)&&
         (port_v37_read16(qio_irp+42u)&0x0100u)!=0u);
     uint16_t channel_ioc=0u;uint32_t deaccess_irp=UINT32_MAX;
