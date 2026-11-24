@@ -10,6 +10,7 @@ static uint16_t rd16(const uint8_t *p){return (uint16_t)(p[0]|(uint16_t)p[1]<<8)
 struct fake {
     uint8_t header[512];
     unsigned allocation,deallocation,turns,maps,reads,invalidated,switched,posts,dismounts,mounts;
+    uint8_t window_write_access;
     uint32_t vbn,lbn;
 };
 static void *allocate(void *p,uint32_t bytes,uint32_t kind){
@@ -20,7 +21,7 @@ static void *allocate(void *p,uint32_t bytes,uint32_t kind){
 }
 static uint32_t deallocate(void *p,void *memory,uint32_t bytes,uint32_t kind){
     struct fake *m=p;(void)bytes;
-    assert(kind==PORT_F11_87_FCBTYPE&&memory);m->deallocation++;
+    assert((kind==PORT_F11_87_FCBTYPE||kind==2u)&&memory);m->deallocation++;
     free(memory);return 1u;
 }
 static uint32_t mount_kernel(void *p,uint32_t *bits,uint32_t mask){
@@ -30,7 +31,7 @@ static uint32_t turn(void *p,struct port_f11_87_window *w,const uint8_t h[512],
                      uint32_t first,uint32_t number,struct port_f11_87_window **out){
     struct fake *m=p;assert(first==1&&number==1&&h);m->turns++;
     if(!w){w=calloc(1,sizeof(*w));assert(w);}
-    w->write_access=1;*out=w;
+    w->write_access=m->window_write_access;*out=w;
     return 1;
 }
 static uint32_t map(void *p,uint32_t vbn,uint32_t *lbn){
@@ -52,7 +53,7 @@ static uint32_t dismount(void *p){struct fake *m=p;m->dismounts++;return 1;}
 
 int main(int argc,char **argv){
     assert(argc==2);
-    struct fake m={0};m.lbn=22;
+    struct fake m={0};m.lbn=22;m.window_write_access=1u;
     struct port_f11_87_volume vol={0};vol.index_bitmap_blocks=1;vol.cluster=1;
     vol.reserved_files=16;vol.default_window=4;
     struct port_f11_87_context c={0};c.volume=&vol;c.ops=(struct port_f11_87_ops){
@@ -189,6 +190,29 @@ int main(int argc,char **argv){
     assert((fibout.bytes[23]&0x80u)==0u);
     assert(rd16(fibout.bytes+4)==fid2.number);
     assert(port_f11b_io_done(&c,&p,1,0,0,0,0)==1u);
+    const struct port_f11_87_deaccess_request no_attributes={0};
+    assert(port_f11b_deaccess(&c,&no_attributes)==PORT_F11_87_INCOMPLETE);
+    m.window_write_access=0u;
+    struct port_f11_87_fcb *read_fcb=port_f11b_create_fcb(&c,m.header,22);
+    assert(read_fcb);
+    struct port_f11_87_window *read_window=
+        port_f11b_create_window(&c,0,0,m.header,100,read_fcb);
+    assert(read_window&&read_window->read&&!read_window->write);
+    struct port_f11_87_window *readback=0;
+    struct port_f11_87_context close_context={
+        .volume=&vol,.ops=c.ops,.ucb=c.ucb,.primary=read_fcb};
+    assert(port_f11b_make_access(&close_context,read_fcb,read_window,
+                                 &readback)==1u);
+    close_context.window=read_window;
+    unsigned free_before_close=m.deallocation;
+    unsigned transactions_before_close=vol.transactions;
+    assert(port_f11b_deaccess(&close_context,&no_attributes)==PORT_F11_87_NORMAL);
+    assert(!close_context.primary&&!close_context.window&&
+           !close_context.cleanup_deaccess&&close_context.open_count==0u&&
+           vol.transactions+1u==transactions_before_close&&
+           read_fcb->accesses==0u&&
+           !read_fcb->windows&&!read_fcb->window_tail&&
+           m.deallocation==free_before_close+1u);
     /* An extended ODS-2 FID keeps the file-number extension and RVN apart. */
     uint8_t extended_header[512];memcpy(extended_header,m.header,512);
     extended_header[13]=2u;

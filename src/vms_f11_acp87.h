@@ -8,7 +8,8 @@ enum {
     PORT_F11_87_NORMAL=1u, PORT_F11_87_BADPARAM=20u,
     PORT_F11_87_WRONGACP=796u, PORT_F11_87_BADCHKSUM=2056u,
     PORT_F11_87_BADFILEHDR=2064u, PORT_F11_87_FILENUMCHK=2224u,
-    PORT_F11_87_FILESTRUCT=2240u, PORT_F11_87_NOSUCHFILE=2320u
+    PORT_F11_87_FILESTRUCT=2240u, PORT_F11_87_NOSUCHFILE=2320u,
+    PORT_F11_87_INCOMPLETE=0xfffffffcu
 };
 enum { PORT_F11_87_FCBTYPE=1u, PORT_F11_87_MIN_WINDOW=1,
        PORT_F11_87_MAX_WINDOW=80, PORT_F11_87_FIBLEN=80,
@@ -50,6 +51,9 @@ struct port_f11_87_window {
     uint16_t access, pointer_count;
     uint8_t read, write, write_access, read_check, write_check;
     uint8_t no_read, no_write, no_truncate;
+    uint8_t expire, allocation_owned;
+    void *allocation_base;
+    uint32_t allocation_bytes;
 };
 struct port_f11_87_ops {
     void *context;
@@ -80,6 +84,9 @@ struct port_f11_87_context {
     uint32_t open_count,total_opens;
     uint8_t cleanup_deaccess,cleanup_directory,cleanup_spool;
     uint16_t status;
+};
+struct port_f11_87_deaccess_request {
+    uint8_t extend,truncate,attributes,reserved;
 };
 
 uint32_t port_f11a_mount(struct port_f11_87_context *,uint8_t,uint32_t *);
@@ -124,6 +131,11 @@ uint32_t port_f11a_make_access(struct port_f11_87_context *,struct port_f11_87_f
                                 struct port_f11_87_window *,struct port_f11_87_window **);
 uint32_t port_f11b_make_access(struct port_f11_87_context *,struct port_f11_87_fcb *,
                                 struct port_f11_87_window *,struct port_f11_87_window **);
+/* DEACCS.B32's read-only, non-expiring, no-attribute close path. Other
+ * source branches return INCOMPLETE until header mutation and cleanup
+ * services are integrated. */
+uint32_t port_f11b_deaccess(struct port_f11_87_context *,
+                            const struct port_f11_87_deaccess_request *);
 uint32_t port_f11a_io_done(struct port_f11_87_context *,struct port_f11_87_packet *,
                             uint32_t,uint32_t,struct port_f11_86_abd *,const uint8_t *,size_t);
 uint32_t port_f11b_io_done(struct port_f11_87_context *,struct port_f11_87_packet *,

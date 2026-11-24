@@ -333,9 +333,17 @@ static struct port_f11_87_window *create_window(struct port_f11_87_context *c,
         if(!w)return 0;
         zero((uint8_t*)w,sizeof(*w));w->pointer_count=(uint16_t)size;
     }
+    struct port_f11_87_window *const allocation=w;
+    const uint32_t allocation_bytes=w?(uint32_t)(sizeof(*w)+(size_t)size*6u):0u;
     struct port_f11_87_window *primary=w;
     uint32_t status=c->ops.turn_window(c->ops.context,w,h,1u,1u,&primary);
-    if(!(status&1u)||!primary){c->status=(uint16_t)status;return 0;}
+    if(!(status&1u)||!primary){
+        c->status=(uint16_t)status;
+        if(allocation&&c->ops.dealloc&&
+           !(c->ops.dealloc(c->ops.context,allocation,allocation_bytes,2u)&1u))
+            c->status=PORT_F11_87_BADPARAM;
+        return 0;
+    }
     unsigned traversed=0;
     for(w=primary;w;w=w->next_segment){
         if(++traversed>65536u)__builtin_trap();
@@ -348,6 +356,11 @@ static struct port_f11_87_window *create_window(struct port_f11_87_context *c,
             if(h[12]&8u)w->read_check=1;
             if(h[12]&16u)w->write_check=1;
         }
+    }
+    if(allocation){
+        primary->allocation_base=allocation;
+        primary->allocation_bytes=allocation_bytes;
+        primary->allocation_owned=1u;
     }
     return primary;
 }
@@ -466,6 +479,42 @@ uint32_t port_f11a_make_access(struct port_f11_87_context *c,struct port_f11_87_
 uint32_t port_f11b_make_access(struct port_f11_87_context *c,struct port_f11_87_fcb *f,
                                struct port_f11_87_window *w,struct port_f11_87_window **wb){
     return make_access(c,f,w,wb,1);
+}
+
+uint32_t port_f11b_deaccess(struct port_f11_87_context *c,
+                            const struct port_f11_87_deaccess_request *request){
+    if(!c||!request||request->reserved||!c->volume||!c->primary||
+       !c->window||!c->cleanup_deaccess||!c->ops.dealloc)
+        return PORT_F11_87_BADPARAM;
+    struct port_f11_87_fcb *f=c->primary;
+    struct port_f11_87_window *w=c->window;
+    struct port_f11_87_volume *v=c->volume;
+    /* The source's update, expiration, truncate, delete and spool branches
+     * need READ_HEADER/WRITE_ATTRIB/TRUNCATE and cleanup actions that are
+     * not yet integrated. Keep those requests intact for their caller. */
+    if(request->extend||request->truncate||request->attributes||
+       c->cleanup_directory||c->cleanup_spool||f->spool||w->write||
+       w->expire||w->no_read||w->next_segment||!w->allocation_owned||
+       w->allocation_base!=w||!w->allocation_bytes)
+        return PORT_F11_87_INCOMPLETE;
+    if(w->fcb!=f||!f->accesses||!c->open_count||!v->transactions||
+       (w->no_write&&!f->no_writers)||
+       (w->no_truncate&&!f->no_truncate))
+        return PORT_F11_87_BADPARAM;
+    struct port_f11_87_window *previous=0,*p=f->windows;
+    while(p&&p!=w){previous=p;p=p->next_fcb;}
+    if(!p)return PORT_F11_87_BADPARAM;
+    if(previous)previous->next_fcb=w->next_fcb;else f->windows=w->next_fcb;
+    if(f->window_tail==w)f->window_tail=previous;
+    f->accesses--;
+    if(w->no_write)f->no_writers--;
+    if(w->no_truncate)f->no_truncate--;
+    c->open_count--;v->transactions--;
+    c->primary=0;c->window=0;c->cleanup_deaccess=0;
+    if(!(c->ops.dealloc(c->ops.context,w->allocation_base,
+                        w->allocation_bytes,2u)&1u))
+        __builtin_trap();
+    return PORT_F11_87_NORMAL;
 }
 
 /* IODONE: put a real IRP on the I/O post queue, then test dismount. */

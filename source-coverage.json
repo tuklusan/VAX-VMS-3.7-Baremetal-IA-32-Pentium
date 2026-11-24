@@ -9966,7 +9966,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_create_window",
-          "pc_line": 354,
+          "pc_line": 367,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10000,7 +10000,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_create_window",
-          "pc_line": 357,
+          "pc_line": 370,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10034,7 +10034,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_get_fib",
-          "pc_line": 415,
+          "pc_line": 428,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10068,7 +10068,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_get_fib",
-          "pc_line": 419,
+          "pc_line": 432,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10102,7 +10102,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_make_access",
-          "pc_line": 462,
+          "pc_line": 475,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10136,13 +10136,47 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_make_access",
-          "pc_line": 466,
+          "pc_line": 479,
           "function": "Native Files-11 ACP routine"
         },
         {
           "original_lines": [
             191,
             194
+          ],
+          "status": "excluded",
+          "reason": "Original module end and blank lines"
+        }
+      ],
+      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+    },
+    {
+      "original_file": "F11B/SRC/DEACCS.B32",
+      "original_lines": 312,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            70
+          ],
+          "status": "excluded",
+          "reason": "Original notices, definitions and procedure description"
+        },
+        {
+          "original_lines": [
+            71,
+            309
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_f11_acp87.c",
+          "pc_symbol": "port_f11b_deaccess",
+          "pc_line": 484,
+          "function": "Read-only non-expiring DEACCESS unlinks the WCB from its FCB, releases window counters and returns the WCB allocation; write attributes, expiration, truncate, delete, spool and cleanup branches remain explicitly incomplete."
+        },
+        {
+          "original_lines": [
+            310,
+            312
           ],
           "status": "excluded",
           "reason": "Original module end and blank lines"
@@ -10170,7 +10204,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_io_done",
-          "pc_line": 505,
+          "pc_line": 554,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10204,7 +10238,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_io_done",
-          "pc_line": 509,
+          "pc_line": 558,
           "function": "Native Files-11 ACP routine"
         },
         {

@@ -1676,6 +1676,7 @@ f11_87_files = [
     ('F11B/SRC/GETFIB.B32',242,66,238,'port_f11b_get_fib'),
     ('F11A/SRC/MAKACC.B32',198,64,194,'port_f11a_make_access'),
     ('F11B/SRC/MAKACC.B32',194,64,190,'port_f11b_make_access'),
+    ('F11B/SRC/DEACCS.B32',312,71,309,'port_f11b_deaccess'),
     ('F11A/SRC/IODONE.MAR',149,100,144,'port_f11a_io_done'),
     ('F11B/SRC/IODONE.MAR',150,100,145,'port_f11b_io_done'),
 ]
@@ -1693,6 +1694,9 @@ for orig,total,first,last,symbol in f11_87_files:
         regions.extend([
             (70,125,'src/vms_f11_acp87.c','port_f11b_create_fcb','Allocate and materialize FCB; return the block to nonpaged pool when FH2-derived initialization fails'),
             (126,178,'src/vms_f11_acp87.c','port_f11b_update_fcb','FCB attribute refresh')])
+    elif orig == 'F11B/SRC/DEACCS.B32':
+        regions.append((first,last,'src/vms_f11_acp87.c',symbol,
+            'Read-only non-expiring DEACCESS unlinks the WCB from its FCB, releases window counters and returns the WCB allocation; write attributes, expiration, truncate, delete, spool and cleanup branches remain explicitly incomplete.'))
     elif orig == 'F11B/SRC/RDHEDR.B32':
         regions.append((first,last,'src/vms_f11_acp87.c',symbol,
             'Native ACP FID-to-INDEXF lookup and FH2 validation execute during real IA-32 boot; SYS.EXE header is read through published DQA0 DDT/CRB IRQ14 and materialized as a native FCB. Full ACP request queues and process callback context remain unbound.'))
