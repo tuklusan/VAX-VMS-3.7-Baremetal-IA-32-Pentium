@@ -876,3 +876,13 @@ Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargs
 M278 implementation commit: `03fe4b8448b8b4ee30d91e0b4caae9260336fc59`.
 
 Remaining: live SYS$ASSIGN dispatch and process CCB storage; public SYS$QIO service-vector entry and DQA0 STARTIO submission; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M279 — Bind executive caller memory to native page maps, 24 November 2026
+
+Implemented `port_exe_user_access_init` to adapt the executive caller-memory interface to a process page map and kernel physical-page resolver. Reads/writes now use the existing checked copy-in/copy-out paths; read/write probes validate user PTE permissions. Integrated the adapter into the kernel link and tested cross-page descriptor-style reads/writes, writable/read-only protection, and translated physical aliases. The current kernel does not yet bind a live process context to SYS$ASSIGN or its public service entry.
+
+Verification: `make -j2 all test sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS through the genuine 700-byte SYS.EXE DQA0 DDT/CRB/IRQ14 read, then incomplete INIT stop. Coverage generation/validation PASS: 2,035 ranges; 445/4,566 indexed; mapped 17,016, partial 29,580, unresolved 52,027, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T145952768575Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login, DCL, DECnet or SET HOST 0 occurred.
+
+M279 implementation commit: `2c14bf089100d7805f15c6950c6312b8f7704d2c`.
+
+Remaining: bind live process memory and CCB storage to SYS$ASSIGN; wire public SYS$QIO and real DQA0 STARTIO; implement Files-11 ACP; connect process-aware IOPOST/AST scheduling; finish native INIT and image activation; verify SYSTEM login, DCL, DECnet Phase IV and nested SET HOST 0 acceptance.
