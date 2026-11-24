@@ -23,7 +23,7 @@ static uint8_t *packet_at(const struct port_ini_packet_list *q,uint32_t va){
     return q->memory+(va-q->split_address);
 }
 static uint32_t queue_check(const struct port_ini_packet_list *q){
-    if(!q||!q->packet_bytes||q->packet_bytes<PORT_V37_IRP_SIZE||
+    if(!q||!q->packet_bytes||q->packet_bytes<16u||
        (q->packet_bytes&15u)||!q->split_address||!q->sentinel_address||
        !q->memory||q->free_count>q->packet_count)return PORT_V37_IRP_POOL_BAD;
     if(!q->free_count)
@@ -48,14 +48,13 @@ static int valid_sync(const struct port_v37_irp_pool_sync *s){
     return s&&s->raise_sync&&s->restore_ipl;
 }
 
-uint32_t port_v37_irp_pool_alloc(struct port_ini_packet_list *q,
-    uint32_t requested,const struct port_v37_irp_pool_sync *sync,
+uint32_t port_v37_lookaside_alloc(struct port_ini_packet_list *q,
+    uint32_t requested,uint8_t type,const struct port_v37_irp_pool_sync *sync,
     uint8_t **packet,uint32_t *address){
-    if(!q||!packet||!address||!valid_sync(sync)||
+    if(!q||!packet||!address||!type||!valid_sync(sync)||
        requested>UINT32_MAX-15u)return PORT_V37_IRP_POOL_BAD;
     uint32_t rounded=(requested+15u)&~15u;
-    if(!rounded||rounded!=q->packet_bytes||
-       rounded<PORT_V37_IRP_SIZE)return PORT_V37_IRP_POOL_BAD;
+    if(!rounded||rounded!=q->packet_bytes)return PORT_V37_IRP_POOL_BAD;
     *packet=0;*address=0u;
     uint32_t old_ipl=sync->raise_sync(sync->context);
     uint32_t st=queue_check(q);
@@ -74,7 +73,7 @@ uint32_t port_v37_irp_pool_alloc(struct port_ini_packet_list *q,
         if(st==PORT_V37_IRP_POOL_OK){
             --q->free_count;
             wr32(p,0u);wr32(p+4u,0u);
-            wr16(p+8u,(uint16_t)rounded);p[10u]=PORT_V37_DYN_IRP;p[11u]=0u;
+            wr16(p+8u,(uint16_t)rounded);p[10u]=type;p[11u]=0u;
             *packet=p;*address=va;
         }
     }
@@ -82,11 +81,11 @@ uint32_t port_v37_irp_pool_alloc(struct port_ini_packet_list *q,
     return st;
 }
 
-uint32_t port_v37_irp_pool_free(struct port_ini_packet_list *q,uint8_t *p,
-    uint32_t va,uint32_t bytes,const struct port_v37_irp_pool_sync *sync){
+uint32_t port_v37_lookaside_free(struct port_ini_packet_list *q,uint8_t *p,
+    uint32_t va,uint32_t bytes,uint8_t type,
+    const struct port_v37_irp_pool_sync *sync){
     if(!q||!p||!valid_sync(sync)||!bytes||round16(bytes)!=q->packet_bytes||
-       packet_at(q,va)!=p||rd16(p+8u)!=bytes||
-       p[10u]!=PORT_V37_DYN_IRP)return PORT_V37_IRP_POOL_BAD;
+       !type||packet_at(q,va)!=p)return PORT_V37_IRP_POOL_BAD;
     uint32_t old_ipl=sync->raise_sync(sync->context);
     uint32_t st=queue_check(q);
     if(st==PORT_V37_IRP_POOL_OK){
@@ -107,10 +106,26 @@ uint32_t port_v37_irp_pool_free(struct port_ini_packet_list *q,uint8_t *p,
         }
         if(st==PORT_V37_IRP_POOL_OK){
             wr32(p,q->sentinel_address);wr32(p+4u,q->previous);
+            wr16(p+8u,(uint16_t)q->packet_bytes);p[10u]=type;p[11u]=0u;
             if(!q->free_count)q->next=va;
             q->previous=va;++q->free_count;
         }
     }
     sync->restore_ipl(sync->context,old_ipl);
     return st;
+}
+uint32_t port_v37_irp_pool_alloc(struct port_ini_packet_list *q,
+    uint32_t requested,const struct port_v37_irp_pool_sync *sync,
+    uint8_t **packet,uint32_t *address){
+    if(!q||q->packet_bytes<PORT_V37_IRP_SIZE||
+       requested<PORT_V37_IRP_SIZE)return PORT_V37_IRP_POOL_BAD;
+    return port_v37_lookaside_alloc(q,requested,PORT_V37_DYN_IRP,sync,
+                                    packet,address);
+}
+uint32_t port_v37_irp_pool_free(struct port_ini_packet_list *q,uint8_t *p,
+    uint32_t va,uint32_t bytes,const struct port_v37_irp_pool_sync *sync){
+    if(!q||!p||bytes>UINT32_MAX-15u||round16(bytes)!=q->packet_bytes||
+       p[10u]!=PORT_V37_DYN_IRP)
+        return PORT_V37_IRP_POOL_BAD;
+    return port_v37_lookaside_free(q,p,va,bytes,PORT_V37_DYN_IRP,sync);
 }

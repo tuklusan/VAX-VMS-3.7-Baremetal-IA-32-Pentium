@@ -2569,11 +2569,11 @@ for first,last,path,sym,why in [
  (1,214,None,None,'Original nonpaged allocation declarations, shared pool, and general ALLOCATE machinery unresolved'),
  (215,240,'src/vms_qio_irp_pool.c','port_v37_irp_pool_alloc','IRP-sized requests dequeue a validated source INIT lookaside packet, write requested size/type, and restore synchronization IPL; nonpaged variable allocation, pool extension, resource waiting and AST-delivery return semantics remain unported'),
  (241,349,None,None,'Other ALLOC* entries, ALONPAGWAIT caller-mode wait and cleanup semantics unresolved'),
- (350,397,'src/vms_qio_irp_pool.c','port_v37_irp_pool_alloc','ALONONPAGED source IRP lookaside dequeue path with FIFO ordering and synchronized mutation, exercised by resident SYS.EXE DQA0 DDT boot reads; SRP/LRP selection and variable nonpaged allocator/extension remain unresolved'),
+ (350,397,'src/vms_exe_np_pool.c','port_exe_np_allocate','Host-tested ALONONPAGED IRP/LRP/SRP class selection, DYN tag preservation, exact-size lookaside dequeue and variable-pool fallback; ACP runtime wiring is not yet verified'),
  (398,461,None,None,'Paged-pool allocation, block splitting, mutexes and shared memory pool unresolved'),
  (462,515,'src/vms_exe_np_pool.c','port_exe_np_pool_alloc','EXE$ALLOCATE source first-fit search, aligned block selection and low-address split in the live SYS.EXE nonpaged pool; failure resource accounting and pool extension remain unresolved'),
  (516,545,'src/vms_qio_irp_pool.c','port_v37_irp_pool_free','Return an allocated source DYN$C_IRP block to the tail of its original lookaside queue with duplicate/corruption guards and synchronization, exercised after resident SYS.EXE DQA0 DDT boot reads; SRP/LRP/general pool return paths unresolved'),
- (546,617,None,None,'Paged deallocation and nonpaged lookaside selection/return paths unresolved'),
+ (546,617,'src/vms_exe_np_pool.c','port_exe_np_deallocate','Host-tested nonpaged IRP/LRP/SRP lookaside return or variable-block release by address and DYN tag; resident ACP runtime wiring is not yet verified and paged-pool return remains unresolved'),
  (618,641,'src/vms_exe_np_pool.c','port_exe_np_pool_free','EXE$DEALLOCATE maintains the sorted free list and coalesces adjacent blocks under restored IPL synchronization; fatal bugcheck delivery and source resource wakeup remain unresolved'),
  (642,919,None,None,'Paged/shared pool return, queue synchronization and pool extension unresolved')]:
     if path is None:memalc_sections.append({'original_lines':[first,last],'status':'unresolved','reason':why})
@@ -2584,7 +2584,7 @@ for first,last,path,sym,why in [
             'pc_file':path,'pc_symbol':sym,'pc_line':ln,'function':why})
 result['files'].append({'original_file':'SYS/SRC/MEMORYALC.MAR',
     'original_lines':919,'sections':memalc_sections,
-    'unresolved_integration':'The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. It has no fallback nonpaged allocator, pool extension, resource wait, public user SYS$QIO integration, or source-wide SRP/LRP/allocation behavior.'})
+    'unresolved_integration':'The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. Host-tested allocation also selects exact-size IRP/LRP/SRP queues and falls back to the variable pool; this broader allocator is not yet wired to ACP because the first live wiring attempt regressed DQA0 DDT publication. Pool extension, resource waits, public user SYS$QIO integration, and paged pool remain unresolved.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')

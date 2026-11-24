@@ -22695,7 +22695,7 @@
           "status": "partial",
           "pc_file": "src/vms_qio_irp_pool.c",
           "pc_symbol": "port_v37_irp_pool_alloc",
-          "pc_line": 51,
+          "pc_line": 117,
           "function": "IRP-sized requests dequeue a validated source INIT lookaside packet, write requested size/type, and restore synchronization IPL; nonpaged variable allocation, pool extension, resource waiting and AST-delivery return semantics remain unported"
         },
         {
@@ -22712,10 +22712,10 @@
             397
           ],
           "status": "partial",
-          "pc_file": "src/vms_qio_irp_pool.c",
-          "pc_symbol": "port_v37_irp_pool_alloc",
-          "pc_line": 51,
-          "function": "ALONONPAGED source IRP lookaside dequeue path with FIFO ordering and synchronized mutation, exercised by resident SYS.EXE DQA0 DDT boot reads; SRP/LRP selection and variable nonpaged allocator/extension remain unresolved"
+          "pc_file": "src/vms_exe_np_pool.c",
+          "pc_symbol": "port_exe_np_allocate",
+          "pc_line": 131,
+          "function": "Host-tested ALONONPAGED IRP/LRP/SRP class selection, DYN tag preservation, exact-size lookaside dequeue and variable-pool fallback; ACP runtime wiring is not yet verified"
         },
         {
           "original_lines": [
@@ -22733,7 +22733,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_np_pool.c",
           "pc_symbol": "port_exe_np_pool_alloc",
-          "pc_line": 51,
+          "pc_line": 53,
           "function": "EXE$ALLOCATE source first-fit search, aligned block selection and low-address split in the live SYS.EXE nonpaged pool; failure resource accounting and pool extension remain unresolved"
         },
         {
@@ -22744,7 +22744,7 @@
           "status": "partial",
           "pc_file": "src/vms_qio_irp_pool.c",
           "pc_symbol": "port_v37_irp_pool_free",
-          "pc_line": 85,
+          "pc_line": 125,
           "function": "Return an allocated source DYN$C_IRP block to the tail of its original lookaside queue with duplicate/corruption guards and synchronization, exercised after resident SYS.EXE DQA0 DDT boot reads; SRP/LRP/general pool return paths unresolved"
         },
         {
@@ -22752,8 +22752,11 @@
             546,
             617
           ],
-          "status": "unresolved",
-          "reason": "Paged deallocation and nonpaged lookaside selection/return paths unresolved"
+          "status": "partial",
+          "pc_file": "src/vms_exe_np_pool.c",
+          "pc_symbol": "port_exe_np_deallocate",
+          "pc_line": 195,
+          "function": "Host-tested nonpaged IRP/LRP/SRP lookaside return or variable-block release by address and DYN tag; resident ACP runtime wiring is not yet verified and paged-pool return remains unresolved"
         },
         {
           "original_lines": [
@@ -22763,7 +22766,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_np_pool.c",
           "pc_symbol": "port_exe_np_pool_free",
-          "pc_line": 75,
+          "pc_line": 77,
           "function": "EXE$DEALLOCATE maintains the sorted free list and coalesces adjacent blocks under restored IPL synchronization; fatal bugcheck delivery and source resource wakeup remain unresolved"
         },
         {
@@ -22775,7 +22778,7 @@
           "reason": "Paged/shared pool return, queue synchronization and pool extension unresolved"
         }
       ],
-      "unresolved_integration": "The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. It has no fallback nonpaged allocator, pool extension, resource wait, public user SYS$QIO integration, or source-wide SRP/LRP/allocation behavior."
+      "unresolved_integration": "The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. Host-tested allocation also selects exact-size IRP/LRP/SRP queues and falls back to the variable pool; this broader allocator is not yet wired to ACP because the first live wiring attempt regressed DQA0 DDT publication. Pool extension, resource waits, public user SYS$QIO integration, and paged pool remain unresolved."
     }
   ]
 }

@@ -1,4 +1,6 @@
 #include "vms_exe_np_pool.h"
+#include "vms_qio_post.h"
+#include "vms_v37_dyn_tags.h"
 #include <stdint.h>
 
 _Static_assert(sizeof(struct port_exe_np_free)==8u,
@@ -99,4 +101,107 @@ uint32_t port_exe_np_pool_free(struct port_exe_np_pool *p,void *address,
     }
     --p->allocations;
     unlock_pool(p,old);return PORT_EXE_NP_POOL_OK;
+}
+
+static uint32_t round8(uint32_t n){return (n+7u)&~7u;}
+static uint32_t round16(uint32_t n){return (n+15u)&~15u;}
+static struct port_ini_packet_list *lookaside_at(
+    const struct port_exe_np_allocator *a,uintptr_t address,uint8_t *source,
+    uint32_t *guest_address){
+    struct port_ini_packet_list *const lists[3]={a->irps,a->lrps,a->srps};
+    for(unsigned i=0;i<3u;i++){
+        struct port_ini_packet_list *q=lists[i];
+        if(!q||!q->memory||!q->packet_count||!q->packet_bytes)continue;
+        uint64_t used=(uint64_t)q->packet_count*q->packet_bytes;
+        uintptr_t host_start=(uintptr_t)q->memory,host_end=host_start+used;
+        uint32_t offset=UINT32_MAX;
+        if(address>=host_start&&address<host_end)
+            offset=(uint32_t)(address-host_start);
+        else if(address<=UINT32_MAX&&address>=q->split_address&&
+                (uint64_t)address<(uint64_t)q->split_address+used)
+            offset=(uint32_t)address-q->split_address;
+        if(offset!=UINT32_MAX&&offset%q->packet_bytes==0u){
+            if(source)*source=(uint8_t)(i+1u);
+            if(guest_address)*guest_address=q->split_address+offset;
+            return q;
+        }
+    }
+    return 0;
+}
+uint32_t port_exe_np_allocate(struct port_exe_np_allocator *a,
+    uint32_t requested,uint8_t tag,struct port_exe_np_allocation *out){
+    if(!a||!a->variable||!a->sync||!out||!requested||!tag||
+       requested>UINT32_MAX-15u)return PORT_EXE_NP_POOL_BAD;
+    const uint32_t size=round8(requested);
+    struct port_ini_packet_list *q=0;uint8_t source=PORT_EXE_NP_FROM_VARIABLE;
+    if(size>round8(PORT_V37_IRP_SIZE)){
+        q=a->lrps;source=PORT_EXE_NP_FROM_LRP;
+    }else if(a->irps&&size<a->irps->minimum_bytes){
+        q=a->srps;source=PORT_EXE_NP_FROM_SRP;
+    }else{
+        q=a->irps;source=PORT_EXE_NP_FROM_IRP;
+    }
+    if(q){
+        const uint32_t rounded_packet=round16(size);
+        if((source!=PORT_EXE_NP_FROM_SRP&&size<q->minimum_bytes)||
+           size>q->packet_bytes||
+           rounded_packet>q->packet_bytes)q=0;
+    }
+    if(q){
+        uint8_t *packet=0;uint32_t address=0;
+        const uint32_t st=port_v37_lookaside_alloc(q,size,tag,a->sync,
+                                                   &packet,&address);
+        if(st==PORT_V37_IRP_POOL_OK){
+            *out=(struct port_exe_np_allocation){packet,q->packet_bytes,
+                                                  source,tag};
+            return PORT_EXE_NP_POOL_OK;
+        }
+        if(st!=PORT_V37_IRP_POOL_EMPTY)
+            return st==PORT_V37_IRP_POOL_CORRUPT?
+                PORT_EXE_NP_POOL_CORRUPT:PORT_EXE_NP_POOL_BAD;
+    }
+    void *memory=0;uint32_t allocated=0;
+    const uint32_t st=port_exe_np_pool_alloc(a->variable,requested,
+                                              &memory,&allocated);
+    if(st!=PORT_EXE_NP_POOL_OK)return st;
+    *out=(struct port_exe_np_allocation){memory,allocated,
+                                         PORT_EXE_NP_FROM_VARIABLE,tag};
+    return PORT_EXE_NP_POOL_OK;
+}
+uint32_t port_exe_np_release(struct port_exe_np_allocator *a,
+    const struct port_exe_np_allocation *allocation){
+    if(!a||!allocation||!allocation->address||!allocation->bytes||
+       !allocation->tag||!a->variable||!a->sync)
+        return PORT_EXE_NP_POOL_BAD;
+    uint32_t va=(uint32_t)(uintptr_t)allocation->address;
+    uint8_t source=PORT_EXE_NP_FROM_VARIABLE;
+    struct port_ini_packet_list *q=lookaside_at(a,(uintptr_t)allocation->address,
+                                                &source,&va);
+    if(q){
+        if(source!=allocation->source&&
+           allocation->source!=PORT_EXE_NP_FROM_VARIABLE)
+            return PORT_EXE_NP_POOL_BAD;
+        uint8_t *packet=q->memory+(va-q->split_address);
+        return port_v37_lookaside_free(q,packet,va,q->packet_bytes,
+                                       allocation->tag,
+                                       a->sync)==PORT_V37_IRP_POOL_OK?
+            PORT_EXE_NP_POOL_OK:PORT_EXE_NP_POOL_CORRUPT;
+    }
+    if(allocation->source!=PORT_EXE_NP_FROM_VARIABLE)
+        return PORT_EXE_NP_POOL_BAD;
+    return port_exe_np_pool_free(a->variable,allocation->address,
+                                 allocation->bytes);
+}
+uint32_t port_exe_np_deallocate(struct port_exe_np_allocator *a,void *address,
+    uint32_t requested,uint8_t tag){
+    if(!a||!address||!requested||!tag||!a->variable)
+        return PORT_EXE_NP_POOL_BAD;
+    uint8_t source=PORT_EXE_NP_FROM_VARIABLE;
+    uint32_t guest_address=0u;
+    struct port_ini_packet_list *q=lookaside_at(a,(uintptr_t)address,&source,
+                                                &guest_address);
+    (void)guest_address;
+    struct port_exe_np_allocation allocation={
+        address,q?q->packet_bytes:round8(requested),source,tag};
+    return port_exe_np_release(a,&allocation);
 }

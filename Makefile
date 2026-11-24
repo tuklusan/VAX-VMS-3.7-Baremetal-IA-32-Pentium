@@ -818,7 +818,7 @@ build/vms_sys_executive_entry.o: src/vms_exe_np_pool.h
 build/vms_exe_np_pool.o: src/vms_exe_np_pool.c src/vms_exe_np_pool.h src/vms_qio_irp_pool.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 exenppoolcheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_np_pool.c tests/test_exe_np_pool_host.c -o build/exenppoolcheck
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c tests/test_exe_np_pool_host.c -o build/exenppoolcheck
 	./build/exenppoolcheck
 build/vms_sysboot_pktmem.o: src/vms_sysboot_pktmem.c src/vms_sysboot_pktmem.h src/vms_booparam.h | build
 	$(CC) $(CFLAGS) -c $< -o $@

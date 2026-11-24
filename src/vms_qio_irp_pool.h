@@ -17,4 +17,10 @@ uint32_t port_v37_irp_pool_alloc(struct port_ini_packet_list *,uint32_t,
     const struct port_v37_irp_pool_sync *,uint8_t **,uint32_t *);
 uint32_t port_v37_irp_pool_free(struct port_ini_packet_list *,uint8_t *,
     uint32_t,uint32_t,const struct port_v37_irp_pool_sync *);
+/* MEMORYALC's LRP/SRP lookasides use the same queue discipline but may be
+ * smaller than an IRP. Their caller supplies the original DYN type. */
+uint32_t port_v37_lookaside_alloc(struct port_ini_packet_list *,uint32_t,
+    uint8_t,const struct port_v37_irp_pool_sync *,uint8_t **,uint32_t *);
+uint32_t port_v37_lookaside_free(struct port_ini_packet_list *,uint8_t *,
+    uint32_t,uint32_t,uint8_t,const struct port_v37_irp_pool_sync *);
 #endif
