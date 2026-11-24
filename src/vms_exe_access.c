@@ -15,12 +15,12 @@ static int user_write(void *context,uint32_t address,const void *source,
 static int user_can_read(void *context,uint32_t address,uint32_t bytes){
     struct port_exe_user_access *u=context;
     return u&&u->physical&&
-        port_user_range_valid(u->map,address,bytes,0)==PORT_USER_OK;
+        port_user_io_range_valid(u->map,address,bytes,0)==PORT_USER_OK;
 }
 static int user_can_write(void *context,uint32_t address,uint32_t bytes){
     struct port_exe_user_access *u=context;
     return u&&u->physical&&
-        port_user_range_valid(u->map,address,bytes,1)==PORT_USER_OK;
+        port_user_io_range_valid(u->map,address,bytes,1)==PORT_USER_OK;
 }
 void port_exe_user_access_init(struct port_exe_access *access,
                               struct port_exe_user_access *context,

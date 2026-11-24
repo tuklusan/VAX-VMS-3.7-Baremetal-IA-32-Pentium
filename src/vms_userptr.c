@@ -18,6 +18,25 @@ int port_user_range_valid(const struct port_user_map *m,
     }
 }
 
+int port_user_io_range_valid(const struct port_user_map *m,uint32_t base,
+                             uint32_t len,int writing){
+    if(!m||!m->pde||!m->resolve||!len||len>UINT16_MAX||base<4096u||
+       base>UINT32_MAX-(len-1u))return PORT_USER_BAD;
+    const uint32_t last=base+len-1u;
+    uint32_t address=base;
+    for(;;){
+        const uint32_t dir=m->pde[(address>>22)&1023u];
+        if((dir&5u)!=5u||(dir&0x80u)||(writing&&!(dir&2u)))
+            return PORT_USER_BAD;
+        const uint32_t *table=m->resolve(m->context,dir&0xfffff000u);
+        if(!table)return PORT_USER_BAD;
+        const uint32_t pte=table[(address>>12)&1023u];
+        if((pte&5u)!=5u||(writing&&!(pte&2u)))return PORT_USER_BAD;
+        if((address>>12)==(last>>12))return PORT_USER_OK;
+        address=(address&0xfffff000u)+4096u;
+    }
+}
+
 /* The output contract is all-or-nothing for unmapped spans. Retain the
  * validated physical page aliases so a page-crossing copy never assumes
  * that consecutive user virtual pages are physically adjacent. */

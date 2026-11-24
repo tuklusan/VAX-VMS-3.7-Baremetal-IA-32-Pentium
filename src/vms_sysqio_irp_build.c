@@ -71,9 +71,8 @@ uint32_t port_v37_sysqio_build_irp(
     put32(candidate+IRP_BCNT,0u);
     put32(candidate+PORT_V37_IRP_ARB,spec->arb_va);
     if(request->dispatch.action_class==PORT_DQ_FDT_READ||
-       request->dispatch.action_class==PORT_DQ_FDT_WRITE||
-       request->dispatch.action_class==PORT_DQ_FDT_MODIFY){
-        /* SYSQIOFDT EXE$READ/WRITE/ MODIFY common path stores P2 as a
+       request->dispatch.action_class==PORT_DQ_FDT_WRITE){
+        /* SYSQIOFDT EXE$READ/WRITE common path stores P2 as a
          * zero-extended transfer byte count and P4 as carriage control.
          * User-buffer accessibility, page locking and SVAPTE binding are
          * still required before this IRP can be submitted to a driver. */

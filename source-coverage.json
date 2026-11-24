@@ -21475,7 +21475,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 137,
+          "pc_line": 170,
           "function": "When CCB$L_WIND bit 0 marks access/deaccess pending, require a scheduler wait callback and resume only after the pending bit clears; no live SCH$WAIT/RSN$_ASTWAIT binding yet"
         },
         {
@@ -21505,7 +21505,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 137,
+          "pc_line": 170,
           "function": "Clear EFN before channel lookup and post failure status to the requested event flag"
         },
         {
@@ -21565,7 +21565,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_args.c",
           "pc_symbol": "port_v37_sysqio_begin",
-          "pc_line": 137,
+          "pc_line": 170,
           "function": "Direct/buffered per-process I/O counter charge with single-unit quota callback and rollback on denial; IRP reservation/dispatch remain unresolved"
         },
         {
@@ -21834,7 +21834,7 @@
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
           "pc_line": 27,
-          "function": "Copies low byte of P4 to IRP$B_CARCON for read/write/modify FDT classes"
+          "function": "Copies low byte of P4 to IRP$B_CARCON for classified read/write FDT actions"
         },
         {
           "original_lines": [
@@ -21853,7 +21853,7 @@
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
           "pc_line": 27,
-          "function": "Zero-extends low word P2 into IRP$L_BCNT for read/write/modify classes; zero count leaves BCNT clear"
+          "function": "Zero-extends low word P2 into IRP$L_BCNT for classified read/write actions; zero count leaves BCNT clear"
         },
         {
           "original_lines": [
@@ -21882,13 +21882,108 @@
         {
           "original_lines": [
             381,
+            527
+          ],
+          "status": "unresolved",
+          "reason": "Page locking and source buffer-check setup remain unported"
+        },
+        {
+          "original_lines": [
+            528,
+            545
+          ],
+          "status": "unresolved",
+          "reason": "Additional EXE$READCHKR/WRITECHKR source documentation and surrounding code remain unported"
+        },
+        {
+          "original_lines": [
+            546,
+            553
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_args.c",
+          "pc_symbol": "port_v37_sysqio_check_buffer",
+          "pc_line": 76,
+          "function": "Selects writable user pages for READ and readable pages for WRITE; DQA ACP MODIFY is a separate FDT action, while completion and IRP mutation ordering remain separate"
+        },
+        {
+          "original_lines": [
+            554,
+            554
+          ],
+          "status": "unresolved",
+          "reason": "Source page boundary directive"
+        },
+        {
+          "original_lines": [
+            555,
+            578
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_userptr.c",
+          "pc_symbol": "port_user_io_range_valid",
+          "pc_line": 21,
+          "function": "Validates address overflow and every IA-32 user PDE/PTE across up to 65,535 bytes; native page size replaces VAX page stepping"
+        },
+        {
+          "original_lines": [
+            579,
+            584
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_args.c",
+          "pc_symbol": "port_v37_sysqio_check_buffer",
+          "pc_line": 76,
+          "function": "Returns SS$_ACCVIO without changing the output buffer plan when any translated user page lacks required access"
+        },
+        {
+          "original_lines": [
+            585,
+            618
+          ],
+          "status": "unresolved",
+          "reason": "Remaining source documentation and WRITECHKR setup unresolved"
+        },
+        {
+          "original_lines": [
+            619,
+            625
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_args.c",
+          "pc_symbol": "port_v37_sysqio_check_buffer",
+          "pc_line": 76,
+          "function": "Selects read access for user WRITE buffers; zero count skips probing, with byte count populated in standard IRP construction"
+        },
+        {
+          "original_lines": [
+            626,
+            626
+          ],
+          "status": "unresolved",
+          "reason": "Source page boundary directive"
+        },
+        {
+          "original_lines": [
+            627,
+            649
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_userptr.c",
+          "pc_symbol": "port_user_io_range_valid",
+          "pc_line": 21,
+          "function": "Checks each page of the complete 16-bit transfer range, including source large-buffer chunk cases"
+        },
+        {
+          "original_lines": [
+            650,
             868
           ],
           "status": "unresolved",
-          "reason": "FDT retry/fault recovery, buffer checks and remaining SYSQIOFDT routines unresolved"
+          "reason": "Modify/window and remaining SYSQIOFDT FDT routines unresolved"
         }
       ],
-      "unresolved_integration": "Native IRP construction now preserves ONE action P1 media, READ status bit, CARCON from P4, and BCNT from zero-extended P2 for read/write/modify action classes. No live FDT dispatcher or QIODRVPKT queue exists; P1 permission checks, page locking, IRP BOFF/SVAPTE setup, fault/restart behavior and all remaining SYSQIOFDT behavior are incomplete."
+      "unresolved_integration": "Native IRP construction preserves ONE action P1 media, READ status bit, CARCON from P4, and BCNT from zero-extended P2 for classified read/write actions. A separate checked buffer-plan helper enforces source READ writable-buffer and WRITE readable-buffer access across all native pages. DQA ACP MODIFY actions are not interpreted as SYSQIOFDT MODIFY memory actions. The live FDT dispatcher/QIODRVPKT queue, page locking, IRP BOFF/SVAPTE setup, fault/restart and abort completion, and remaining SYSQIOFDT functions remain incomplete."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

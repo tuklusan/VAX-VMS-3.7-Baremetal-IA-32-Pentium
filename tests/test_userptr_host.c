@@ -42,6 +42,13 @@ int main(void) {
     assert(port_user_range_valid(&m,0x3ffffe,4,0)==PORT_USER_BAD);
     directory[1]=0xdead000|7u;
     assert(port_user_range_valid(&m,0x400000,4,0)==PORT_USER_BAD);
+    directory[0]=0x5000|7u;
+    for(unsigned i=1u;i<=16u;i++)t0[i]=((i+1u)<<12)|7u;
+    assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,1)==PORT_USER_OK);
+    t0[16]=0x11000u|5u;
+    assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,1)==PORT_USER_BAD);
+    assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,0)==PORT_USER_OK);
+    assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX+1u,0)==PORT_USER_BAD);
     puts("M27 user pointer PDE/PTE ownership, access, crossings, overflow PASS");
     return 0;
 }

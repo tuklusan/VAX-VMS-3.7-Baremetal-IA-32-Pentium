@@ -54,6 +54,25 @@ struct iosb_memory_test {
     uint32_t probes,clears;
     int deny_probe,deny_clear;
 };
+struct transfer_access_test {
+    uint32_t reads,writes,address,bytes;
+    int read_ok,write_ok;
+};
+static int probe_transfer_read(void *opaque,uint32_t address,uint32_t bytes){
+    struct transfer_access_test *t=opaque;t->reads++;
+    t->address=address;t->bytes=bytes;return t->read_ok;
+}
+static int probe_transfer_write(void *opaque,uint32_t address,uint32_t bytes){
+    struct transfer_access_test *t=opaque;t->writes++;
+    t->address=address;t->bytes=bytes;return t->write_ok;
+}
+static uint32_t transfer_pde[1024],transfer_pte[1024];
+static const uint32_t *resolve_transfer_table(void *opaque,uint32_t physical){
+    (void)opaque;return physical==0x1000u?transfer_pte:0;
+}
+static uint8_t *resolve_transfer_page(void *opaque,uint32_t physical){
+    (void)opaque;return physical?(uint8_t *)(uintptr_t)1u:0;
+}
 static int probe_iosb(void *opaque,uint32_t address,size_t size){
     struct iosb_memory_test *m=opaque;m->probes++;
     return m->deny_probe||address<m->base||size>sizeof m->bytes||
@@ -419,6 +438,24 @@ int main(void){
        get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0xffffu||
        one_parameter_irp[64u]!=0x80u)
         return 71;
+    struct transfer_access_test transfer_test={.read_ok=1,.write_ok=1};
+    const struct port_exe_access transfer_access={&transfer_test,0,0,
+        probe_transfer_read,probe_transfer_write};
+    struct port_v37_sysqio_buffer transfer_buffer={0};
+    if(port_v37_sysqio_check_buffer(&read_request,&transfer_access,
+          &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_OK||
+       ast_status!=PORT_SYS85_NORMAL||transfer_test.writes!=1u||
+       transfer_test.reads||transfer_test.address!=0x12345ff0u||
+       transfer_test.bytes!=0xffffu||
+       transfer_buffer.address!=0x12345ff0u||transfer_buffer.bytes!=0xffffu||
+       transfer_buffer.direction!=PORT_V37_SYSQIO_BUFFER_WRITE_TO_USER)
+        return 73;
+    transfer_test.write_ok=0;transfer_buffer.address=0xdeadbeefu;
+    if(port_v37_sysqio_check_buffer(&read_request,&transfer_access,
+          &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_ACCVIO||
+       ast_status!=PORT_SYS85_ACCVIO||
+       transfer_buffer.address!=0xdeadbeefu)
+        return 74;
     struct port_v37_sysqio_prepared write_request=read_request;
     write_request.args.function=PORT_DQ_WRITEPBLK;
     if(port_v37_sysqio_preflight(&write_request.args,proc.access_mode,4u,
@@ -431,6 +468,60 @@ int main(void){
        get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0xffffu||
        one_parameter_irp[64u]!=0x80u)
         return 72;
+    transfer_test.write_ok=1;transfer_test.reads=transfer_test.writes=0u;
+    if(port_v37_sysqio_check_buffer(&write_request,&transfer_access,
+          &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_OK||
+       transfer_test.reads!=1u||transfer_test.writes||
+       transfer_buffer.direction!=PORT_V37_SYSQIO_BUFFER_READ_FROM_USER)
+        return 75;
+    write_request.args.parameter[1]=0x10000u;
+    transfer_test.reads=transfer_test.writes=0u;
+    if(port_v37_sysqio_check_buffer(&write_request,&transfer_access,
+          &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_OK||
+       transfer_test.reads||transfer_test.writes||transfer_buffer.bytes!=0u)
+        return 76;
+    write_request.args.function=PORT_DQ_MODIFY;
+    if(port_v37_sysqio_preflight(&write_request.args,proc.access_mode,4u,
+          &device,&write_request.dispatch)!=PORT_V37_SYSQIO_PRECHECK_OK||
+       write_request.dispatch.action_class!=PORT_DQ_FDT_MODIFY)
+        return 82;
+    transfer_test.reads=transfer_test.writes=0u;
+    if(port_v37_sysqio_check_buffer(&write_request,&transfer_access,
+          &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_NONE||
+       transfer_test.reads||transfer_test.writes)
+        return 80;
+    one_parameter_spec.packet_va=0x4000u;
+    if(port_v37_sysqio_build_irp(&write_request,&proc,&one_parameter_spec,
+          one_parameter_irp,sizeof one_parameter_irp)!=
+          PORT_V37_SYSQIO_IRP_BUILD_OK||
+       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0u||
+       one_parameter_irp[64u]!=0u)
+        return 81;
+    transfer_pde[0]=0x1007u;
+    for(unsigned i=1u;i<=16u;i++)
+        transfer_pte[i]=((i+1u)<<12)|7u;
+    struct port_user_map transfer_map={transfer_pde,resolve_transfer_table,0};
+    struct port_exe_access mapped_access;
+    struct port_exe_user_access mapped_context;
+    port_exe_user_access_init(&mapped_access,&mapped_context,&transfer_map,
+                              resolve_transfer_page,0);
+    struct port_v37_sysqio_prepared mapped_request=read_request;
+    mapped_request.args.parameter[0]=0x1001u;
+    mapped_request.args.parameter[1]=UINT16_MAX;
+    if(port_v37_sysqio_check_buffer(&mapped_request,&mapped_access,
+          &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_OK||
+       transfer_buffer.bytes!=UINT16_MAX)
+        return 77;
+    transfer_pte[16]=0x11005u;transfer_buffer.address=0xdeadbeefu;
+    if(port_v37_sysqio_check_buffer(&mapped_request,&mapped_access,
+          &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_ACCVIO||
+       transfer_buffer.address!=0xdeadbeefu)
+        return 78;
+    mapped_request.dispatch.action_class=PORT_DQ_FDT_WRITE;
+    if(port_v37_sysqio_check_buffer(&mapped_request,&mapped_access,
+          &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_OK||
+       transfer_buffer.direction!=PORT_V37_SYSQIO_BUFFER_READ_FROM_USER)
+        return 79;
     uint8_t *prepared_irp=0;uint32_t prepared_va=0u;
     struct port_v37_sysqio_prepared integrated={0};
     proc.direct_io_count=1;proc.ast_count=1;rig.posts=0u;

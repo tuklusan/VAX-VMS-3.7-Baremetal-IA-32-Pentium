@@ -133,6 +133,22 @@ struct port_v37_sysqio_prepared {
     struct port_v37_sysqio_resolved_channel channel;
 };
 
+enum { PORT_V37_SYSQIO_BUFFER_OK=1u,PORT_V37_SYSQIO_BUFFER_BAD=2u,
+       PORT_V37_SYSQIO_BUFFER_ACCVIO=4u,PORT_V37_SYSQIO_BUFFER_NONE=6u,
+       PORT_V37_SYSQIO_BUFFER_READ_FROM_USER=1u,
+       PORT_V37_SYSQIO_BUFFER_WRITE_TO_USER=2u };
+struct port_v37_sysqio_buffer {
+    uint32_t address;
+    uint16_t bytes;
+    uint8_t direction,reserved;
+};
+/* SYSQIOFDT READCHKR/WRITECHKR page-access stage. The output plan is
+ * committed only after every page is accessible; page locking/SVAPTE and
+ * driver dispatch are separate steps. */
+uint32_t port_v37_sysqio_check_buffer(
+    const struct port_v37_sysqio_prepared *,const struct port_exe_access *,
+    struct port_v37_sysqio_buffer *,uint32_t *service_status);
+
 /* Source SYSQIOREQ SUCCES constructs the device-independent standard IRP.
  * This builder only consumes an already reserved packet; allocation,
  * channel IOC accounting, device access checks and FDT invocation remain

@@ -363,7 +363,7 @@ test: sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapchec
 
 .PHONY: sysqioargscheck
 sysqioargscheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c src/vms_sysqio_pcb.c src/vms_v37_ccb.c src/vms_sysqio_irp_build.c src/vms_sysqio_irp_reserve.c src/vms_sysqio_normalize.c src/vms_sysqio_ast.c src/vms_sysqio_device_access.c src/vms_sysqio_ef.c src/vms_sysqio_iosb.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c $(wildcard src/vms_dq_fdt_*.c) tests/test_sysqio_args_host.c -o build/sysqioargscheck
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c src/vms_sysqio_pcb.c src/vms_v37_ccb.c src/vms_sysqio_irp_build.c src/vms_sysqio_irp_reserve.c src/vms_sysqio_normalize.c src/vms_sysqio_ast.c src/vms_sysqio_device_access.c src/vms_sysqio_ef.c src/vms_sysqio_iosb.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_userptr.c src/vms_exe_access.c $(wildcard src/vms_dq_fdt_*.c) tests/test_sysqio_args_host.c -o build/sysqioargscheck
 	./build/sysqioargscheck
 
 .PHONY: sysqioresidentcheck

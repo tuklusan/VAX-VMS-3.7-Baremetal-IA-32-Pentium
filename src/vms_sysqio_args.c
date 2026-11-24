@@ -73,6 +73,39 @@ uint32_t port_v37_sysqio_preflight(const struct port_v37_sysqio_args *args,
     return PORT_V37_SYSQIO_PRECHECK_OK;
 }
 
+uint32_t port_v37_sysqio_check_buffer(
+    const struct port_v37_sysqio_prepared *request,
+    const struct port_exe_access *memory,
+    struct port_v37_sysqio_buffer *buffer,uint32_t *service_status){
+    if(!request||!memory||!buffer||!service_status){
+        if(service_status)*service_status=PORT_SYS85_BADPARAM;
+        return PORT_V37_SYSQIO_BUFFER_BAD;
+    }
+    uint8_t direction=0u;
+    int (*probe)(const struct port_exe_access *,uint32_t,uint32_t)=0;
+    if(request->dispatch.action_class==PORT_DQ_FDT_READ){
+        direction=PORT_V37_SYSQIO_BUFFER_WRITE_TO_USER;
+        probe=port_exe_probe_write;
+    }else if(request->dispatch.action_class==PORT_DQ_FDT_WRITE){
+        direction=PORT_V37_SYSQIO_BUFFER_READ_FROM_USER;
+        probe=port_exe_probe_read;
+    }else{
+        *buffer=(struct port_v37_sysqio_buffer){0};
+        *service_status=PORT_SYS85_NORMAL;
+        return PORT_V37_SYSQIO_BUFFER_NONE;
+    }
+    const struct port_v37_sysqio_buffer candidate={
+        request->args.parameter[0],(uint16_t)request->args.parameter[1],
+        direction,0u};
+    if(candidate.bytes&&!probe(memory,candidate.address,candidate.bytes)){
+        *service_status=PORT_SYS85_ACCVIO;
+        return PORT_V37_SYSQIO_BUFFER_ACCVIO;
+    }
+    *buffer=candidate;
+    *service_status=PORT_SYS85_NORMAL;
+    return PORT_V37_SYSQIO_BUFFER_OK;
+}
+
 static uint32_t begin_failure(uint32_t result,uint32_t status,
     const struct port_v37_sysqio_args *args,
     const struct port_v37_sysqio_process *process,

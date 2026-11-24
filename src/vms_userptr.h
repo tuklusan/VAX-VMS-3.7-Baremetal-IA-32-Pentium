@@ -16,6 +16,10 @@ struct port_user_map {
 };
 int port_user_range_valid(const struct port_user_map *map,
                           uint32_t address,uint32_t size,int writing);
+/* QIO transfer probes may span the full 16-bit VMS byte count. This walks
+ * every IA-32 page without imposing the smaller synchronous-copy bound. */
+int port_user_io_range_valid(const struct port_user_map *map,
+                             uint32_t address,uint32_t size,int writing);
 /* Validate all user PTEs and all destination physical spans before writing
  * any byte. Works when user virtual pages are not identity-mapped. */
 int port_user_copy_to(const struct port_user_map *map, uint32_t dest,
