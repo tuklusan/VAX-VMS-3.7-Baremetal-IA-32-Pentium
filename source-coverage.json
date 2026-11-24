@@ -21322,10 +21322,29 @@
         {
           "original_lines": [
             1,
+            180
+          ],
+          "status": "unresolved",
+          "reason": "System-service argument and mailbox-descriptor handling remain unresolved"
+        },
+        {
+          "original_lines": [
+            181,
+            182
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysassign.c",
+          "pc_symbol": "port_v37_sysassign_descriptor_service",
+          "pc_line": 65,
+          "function": "Probes and clears the caller-supplied channel output before descriptor reads; live process-address translation is not bound"
+        },
+        {
+          "original_lines": [
+            183,
             187
           ],
           "status": "unresolved",
-          "reason": "Channel output probing and mailbox descriptor processing remain unresolved"
+          "reason": "Mailbox descriptor copy and TEST_MAILBOX remain unresolved"
         },
         {
           "original_lines": [
@@ -21415,7 +21434,7 @@
           "reason": "Remote assignment, SYS$QIO connection, completion wait and TEST_MAILBOX are not implemented"
         }
       ],
-      "unresolved_integration": "Native helpers parse a caller-readable VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. The descriptor path is host-tested only. There is no live SYS$ASSIGN service entry/process CCB, channel output probing/clear, mailbox handling, network UCB creation or remote assignment."
+      "unresolved_integration": "Native helpers probe/clear/write a caller-supplied channel output through an abstract caller-memory interface, parse a VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. These are host-tested; no live SYS$ASSIGN service entry or process-address translation is bound. Mailbox handling, network UCB creation and remote assignment remain unresolved."
     },
     {
       "original_file": "SYS/SRC/SYSQIOREQ.MAR",
@@ -21494,7 +21513,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_lookup_qio_channel",
-          "pc_line": 65,
+          "pc_line": 82,
           "function": "Resolve the source channel token from a PID-bound CCB table, verify the assigned UCB and bind its native DQ FDT/device view; local DQA0 SYS$ASSIGN helper composes IOC$SEARCHDEV with CCB ownership/refcount. Public service-vector dispatch remains absent"
         },
         {

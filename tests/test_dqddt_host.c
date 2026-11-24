@@ -39,7 +39,10 @@ static int assign_memory_read(void *v,uint32_t address,void *out,uint32_t n){
     memcpy(out,m->bytes+(address-m->base),n);return 1;
 }
 static int assign_memory_write(void *v,uint32_t address,const void *in,uint32_t n){
-    (void)v;(void)address;(void)in;(void)n;return 0;
+    struct assign_user_memory *m=v;
+    if(address<m->base||n>sizeof m->bytes||
+       address-m->base>sizeof m->bytes-n)return 0;
+    memcpy(m->bytes+(address-m->base),in,n);return 1;
 }
 static int assign_memory_probe(void *v,uint32_t address,uint32_t n){
     struct assign_user_memory *m=v;
@@ -220,8 +223,9 @@ int main(void){
         assign_memory_probe};
     const struct port_v37_sysassign_descriptor_request assign_descriptor={
         &assign_request,&assign_access,0x1000u,2u,0u};
-    CHECK(port_v37_sysassign_descriptor(&assign_descriptor,&assigned)==
+    CHECK(port_v37_sysassign_descriptor_service(&assign_descriptor,0x1040u)==
         PORT_V37_CCB_OK);
+    assigned=port_v37_read16(assign_memory.bytes+64u);
     CHECK(assigned==16u&&high_water==16u&&
         port_v37_read32(ccb_base-16u+PORT_V37_CCB_UCB)==info.ucb[0]&&
         (ccb_base-16u)[PORT_V37_CCB_AMOD]==3u);
@@ -259,8 +263,9 @@ int main(void){
     struct port_v37_sysassign_descriptor_request bad_descriptor=
         assign_descriptor;
     bad_descriptor.device_name_descriptor=0x1080u;
-    CHECK(port_v37_sysassign_descriptor(&bad_descriptor,&bad_channel)==
-        PORT_SYS85_ACCVIO&&bad_channel==0u);
+    assign_memory.bytes[64]=0xffu;assign_memory.bytes[65]=0xffu;
+    CHECK(port_v37_sysassign_descriptor_service(&bad_descriptor,0x1040u)==
+        PORT_SYS85_ACCVIO&&port_v37_read16(assign_memory.bytes+64u)==0u);
     bad_descriptor=assign_descriptor;bad_channel=UINT16_MAX;
     assign_memory.bytes[0]=64u;
     CHECK(port_v37_sysassign_descriptor(&bad_descriptor,&bad_channel)==

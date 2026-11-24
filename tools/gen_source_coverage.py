@@ -2321,11 +2321,13 @@ result['files'].append({'original_file':'SYS/SRC/IOSUBPAGD.MAR','original_lines'
     'sections':rows,'unresolved_integration':'Original IOC$SEARCHDEV calls resident bounded SYSTEM-only LOG$TRANSLATE followed by typed DDB/UCB scan. SYS$DISK/SYS$SYSDEVICE reach unbound DQA0; the DQ DDT, IOC mutex, $ASSIGN/$QIO, process/group logical tables, full RMS and ACP remain unported.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
-# M277: SYSASSIGN.MAR descriptor read/MAXACMODE followed by M262's local
-# device binding. Output-channel probing, mailbox, network and remote paths
-# remain incomplete; no public service entry is wired.
+# M277-M278: SYSASSIGN.MAR output probe/clear, descriptor read/MAXACMODE and
+# local device binding. Mailbox, network and remote paths remain incomplete;
+# no public service entry/process-memory binding is wired.
 assign_rows=[
- (1,187,None,None,'Channel output probing and mailbox descriptor processing remain unresolved','unresolved'),
+ (1,180,None,None,'System-service argument and mailbox-descriptor handling remain unresolved','unresolved'),
+ (181,182,'src/vms_sysassign.c','port_v37_sysassign_descriptor_service','Probes and clears the caller-supplied channel output before descriptor reads; live process-address translation is not bound','partial'),
+ (183,187,None,None,'Mailbox descriptor copy and TEST_MAILBOX remain unresolved','unresolved'),
  (188,194,'src/vms_sysassign.c','port_v37_sysassign_descriptor','Rejects missing/invalid descriptor inputs, reads the 8-byte VMS descriptor and counted name through the caller-mode memory interface, and applies MAXACMODE=max(requested,current); output-channel write probing remains unresolved','partial'),
  (195,195,'src/vms_v37_ccb.c','port_v37_ccb_find_free','IOC$FFCHAN scans the source byte-offset channel table and advances CHINDX after descriptor access-mode maximization','partial'),
  (196,210,None,None,'Mailbox TEST_MAILBOX, spooled/template and error routing unresolved','unresolved'),
@@ -2344,7 +2346,7 @@ for lo,hi,pc,sym,description,status in assign_rows:
             'pc_file':pc,'pc_symbol':sym,'pc_line':lineno,'function':description})
     else:assign_sections.append({'original_lines':[lo,hi],'status':status,'reason':description})
 result['files'].append({'original_file':'SYS/SRC/SYSASSIGN.MAR','original_lines':415,
-    'sections':assign_sections,'unresolved_integration':'Native helpers parse a caller-readable VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. The descriptor path is host-tested only. There is no live SYS$ASSIGN service entry/process CCB, channel output probing/clear, mailbox handling, network UCB creation or remote assignment.'})
+    'sections':assign_sections,'unresolved_integration':'Native helpers probe/clear/write a caller-supplied channel output through an abstract caller-memory interface, parse a VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. These are host-tested; no live SYS$ASSIGN service entry or process-address translation is bound. Mailbox handling, network UCB creation and remote assignment remain unresolved.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M121: original SYSQIOREQ.MAR EXE$FINISHIOC only. The pending

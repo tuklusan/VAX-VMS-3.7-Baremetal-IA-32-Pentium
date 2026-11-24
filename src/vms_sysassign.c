@@ -62,6 +62,23 @@ uint32_t port_v37_sysassign_descriptor(
     return port_v37_sysassign_local(&local,channel);
 }
 
+uint32_t port_v37_sysassign_descriptor_service(
+    const struct port_v37_sysassign_descriptor_request *r,
+    uint32_t channel_output){
+    if(!r||!r->memory)return PORT_V37_CCB_BAD;
+    uint8_t output[2]={0u,0u};
+    if(!port_exe_probe_write(r->memory,channel_output,sizeof output)||
+       !port_exe_write(r->memory,channel_output,output,sizeof output))
+        return PORT_SS_ACCVIO;
+    uint16_t channel=0u;
+    const uint32_t status=port_v37_sysassign_descriptor(r,&channel);
+    if(!(status&1u))return status;
+    output[0]=(uint8_t)channel;output[1]=(uint8_t)(channel>>8);
+    if(!port_exe_write(r->memory,channel_output,output,sizeof output))
+        return PORT_SS_ACCVIO;
+    return status;
+}
+
 int port_v37_sysassign_lookup_qio_channel(void *context,uint32_t pid,
     uint32_t channel,struct port_v37_sysqio_resolved_channel *out){
     struct port_v37_sysassign_qio_context *c=context;

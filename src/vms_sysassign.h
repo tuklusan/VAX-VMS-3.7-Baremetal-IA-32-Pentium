@@ -7,9 +7,8 @@
 #include "vms_sysqio_args.h"
 #include "vms_exe_access.h"
 
-/* Local SYS$ASSIGN front end through physical IOC$SEARCHDEV and the source
- * CCB/owner path. Descriptor probing/translation, MAXACMODE calculation,
- * mailbox association, spooled and remote-device paths remain caller work. */
+/* Local SYS$ASSIGN binding through physical IOC$SEARCHDEV and source CCBs.
+ * Mailbox, spooled and remote assignment branches remain unresolved. */
 struct port_v37_sysassign_local_request {
     const uint8_t *device_database;
     size_t device_database_bytes;
@@ -35,6 +34,9 @@ struct port_v37_sysassign_descriptor_request {
  * maximize the requested mode, then enter the native local assignment path. */
 uint32_t port_v37_sysassign_descriptor(
     const struct port_v37_sysassign_descriptor_request *,uint16_t *channel);
+/* SYSASSIGN entry ordering through user channel output and local assignment. */
+uint32_t port_v37_sysassign_descriptor_service(
+    const struct port_v37_sysassign_descriptor_request *,uint32_t channel_output);
 uint32_t port_v37_sysassign_local(
     const struct port_v37_sysassign_local_request *,uint16_t *channel);
 
