@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M290
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M291
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -966,6 +966,18 @@ Verification: the named build/test goals `make -j2 all test sysqioresidentcheck 
 M287 implementation commit: `265d50d9144f8db9aec6c1b599bfee900ab3b0a1`.
 
 Remaining: live system-service trap dispatch; transfer-buffer page locking and proper IRP SVAPTE/BCNT setup; DQA0 STARTIO submission and real interrupt completion; Files-11 ACP; process-aware IOSB/event/AST delivery; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M291 — Integrate SYSQIO transfer access rollback, 24 November 2026
+
+Connected M290 caller-buffer accessibility checking to `port_v37_sysqio_prepare_user_irp` after source-order channel/IOSB/I/O/IRP/AST reservation and device privilege checks. A READ request now rejects a read-only user page with SS$_ACCVIO, returns its private IRP, restores direct/buffered I/O and AST charges, and posts the requested event before returning. A valid transfer proceeds with the prepared standard IRP and its READ/WRITE BCNT/CARCON fields. The host DQA0 integration test covers this path with an actual translated user page and checks rollback. This is still preparation only: the page is not locked, SVAPTE/BOFF are unset, and the IRP is not submitted to the DQA0 DDT or completed asynchronously.
+
+Verification: `python3 tools/gen_source_coverage.py` PASS (2,058 ranges, zero missing mapped functions); `python3 tests/test_coverage_ranges.py` PASS; `make sysqioargscheck dqddtcheck` PASS; full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); `make qemu-sysboot-m217` PASS. QEMU performed the actual 700-byte Files-11 SYS.EXE chain read across two sectors using the DQA0 IRQ14 route, then stopped at the known incomplete INIT boundary. No login or DCL observed. Runner exited. Transcript: `logs/serial/qemu-m217-run-local-20261124T160009276547Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`.
+
+Coverage remains 446/4,566 original files indexed; 2,058 ranges; mapped 17,016 lines, partial 29,660, unresolved 52,815, missing 7,799, excluded 26,237, hardware-excluded 917. These are inventory counts only. Public source/artifact/secret scan and `git diff --check` passed; no redistribution-restricted original source or binary image was added.
+
+M291 implementation commit: `9c13bc24396fdab26a0e127d38b43a84726eca61`.
+
+Remaining priority: native page locking with rollback and correct IA-32 IRP buffer mapping, then actual DQA0 DDT STARTIO submission and interrupt completion. Public system-service vector dispatch, Files-11 ACP, process-aware IOSB/event/AST delivery, native INIT/process activation, SYSTEM login/DCL, DECnet Phase IV and genuine nested SET HOST 0 remain incomplete.
 
 ## M289 — Populate SYSQIO read/write standard IRP fields, 24 November 2026
 
