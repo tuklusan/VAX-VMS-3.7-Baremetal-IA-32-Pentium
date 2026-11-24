@@ -97,6 +97,7 @@ def main():
         b'INIT: Files-11 FH2 chain read 700 SYS.EXE bytes across two sectors through IOC-selected DQA0 DDT/IRQ14.',
         b'INIT: ACP FCB source=3',
         b'INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.',
+        b'INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.',
         b'INIT: SYS.EXE DQA0 write FIFO completed two ordered DDT WRITEPBLK IRPs; read FIFO posted two READPBLK IRPs via IRQ14, readback and restore verified.',
         b'INIT stopped: remaining original initialization dependencies incomplete.']
     failures=[

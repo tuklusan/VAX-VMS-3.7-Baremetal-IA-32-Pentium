@@ -9435,7 +9435,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/MOUNT.B32",
@@ -9469,7 +9469,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/SCHFCB.B32",
@@ -9503,7 +9503,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/SCHFCB.B32",
@@ -9537,7 +9537,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/MAKSTR.B32",
@@ -9571,7 +9571,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/MAKSTR.B32",
@@ -9605,7 +9605,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/CHKHDR.B32",
@@ -9639,7 +9639,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/CHKHD2.B32",
@@ -9673,7 +9673,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/INIFCB.B32",
@@ -9707,7 +9707,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/INIFC2.B32",
@@ -9752,7 +9752,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/CREFCB.B32",
@@ -9797,7 +9797,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/CREFCB.B32",
@@ -9842,7 +9842,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/MAKPTR.B32",
@@ -9876,7 +9876,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/RDHEDR.B32",
@@ -9910,7 +9910,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/RDHEDR.B32",
@@ -9944,7 +9944,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/CREWIN.B32",
@@ -9966,7 +9966,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_create_window",
-          "pc_line": 367,
+          "pc_line": 369,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -9978,7 +9978,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/CREWIN.B32",
@@ -10000,7 +10000,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_create_window",
-          "pc_line": 370,
+          "pc_line": 372,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10012,7 +10012,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/GETFIB.B32",
@@ -10034,7 +10034,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_get_fib",
-          "pc_line": 428,
+          "pc_line": 430,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10046,7 +10046,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/GETFIB.B32",
@@ -10068,7 +10068,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_get_fib",
-          "pc_line": 432,
+          "pc_line": 434,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10080,7 +10080,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/MAKACC.B32",
@@ -10102,7 +10102,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_make_access",
-          "pc_line": 475,
+          "pc_line": 477,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10114,7 +10114,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/MAKACC.B32",
@@ -10136,7 +10136,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_make_access",
-          "pc_line": 479,
+          "pc_line": 481,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10148,7 +10148,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/DEACCS.B32",
@@ -10170,8 +10170,8 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_deaccess",
-          "pc_line": 484,
-          "function": "Read-only non-expiring DEACCESS unlinks the WCB from its FCB, releases window counters and returns the WCB allocation; write attributes, expiration, truncate, delete, spool and cleanup branches remain explicitly incomplete."
+          "pc_line": 486,
+          "function": "Read-only non-expiring DEACCESS unlinks the WCB from its FCB, releases window counters and returns the WCB allocation; this exact MAKACC/DEACCS path is exercised by the live SYS.EXE INIT probe against a real SYS.EXE FCB. Write attributes, expiration, truncate, delete, spool and cleanup branches remain explicitly incomplete."
         },
         {
           "original_lines": [
@@ -10182,7 +10182,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11A/SRC/IODONE.MAR",
@@ -10204,7 +10204,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_io_done",
-          "pc_line": 554,
+          "pc_line": 556,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10216,7 +10216,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "F11B/SRC/IODONE.MAR",
@@ -10238,7 +10238,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_io_done",
-          "pc_line": 558,
+          "pc_line": 560,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10250,7 +10250,7 @@
           "reason": "Original module end and blank lines"
         }
       ],
-      "unresolved_integration": "Guest ACP process and disk scheduler must attach the real memory and I/O callbacks."
+      "unresolved_integration": "Guest ACP process requests and scheduler must attach live process memory, user arguments, and I/O completion callbacks; the boot probe exercises read-only MAKACC/DEACCS only."
     },
     {
       "original_file": "INILOA/SRC/INITADP.MAR",
@@ -22045,7 +22045,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 507,
+          "pc_line": 511,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -22715,7 +22715,7 @@
           "pc_file": "src/vms_exe_np_pool.c",
           "pc_symbol": "port_exe_np_allocate",
           "pc_line": 131,
-          "function": "Source IRP/LRP/SRP class selection, DYN tag preservation, any-fitting-slot lookaside dequeue and variable-pool fallback; resident SYS.EXE ACP FCB creation now allocates through this path and QEMU verified an SRP result; general users, pool extension, resource waiting and AST-delivery semantics remain unresolved"
+          "function": "Source IRP/LRP/SRP class selection, DYN tag preservation, any-fitting-slot lookaside dequeue and variable-pool fallback; resident SYS.EXE ACP FCB and WCB allocation now use this path, and QEMU verifies FCB creation plus a read-only MAKACC/DEACCS WCB cycle returning both allocations; general users, pool extension, resource waiting and AST-delivery semantics remain unresolved"
         },
         {
           "original_lines": [
@@ -22756,7 +22756,7 @@
           "pc_file": "src/vms_exe_np_pool.c",
           "pc_symbol": "port_exe_np_deallocate",
           "pc_line": 195,
-          "function": "Source-addressed nonpaged IRP/LRP/SRP lookaside return or variable-block release by DYN tag; QEMU verifies failed Files-11 ACP FCB initialization returns the SRP packet, while paged-pool return remains unresolved"
+          "function": "Source-addressed nonpaged IRP/LRP/SRP lookaside return or variable-block release by DYN tag; QEMU verifies failed Files-11 ACP FCB initialization returns the SRP packet and successful read-only WCB deaccess returns its WCB packet, while paged-pool return remains unresolved"
         },
         {
           "original_lines": [

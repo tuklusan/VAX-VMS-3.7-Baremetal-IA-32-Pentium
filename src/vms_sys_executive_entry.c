@@ -374,8 +374,11 @@ struct executive_acp_io_context {
 };
 static void *executive_acp_alloc(void *opaque,uint32_t bytes,uint32_t tag){
     (void)opaque;
-    if(!executive_np_pool_ready||tag!=PORT_F11_87_FCBTYPE||
-       bytes<sizeof(struct port_f11_87_fcb))
+    const uint32_t minimum=tag==PORT_F11_87_FCBTYPE?
+        sizeof(struct port_f11_87_fcb):sizeof(struct port_f11_87_window);
+    if(!executive_np_pool_ready||
+       (tag!=PORT_F11_87_FCBTYPE&&tag!=PORT_F11_87_WCBTYPE)||
+       bytes<minimum)
         return 0;
     struct port_exe_np_allocator allocator={
         &executive_irps,&executive_lrps,&executive_srps,
@@ -383,7 +386,7 @@ static void *executive_acp_alloc(void *opaque,uint32_t bytes,uint32_t tag){
     struct port_exe_np_allocation allocation={0};
     if(port_exe_np_allocate(&allocator,bytes,(uint8_t)tag,&allocation)!=
           PORT_EXE_NP_POOL_OK||
-       !allocation.address||allocation.bytes<sizeof(struct port_f11_87_fcb))
+       !allocation.address||allocation.bytes<minimum)
         return 0;
     executive_acp_allocation_source=allocation.source;
     return allocation.address;
@@ -391,7 +394,8 @@ static void *executive_acp_alloc(void *opaque,uint32_t bytes,uint32_t tag){
 static uint32_t executive_acp_dealloc(void *opaque,void *memory,
                                       uint32_t bytes,uint32_t tag){
     (void)opaque;
-    if(!executive_np_pool_ready||tag!=PORT_F11_87_FCBTYPE)
+    if(!executive_np_pool_ready||
+       (tag!=PORT_F11_87_FCBTYPE&&tag!=PORT_F11_87_WCBTYPE))
         return PORT_EXE_NP_POOL_BAD;
     struct port_exe_np_allocator allocator={
         &executive_irps,&executive_lrps,&executive_srps,
@@ -2053,6 +2057,43 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         const uint32_t queue_free_before=fcb_queue?fcb_queue->free_count:0u;
         const uint32_t pool_allocations_before=executive_np_pool.allocations;
         const uint32_t fcb_source=executive_acp_allocation_source;
+        struct port_f11_87_window *acp_window=executive_acp_alloc(
+            0u,sizeof(struct port_f11_87_window),PORT_F11_87_WCBTYPE);
+        if(!acp_window)return PORT_SYS_EXEC_BAD_PARAMETERS;
+        for(unsigned i=0u;i<sizeof(*acp_window);i++)
+            ((uint8_t *)acp_window)[i]=0u;
+        acp_window->fcb=acp_sys_fcb;
+        acp_window->read=1u;
+        acp_window->no_write=1u;
+        acp_window->no_truncate=1u;
+        acp_window->allocation_owned=1u;
+        acp_window->allocation_base=acp_window;
+        acp_window->allocation_bytes=sizeof(*acp_window);
+        struct port_f11_87_window *writeback=0;
+        if(port_f11b_make_access(&acp_context,acp_sys_fcb,acp_window,
+                                 &writeback)!=PORT_F11_87_NORMAL||
+           writeback!=acp_window||acp_sys_fcb->accesses!=1u||
+           acp_sys_fcb->no_writers!=1u||acp_sys_fcb->no_truncate!=1u||
+           acp_context.open_count!=1u||acp_volume.transactions!=1u||
+           !acp_context.cleanup_deaccess)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        acp_context.primary=acp_sys_fcb;
+        acp_context.window=acp_window;
+        const struct port_f11_87_deaccess_request readonly_close={0u,0u,0u,0u};
+        if(port_f11b_deaccess(&acp_context,&readonly_close)!=
+              PORT_F11_87_NORMAL||acp_sys_fcb->accesses||
+           acp_sys_fcb->no_writers||acp_sys_fcb->no_truncate||
+           acp_sys_fcb->windows||acp_sys_fcb->window_tail||
+           acp_context.open_count||acp_volume.transactions||
+           acp_context.primary||acp_context.window||
+           acp_context.cleanup_deaccess||
+           executive_acp_allocation_source!=fcb_source||
+           (fcb_queue&&fcb_queue->free_count!=queue_free_before)||
+           executive_np_pool.allocations!=pool_allocations_before||
+           port_exe_np_pool_check(&executive_np_pool)!=PORT_EXE_NP_POOL_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        executive_acp_allocation_source=fcb_source;
+        p->result->dq_acp_readonly_wcb_closed=1u;
         uint8_t invalid_fcb_header[512];
         for(unsigned i=0u;i<sizeof invalid_fcb_header;i++)
             invalid_fcb_header[i]=acp_sys_header[i];
@@ -2080,7 +2121,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->dq_acp_volume=sys_fid.volume;
         p->result->dq_acp_fcb=acp_sys_fcb;
         p->result->dq_acp_file_blocks=acp_sys_fcb->file_blocks;
-        p->result->dq_acp_alloc_source=executive_acp_allocation_source;
+        p->result->dq_acp_alloc_source=fcb_source;
         p->result->dq_acp_np_allocations=executive_np_pool.allocations;
         p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
         return PORT_SYS_EXEC_NORMAL;

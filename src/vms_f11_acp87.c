@@ -329,7 +329,8 @@ static struct port_f11_87_window *create_window(struct port_f11_87_context *c,
         if(size<PORT_F11_87_MIN_WINDOW)size=PORT_F11_87_MIN_WINDOW;
         if(size>PORT_F11_87_MAX_WINDOW)size=PORT_F11_87_MAX_WINDOW;
         if(!c->ops.alloc)return 0;
-        w=c->ops.alloc(c->ops.context,sizeof(*w)+(size_t)size*6u,2u);
+        w=c->ops.alloc(c->ops.context,sizeof(*w)+(size_t)size*6u,
+                       PORT_F11_87_WCBTYPE);
         if(!w)return 0;
         zero((uint8_t*)w,sizeof(*w));w->pointer_count=(uint16_t)size;
     }
@@ -340,7 +341,8 @@ static struct port_f11_87_window *create_window(struct port_f11_87_context *c,
     if(!(status&1u)||!primary){
         c->status=(uint16_t)status;
         if(allocation&&c->ops.dealloc&&
-           !(c->ops.dealloc(c->ops.context,allocation,allocation_bytes,2u)&1u))
+           !(c->ops.dealloc(c->ops.context,allocation,allocation_bytes,
+                            PORT_F11_87_WCBTYPE)&1u))
             c->status=PORT_F11_87_BADPARAM;
         return 0;
     }
@@ -512,7 +514,7 @@ uint32_t port_f11b_deaccess(struct port_f11_87_context *c,
     c->open_count--;v->transactions--;
     c->primary=0;c->window=0;c->cleanup_deaccess=0;
     if(!(c->ops.dealloc(c->ops.context,w->allocation_base,
-                        w->allocation_bytes,2u)&1u))
+                        w->allocation_bytes,PORT_F11_87_WCBTYPE)&1u))
         __builtin_trap();
     return PORT_F11_87_NORMAL;
 }

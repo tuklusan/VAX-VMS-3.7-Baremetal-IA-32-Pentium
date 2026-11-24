@@ -15,13 +15,13 @@ struct fake {
 };
 static void *allocate(void *p,uint32_t bytes,uint32_t kind){
     struct fake *m=p;
-    assert(kind==PORT_F11_87_FCBTYPE||kind==2u);
+    assert(kind==PORT_F11_87_FCBTYPE||kind==PORT_F11_87_WCBTYPE);
     m->allocation++;
     return calloc(1,bytes);
 }
 static uint32_t deallocate(void *p,void *memory,uint32_t bytes,uint32_t kind){
     struct fake *m=p;(void)bytes;
-    assert((kind==PORT_F11_87_FCBTYPE||kind==2u)&&memory);m->deallocation++;
+    assert((kind==PORT_F11_87_FCBTYPE||kind==PORT_F11_87_WCBTYPE)&&memory);m->deallocation++;
     free(memory);return 1u;
 }
 static uint32_t mount_kernel(void *p,uint32_t *bits,uint32_t mask){
