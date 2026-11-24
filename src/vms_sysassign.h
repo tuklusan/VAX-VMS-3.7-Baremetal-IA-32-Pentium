@@ -5,6 +5,7 @@
 #include "vms_ioc_phys.h"
 #include "vms_v37_ccb.h"
 #include "vms_sysqio_args.h"
+#include "vms_exe_access.h"
 
 /* Local SYS$ASSIGN front end through physical IOC$SEARCHDEV and the source
  * CCB/owner path. Descriptor probing/translation, MAXACMODE calculation,
@@ -24,6 +25,16 @@ struct port_v37_sysassign_local_request {
     uint8_t effective_max_acmode;
     const struct port_v37_assign_ops *assign_ops;
 };
+struct port_v37_sysassign_descriptor_request {
+    const struct port_v37_sysassign_local_request *local;
+    const struct port_exe_access *memory;
+    uint32_t device_name_descriptor;
+    uint8_t caller_access_mode,requested_access_mode;
+};
+/* SYSASSIGN.MAR entry: clear channel, read the source string descriptor,
+ * maximize the requested mode, then enter the native local assignment path. */
+uint32_t port_v37_sysassign_descriptor(
+    const struct port_v37_sysassign_descriptor_request *,uint16_t *channel);
 uint32_t port_v37_sysassign_local(
     const struct port_v37_sysassign_local_request *,uint16_t *channel);
 

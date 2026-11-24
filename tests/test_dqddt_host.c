@@ -31,6 +31,21 @@ struct sysqio_fixture {
     struct port_v37_sysassign_qio_context channels;
     unsigned errors;
 };
+struct assign_user_memory { uint32_t base;uint8_t bytes[128]; };
+static int assign_memory_read(void *v,uint32_t address,void *out,uint32_t n){
+    struct assign_user_memory *m=v;
+    if(address<m->base||n>sizeof m->bytes||
+       address-m->base>sizeof m->bytes-n)return 0;
+    memcpy(out,m->bytes+(address-m->base),n);return 1;
+}
+static int assign_memory_write(void *v,uint32_t address,const void *in,uint32_t n){
+    (void)v;(void)address;(void)in;(void)n;return 0;
+}
+static int assign_memory_probe(void *v,uint32_t address,uint32_t n){
+    struct assign_user_memory *m=v;
+    return address>=m->base&&n<=sizeof m->bytes&&
+        address-m->base<=sizeof m->bytes-n;
+}
 static void sysqio_post_error(void *v,uint32_t pid,uint8_t efn,uint32_t status){
     struct sysqio_fixture *f=v;(void)pid;(void)efn;(void)status;f->errors++;
 }
@@ -193,9 +208,20 @@ int main(void){
         .device_name="DQA0",.device_name_bytes=4u,.ccb_base=ccb_base,
         .ccb_preceding_bytes=48u,.channel_count=3u,
         .high_water_channel=&high_water,.process_pid=0x12340001u,
-        .arb_va=0x0034c000u,.effective_max_acmode=2u,
+        .arb_va=0x0034c000u,.effective_max_acmode=0u,
         .assign_ops=&assign_ops};
-    CHECK(port_v37_sysassign_local(&assign_request,&assigned)==PORT_V37_CCB_OK);
+    struct assign_user_memory assign_memory={.base=0x1000u};
+    assign_memory.bytes[0]=4u;assign_memory.bytes[1]=0u;
+    assign_memory.bytes[2]=14u;assign_memory.bytes[3]=1u;
+    assign_memory.bytes[4]=0x10u;assign_memory.bytes[5]=0x10u;
+    memcpy(assign_memory.bytes+16u,"DQA0",4u);
+    const struct port_exe_access assign_access={&assign_memory,
+        assign_memory_read,assign_memory_write,assign_memory_probe,
+        assign_memory_probe};
+    const struct port_v37_sysassign_descriptor_request assign_descriptor={
+        &assign_request,&assign_access,0x1000u,2u,0u};
+    CHECK(port_v37_sysassign_descriptor(&assign_descriptor,&assigned)==
+        PORT_V37_CCB_OK);
     CHECK(assigned==16u&&high_water==16u&&
         port_v37_read32(ccb_base-16u+PORT_V37_CCB_UCB)==info.ucb[0]&&
         (ccb_base-16u)[PORT_V37_CCB_AMOD]==3u);
@@ -229,6 +255,17 @@ int main(void){
         qio_process.direct_io_count==0&&qio_fixture.errors==0u);
     CHECK(port_v37_sysassign_lookup_qio_channel(&qio_fixture.channels,
         0x12340002u,assigned,&qio_prepared.channel)!=0);
+    uint16_t bad_channel=UINT16_MAX;
+    struct port_v37_sysassign_descriptor_request bad_descriptor=
+        assign_descriptor;
+    bad_descriptor.device_name_descriptor=0x1080u;
+    CHECK(port_v37_sysassign_descriptor(&bad_descriptor,&bad_channel)==
+        PORT_SYS85_ACCVIO&&bad_channel==0u);
+    bad_descriptor=assign_descriptor;bad_channel=UINT16_MAX;
+    assign_memory.bytes[0]=64u;
+    CHECK(port_v37_sysassign_descriptor(&bad_descriptor,&bad_channel)==
+        PORT_V37_IOC_BAD&&bad_channel==0u);
+    assign_memory.bytes[0]=4u;
     /* Exercise the complete host-side route through standard IRP reservation
      * using the channel created above. Hardware submission remains separate. */
     uint8_t qio_pool_memory[512u]={0};
@@ -310,6 +347,6 @@ int main(void){
     CHECK(!memcmp(&before,&d,sizeof d));
     CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    puts("DQ native DDT activation, DQA0 DDB/UCB binding, IOC search, SYSQIO IRP/CCB accounting and privileged READPBLK/WRITEPBLK dispatch PASS; public QIO/ACP remain unimplemented");
+    puts("DQ native DDT activation, SYSASSIGN descriptor/MAXACMODE, DQA0 IOC/CCB, SYSQIO IRP/CCB accounting and privileged READPBLK/WRITEPBLK dispatch PASS; public QIO/ACP remain unimplemented");
     return 0;
 }

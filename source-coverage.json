@@ -21322,21 +21322,32 @@
         {
           "original_lines": [
             1,
-            192
+            187
           ],
           "status": "unresolved",
-          "reason": "Service argument probing, caller access validation, descriptor parsing and MAXACMODE dispatch unresolved"
+          "reason": "Channel output probing and mailbox descriptor processing remain unresolved"
         },
         {
           "original_lines": [
-            193,
+            188,
+            194
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysassign.c",
+          "pc_symbol": "port_v37_sysassign_descriptor",
+          "pc_line": 34,
+          "function": "Rejects missing/invalid descriptor inputs, reads the 8-byte VMS descriptor and counted name through the caller-mode memory interface, and applies MAXACMODE=max(requested,current); output-channel write probing remains unresolved"
+        },
+        {
+          "original_lines": [
+            195,
             195
           ],
           "status": "partial",
           "pc_file": "src/vms_v37_ccb.c",
           "pc_symbol": "port_v37_ccb_find_free",
           "pc_line": 41,
-          "function": "IOC$FFCHAN scans the source byte-offset channel table and advances CHINDX; MAXACMODE integration is unresolved"
+          "function": "IOC$FFCHAN scans the source byte-offset channel table and advances CHINDX after descriptor access-mode maximization"
         },
         {
           "original_lines": [
@@ -21354,8 +21365,8 @@
           "status": "partial",
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_local",
-          "pc_line": 3,
-          "function": "Local physical IOC$SEARCHDEV is composed with the source CCB assignment helper; descriptor probing and public service-vector binding remain unresolved"
+          "pc_line": 4,
+          "function": "Local physical IOC$SEARCHDEV is composed with the source CCB assignment helper; public service-vector binding remains unresolved"
         },
         {
           "original_lines": [
@@ -21404,7 +21415,7 @@
           "reason": "Remote assignment, SYS$QIO connection, completion wait and TEST_MAILBOX are not implemented"
         }
       ],
-      "unresolved_integration": "Native resident helper implements only the local-device ownership/access/refcount/CCB mutation after the caller supplies a resolved UCB and effective access mode. No live process CCB table, SYS$ASSIGN service vector, descriptor validation, caller-mode probing, mailbox or network assignment is wired."
+      "unresolved_integration": "Native helpers parse a caller-readable VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. The descriptor path is host-tested only. There is no live SYS$ASSIGN service entry/process CCB, channel output probing/clear, mailbox handling, network UCB creation or remote assignment."
     },
     {
       "original_file": "SYS/SRC/SYSQIOREQ.MAR",
@@ -21483,7 +21494,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_lookup_qio_channel",
-          "pc_line": 33,
+          "pc_line": 65,
           "function": "Resolve the source channel token from a PID-bound CCB table, verify the assigned UCB and bind its native DQ FDT/device view; local DQA0 SYS$ASSIGN helper composes IOC$SEARCHDEV with CCB ownership/refcount. Public service-vector dispatch remains absent"
         },
         {

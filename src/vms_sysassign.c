@@ -1,4 +1,5 @@
 #include "vms_sysassign.h"
+#include "vms_exe_io.h"
 
 uint32_t port_v37_sysassign_local(
     const struct port_v37_sysassign_local_request *r,uint16_t *channel){
@@ -28,6 +29,37 @@ uint32_t port_v37_sysassign_local(
         r->effective_max_acmode,r->mailbox_ucb,r->assign_ops,&assigned);
     if(status==PORT_V37_CCB_OK)*channel=assigned;
     return status;
+}
+
+uint32_t port_v37_sysassign_descriptor(
+    const struct port_v37_sysassign_descriptor_request *r,uint16_t *channel){
+    if(!channel)return PORT_V37_CCB_BAD;
+    *channel=0u;
+    if(!r||!r->local||!r->memory||r->caller_access_mode>3u)
+        return PORT_V37_CCB_BAD;
+    if(!r->device_name_descriptor)return PORT_SS_IVDEVNAM;
+    uint8_t descriptor[8];
+    if(!port_exe_probe_read(r->memory,r->device_name_descriptor,
+                            sizeof descriptor)||
+       !port_exe_read(r->memory,r->device_name_descriptor,descriptor,
+                      sizeof descriptor))return PORT_SS_ACCVIO;
+    const uint32_t length=(uint32_t)descriptor[0]|
+                          ((uint32_t)descriptor[1]<<8);
+    const uint32_t address=(uint32_t)descriptor[4]|
+        ((uint32_t)descriptor[5]<<8)|((uint32_t)descriptor[6]<<16)|
+        ((uint32_t)descriptor[7]<<24);
+    if(!length||length>PORT_V37_IOC_NAME_MAX||!address)
+        return PORT_V37_IOC_BAD;
+    char name[PORT_V37_IOC_NAME_MAX];
+    if(!port_exe_probe_read(r->memory,address,length)||
+       !port_exe_read(r->memory,address,name,length))
+        return PORT_SS_ACCVIO;
+    struct port_v37_sysassign_local_request local=*r->local;
+    const uint8_t requested=(uint8_t)(r->requested_access_mode&3u);
+    local.effective_max_acmode=requested>r->caller_access_mode?
+        requested:r->caller_access_mode;
+    local.device_name=name;local.device_name_bytes=length;
+    return port_v37_sysassign_local(&local,channel);
 }
 
 int port_v37_sysassign_lookup_qio_channel(void *context,uint32_t pid,
