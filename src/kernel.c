@@ -4170,7 +4170,7 @@ void kmain(void) {
     }
     bootstrap_message("INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).");
     bootstrap_message("INIT: Files-11 FH2 chain read 700 SYS.EXE bytes across two sectors through IOC-selected DQA0 DDT/IRQ14.");
-    bootstrap_message("INIT: Files-11 ACP RDHEDR/F11B FCB opened SYS.EXE FID 11 through DQA0 DDT/CRB IRQ14.");
+    bootstrap_message("INIT: Files-11 ACP RDHEDR/F11B allocated SYS.EXE FID 11 FCB from native EXE$ALONONPAGED pool via DQA0 DDT/CRB IRQ14.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,
