@@ -21336,7 +21336,7 @@
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_descriptor_service",
           "pc_line": 65,
-          "function": "Probes and clears the caller-supplied channel output before descriptor reads; live process-address translation is not bound"
+          "function": "Probes and clears channel output before descriptor reads; its caller-memory adapter is tested through translated IA-32 pages, but no live process map is bound"
         },
         {
           "original_lines": [
@@ -21355,7 +21355,7 @@
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_descriptor",
           "pc_line": 34,
-          "function": "Rejects missing/invalid descriptor inputs, reads the 8-byte VMS descriptor and counted name through the caller-mode memory interface, and applies MAXACMODE=max(requested,current); output-channel write probing remains unresolved"
+          "function": "Rejects missing/invalid descriptor inputs, reads the 8-byte VMS descriptor and counted name through checked caller-mode page translations, and applies MAXACMODE=max(requested,current); live per-process context remains unresolved"
         },
         {
           "original_lines": [
@@ -21434,7 +21434,7 @@
           "reason": "Remote assignment, SYS$QIO connection, completion wait and TEST_MAILBOX are not implemented"
         }
       ],
-      "unresolved_integration": "Native helpers probe/clear/write a caller-supplied channel output through an abstract caller-memory interface, parse a VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. These are host-tested; no live SYS$ASSIGN service entry or process-address translation is bound. Mailbox handling, network UCB creation and remote assignment remain unresolved."
+      "unresolved_integration": "Native helpers probe/clear/write channel output through the translated caller-memory adapter, parse a VMS string descriptor, maximize requested access mode, search DQA0, and perform local UCB ownership/refcount/CCB mutation. A host integration test maps descriptor/name/output through IA-32 PTEs, and the adapter is resident in SYS.EXE, but no live process-map/CCB binding or public SYS$ASSIGN service entry invokes the path. Mailbox handling, network UCB creation and remote assignment remain unresolved."
     },
     {
       "original_file": "SYS/SRC/SYSQIOREQ.MAR",

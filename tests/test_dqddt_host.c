@@ -31,23 +31,15 @@ struct sysqio_fixture {
     struct port_v37_sysassign_qio_context channels;
     unsigned errors;
 };
-struct assign_user_memory { uint32_t base;uint8_t bytes[128]; };
-static int assign_memory_read(void *v,uint32_t address,void *out,uint32_t n){
-    struct assign_user_memory *m=v;
-    if(address<m->base||n>sizeof m->bytes||
-       address-m->base>sizeof m->bytes-n)return 0;
-    memcpy(out,m->bytes+(address-m->base),n);return 1;
+struct assign_user_memory {
+    uint32_t pde[1024],pte[1024];
+    _Alignas(4096) uint8_t bytes[4096];
+};
+static const uint32_t *assign_table(void *v,uint32_t address){
+    struct assign_user_memory *m=v;return address==0x5000u?m->pte:0;
 }
-static int assign_memory_write(void *v,uint32_t address,const void *in,uint32_t n){
-    struct assign_user_memory *m=v;
-    if(address<m->base||n>sizeof m->bytes||
-       address-m->base>sizeof m->bytes-n)return 0;
-    memcpy(m->bytes+(address-m->base),in,n);return 1;
-}
-static int assign_memory_probe(void *v,uint32_t address,uint32_t n){
-    struct assign_user_memory *m=v;
-    return address>=m->base&&n<=sizeof m->bytes&&
-        address-m->base<=sizeof m->bytes-n;
+static uint8_t *assign_page(void *v,uint32_t address){
+    struct assign_user_memory *m=v;return address==0x9000u?m->bytes:0;
 }
 static void sysqio_post_error(void *v,uint32_t pid,uint8_t efn,uint32_t status){
     struct sysqio_fixture *f=v;(void)pid;(void)efn;(void)status;f->errors++;
@@ -213,14 +205,18 @@ int main(void){
         .high_water_channel=&high_water,.process_pid=0x12340001u,
         .arb_va=0x0034c000u,.effective_max_acmode=0u,
         .assign_ops=&assign_ops};
-    struct assign_user_memory assign_memory={.base=0x1000u};
+    struct assign_user_memory assign_memory={0};
+    assign_memory.pde[0]=0x5007u;assign_memory.pte[1]=0x9007u;
     assign_memory.bytes[0]=4u;assign_memory.bytes[1]=0u;
     assign_memory.bytes[2]=14u;assign_memory.bytes[3]=1u;
     assign_memory.bytes[4]=0x10u;assign_memory.bytes[5]=0x10u;
     memcpy(assign_memory.bytes+16u,"DQA0",4u);
-    const struct port_exe_access assign_access={&assign_memory,
-        assign_memory_read,assign_memory_write,assign_memory_probe,
-        assign_memory_probe};
+    const struct port_user_map assign_map={assign_memory.pde,
+        assign_table,&assign_memory};
+    struct port_exe_access assign_access;
+    struct port_exe_user_access assign_binding;
+    port_exe_user_access_init(&assign_access,&assign_binding,&assign_map,
+        assign_page,&assign_memory);
     const struct port_v37_sysassign_descriptor_request assign_descriptor={
         &assign_request,&assign_access,0x1000u,2u,0u};
     CHECK(port_v37_sysassign_descriptor_service(&assign_descriptor,0x1040u)==
@@ -262,7 +258,7 @@ int main(void){
     uint16_t bad_channel=UINT16_MAX;
     struct port_v37_sysassign_descriptor_request bad_descriptor=
         assign_descriptor;
-    bad_descriptor.device_name_descriptor=0x1080u;
+    bad_descriptor.device_name_descriptor=0x2000u;
     assign_memory.bytes[64]=0xffu;assign_memory.bytes[65]=0xffu;
     CHECK(port_v37_sysassign_descriptor_service(&bad_descriptor,0x1040u)==
         PORT_SYS85_ACCVIO&&port_v37_read16(assign_memory.bytes+64u)==0u);
@@ -352,6 +348,6 @@ int main(void){
     CHECK(!memcmp(&before,&d,sizeof d));
     CHECK(port_dqddt_stage_init(&d,&fdt,BASE,START,BASE+8u,action,write_action)==PORT_DQDDT_BAD);
     CHECK(!memcmp(&before,&d,sizeof d));
-    puts("DQ native DDT activation, SYSASSIGN descriptor/MAXACMODE, DQA0 IOC/CCB, SYSQIO IRP/CCB accounting and privileged READPBLK/WRITEPBLK dispatch PASS; public QIO/ACP remain unimplemented");
+    puts("DQ native DDT activation, translated SYSASSIGN descriptor/channel output, DQA0 IOC/CCB, SYSQIO IRP/CCB accounting and privileged READPBLK/WRITEPBLK dispatch PASS; public QIO/ACP remain unimplemented");
     return 0;
 }
