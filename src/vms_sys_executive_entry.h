@@ -196,6 +196,9 @@ struct port_sys_exec_result {
         const struct port_dq_fdt *,const struct port_dqddt_native *);
     uint32_t dq_ddt_published,dqa_ioc_status,dqa_ioc_ddb,dqa_ioc_ucb;
     uint32_t dq_published_f11_read_bytes,dq_published_f11_read_irps;
+    uint32_t dq_acp_header_lbn,dq_acp_header_reads;
+    const uint8_t *dq_acp_header;
+    uint16_t dq_acp_file,dq_acp_sequence,dq_acp_volume;
     /* DEVICEDAT DDB/UCB pointer graph; DQA0 is partially DDT/CRB bound. */
     const struct port_v37_device_result *device_db;
     const uint8_t *device_db_bytes;

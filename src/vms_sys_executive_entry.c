@@ -24,6 +24,7 @@
 #include "vms_f11_bootpath.h"
 #include "vms_f11_bootdir.h"
 #include "vms_f11_chain.h"
+#include "vms_f11_acp87.h"
 #include "vms_f11_cursor.h"
 #include "vms_dq_ioc.h"
 #include "vms_f11_ioc.h"
@@ -362,6 +363,31 @@ struct executive_postpub_f11_context {
     const struct port_sys_exec_dq_boot_settings *settings;
     uint32_t reads;
 };
+struct executive_acp_io_context {
+    struct executive_postpub_f11_context disk;
+    const uint8_t *index_header;
+    uint16_t volume;
+};
+static uint32_t executive_postpub_f11_sector(void *,uint32_t,uint8_t[512]);
+static uint32_t executive_acp_map_vbn(void *opaque,uint32_t vbn,
+                                      uint32_t *lbn){
+    struct executive_acp_io_context *ctx=opaque;
+    if(!ctx||!ctx->index_header||!lbn)return PORT_F11_87_BADPARAM;
+    return port_dq_dir_map_vbn(ctx->index_header,vbn,lbn)==PORT_DQ_DIR_OK?
+        PORT_F11_87_NORMAL:PORT_F11_87_BADFILEHDR;
+}
+static uint32_t executive_acp_read_lbn(void *opaque,uint32_t lbn,
+                                       uint8_t output[512]){
+    struct executive_acp_io_context *ctx=opaque;
+    if(!ctx||!output)return PORT_F11_87_BADPARAM;
+    return executive_postpub_f11_sector(&ctx->disk,lbn,output)==PORT_DQ_DIR_OK?
+        PORT_F11_87_NORMAL:PORT_F11_86_IOERROR;
+}
+static uint32_t executive_acp_switch_volume(void *opaque,uint16_t volume){
+    const struct executive_acp_io_context *ctx=opaque;
+    return ctx&&ctx->volume==volume?PORT_F11_87_NORMAL:
+        PORT_F11_87_WRONGACP;
+}
 static uint32_t executive_postpub_f11_sector(void *opaque,uint32_t lbn,
                                               uint8_t output[512]){
     struct executive_postpub_f11_context *ctx=opaque;
@@ -1905,12 +1931,54 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         for(unsigned i=0u;i<sizeof chain_sample;i++)
             if(chain_sample[i]!=executive_f11_chain_text[i])
                 return PORT_SYS_EXEC_BAD_PARAMETERS;
+        /* Exercise the Files-11 ACP RDHEDR path for the just-opened SYS.EXE.
+         * Its FID-to-VBN and FH2 retrieval-map callbacks read the same
+         * published DQA0 DDT through the CRB IRQ14 completion path. */
+        const uint8_t *home=(const uint8_t *)executive_dq_boot_sector.words;
+        const uint8_t *index_header=
+            (const uint8_t *)executive_dq_index_sector.words;
+        const uint32_t bitmap_blocks=port_dq_index_word(home,32u);
+        const uint32_t cluster=port_dq_index_word(home,14u);
+        if(bitmap_blocks>UINT8_MAX||cluster>UINT16_MAX)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        struct executive_acp_io_context acp_io={{p->dq_boot_io,0u},
+            index_header,executive_f11_opened_sys.file.volume};
+        const struct port_f11_87_ops acp_ops={
+            .context=&acp_io,.map_vbn=executive_acp_map_vbn,
+            .read_lbn=executive_acp_read_lbn,
+            .switch_volume=executive_acp_switch_volume};
+        struct port_f11_87_volume acp_volume={0};
+        acp_volume.index_bitmap_blocks=(uint8_t)bitmap_blocks;
+        acp_volume.cluster=(uint16_t)cluster;
+        acp_volume.current_rvn=executive_f11_opened_sys.file.volume;
+        struct port_f11_87_context acp_context={
+            .volume=&acp_volume,.ops=acp_ops};
+        const struct port_f11_86_fid sys_fid={
+            executive_f11_opened_sys.file.number,
+            executive_f11_opened_sys.file.sequence,
+            executive_f11_opened_sys.file.volume,0u};
+        static uint8_t acp_sys_header[512] __attribute__((aligned(4)));
+        uint32_t acp_header_lbn=0u;
+        if(port_f11b_read_header(&acp_context,&sys_fid,0,
+              acp_sys_header,&acp_header_lbn)!=PORT_F11_87_NORMAL||
+           acp_header_lbn!=executive_f11_opened_sys.file_header_lbn||
+           acp_io.disk.reads!=1u)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        for(unsigned i=0u;i<sizeof acp_sys_header;i++)
+            if(acp_sys_header[i]!=executive_f11_opened_sys.header[i])
+                return PORT_SYS_EXEC_BAD_PARAMETERS;
         p->result->dq_ddt_published=1u;
         p->result->dqa_ioc_status=PORT_V37_IOC_OK;
         p->result->dqa_ioc_ddb=found.ddb;
         p->result->dqa_ioc_ucb=found.ucb;
         p->result->dq_published_f11_read_bytes=chain_done;
         p->result->dq_published_f11_read_irps=f11ctx.reads;
+        p->result->dq_acp_header_lbn=acp_header_lbn;
+        p->result->dq_acp_header_reads=acp_io.disk.reads;
+        p->result->dq_acp_header=acp_sys_header;
+        p->result->dq_acp_file=sys_fid.number;
+        p->result->dq_acp_sequence=sys_fid.sequence;
+        p->result->dq_acp_volume=sys_fid.volume;
         p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }

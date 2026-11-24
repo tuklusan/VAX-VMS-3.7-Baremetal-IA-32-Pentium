@@ -4146,6 +4146,14 @@ void kmain(void) {
        !dq_publish_result.ioc_search||
        dq_publish_result.dq_published_f11_read_bytes!=700u||
        dq_publish_result.dq_published_f11_read_irps!=2u||
+       !dq_publish_result.dq_acp_header||
+       (uintptr_t)dq_publish_result.dq_acp_header<PORT_SYS_ELF_START||
+       (uintptr_t)dq_publish_result.dq_acp_header>
+          PORT_SYS_ELF_LIMIT-512u||
+       dq_publish_result.dq_acp_header_lbn==0u||
+       dq_publish_result.dq_acp_header_reads!=1u||
+       dq_publish_result.dq_acp_file!=11u||
+       dq_publish_result.dq_acp_sequence!=11u||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
        dq_publish_result.device_db->incomplete_driver_mask!=6u||
@@ -4156,6 +4164,7 @@ void kmain(void) {
     }
     bootstrap_message("INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).");
     bootstrap_message("INIT: Files-11 FH2 chain read 700 SYS.EXE bytes across two sectors through IOC-selected DQA0 DDT/IRQ14.");
+    bootstrap_message("INIT: Files-11 ACP RDHEDR read SYS.EXE FID 11 through DQA0 DDT/CRB IRQ14.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,
