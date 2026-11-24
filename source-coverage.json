@@ -21606,7 +21606,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
-          "pc_line": 26,
+          "pc_line": 27,
           "function": "Build source-layout 136-byte standard IRP with source negative byte-offset IRP$W_CHAN encoding validated against the SYSQIO channel argument, ARB/fork fields and conditional ACB quota flag plus ASTCNT charge; native channel accounting and driver dispatch remain unbound"
         },
         {
@@ -21777,7 +21777,7 @@
             176
           ],
           "status": "unresolved",
-          "reason": "SYSQIOFDT setup, FDT dispatch and non-one-parameter routines remain unported"
+          "reason": "SYSQIOFDT setup, FDT dispatch and routines before the one-parameter action remain unported"
         },
         {
           "original_lines": [
@@ -21787,19 +21787,108 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
-          "pc_line": 26,
+          "pc_line": 27,
           "function": "EXE$ONEPARM copies P1 to IRP$L_MEDIA when the device FDT selects the one-parameter action; host test verifies the exact packet field"
         },
         {
           "original_lines": [
             180,
+            248
+          ],
+          "status": "unresolved",
+          "reason": "Zero-parameter action and pre-read/write SYSQIOFDT routines remain unported"
+        },
+        {
+          "original_lines": [
+            249,
+            250
+          ],
+          "status": "unresolved",
+          "reason": "Read/modify buffer-lock routine selection remains unported"
+        },
+        {
+          "original_lines": [
+            251,
+            251
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_build.c",
+          "pc_symbol": "port_v37_sysqio_build_irp",
+          "pc_line": 27,
+          "function": "Sets IRP$V_FUNC for the classified READ FDT action; following source lock/access checks remain unresolved"
+        },
+        {
+          "original_lines": [
+            252,
+            253
+          ],
+          "status": "unresolved",
+          "reason": "Write buffer-lock routine selection remains unported"
+        },
+        {
+          "original_lines": [
+            254,
+            254
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_build.c",
+          "pc_symbol": "port_v37_sysqio_build_irp",
+          "pc_line": 27,
+          "function": "Copies low byte of P4 to IRP$B_CARCON for read/write/modify FDT classes"
+        },
+        {
+          "original_lines": [
+            255,
+            259
+          ],
+          "status": "unresolved",
+          "reason": "Physical function normalization in the common FDT path remains incomplete"
+        },
+        {
+          "original_lines": [
+            260,
+            261
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysqio_irp_build.c",
+          "pc_symbol": "port_v37_sysqio_build_irp",
+          "pc_line": 27,
+          "function": "Zero-extends low word P2 into IRP$L_BCNT for read/write/modify classes; zero count leaves BCNT clear"
+        },
+        {
+          "original_lines": [
+            262,
+            264
+          ],
+          "status": "unresolved",
+          "reason": "P1 buffer accessibility, page locking and EXE$QIODRVPKT submission remain unported"
+        },
+        {
+          "original_lines": [
+            265,
+            364
+          ],
+          "status": "unresolved",
+          "reason": "Remaining SYSQIOFDT routines and buffer-check setup unresolved"
+        },
+        {
+          "original_lines": [
+            365,
+            380
+          ],
+          "status": "unresolved",
+          "reason": "READLOCK/WRITELOCK address probing, page locking, BOFF and SVAPTE population unresolved"
+        },
+        {
+          "original_lines": [
+            381,
             868
           ],
           "status": "unresolved",
-          "reason": "Zero/read/write/buffer check and remaining FDT routines unresolved"
+          "reason": "FDT retry/fault recovery, buffer checks and remaining SYSQIOFDT routines unresolved"
         }
       ],
-      "unresolved_integration": "Only the standard IRP field effect of EXE$ONEPARM is covered, selected by the classified FDT action. The live FDT dispatcher, one-parameter device queuing, EXE$READLOCK buffer pinning and all remaining SYSQIOFDT behavior are incomplete."
+      "unresolved_integration": "Native IRP construction now preserves ONE action P1 media, READ status bit, CARCON from P4, and BCNT from zero-extended P2 for read/write/modify action classes. No live FDT dispatcher or QIODRVPKT queue exists; P1 permission checks, page locking, IRP BOFF/SVAPTE setup, fault/restart behavior and all remaining SYSQIOFDT behavior are incomplete."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",

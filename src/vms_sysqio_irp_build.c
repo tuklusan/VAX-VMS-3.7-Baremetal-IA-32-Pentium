@@ -6,7 +6,8 @@ enum { IRP_SIZE=8u,IRP_TYPE=10u,IRP_RMOD=11u,IRP_PID=12u,
        IRP_AST=16u,IRP_ASTPRM=20u,IRP_WIND=24u,IRP_UCB=28u,
        IRP_FUNC=32u,IRP_EFN=34u,IRP_PRI=35u,IRP_IOSB=36u,
        IRP_CHAN=40u,IRP_STS=42u,IRP_SVAPTE=44u,IRP_BOFF=48u,
-       IRP_BCNT=52u,IRP_STS_BUFIO=1u,IRP_RMOD_QUOTA=0x40u };
+       IRP_BCNT=52u,IRP_CARCON=64u,IRP_STS_BUFIO=1u,
+       IRP_STS_FUNC=2u,IRP_RMOD_QUOTA=0x40u };
 _Static_assert(PORT_V37_IRP_ARB+4u<=PORT_V37_SYSQIO_IRP_STANDARD_BYTES,
                "standard IRP includes ARB");
 _Static_assert((unsigned)PORT_V37_IRP_SIZE==
@@ -61,11 +62,25 @@ uint32_t port_v37_sysqio_build_irp(
      * sign-extends it and adds it to CTL$GL_CCBBASE. */
     put16(candidate+IRP_CHAN,
           (uint16_t)(0u-(uint16_t)spec->channel_index));
-    put16(candidate+IRP_STS,request->dispatch.buffered?IRP_STS_BUFIO:0u);
+    uint16_t irp_status=request->dispatch.buffered?IRP_STS_BUFIO:0u;
+    if(request->dispatch.action_class==PORT_DQ_FDT_READ)
+        irp_status|=IRP_STS_FUNC;
+    put16(candidate+IRP_STS,irp_status);
     put32(candidate+IRP_SVAPTE,0u);
     put16(candidate+IRP_BOFF,0u);
     put32(candidate+IRP_BCNT,0u);
     put32(candidate+PORT_V37_IRP_ARB,spec->arb_va);
+    if(request->dispatch.action_class==PORT_DQ_FDT_READ||
+       request->dispatch.action_class==PORT_DQ_FDT_WRITE||
+       request->dispatch.action_class==PORT_DQ_FDT_MODIFY){
+        /* SYSQIOFDT EXE$READ/WRITE/ MODIFY common path stores P2 as a
+         * zero-extended transfer byte count and P4 as carriage control.
+         * User-buffer accessibility, page locking and SVAPTE binding are
+         * still required before this IRP can be submitted to a driver. */
+        put32(candidate+IRP_BCNT,
+              (uint16_t)request->args.parameter[1]);
+        candidate[IRP_CARCON]=(uint8_t)request->args.parameter[3];
+    }
     /* SYSQIOFDT.MAR EXE$ONEPARM stores P1 in IRP$L_MEDIA before queuing.
      * Keep that FDT action in the standard packet so DQ SEEK receives P1
      * through the same IRP field used by its original driver. */

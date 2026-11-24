@@ -349,9 +349,10 @@ int main(void){
        get32(irp+20u)!=0xaabbccddu||get32(irp+24u)!=0u||
        get32(irp+28u)!=0x2000u||get16(irp+32u)!=0x31u||
        irp[34u]!=3u||irp[35u]!=8u||get32(irp+36u)!=0x1000u||
-       get16(irp+40u)!=(uint16_t)(0u-32u)||get16(irp+42u)!=0u||
+       get16(irp+40u)!=(uint16_t)(0u-32u)||get16(irp+42u)!=2u||
        get32(irp+44u)!=0u||get16(irp+48u)!=0u||
-       get32(irp+52u)!=0u||get32(irp+PORT_V37_IRP_ARB)!=0x3000u||
+       get32(irp+52u)!=2u||irp[64u]!=4u||
+       get32(irp+PORT_V37_IRP_ARB)!=0x3000u||
        irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES]!=0xa5u){
         return 28;
     }
@@ -403,6 +404,33 @@ int main(void){
           PORT_V37_SYSQIO_IRP_BUILD_OK||
        get32(one_parameter_irp+PORT_V37_IRP_MEDIA)!=0x12345678u)
         return 67;
+    struct port_v37_sysqio_prepared read_request=prepared;
+    read_request.args.function=PORT_DQ_READPBLK;
+    read_request.args.parameter[0]=0x12345ff0u;
+    read_request.args.parameter[1]=0x1234ffffu;
+    read_request.args.parameter[3]=0xabcdef80u;
+    if(port_v37_sysqio_preflight(&read_request.args,proc.access_mode,4u,
+          &device,&read_request.dispatch)!=PORT_V37_SYSQIO_PRECHECK_OK||
+       read_request.dispatch.action_class!=PORT_DQ_FDT_READ||
+       port_v37_sysqio_build_irp(&read_request,&proc,&one_parameter_spec,
+          one_parameter_irp,sizeof one_parameter_irp)!=
+          PORT_V37_SYSQIO_IRP_BUILD_OK||
+       !(get16(one_parameter_irp+42u)&2u)||
+       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0xffffu||
+       one_parameter_irp[64u]!=0x80u)
+        return 71;
+    struct port_v37_sysqio_prepared write_request=read_request;
+    write_request.args.function=PORT_DQ_WRITEPBLK;
+    if(port_v37_sysqio_preflight(&write_request.args,proc.access_mode,4u,
+          &device,&write_request.dispatch)!=PORT_V37_SYSQIO_PRECHECK_OK||
+       write_request.dispatch.action_class!=PORT_DQ_FDT_WRITE||
+       port_v37_sysqio_build_irp(&write_request,&proc,&one_parameter_spec,
+          one_parameter_irp,sizeof one_parameter_irp)!=
+          PORT_V37_SYSQIO_IRP_BUILD_OK||
+       (get16(one_parameter_irp+42u)&2u)||
+       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0xffffu||
+       one_parameter_irp[64u]!=0x80u)
+        return 72;
     uint8_t *prepared_irp=0;uint32_t prepared_va=0u;
     struct port_v37_sysqio_prepared integrated={0};
     proc.direct_io_count=1;proc.ast_count=1;rig.posts=0u;
