@@ -9,7 +9,8 @@ uint32_t port_v37_sysqio_check_ast_quota(
     const struct port_v37_sysqio_process *process,uint32_t *service_status){
     if(!request||!process||!service_status||!process->pid)
         return PORT_V37_SYSQIO_AST_BAD;
-    if(request->args.ast_address&&process->ast_count<0){
+    if(request->args.ast_address&&
+       port_v37_sysqio_process_ast_count(process)<0){
         *service_status=PORT_SS_EXQUOTA;
         return PORT_V37_SYSQIO_AST_EXQUOTA;
     }

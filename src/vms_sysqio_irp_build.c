@@ -58,8 +58,9 @@ uint32_t port_v37_sysqio_build_irp(
     put32(candidate+PORT_V37_IRP_ARB,spec->arb_va);
     if(request->args.ast_address){
         /* VMS DECW semantics without signed C overflow. */
-        process->ast_count=process->ast_count==INT16_MIN?INT16_MAX:
-                           (int16_t)(process->ast_count-1);
+        const int16_t ast_count=port_v37_sysqio_process_ast_count(process);
+        port_v37_sysqio_process_set_ast_count(process,
+            ast_count==INT16_MIN?INT16_MAX:(int16_t)(ast_count-1));
     }
     for(size_t i=0;i<sizeof candidate;i++)packet[i]=candidate[i];
     return PORT_V37_SYSQIO_IRP_BUILD_OK;
