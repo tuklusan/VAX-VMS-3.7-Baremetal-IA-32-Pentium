@@ -1078,3 +1078,13 @@ Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargs
 M298 implementation commit: `1c6a6c00186b325f705bcb8115d1f08618188b3d`.
 
 Remaining: bind retained SYSQIO state to actual DQA0 submission and running IOCIOPOST; real PCB/PHD accounting, event/AST scheduling and single-owner pin release; Files-11 ACP, full INIT and process image activation; SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0 acceptance.
+
+## M299 — Retain SYSQIO pins through bounded DIRPOST completion, 24 November 2026
+
+Added a 32-entry resident SYSQIO pending table. It validates standard IRPs against PID, IRP VA, IOSB and request mode, rejects duplicate ownership, atomically takes ownership of the prepared request and its pinned IOSB/transfer pages, and supplies DIRPOST validation/completion callbacks. Completion writes status, information and device status through the retained IOSB page alias, then releases both pin sets. The DIRPOST host regression now exercises the actual table, deferred validation on corrupted IRP IOSB, successful IOSB write and exactly-once unpin. This is a tested callback composition only: no live public SYS$QIO dispatcher submits to DQA0 or binds this table to a running process/scheduler.
+
+Verification: `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); `make iopostendcheck` PASS under UBSan; `make qemu-sysboot-m217` PASS with actual 700-byte Files-11 SYS.EXE chain read across two DQA0 DDT/IRQ14 sectors, then the existing incomplete INIT stop. The new run transcript `logs/serial/qemu-m217-run-local-20261124T191314310380Z.log` is 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No SYSTEM login, DCL, DECnet or SET HOST 0 occurred. `python3 tests/test_coverage_ranges.py`, `python3 tools/validate_source_ranges.py` and staged source whitespace checks PASS; source inventory is 446/4,566 indexed originals, 2,058 ranges, mapped 17,016, partial 29,664, unresolved 52,811, missing 7,799, excluded 26,237, hardware-excluded 917. No original DEC source, image or secret was added; generated coverage and raw serial evidence only accompany native code.
+
+M299 implementation commit: `f876849c`.
+
+Remaining: connect public SYS$QIO system-service dispatch to DQA0 STARTIO and the pending table; implement SVAPTE/BOFF and IOLOCK restart semantics; connect real IOCIOPOST to process PHD/CCB/event/AST completion and scheduler ownership; Files-11 ACP; complete native INIT and process image activation; SYSTEM login and DCL; DECnet Phase IV; genuine nested `SET HOST 0`/second login/LOGOUT end-to-end QEMU acceptance.
