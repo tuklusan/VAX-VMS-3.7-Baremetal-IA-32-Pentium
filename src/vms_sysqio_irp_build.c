@@ -71,3 +71,4 @@ uint32_t port_v37_sysqio_build_irp(
     for(size_t i=0;i<sizeof candidate;i++)packet[i]=candidate[i];
     return PORT_V37_SYSQIO_IRP_BUILD_OK;
 }
+
