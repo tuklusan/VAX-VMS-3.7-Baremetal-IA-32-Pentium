@@ -906,3 +906,13 @@ Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; DQA0 SYSASS
 M281 implementation commit: `dcc9ad21a08636b09048032648998e14e1f340bb`.
 
 Remaining: actual public SYS$ASSIGN/SYS$QIO service dispatch with live process map and CCB; DQ STARTIO request submission; Files-11 ACP; real process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M282 — Preserve SYSASSIGN invalid-name status codes, 24 November 2026
+
+Corrected descriptor validation to return the VMS `IVLOGNAM` status for zero-length or overlong device names and `ACCVIO` for a nonempty descriptor with a null name pointer. Added regression assertions for oversize-name and inaccessible-name behavior. Previously these cases leaked a private IOC status, which did not match SYSASSIGN's documented service statuses.
+
+Verification: `make -j2 all test dqddtcheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS through SYS.EXE load and the real 700-byte DQA0 DDT/IRQ14 Files-11 read, then incomplete INIT stop. Coverage validation PASS: 2,035 ranges; 445/4,566 indexed; mapped 17,016, partial 29,580, unresolved 52,027, missing 7,799, excluded 26,237, hardware-excluded 917. Transcript `logs/serial/qemu-m217-run-local-20261124T150854594676Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login, DCL, DECnet or SET HOST 0 occurred.
+
+M282 implementation commit: `99e06bce6bdee75880d77936ed665e246e867e38`.
+
+Remaining: live public SYS$ASSIGN/SYS$QIO service dispatch and process context; DQA0 STARTIO submission; Files-11 ACP; process-aware IOPOST/AST scheduling; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
