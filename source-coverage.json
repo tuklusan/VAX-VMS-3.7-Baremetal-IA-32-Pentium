@@ -21774,10 +21774,29 @@
         {
           "original_lines": [
             166,
+            971
+          ],
+          "status": "unresolved",
+          "reason": "Source original direct/buffered/paging postprocessing, PCB quotas, buffer/page unlock, kernel AST and virtual segmentation unported"
+        },
+        {
+          "original_lines": [
+            972,
+            1000
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_ccb.c",
+          "pc_symbol": "port_v37_iopost_ccb_complete",
+          "pc_line": 21,
+          "function": "DIRPOST sign-extends the IRP negative CCB byte offset, decrements CCB$W_IOC, and on idle transfers the queued deaccess IRP to an IOC$WAKACP callback; live SYS$QIO completion is not connected"
+        },
+        {
+          "original_lines": [
+            1001,
             1113
           ],
           "status": "unresolved",
-          "reason": "Source original direct/buffered/paging postprocessing, PCB quotas, kernel AST, IOSB, wakeup, virtual segmentation, error paths, VAX interrupt frame and remainder unported"
+          "reason": "DIRPOST IOSB protection/store, SCH$POSTEF, AST quota/SCH$QAST, IRP/IRPE release and source error paths remain unported"
         }
       ],
       "unresolved_integration": "Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. This is not a VAX IPL implementation or a real user I/O/AST. All process postprocessing remains unported."

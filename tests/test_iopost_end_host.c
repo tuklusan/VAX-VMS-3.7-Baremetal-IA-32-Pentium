@@ -6,7 +6,48 @@
 #define CHECK(x) do { if(!(x)) {fprintf(stderr,"IOPOST end FAIL %d: %s\n",__LINE__,#x);return 1;} }while(0)
 struct irq {uint32_t count,level;};
 static void interrupt(void *v,uint8_t level){struct irq *p=v;p->count++;p->level=level;}
+struct acp_wake {uint32_t calls,irp,ucb;};
+static void wake_acp(void *v,uint32_t irp,uint32_t ucb){
+    struct acp_wake *w=v;++w->calls;w->irp=irp;w->ucb=ucb;
+}
 int main(void){
+    _Alignas(4) uint8_t ccb_bytes[64]={0};
+    uint8_t *const ccb_base=ccb_bytes+48u;
+    uint8_t *const ccb=ccb_base-32u;
+    uint16_t outstanding=UINT16_C(0xaaaa);uint32_t deaccess=UINT32_MAX;
+    port_v37_write16(ccb+PORT_V37_CCB_IOC,2u);
+    CHECK(port_v37_iopost_ccb_complete(ccb_base,48u,
+          (uint16_t)(0u-32u),0,&outstanding,&deaccess)==PORT_V37_IOPOST_OK);
+    CHECK(outstanding==1u&&deaccess==0u&&
+          port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u);
+    port_v37_write16(ccb+PORT_V37_CCB_IOC,1u);
+    port_v37_write32(ccb+PORT_V37_CCB_DIRP,0x00005678u);
+    port_v37_write32(ccb+PORT_V37_CCB_UCB,0x00001234u);
+    CHECK(port_v37_iopost_ccb_complete(ccb_base,48u,
+          (uint16_t)(0u-32u),0,&outstanding,&deaccess)==
+          PORT_V37_IOPOST_CCB_DEFER);
+    CHECK(port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u&&
+          port_v37_read32(ccb+PORT_V37_CCB_DIRP)==0x00005678u);
+    struct acp_wake wake={0};
+    const struct port_v37_iopost_ccb_ops ccb_ops={&wake,wake_acp};
+    CHECK(port_v37_iopost_ccb_complete(ccb_base,48u,
+          (uint16_t)(0u-32u),&ccb_ops,&outstanding,&deaccess)==
+          PORT_V37_IOPOST_OK);
+    CHECK(outstanding==1u&&deaccess==0x00005678u&&wake.calls==1u&&
+          wake.irp==0x00005678u&&wake.ucb==0x00001234u&&
+          port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u&&
+          port_v37_read32(ccb+PORT_V37_CCB_DIRP)==0u);
+    port_v37_write16(ccb+PORT_V37_CCB_IOC,0u);
+    port_v37_write32(ccb+PORT_V37_CCB_DIRP,0u);
+    CHECK(port_v37_iopost_ccb_complete(ccb_base,48u,
+          (uint16_t)(0u-32u),&ccb_ops,&outstanding,&deaccess)==
+          PORT_V37_IOPOST_OK);
+    CHECK(outstanding==UINT16_MAX&&port_v37_read16(ccb+PORT_V37_CCB_IOC)==
+          UINT16_MAX&&wake.calls==1u);
+    port_v37_write16(ccb+PORT_V37_CCB_IOC,3u);
+    CHECK(port_v37_iopost_ccb_complete(ccb_base,48u,UINT16_MAX,
+          &ccb_ops,&outstanding,&deaccess)==PORT_V37_IOPOST_BAD);
+    CHECK(port_v37_read16(ccb+PORT_V37_CCB_IOC)==3u);
     enum {BASE=0x00342000u,DDT=0x00349000u,RET=0x00320101u,
           READ=0x00320120u,WRITE=0x00320160u,
           PKTS=0x0034a000u,HEAD=0x0034b000u,

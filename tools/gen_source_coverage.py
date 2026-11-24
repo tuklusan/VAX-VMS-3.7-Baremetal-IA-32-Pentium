@@ -2403,7 +2403,9 @@ iopost_rows=[
  (145,155,'src/vms_iopost_pop.c','port_v37_iopost_pop','First-in/first-out REMQUE and sentinel restoration, now called through x86 CPL0 IDT 0x90','partial'),
  (156,159,'src/vms_iopost_kernel_end.c','port_v37_iopost_kernel_end','Whitelisted native privileged end action; other VAX branch and kernel ABI unresolved','partial'),
  (160,165,'src/vms_iopost_service.c','port_v37_iopost_service','Kernel address branch for source IRP PID, IA-32 supervisor aperture replacing VAX high-bit test; PCB lookup unresolved','partial'),
- (166,1113,None,None,'Source original direct/buffered/paging postprocessing, PCB quotas, kernel AST, IOSB, wakeup, virtual segmentation, error paths, VAX interrupt frame and remainder unported','unresolved')]
+ (166,971,None,None,'Source original direct/buffered/paging postprocessing, PCB quotas, buffer/page unlock, kernel AST and virtual segmentation unported','unresolved'),
+ (972,1000,'src/vms_iopost_ccb.c','port_v37_iopost_ccb_complete','DIRPOST sign-extends the IRP negative CCB byte offset, decrements CCB$W_IOC, and on idle transfers the queued deaccess IRP to an IOC$WAKACP callback; live SYS$QIO completion is not connected','partial'),
+ (1001,1113,None,None,'DIRPOST IOSB protection/store, SCH$POSTEF, AST quota/SCH$QAST, IRP/IRPE release and source error paths remain unported','unresolved')]
 rows=[]
 for lo,hi,pc,sym,desc,status in iopost_rows:
     if pc:
