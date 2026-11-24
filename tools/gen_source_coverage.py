@@ -1695,7 +1695,7 @@ for orig,total,first,last,symbol in f11_87_files:
             (126,178,'src/vms_f11_acp87.c','port_f11b_update_fcb','FCB attribute refresh')])
     elif orig == 'F11B/SRC/RDHEDR.B32':
         regions.append((first,last,'src/vms_f11_acp87.c',symbol,
-            'Native ACP FID-to-INDEXF lookup and FH2 validation execute during real IA-32 boot; the SYS.EXE header is then read through the published DQA0 DDT/CRB IRQ14 path. Full ACP request queues and process callback context remain unbound.'))
+            'Native ACP FID-to-INDEXF lookup and FH2 validation execute during real IA-32 boot; SYS.EXE header is read through published DQA0 DDT/CRB IRQ14 and materialized as a native FCB. Full ACP request queues and process callback context remain unbound.'))
     else:
         regions.append((first,last,'src/vms_f11_acp87.c',symbol,
                         'Native Files-11 ACP routine'))

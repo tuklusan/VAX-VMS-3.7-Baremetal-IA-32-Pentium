@@ -58,6 +58,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #include "vms_dq_crb.h"
 #include "vms_dq_ioc.h"
 #include "vms_dq_ioc_write.h"
+#include "vms_f11_acp87.h"
 #include "vms_ioc_phys.h"
 
 #define VGA ((volatile uint16_t *)0xB8000)
@@ -4154,6 +4155,11 @@ void kmain(void) {
        dq_publish_result.dq_acp_header_reads!=1u||
        dq_publish_result.dq_acp_file!=11u||
        dq_publish_result.dq_acp_sequence!=11u||
+       !dq_publish_result.dq_acp_fcb||
+       (uintptr_t)dq_publish_result.dq_acp_fcb<PORT_SYS_ELF_START||
+       (uintptr_t)dq_publish_result.dq_acp_fcb>
+          PORT_SYS_ELF_LIMIT-sizeof(struct port_f11_87_fcb)||
+       dq_publish_result.dq_acp_file_blocks==0u||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
        dq_publish_result.device_db->incomplete_driver_mask!=6u||
@@ -4164,7 +4170,7 @@ void kmain(void) {
     }
     bootstrap_message("INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).");
     bootstrap_message("INIT: Files-11 FH2 chain read 700 SYS.EXE bytes across two sectors through IOC-selected DQA0 DDT/IRQ14.");
-    bootstrap_message("INIT: Files-11 ACP RDHEDR read SYS.EXE FID 11 through DQA0 DDT/CRB IRQ14.");
+    bootstrap_message("INIT: Files-11 ACP RDHEDR/F11B FCB opened SYS.EXE FID 11 through DQA0 DDT/CRB IRQ14.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,

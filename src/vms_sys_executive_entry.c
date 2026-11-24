@@ -368,6 +368,13 @@ struct executive_acp_io_context {
     const uint8_t *index_header;
     uint16_t volume;
 };
+static struct port_f11_87_fcb executive_acp_sys_fcb;
+static void *executive_acp_alloc(void *opaque,uint32_t bytes,uint32_t tag){
+    (void)opaque;
+    if(bytes!=sizeof(executive_acp_sys_fcb)||tag!=PORT_F11_87_FCBTYPE)
+        return 0;
+    return &executive_acp_sys_fcb;
+}
 static uint32_t executive_postpub_f11_sector(void *,uint32_t,uint8_t[512]);
 static uint32_t executive_acp_map_vbn(void *opaque,uint32_t vbn,
                                       uint32_t *lbn){
@@ -1944,7 +1951,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         struct executive_acp_io_context acp_io={{p->dq_boot_io,0u},
             index_header,executive_f11_opened_sys.file.volume};
         const struct port_f11_87_ops acp_ops={
-            .context=&acp_io,.map_vbn=executive_acp_map_vbn,
+            .context=&acp_io,.alloc=executive_acp_alloc,
+            .map_vbn=executive_acp_map_vbn,
             .read_lbn=executive_acp_read_lbn,
             .switch_volume=executive_acp_switch_volume};
         struct port_f11_87_volume acp_volume={0};
@@ -1967,6 +1975,16 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         for(unsigned i=0u;i<sizeof acp_sys_header;i++)
             if(acp_sys_header[i]!=executive_f11_opened_sys.header[i])
                 return PORT_SYS_EXEC_BAD_PARAMETERS;
+        struct port_f11_87_fcb *acp_sys_fcb=
+            port_f11b_create_fcb(&acp_context,acp_sys_header,
+                                 acp_header_lbn);
+        if(acp_sys_fcb!=&executive_acp_sys_fcb||
+           acp_sys_fcb->header_lbn!=acp_header_lbn||
+           acp_sys_fcb->fid.number!=sys_fid.number||
+           acp_sys_fcb->fid.sequence!=sys_fid.sequence||
+           acp_sys_fcb->fid.volume!=sys_fid.volume||
+           acp_sys_fcb->file_blocks==0u)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
         p->result->dq_ddt_published=1u;
         p->result->dqa_ioc_status=PORT_V37_IOC_OK;
         p->result->dqa_ioc_ddb=found.ddb;
@@ -1979,6 +1997,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->dq_acp_file=sys_fid.number;
         p->result->dq_acp_sequence=sys_fid.sequence;
         p->result->dq_acp_volume=sys_fid.volume;
+        p->result->dq_acp_fcb=acp_sys_fcb;
+        p->result->dq_acp_file_blocks=acp_sys_fcb->file_blocks;
         p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }

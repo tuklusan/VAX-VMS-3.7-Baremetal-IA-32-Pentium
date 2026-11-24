@@ -9933,7 +9933,7 @@
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_read_header",
           "pc_line": 311,
-          "function": "Native ACP FID-to-INDEXF lookup and FH2 validation execute during real IA-32 boot; the SYS.EXE header is then read through the published DQA0 DDT/CRB IRQ14 path. Full ACP request queues and process callback context remain unbound."
+          "function": "Native ACP FID-to-INDEXF lookup and FH2 validation execute during real IA-32 boot; SYS.EXE header is read through published DQA0 DDT/CRB IRQ14 and materialized as a native FCB. Full ACP request queues and process callback context remain unbound."
         },
         {
           "original_lines": [
@@ -10293,7 +10293,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2747,
+          "pc_line": 2748,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10331,7 +10331,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2747,
+          "pc_line": 2748,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -22011,7 +22011,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 477,
+          "pc_line": 484,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
