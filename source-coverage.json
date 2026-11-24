@@ -22116,7 +22116,7 @@
           "pc_file": "src/vms_iopost_dirpost.c",
           "pc_symbol": "port_v37_iopost_dirpost",
           "pc_line": 12,
-          "function": "DIRPOST process I/O accounting, source callback for guarded two-longword IOSB store, SCH$POSTEF and AST-quota QAST versus IRP release selection; no live PCB/PHD, IOSB, event, AST or lookaside binding"
+          "function": "DIRPOST process I/O accounting and ordered completion; optional pinned SYSQIO callback validates ownership before accounting and writes IOSB/releases retained pages before SCH$POSTEF, while live process, IOSB, event, AST and lookaside binding remain absent"
         },
         {
           "original_lines": [

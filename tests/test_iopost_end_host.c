@@ -14,6 +14,8 @@ static void wake_acp(void *v,uint32_t irp,uint32_t ucb){
 struct dirpost_rig {
     uint32_t order,pid,efn,irp_va,iosb,iosb_mode,status,secondary;
     uint8_t buffered;
+    uint8_t reject_pinned;
+    uint32_t pinned_validations,pinned_completions;
     uint8_t *irpe;
     uint32_t irpe_freed;
 };
@@ -36,6 +38,20 @@ static void dirpost_iosb(void *v,uint32_t iosb,uint8_t mode,
     uint32_t status,uint32_t secondary){
     struct dirpost_rig *r=v;r->order++;r->iosb=iosb;r->iosb_mode=mode;
     r->status=status;r->secondary=secondary;
+}
+static int dirpost_validate_pinned(void *v,uint32_t pid,uint32_t irp_va,
+    uint32_t iosb,uint8_t mode){
+    struct dirpost_rig *r=v;r->pinned_validations++;
+    if(r->reject_pinned||pid!=0x10007u||irp_va!=0x00347000u||
+       iosb!=0x00401000u||mode!=2u)return -1;
+    return 0;
+}
+static uint32_t dirpost_complete_pinned(void *v,uint32_t pid,uint32_t irp_va,
+    uint32_t iosb,uint8_t mode,uint32_t status,uint32_t secondary){
+    struct dirpost_rig *r=v;r->order++;r->pinned_completions++;
+    r->pid=pid;r->irp_va=irp_va;r->iosb=iosb;r->iosb_mode=mode;
+    r->status=status;r->secondary=secondary;
+    return PORT_V37_IOPOST_OK;
 }
 static void dirpost_event(void *v,uint32_t pid,uint8_t efn){
     struct dirpost_rig *r=v;r->order++;r->pid=pid;r->efn=efn;
@@ -124,6 +140,27 @@ int main(void){
     CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
           0x00347000u,&dirpost_ops)==PORT_V37_IOPOST_OK);
     CHECK(dirpost.order==4u&&dirpost.irp_va==0x00347000u&&
+          port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u);
+    struct port_v37_iopost_dirpost_ops pinned_ops=dirpost_ops;
+    pinned_ops.store_iosb_if_writable=0;
+    pinned_ops.validate_user_qio=dirpost_validate_pinned;
+    pinned_ops.complete_user_qio=dirpost_complete_pinned;
+    dirpost.order=0u;dirpost.irp_va=0u;dirpost.pinned_validations=0u;
+    dirpost.pinned_completions=0u;dirpost.reject_pinned=1u;
+    port_v37_write16(dirpost_irp+40u,(uint16_t)(0u-32u));
+    port_v37_write16(ccb+PORT_V37_CCB_IOC,2u);
+    CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
+          0x00347000u,&pinned_ops)==PORT_V37_IOPOST_DIRPOST_DEFER);
+    CHECK(dirpost.order==0u&&dirpost.pinned_validations==1u&&
+          dirpost.pinned_completions==0u&&
+          port_v37_read16(ccb+PORT_V37_CCB_IOC)==2u);
+    dirpost.reject_pinned=0u;
+    CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
+          0x00347000u,&pinned_ops)==PORT_V37_IOPOST_OK);
+    CHECK(dirpost.order==4u&&dirpost.pinned_validations==2u&&
+          dirpost.pinned_completions==1u&&dirpost.iosb==0x00401000u&&
+          dirpost.iosb_mode==2u&&dirpost.status==1u&&
+          dirpost.secondary==512u&&dirpost.efn==7u&&
           port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u);
     dirpost.order=0u;port_v37_write16(dirpost_irp+40u,0u);
     port_v37_write16(ccb+PORT_V37_CCB_IOC,2u);

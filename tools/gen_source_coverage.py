@@ -2441,7 +2441,7 @@ iopost_rows=[
  (972,975,'src/vms_iopost_account.c','port_v37_iopost_account_phd','DIRPOST selects PHD$L_DIOCNT or BIOCNT from the IRP buffered bit and increments the source 32-bit accounting counter; the caller must resolve SCH$GL_CURPCB PHD','partial'),
  (976,989,None,None,'Optional I/O measurement and diagnostic-buffer move/probe/free path remain unresolved','unresolved'),
  (990,1000,'src/vms_iopost_ccb.c','port_v37_iopost_ccb_complete','DIRPOST sign-extends the IRP negative CCB byte offset, decrements CCB$W_IOC, and on idle transfers the queued deaccess IRP to an IOC$WAKACP callback; live SYS$QIO completion is not connected','partial'),
- (1001,1015,'src/vms_iopost_dirpost.c','port_v37_iopost_dirpost','DIRPOST process I/O accounting, source callback for guarded two-longword IOSB store, SCH$POSTEF and AST-quota QAST versus IRP release selection; no live PCB/PHD, IOSB, event, AST or lookaside binding','partial'),
+ (1001,1015,'src/vms_iopost_dirpost.c','port_v37_iopost_dirpost','DIRPOST process I/O accounting and ordered completion; optional pinned SYSQIO callback validates ownership before accounting and writes IOSB/releases retained pages before SCH$POSTEF, while live process, IOSB, event, AST and lookaside binding remain absent','partial'),
  (1016,1035,'src/vms_iopost_irpe.c','port_v37_iopost_irpe_plan','Bounded source-ordered IRPE chain preflight and post-POSTEF deallocation callback; live IRPE resolver/lookaside is not bound','partial'),
  (1036,1113,None,None,'System-buffer move/PROBEW, IOSB access-fault path, and remaining paging/segmented I/O completion unported','unresolved')]
 rows=[]

@@ -22,9 +22,14 @@ uint32_t port_v37_iopost_dirpost(uint8_t *irp,size_t irp_bytes,
                                       IRP_STS_BUFIO)!=0u);
     const uint8_t quota_ast=(uint8_t)((irp[IRP_RMOD]&IRP_RMOD_QUOTA)!=0u);
     struct port_v37_iopost_irpe_plan irpe_plan={0};
-    if(!pid||(iosb&&!ops->store_iosb_if_writable)||
+    const uint8_t use_pinned_qio=(uint8_t)(ops->complete_user_qio!=0);
+    if(!pid||(iosb&&!ops->store_iosb_if_writable&&!use_pinned_qio)||
+       (use_pinned_qio&&!ops->validate_user_qio)||
        (quota_ast&&!ast)||
        (quota_ast&&!ops->queue_ast)||(!quota_ast&&!ops->free_irp))
+        return PORT_V37_IOPOST_DIRPOST_DEFER;
+    if(use_pinned_qio&&ops->validate_user_qio(ops->context,pid,irp_va,
+                                               iosb,request_mode)!=0)
         return PORT_V37_IOPOST_DIRPOST_DEFER;
     const uint32_t irpe_status=port_v37_iopost_irpe_plan(irp,irp_bytes,
         ops->resolve_irpe,ops->context,ops->maximum_extensions,&irpe_plan);
@@ -55,8 +60,15 @@ uint32_t port_v37_iopost_dirpost(uint8_t *irp,size_t irp_bytes,
     if(ccb_status==PORT_V37_IOPOST_CCB_DEFER)
         return PORT_V37_IOPOST_DIRPOST_DEFER;
     if(ccb_status!=PORT_V37_IOPOST_OK)return PORT_V37_IOPOST_BAD;
-    if(iosb)ops->store_iosb_if_writable(ops->context,iosb,request_mode,
-        port_v37_read32(irp+IRP_IOST1),port_v37_read32(irp+IRP_IOST2));
+    if(use_pinned_qio){
+        const uint32_t completion=ops->complete_user_qio(ops->context,pid,
+            irp_va,iosb,request_mode,port_v37_read32(irp+IRP_IOST1),
+            port_v37_read32(irp+IRP_IOST2));
+        if(completion!=PORT_V37_IOPOST_OK)return PORT_V37_IOPOST_BAD;
+    }else if(iosb)
+        ops->store_iosb_if_writable(ops->context,iosb,request_mode,
+            port_v37_read32(irp+IRP_IOST1),
+            port_v37_read32(irp+IRP_IOST2));
     ops->post_event(ops->context,pid,irp[IRP_EFN]);
     if(port_v37_iopost_irpe_release(&irpe_plan,ops->free_irpe,
                                     ops->context,pid)!=PORT_V37_IOPOST_OK)

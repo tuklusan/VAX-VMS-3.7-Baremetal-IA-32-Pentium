@@ -10,7 +10,8 @@
 /* SYS/SRC/IOCIOPOST.MAR 115-165. The original kernel end action
  * recognises a negative VAX system-space address in IRP$L_PID; native
  * IA-32 uses the checked supervisor-only SYS.EXE mapping instead.
- * No process/IOSB, special kernel AST, or ordinary $QIO dispatch yet. */
+ * Optional callback path accepts retained SYSQIO state, but no running
+ * process/IOSB/scheduler binding or ordinary $QIO dispatch exists yet. */
 enum {PORT_V37_IOPOST_OK=1u,PORT_V37_IOPOST_BAD=2u,
       PORT_V37_IOPOST_EMPTY=4u,PORT_V37_IOPOST_DEFER=6u,
       PORT_V37_IOPOST_CORRUPT=8u,PORT_V37_IOPOST_FULL=10u,
@@ -54,6 +55,10 @@ uint32_t port_v37_iopost_ccb_complete(uint8_t *,size_t,uint16_t,
 typedef void (*port_v37_iopost_account_fn)(void *,uint32_t,uint8_t);
 typedef void (*port_v37_iopost_iosb_fn)(void *,uint32_t,uint8_t,
     uint32_t,uint32_t);
+typedef int (*port_v37_iopost_user_qio_validate_fn)(void *,uint32_t,
+    uint32_t,uint32_t,uint8_t);
+typedef uint32_t (*port_v37_iopost_user_qio_complete_fn)(void *,uint32_t,
+    uint32_t,uint32_t,uint8_t,uint32_t,uint32_t);
 typedef void (*port_v37_iopost_event_fn)(void *,uint32_t,uint8_t);
 typedef void (*port_v37_iopost_packet_fn)(void *,uint32_t,uint32_t);
 typedef int (*port_v37_iopost_resolve_irpe_fn)(void *,uint32_t,
@@ -75,6 +80,10 @@ struct port_v37_iopost_dirpost_ops {
     uint8_t *ccb_base;
     size_t ccb_preceding_bytes;
     port_v37_iopost_iosb_fn store_iosb_if_writable;
+    /* Native prepared SYS$QIO path: validate retained IOSB/buffer ownership
+     * before DIRPOST mutates accounting, then write IOSB and release pins. */
+    port_v37_iopost_user_qio_validate_fn validate_user_qio;
+    port_v37_iopost_user_qio_complete_fn complete_user_qio;
     port_v37_iopost_event_fn post_event;
     port_v37_iopost_packet_fn queue_ast;
     port_v37_iopost_packet_fn free_irp;
