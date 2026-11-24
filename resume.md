@@ -657,7 +657,7 @@ Verification: make -j2 all test sysqioresidentcheck sysexecentrycheck PASS (exit
 
 M255 implementation commit (local): 5b089e82dea3625af525e38c4468e1aa49c33da7.
 
-Remaining: connect this allocator to genuine SYS and live process CCB tables; connect public SYS dispatch, DQA0 DDT/CRB and process-owned completion/AST; implement the Files-11 ACP and native INIT continuation; activate resident VMS process images and complete DECnet Phase IV plus nested SYSTEM/DCL SET HOST 0 acceptance.
+Remaining: connect this allocator through genuine SYS$ASSIGN and live process CCB tables; connect public SYS dispatch, DQA0 DDT/CRB and process-owned completion/AST; implement the Files-11 ACP and native INIT continuation; activate resident VMS process images and complete DECnet Phase IV plus nested SYSTEM/DCL SET HOST 0 acceptance.
 
 M255 GitHub main publication commits: CCB implementation ddb8912ffdd2b5e99f0b5d8bc4b3acc96e2bf834; header 2d102a422454129b6ce6764f7462457755a43175; CCB tests a624c35f1356fc95007bb17b0437bdd94281cf12; resident symbol check ad96235bc230ea1ab527411815e51a6818e456bb; coverage generator 511c1147d2666ddf939395ced986e169534e2f97; coverage aa97dfa310d389d6221c52dc26bc542a92a3e548; serial manifest 7b206dfe7bcde75e007d74c7c40dd147d9f8d1d5; QEMU transcript 57a4b07456fd599e856ae332ecb7b5c108e2ebf6. Resume publication before this final record: 44ce1ef87c0708b2215cbfc82801816216989bfc. GitHub blob IDs for all published files were checked against local Git blob IDs. Native Git push credentials remain unavailable; contents API publication succeeded.
 
@@ -670,3 +670,11 @@ Verification: make -j2 all test sysqioresidentcheck sysexecentrycheck PASS (exit
 M256 implementation commit (local): c84d28f5d2c470173b0ea3b495d27d0af696129f.
 
 M256 GitHub main publication commits: header cab3691ab1d4c3f93129b1031af8922617a710d8; transaction a80adfe87ef41b74803d6f7d5c2aa55089b47c34; PCB binding 4c09f560976f54aad1aff5bff0829a8cf9f6f888; host tests af9ce41b7aa6000c7c06880f8674e2d676e4a216; coverage generator be5307248d561ff305537c957a9b6331f0467782; coverage 10fed49efd994ed0c4380cafec4b1568990605c3; serial manifest 764702981096d6a6b579a75ecb7bfd6e81488500; QEMU transcript 21fa8f122d372f996a0c7b39cc0733ee1e8e1dd7. Resume publication before this record: d26d4ffb3e3d606cbddbc32441a5adc27cf816cb. All published content blob IDs match local Git objects.
+
+## M257 — Bind QIO privilege decisions to the source PCB mask, 23 November 2026
+
+PCB binding now reads the source eight-byte privilege mask and populates PHY_IO and LOG_IO flags using PRVDEF bit positions 22 and 7; PHY_IO implies LOG_IO as in the VMS privilege model. Host tests cover both enabled and cleared masks. This closes the prior caller-supplied privilege booleans for process-bound QIO helper transactions, but process binding is not yet connected to the public SYS$QIO service path. The original PRVDEF macro source is absent from the pinned source checkout; positions are consistent with the VAX/VMS privilege ordering and the 3.7 PCB layout. Device UCB security inputs remain caller-supplied.
+
+Verification: make sysqioargscheck PASS; make -j2 all test sysqioresidentcheck sysexecentrycheck PASS (exit 0); source coverage generation and validation PASS (2,015 ranges, 0 errors; 444/4,566 original files indexed); git diff --check PASS. Real make qemu-sysboot-m217 PASS for the existing 700-byte Files-11 DQA0 read via IRQ14, then stopped at the documented incomplete INIT boundary. Transcript logs/serial/qemu-m217-run-local-20261124T010209071845Z.log, 5,350 bytes, SHA-256 8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c. No public SYS$QIO, SYSTEM login, DCL, DECnet or SET HOST 0 occurred.
+
+M257 implementation commit (local): 42ec9891bbdb60b5bb235e3c6e96875dbe0fcd96.
