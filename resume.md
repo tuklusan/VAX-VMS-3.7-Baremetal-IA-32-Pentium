@@ -1088,3 +1088,13 @@ Verification: `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck
 M299 implementation commit: `f876849c40230a06a4aeed4d8174eb6f224a0f79`.
 
 Remaining: connect public SYS$QIO system-service dispatch to DQA0 STARTIO and the pending table; implement SVAPTE/BOFF and IOLOCK restart semantics; connect real IOCIOPOST to process PHD/CCB/event/AST completion and scheduler ownership; Files-11 ACP; complete native INIT and process image activation; SYSTEM login and DCL; DECnet Phase IV; genuine nested `SET HOST 0`/second login/LOGOUT end-to-end QEMU acceptance.
+
+## M300 — Release retained SYSQIO pins on pre-submit abort, 24 November 2026
+
+Added a pending-table abort operation for requests whose driver submission fails before activation. Under the table's IPL synchronization it claims only the matching PID/IRP/IOSB/mode entry, removes it before releasing both retained pin sets, and refuses repeat or nonmatching aborts. DIRPOST host coverage now verifies ownership transfer, successful post-failure rollback, exactly two unlocks, and duplicate-abort rejection.
+
+Verification: `make iopostendcheck` PASS under UBSan; `make -j2 all sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck dqddtcheck` PASS (exit 0); source coverage generation and range consistency PASS (2,058 ranges, zero missing mapped functions); source-range validator PASS, 446/4,566 originals indexed. No QEMU rerun: the change affects only the isolated pending-table abort path and does not change the boot path; latest actual M217 transcript remains recorded under M299. Public SYS$QIO dispatch, DQA0 submission, process AST scheduling and all login/DECnet acceptance remain incomplete.
+
+M300 implementation commit: `fa66c84728fc44c8e64ea4344cac0b0147a49287`.
+
+Remaining: integrate this ownership rollback into live public SYS$QIO/DQA0 request submission and its real failure/cancel paths; construct native SVAPTE/BOFF mapping and IOLOCK restart semantics; connect real IOCIOPOST to PCB/PHD/event/AST and scheduler ownership; Files-11 ACP; full INIT/process activation; SYSTEM login/DCL; DECnet Phase IV; genuine nested SET HOST 0 acceptance.
