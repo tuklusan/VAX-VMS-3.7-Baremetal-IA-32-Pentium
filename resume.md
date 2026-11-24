@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M276
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M277
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -858,3 +858,11 @@ Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargs
 M276 implementation commit: `7640afd87f94036fce3095d643e247de0fcce972`.
 
 Remaining: public SYS$QIO entry, IPL/deletion protection and EXE$ABORTIO; real DQ FDT/STARTIO submission with user buffer locking and asynchronous IRQ completion; ACP, process-aware AST delivery, PHD/native contexts, INIT continuation/process activation, SYSTEM login/DCL, DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M277 — SYS$ASSIGN descriptor and access-mode front end, 24 November 2026
+
+Added the source entry stage that probes and copies the caller's 8-byte VMS string descriptor and counted device name through the supplied caller-memory access interface, clears the output channel before any lookup, and applies `MAXACMODE=max(requested,current)` before IOC$FFCHAN/local UCB assignment. The DQA0 test now enters assignment through this descriptor path and verifies access-mode maximization and output clearing on descriptor access failure/oversize. It remains host-tested; channel output probing through a live process address space, public SYS$ASSIGN dispatch/status translation, mailbox/network/remote branches and real process CCB storage are not connected.
+
+Verification: full `make -j2 all test sysqioresidentcheck v37ccbcheck sysqioargscheck sysexecentrycheck` PASS; `make dqddtcheck` PASS; `make qemu-sysboot-m217` PASS through the real 700-byte SYS.EXE Files-11 read over published DQA0 DDT/CRB/IRQ14 then incomplete INIT stop. Coverage generation/validation PASS: 2,033 ranges; 445/4,566 files indexed; mapped 17,016, partial 29,578, unresolved 52,029, missing 7,799, excluded 26,237, hardware-excluded 917. QEMU transcript `logs/serial/qemu-m217-run-local-20261124T145100251421Z.log`, 5,350 bytes, SHA-256 `8ff4be5730e7a2bf66155c8372459b2abeaabed345df51718f5cec790712629c`. No login/DCL/DECnet/SET HOST 0.
+
+M277 implementation commit: `ad480415dd7358d93c4fce2b5b79a0f0b827f28d`.
