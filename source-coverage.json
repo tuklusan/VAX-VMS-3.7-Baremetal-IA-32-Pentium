@@ -21763,17 +21763,28 @@
         {
           "original_lines": [
             160,
-            165
+            162
           ],
           "status": "partial",
           "pc_file": "src/vms_iopost_service.c",
           "pc_symbol": "port_v37_iopost_service",
           "pc_line": 5,
-          "function": "Kernel address branch for source IRP PID, IA-32 supervisor aperture replacing VAX high-bit test; PCB lookup unresolved"
+          "function": "Negative PID/end-action kernel branch is limited to the checked IA-32 supervisor aperture; other kernel actions remain fail-closed"
         },
         {
           "original_lines": [
-            166,
+            163,
+            170
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_process_direct.c",
+          "pc_symbol": "port_v37_iopost_process_direct",
+          "pc_line": 28,
+          "function": "Resolve positive PID process index through source PCB vector, verify PCB sequence, and charge PCB$W_DIOCNT before direct completion; buffered route remains deferred"
+        },
+        {
+          "original_lines": [
+            171,
             210
           ],
           "status": "partial",

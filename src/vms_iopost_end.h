@@ -5,6 +5,8 @@
 #include "vms_qio_post.h"
 #include "vms_v37_ccb.h"
 #include "vms_v37_phd.h"
+#include "vms_ini_procvec.h"
+#include "vms_v37_pcb.h"
 /* SYS/SRC/IOCIOPOST.MAR 115-165. The original kernel end action
  * recognises a negative VAX system-space address in IRP$L_PID; native
  * IA-32 uses the checked supervisor-only SYS.EXE mapping instead.
@@ -15,6 +17,7 @@ enum {PORT_V37_IOPOST_OK=1u,PORT_V37_IOPOST_BAD=2u,
       PORT_V37_IOPOST_CCB_DEFER=12u,
       PORT_V37_IOPOST_DIRPOST_DEFER=14u,
       PORT_V37_IOPOST_UNLOCK_DEFER=16u,
+      PORT_V37_IOPOST_PROCESS_DEFER=18u,
       PORT_V37_IOPOST_LOG_CAP=2u,PORT_V37_IRP_PID=12u,
       PORT_V37_IRP_AST=16u,PORT_V37_IRP_WIND=24u,
       PORT_V37_IRP_EXTEND=84u,
@@ -82,4 +85,22 @@ uint32_t port_v37_iopost_unlock_direct(uint8_t *,size_t,
     const struct port_v37_iopost_unlock_ops *);
 /* IOCIOPOST.MAR DIRPOST PHD$L_DIOCNT/BIOCNT accounting, before CCB posting. */
 uint32_t port_v37_iopost_account_phd(uint8_t *,size_t,uint8_t);
+typedef int (*port_v37_iopost_resolve_pcb_fn)(void *,uint32_t,
+    uint8_t **,size_t *);
+typedef void (*port_v37_iopost_queue_kast_fn)(void *,uint32_t,uint32_t,
+    uint32_t);
+struct port_v37_iopost_process_ops {
+    void *context;
+    const struct port_ini_procvec *process_vector;
+    port_v37_iopost_resolve_pcb_fn resolve_pcb;
+    port_v37_iopost_resolve_irpe_fn resolve_irpe;
+    port_v37_iopost_unlock_pages_fn unlock_pages;
+    port_v37_iopost_queue_kast_fn queue_kast;
+    uint8_t maximum_extensions;
+};
+/* IOCIOPOST.MAR process-vector/direct-I/O portion: resolve positive PID,
+ * charge PCB$W_DIOCNT, unlock direct buffers, and queue the completion KAST.
+ * Buffered, paging, swap and segmented-virtual requests remain unhandled. */
+uint32_t port_v37_iopost_process_direct(uint8_t *,size_t,uint32_t,
+    const struct port_v37_iopost_process_ops *);
 #endif
