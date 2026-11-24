@@ -966,3 +966,13 @@ Verification: the named build/test goals `make -j2 all test sysqioresidentcheck 
 M287 implementation commit: `265d50d9144f8db9aec6c1b599bfee900ab3b0a1`.
 
 Remaining: live system-service trap dispatch; transfer-buffer page locking and proper IRP SVAPTE/BCNT setup; DQA0 STARTIO submission and real interrupt completion; Files-11 ACP; process-aware IOSB/event/AST delivery; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
+
+## M288 — Verify classified one-parameter SYSQIO FDT action, 24 November 2026
+
+Strengthened the M287 regression so `IO$_SEEK` is classified from the actual DQA0 FDT before its `EXE$ONEPARM` behavior is checked in the native IRP builder. The test no longer forces the action class manually. This remains host-side source-action verification; no QIO service dispatch or live DQ seek hardware action is connected.
+
+Verification: `make sysqioargscheck` PASS; `python3 tests/test_coverage_ranges.py` PASS; `python3 tools/gen_source_coverage.py` PASS (2,038 ranges, no missing mapped functions). No QEMU run was needed for this host-only test change. No system login, DCL, DECnet or SET HOST 0 acceptance has passed.
+
+M288 implementation commit: `5166e22635c59ed12ea24453903d9b5f99ba8eac`.
+
+Remaining: live system-service trap dispatch; transfer-buffer page locking and proper IRP SVAPTE/BCNT setup; DQA0 STARTIO submission and real interrupt completion; Files-11 ACP; process-aware IOSB/event/AST delivery; native INIT and process image activation; SYSTEM login/DCL; DECnet Phase IV and nested SET HOST 0 acceptance.
