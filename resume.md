@@ -707,4 +707,4 @@ Updated stale DQDRIVER, boot UCB, and system logical-name coverage descriptions 
 
 Verification: source coverage generation/validation PASS (2,015 ranges, 0 errors; 444/4,566 original files indexed; 17,016 mapped, 29,402 partial, 51,790 unresolved, 7,799 missing, 26,237 excluded, 917 hardware-excluded); git diff --check PASS. Runtime evidence remains the M259 QEMU transcript above; M260 did not run QEMU.
 
-M260 local coverage commits: 6697d7b240ad75db71443ef2e24731b48fb9a219; bf363c4a40117921559003fbfc86d1b13c2aa71e. GitHub publication and final resume record follow.
+M260 local coverage commits: 6697d7b240ad75db71443ef2e24731b48fb9a219; bf363c4a40117921559003fbfc86d1b13c2aa71e. GitHub main publication commits: coverage generator 1fe875816ef448175f26db5c33170451d05fd427; source coverage e6c126ce09c8785c0f2442ed21ae6f9bf7856093. Published file blobs match local Git objects. M260 resume local commit: 33a4add5c12a6e3aa6651f0c6995230f56284697.
