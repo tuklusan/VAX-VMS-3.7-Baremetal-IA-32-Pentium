@@ -21137,10 +21137,29 @@
         {
           "original_lines": [
             1,
+            215
+          ],
+          "status": "unresolved",
+          "reason": "Original IOC queues, channel tables and declarations unresolved"
+        },
+        {
+          "original_lines": [
+            216,
+            248
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_ccb.c",
+          "pc_symbol": "port_v37_ccb_find_free",
+          "pc_line": 41,
+          "function": "IOC$FFCHAN source scan of CCB$B_AMOD from CTL$GL_CCBBASE, first free 16-byte channel token and CHINDX high-water update"
+        },
+        {
+          "original_lines": [
+            249,
             295
           ],
           "status": "unresolved",
-          "reason": "Original VAX queues, channel allocation, IOC interfaces and source comments unresolved"
+          "reason": "Original IOC lock and device search entry context unresolved"
         },
         {
           "original_lines": [

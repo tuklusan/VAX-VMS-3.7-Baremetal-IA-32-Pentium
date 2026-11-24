@@ -35,3 +35,25 @@ uint32_t port_v37_ccb_resolve(uint8_t *base,size_t preceding_bytes,
     *view=out;
     return PORT_V37_CCB_OK;
 }
+
+/* IOSUBPAGD.MAR IOC$FFCHAN: scan CCB$B_AMOD backwards from CTL$GL_CCBBASE,
+ * return the first free byte-offset channel and raise CTL$GW_CHINDX. */
+uint32_t port_v37_ccb_find_free(uint8_t *base,size_t preceding_bytes,
+    uint16_t count,uint16_t *high_water,uint16_t *channel,uint8_t **out_ccb){
+    if(!base||!high_water||!channel||!out_ccb||((uintptr_t)base&3u))
+        return PORT_V37_CCB_BAD;
+    if(!count)return PORT_V37_CCB_NOCHANNEL;
+    for(uint32_t n=1u;n<=count;n++){
+        const uint32_t offset=n*PORT_V37_CCB_BYTES;
+        if(offset>UINT16_MAX||offset>preceding_bytes)
+            return PORT_V37_CCB_BAD;
+        uint8_t *const candidate=base-offset;
+        if(candidate[PORT_V37_CCB_AMOD])continue;
+        const uint16_t token=(uint16_t)offset;
+        if(token>=*high_water)*high_water=token;
+        *channel=token;
+        *out_ccb=candidate;
+        return PORT_V37_CCB_OK;
+    }
+    return PORT_V37_CCB_NOCHANNEL;
+}
