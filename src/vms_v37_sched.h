@@ -20,7 +20,7 @@ enum {
 enum {PORT_V37_SCHED_OK=1u,PORT_V37_SCHED_BADPARAM=2u,
       PORT_V37_SCHED_CORRUPT=4u,PORT_V37_SCHED_UNRESOLVED=8u,
       PORT_V37_SCHED_EMPTY=16u,PORT_V37_SCHED_NO_CONTEXT=32u,
-      PORT_V37_SCHED_BLOCKED=64u,PORT_V37_SCHED_IGNORED=128u};
+      PORT_V37_SCHED_BLOCKED=64u,PORT_V37_SCHED_IGNORED=128u,PORT_V37_SCHED_UNASSIGNED=256u};
 enum {PORT_V37_RSE_AST=0u,PORT_V37_RSE_EVENT_LEF=1u,
       PORT_V37_RSE_EVENT_CEF=2u,
       PORT_V37_RSE_EVENT_LEFO=3u,PORT_V37_RSE_FPGA=4u,PORT_V37_RSE_WAKE=5u,
@@ -101,7 +101,8 @@ uint32_t port_v37_sched_wake_waiter(struct port_v37_scheduler *,
 uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *,uint8_t event,
     uint32_t wait_queue_address,uint32_t pcb_address,uint8_t priority_class);
 /* SYSWAIT.MAR WFLOR/WFLAND local and common cluster wait. Event flags and
- * WQH/CEB records are SYSDEF layouts; output service status is an SS$ code. */
+ * WQH/CEB records are SYSDEF layouts; *service_status is valid only when
+ * the scheduler returns OK, and then contains an SS$ condition code. */
 uint32_t port_v37_sched_wait_event(struct port_v37_scheduler *,
     uint32_t local_lef_wqh,uint32_t interrupted_frame,uint32_t efn,
     uint32_t mask,int wait_all,uint32_t *selected_pcb,
