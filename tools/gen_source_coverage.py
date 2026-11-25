@@ -1880,7 +1880,9 @@ result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
 rse_lines=735 # pinned original SYS/SRC/RSE.MAR line count at REVISION
 rse_sections=[]
 for first,last,path,symbol,description,status in [
- (1,209,None,None,'RSE AST declarations and AST dispatch/delivery remain unresolved','unresolved'),
+ (1,193,None,None,'RSE AST declarations and AST state lookup/continuation dispatch remain unresolved','unresolved'),
+ (194,207,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial AST event state mask and CHSE wake routing; AST queue/AST delivery semantics remain unresolved','partial'),
+ (208,209,None,None,'RSE source separation before the event-flag table remains unresolved','unresolved'),
  (210,213,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial local/common event state dispatch; source event selection is supplied by the caller','partial'),
  (214,231,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial source state masks and wake dispatch for free-page, WAKE, RESUME and page-fault-complete events; caller supplies the actual wait-queue header and situational priority class','partial'),
  (232,257,None,None,'RSE SETPRI and SWPOUT actions and illegal-event handling remain unresolved','unresolved'),

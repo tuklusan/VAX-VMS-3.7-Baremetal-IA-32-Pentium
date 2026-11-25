@@ -356,6 +356,19 @@ int main(void){
        get32(f.phds[0]+PORT_V37_PHD_R0)!=1u||f.wait_queue.count||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("RSE LEF commits saved syscall result after queue validation");
+    f.wait_queue.state=PORT_V37_SCH_MWAIT;
+    f.frames[0].registers.eip=0x45678901u;
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||selected!=f.pcb_va[0]||
+       port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
+           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_BLOCKED||
+       port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_AST,
+           f.wait_queue_va,f.pcb_va[0],0u)!=PORT_V37_SCHED_OK||
+       f.wait_queue.count||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       get32(f.phds[0]+PORT_V37_PHD_PC)!=0x45678901u||
+       port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("RSE AST wakes MWAIT process without altering its return frame");
     puts("SYSWAIT SCH$WAITK/WQH wake plus SCHED SCH$RESCHED/SCH$SCHED and RSE SCH$CHSE PASS");
     return 0;
 }
