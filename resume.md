@@ -1779,3 +1779,4 @@ Expanded the RSE host regression to exercise source LEF completion separately fr
 Verification: `make v37schedcheck` PASS; `python3 tools/gen_source_coverage.py`, `python3 tests/test_coverage_ranges.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS (2,129 ranges; zero validation errors; totals unchanged). No QEMU run; this test change does not affect the guest. Login/DCL/DECnet/SET HOST remain unobserved.
 
 Local M379 test commit: `e519b6ff1bda6f35be0310646b20709227a8fb4b`.
+Published GitHub M379 test commit: `9449b69b782363db78afc10a5eb9bc0dc8b5128a`.
