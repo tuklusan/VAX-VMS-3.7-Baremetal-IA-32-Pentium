@@ -1448,7 +1448,7 @@ for original,length,ranges,note in [
        (62,67,'vms_v37_sched','port_v37_sched_resched_current','Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction'),
        (68,74,None,None,'source comments and SCH$SCHED entry separator'),
        (75,96,'vms_v37_sched','port_v37_sched_select','Highest resident COM queue selection validates the saved IA-32 IRET frame and returns its address with the selected PCB; IRQ0 invokes this transaction, but contextless NULL/SWAPPER are still not activated and TSS/CR3 switching remains incomplete'),
-       (97,98,'vms_v37_ia32_context','port_v37_ia32_context_validate','Validate mode-matched selectors, EFLAGS and return stack; arch_prepare_restore_frame publishes a validated frame for shared IRET restore when a runnable VMS context exists'),
+       (97,98,'vms_v37_ia32_context','port_v37_ia32_context_validate','Validate mode-matched selectors/EFLAGS and distinguish seeded cross-CPL IRET stacks from hardware same-CPL interrupt frames; arch_prepare_restore_frame publishes validated restore frames'),
        (99,106,None,None,'source idle wait and fatal empty-queue path lack native scheduler context restoration'),
        (107,108,None,None,'assembler end')],
        'The scheduler validates/saves native PCB/PHD contexts and provides an interrupt-level SCH$RESCHED/SCH$SCHED transaction; the live IA-32 IRQ path still does not invoke it, update TSS/CR3, or IRET into the selected frame; executive wait/wake queues remain unbound.'),
