@@ -576,7 +576,7 @@ static int event_condition(const uint8_t *pcb,uint32_t flags,int wait_all){
     return wait_all?present==selected:present!=0u;
 }
 
-uint32_t port_v37_sched_wait_event(struct port_v37_scheduler *s,
+static uint32_t sched_wait_event_synchronized(struct port_v37_scheduler *s,
     uint32_t local_lef_wqh,uint32_t interrupted_frame,uint32_t efn,
     uint32_t mask,int wait_all,uint32_t *selected_pcb,
     uint32_t *selected_frame,uint32_t *service_status){
@@ -634,7 +634,7 @@ uint32_t port_v37_sched_wait_event(struct port_v37_scheduler *s,
     return status;
 }
 
-uint32_t port_v37_sched_post_event(struct port_v37_scheduler *s,
+static uint32_t sched_post_event_synchronized(struct port_v37_scheduler *s,
     uint32_t target_pcb,uint32_t local_lef_wqh,uint32_t efn,
     uint8_t priority_class,uint32_t *service_status){
     if(!s||!s->initialized||!target_pcb||!service_status||
@@ -692,6 +692,32 @@ uint32_t port_v37_sched_post_event(struct port_v37_scheduler *s,
         cursor=next;
     }
     return wait_queue_check(s,wqh_address,&queue);
+}
+
+uint32_t port_v37_sched_wait_event(struct port_v37_scheduler *s,
+    uint32_t local_lef_wqh,uint32_t interrupted_frame,uint32_t efn,
+    uint32_t mask,int wait_all,uint32_t *selected_pcb,
+    uint32_t *selected_frame,uint32_t *service_status){
+    if(!s||!s->initialized||!s->ops.enter_synchronization||
+       !s->ops.leave_synchronization)return PORT_V37_SCHED_BADPARAM;
+    const uint32_t token=s->ops.enter_synchronization(s->ops.context);
+    const uint32_t status=sched_wait_event_synchronized(s,local_lef_wqh,
+        interrupted_frame,efn,mask,wait_all,selected_pcb,selected_frame,
+        service_status);
+    s->ops.leave_synchronization(s->ops.context,token);
+    return status;
+}
+
+uint32_t port_v37_sched_post_event(struct port_v37_scheduler *s,
+    uint32_t target_pcb,uint32_t local_lef_wqh,uint32_t efn,
+    uint8_t priority_class,uint32_t *service_status){
+    if(!s||!s->initialized||!s->ops.enter_synchronization||
+       !s->ops.leave_synchronization)return PORT_V37_SCHED_BADPARAM;
+    const uint32_t token=s->ops.enter_synchronization(s->ops.context);
+    const uint32_t status=sched_post_event_synchronized(s,target_pcb,
+        local_lef_wqh,efn,priority_class,service_status);
+    s->ops.leave_synchronization(s->ops.context,token);
+    return status;
 }
 
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){

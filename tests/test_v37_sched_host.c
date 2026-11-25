@@ -93,7 +93,7 @@ int main(void){
         .wait_queue_va=0x00600000u};
     f.wait_queue.forward=f.wait_queue.backward=f.wait_queue_va;
     f.wait_queue.state=7u;
-    const struct port_v37_sched_ops ops={&f,addr,resolve,wake,reschedule};
+    const struct port_v37_sched_ops ops={&f,addr,resolve,wake,reschedule,0,0};
     if(port_v37_sched_init(&scheduler,&ops)!=PORT_V37_SCHED_OK||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("empty 64-queue initialization");

@@ -6,6 +6,7 @@
 
 struct fixture {
     struct port_v37_scheduler scheduler;
+    uint32_t synchronization_enters,synchronization_leaves;
     uint8_t pcb[PORT_V37_PCB_BYTES];
     uint8_t phd[PORT_V37_PHD_BYTES];
     struct port_v37_ia32_restore_frame frame;
@@ -46,6 +47,12 @@ static void put32(uint8_t *p,uint32_t v){
 static uint32_t get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
+static uint32_t enter_synchronization(void *ctx){
+    struct fixture *f=ctx;f->synchronization_enters++;return 0u;
+}
+static void leave_synchronization(void *ctx,uint32_t token){
+    struct fixture *f=ctx;if(token==0u)f->synchronization_leaves++;
+}
 static int fail(const char *what){fprintf(stderr,"VMS EVENT WAIT FAIL: %s\n",what);return 1;}
 static int start_current(struct fixture *f,uint32_t *pcb,uint32_t *frame){
     uint32_t status=port_v37_sched_select(&f->scheduler,pcb,frame);
@@ -57,7 +64,8 @@ static int start_current(struct fixture *f,uint32_t *pcb,uint32_t *frame){
 int main(void){
     struct fixture f={0};
     f.lef.forward=f.lef.backward=WQ_VA;f.lef.state=PORT_V37_SCH_LEF;
-    const struct port_v37_sched_ops ops={&f,address,resolve,0,0};
+    const struct port_v37_sched_ops ops={&f,address,resolve,0,0,
+        enter_synchronization,leave_synchronization};
     if(port_v37_sched_init(&f.scheduler,&ops)!=PORT_V37_SCHED_OK)
         return fail("scheduler initialization");
     const struct port_v37_pcb_seed seed={.address=PCB_VA,.pid=0x00010000u,
@@ -151,6 +159,9 @@ int main(void){
        port_v37_sched_wait_event(&f.scheduler,0u,FRAME_VA,96u,1u,0,
            &pcb,&frame,&ss)!=PORT_V37_SCHED_OK||ss!=PORT_V37_SS_UNASEFC)
         return fail("illegal and unassigned event clusters return source statuses");
-    puts("SYSWAIT WFLOR/WFLAND local+common flags, POSTEF wake and IA-32 completion PASS");
+    if(!f.synchronization_enters||
+       f.synchronization_enters!=f.synchronization_leaves)
+        return fail("event flag calls restore the caller synchronization level");
+    puts("SYSWAIT WFLOR/WFLAND local+common flags, POSTEF wake, IPL restore and IA-32 completion PASS");
     return 0;
 }
