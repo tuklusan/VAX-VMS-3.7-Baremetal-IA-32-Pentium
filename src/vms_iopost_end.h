@@ -56,7 +56,7 @@ typedef void (*port_v37_iopost_account_fn)(void *,uint32_t,uint8_t);
 typedef void (*port_v37_iopost_iosb_fn)(void *,uint32_t,uint8_t,
     uint32_t,uint32_t);
 typedef int (*port_v37_iopost_user_qio_validate_fn)(void *,uint32_t,
-    uint32_t,uint32_t,uint8_t);
+    uint32_t,uint32_t,uint8_t,uint32_t);
 typedef uint32_t (*port_v37_iopost_user_qio_complete_fn)(void *,uint32_t,
     uint32_t,uint32_t,uint8_t,uint32_t,uint32_t);
 typedef void (*port_v37_iopost_event_fn)(void *,uint32_t,uint8_t);

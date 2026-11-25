@@ -21806,7 +21806,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_pending.c",
           "pc_symbol": "port_v37_sysqio_submit",
-          "pc_line": 93,
+          "pc_line": 164,
           "function": "Transfer prepared process page-pin ownership to the pending registry before invoking the driver callback; rejected callbacks release the transferred pins. The callback still lacks a live DQA0 priority queue/IOC$INITIATE binding"
         },
         {

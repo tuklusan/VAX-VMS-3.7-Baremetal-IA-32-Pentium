@@ -42,10 +42,11 @@ static void dirpost_iosb(void *v,uint32_t iosb,uint8_t mode,
     r->status=status;r->secondary=secondary;
 }
 static int dirpost_validate_pinned(void *v,uint32_t pid,uint32_t irp_va,
-    uint32_t iosb,uint8_t mode){
+    uint32_t iosb,uint8_t mode,uint32_t status){
     struct dirpost_rig *r=v;r->pinned_validations++;
     if(!r->pending||r->reject_pinned)return -1;
-    return port_v37_sysqio_pending_validate(r->pending,pid,irp_va,iosb,mode);
+    return port_v37_sysqio_pending_validate(r->pending,pid,irp_va,iosb,mode,
+                                            status);
 }
 static uint32_t dirpost_complete_pinned(void *v,uint32_t pid,uint32_t irp_va,
     uint32_t iosb,uint8_t mode,uint32_t status,uint32_t secondary){
@@ -90,7 +91,7 @@ static int qio_driver_submit(void *v,uint32_t pid,uint32_t irp_va,
     struct qio_submit_probe *p=v;p->calls++;
     if(!p->pending||bytes<44u||port_v37_read32(irp+12u)!=pid||
        port_v37_sysqio_pending_validate(p->pending,pid,irp_va,
-          port_v37_read32(irp+36u),(uint8_t)(irp[11u]&3u)))return -1;
+          port_v37_read32(irp+36u),(uint8_t)(irp[11u]&3u),0u))return -1;
     return p->accept?0:-1;
 }
 int main(void){
@@ -189,13 +190,13 @@ int main(void){
     port_v37_sysqio_pending_init(&pending,&pending_sync);
     struct port_v37_sysqio_prepared pending_request={0};
     pending_request.args.iosb=0x2000u;
-    pending_request.args.parameter[0]=0x3000u;
+    pending_request.args.parameter[0]=0x3100u;
     pending_request.args.parameter[1]=512u;
     pending_request.dispatch.action_class=PORT_DQ_FDT_READ;
     CHECK(port_user_pin_io_range(&pending_map,0x2000u,8u,1,
         pending_page,&pending_mem,pending_pin,pending_unpin,&pending_mem,
         &pending_request.iosb_pages)==PORT_USER_OK&&
-      port_user_pin_io_range(&pending_map,0x3000u,512u,1,
+      port_user_pin_io_range(&pending_map,0x3100u,512u,1,
         pending_page,&pending_mem,pending_pin,pending_unpin,&pending_mem,
         &pending_request.transfer_pages)==PORT_USER_OK&&pending_mem.pins==2u);
     port_v37_write32(dirpost_irp+36u,0x2000u);
@@ -206,41 +207,64 @@ int main(void){
         PORT_V37_SYSQIO_PENDING_OK&&pending_mem.pins==2u&&
         pending_request.iosb_pages.count==0u&&
         pending_request.transfer_pages.count==0u);
+    uint8_t qio_data[512];
+    for(unsigned i=0u;i<sizeof qio_data;i++)qio_data[i]=(uint8_t)(i^0x5au);
+    port_v37_write32(dirpost_irp+56u,(512u<<16)|1u);
+    port_v37_write32(dirpost_irp+60u,0u);
+    CHECK(port_v37_sysqio_pending_complete(&pending,0x10007u,0x00347000u,
+        0x2000u,2u,(512u<<16)|1u,0u)==PORT_V37_IOPOST_DEFER);
     port_v37_write16(dirpost_irp+40u,(uint16_t)(0u-32u));
     port_v37_write16(ccb+PORT_V37_CCB_IOC,2u);
+    CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
+          0x00347000u,&pinned_ops)==PORT_V37_IOPOST_DIRPOST_DEFER&&
+          dirpost.order==0u&&dirpost.pinned_validations==1u&&
+          dirpost.pinned_completions==0u&&
+          port_v37_read16(ccb+PORT_V37_CCB_IOC)==2u&&pending_mem.pins==2u);
+    CHECK(port_v37_sysqio_pending_copy_to_user(&pending,0x10007u,
+        0x00347000u,1u,qio_data,1u)==PORT_V37_SYSQIO_PENDING_BAD&&
+       port_v37_sysqio_pending_copy_to_user(&pending,0x10007u,
+        0x00347000u,0u,qio_data,sizeof qio_data)==PORT_V37_SYSQIO_PENDING_OK&&
+       pending_mem.page[0x100u]==qio_data[0]&&
+       pending_mem.page[0x2ffu]==qio_data[511]);
     port_v37_write32(dirpost_irp+36u,0x2004u);
     CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
           0x00347000u,&pinned_ops)==PORT_V37_IOPOST_DIRPOST_DEFER);
-    CHECK(dirpost.order==0u&&dirpost.pinned_validations==1u&&
+    CHECK(dirpost.order==0u&&dirpost.pinned_validations==2u&&
           dirpost.pinned_completions==0u&&
           port_v37_read16(ccb+PORT_V37_CCB_IOC)==2u&&pending_mem.pins==2u);
     port_v37_write32(dirpost_irp+36u,0x2000u);
     CHECK(port_v37_iopost_dirpost(dirpost_irp,sizeof dirpost_irp,
           0x00347000u,&pinned_ops)==PORT_V37_IOPOST_OK);
-    CHECK(dirpost.order==4u&&dirpost.pinned_validations==2u&&
+    CHECK(dirpost.order==4u&&dirpost.pinned_validations==3u&&
           dirpost.pinned_completions==1u&&dirpost.iosb==0x2000u&&
-          dirpost.iosb_mode==2u&&dirpost.status==1u&&
-          dirpost.secondary==512u&&dirpost.efn==7u&&
+          dirpost.iosb_mode==2u&&dirpost.status==((512u<<16)|1u)&&
+          dirpost.secondary==0u&&dirpost.efn==7u&&
           port_v37_read16(ccb+PORT_V37_CCB_IOC)==1u&&
           port_v37_read16(pending_mem.page)==1u&&
-          port_v37_read16(pending_mem.page+2u)==0u&&
-          port_v37_read32(pending_mem.page+4u)==512u&&
+          port_v37_read16(pending_mem.page+2u)==512u&&
+          port_v37_read32(pending_mem.page+4u)==0u&&
+          pending_mem.page[0x100u]==qio_data[0]&&
+          pending_mem.page[0x2ffu]==qio_data[511]&&
           pending_mem.pins==0u&&pending_mem.unpins==2u);
     pending_request=(struct port_v37_sysqio_prepared){0};
     pending_request.args.iosb=0x2000u;
-    pending_request.args.parameter[0]=0x3000u;
+    pending_request.args.parameter[0]=0x3100u;
     pending_request.args.parameter[1]=512u;
-    pending_request.dispatch.action_class=PORT_DQ_FDT_READ;
+    pending_request.dispatch.action_class=PORT_DQ_FDT_WRITE;
     CHECK(port_user_pin_io_range(&pending_map,0x2000u,8u,1,
         pending_page,&pending_mem,pending_pin,pending_unpin,&pending_mem,
         &pending_request.iosb_pages)==PORT_USER_OK&&
-      port_user_pin_io_range(&pending_map,0x3000u,512u,1,
+      port_user_pin_io_range(&pending_map,0x3100u,512u,0,
         pending_page,&pending_mem,pending_pin,pending_unpin,&pending_mem,
         &pending_request.transfer_pages)==PORT_USER_OK&&pending_mem.pins==2u);
     port_v37_write32(dirpost_irp+12u,0x10008u);
     CHECK(port_v37_sysqio_pending_track(&pending,0x10008u,0x00347000u,
         dirpost_irp,sizeof dirpost_irp,&pending_request)==
         PORT_V37_SYSQIO_PENDING_OK&&pending_mem.pins==2u);
+    uint8_t write_data[512];
+    CHECK(port_v37_sysqio_pending_copy_from_user(&pending,0x10008u,
+        0x00347000u,0u,write_data,sizeof write_data)==
+        PORT_V37_SYSQIO_PENDING_OK&&memcmp(write_data,qio_data,sizeof qio_data)==0);
     CHECK(port_v37_sysqio_pending_abort(&pending,0x10008u,0x00347000u,
         0x2000u,2u)==PORT_V37_SYSQIO_PENDING_OK&&pending_mem.pins==0u&&
         pending_mem.unpins==4u&&
@@ -283,7 +307,7 @@ int main(void){
         &submit_probe)==PORT_V37_SYSQIO_SUBMIT_OK&&submit_probe.calls==2u&&
         pending_mem.pins==2u&&pending_request.iosb_pages.count==0u&&
         port_v37_sysqio_pending_validate(&pending,0x10009u,0x00347000u,
-          0x2000u,2u)==0);
+          0x2000u,2u,0u)==0);
     CHECK(port_v37_sysqio_pending_complete(&pending,0x10009u,0x00347000u,
         0x2000u,2u,1u,512u)==PORT_V37_IOPOST_OK&&pending_mem.pins==0u&&
         pending_mem.unpins==8u);

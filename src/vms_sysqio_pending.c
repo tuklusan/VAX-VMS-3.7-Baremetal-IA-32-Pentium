@@ -81,13 +81,84 @@ uint32_t port_v37_sysqio_pending_track(struct port_v37_sysqio_pending *table,
     }
     struct port_v37_sysqio_pending_entry *entry=&table->entries[free_slot];
     entry->request=*prepared;entry->pid=pid;entry->irp_va=irp_va;
-    entry->request_mode=mode;entry->state=1u;
+    entry->request_mode=mode;entry->transfer_bytes=0u;
+    entry->transfer_busy=0u;entry->state=1u;
     /* This is an ownership move. A caller that later aborts the request must
      * remove it through the same completion owner, never unpin the old copy. */
     prepared->transfer_pages=(struct port_user_page_locks){0};
     prepared->iosb_pages=(struct port_user_page_locks){0};
     leave(table,old);
     return PORT_V37_SYSQIO_PENDING_OK;
+}
+
+static uint32_t pending_copy_user(struct port_v37_sysqio_pending *table,
+    uint32_t pid,uint32_t irp_va,uint32_t offset,void *kernel_buffer,
+    uint16_t bytes,uint8_t to_user){
+    if(!table||!table->sync.raise_sync||!table->sync.restore_ipl||!pid||
+       !irp_va||!kernel_buffer||!bytes)
+        return PORT_V37_SYSQIO_PENDING_BAD;
+    const uint32_t old=enter(table);
+    struct port_v37_sysqio_pending_entry *entry=0;
+    for(unsigned i=0u;i<PORT_V37_SYSQIO_PENDING_DEPTH;i++){
+        struct port_v37_sysqio_pending_entry *candidate=&table->entries[i];
+        if(candidate->state==1u&&candidate->pid==pid&&
+           candidate->irp_va==irp_va){entry=candidate;break;}
+    }
+    if(!entry){leave(table,old);return PORT_V37_SYSQIO_PENDING_NOTFOUND;}
+    const uint8_t expected=to_user?PORT_DQ_FDT_READ:PORT_DQ_FDT_WRITE;
+    const uint32_t count=(uint16_t)entry->request.args.parameter[1];
+    if(entry->request.dispatch.action_class!=expected||
+       offset!=entry->transfer_bytes||offset>count||bytes>count-offset){
+        leave(table,old);return PORT_V37_SYSQIO_PENDING_BAD;
+    }
+    if(entry->transfer_busy){
+        leave(table,old);return PORT_V37_SYSQIO_PENDING_DEFER;
+    }
+    if(entry->request.args.parameter[0]>UINT32_MAX-offset){
+        leave(table,old);return PORT_V37_SYSQIO_PENDING_BAD;
+    }
+    entry->transfer_busy=1u;
+    struct port_v37_sysqio_prepared request=entry->request;
+    request.args.parameter[0]+=offset;
+    request.args.parameter[1]=bytes;
+    leave(table,old);
+
+    const int copied=to_user?
+        port_user_copy_to_pinned(&request.transfer_pages,
+            request.args.parameter[0],kernel_buffer,bytes):
+        port_user_copy_from_pinned(&request.transfer_pages,kernel_buffer,
+            request.args.parameter[0],bytes);
+    const uint32_t locked=enter(table);
+    entry=0;
+    for(unsigned i=0u;i<PORT_V37_SYSQIO_PENDING_DEPTH;i++){
+        struct port_v37_sysqio_pending_entry *candidate=&table->entries[i];
+        if(candidate->state==1u&&candidate->pid==pid&&
+           candidate->irp_va==irp_va){entry=candidate;break;}
+    }
+    if(!entry||!entry->transfer_busy){
+        leave(table,locked);return PORT_V37_SYSQIO_PENDING_BAD;
+    }
+    entry->transfer_busy=0u;
+    if(copied==PORT_USER_OK){
+        if(entry->transfer_bytes>UINT16_MAX-bytes){
+            leave(table,locked);return PORT_V37_SYSQIO_PENDING_BAD;
+        }
+        entry->transfer_bytes=(uint16_t)(entry->transfer_bytes+bytes);
+    }
+    leave(table,locked);
+    return copied==PORT_USER_OK?
+        PORT_V37_SYSQIO_PENDING_OK:PORT_V37_SYSQIO_PENDING_BAD;
+}
+
+uint32_t port_v37_sysqio_pending_copy_from_user(
+    struct port_v37_sysqio_pending *table,uint32_t pid,uint32_t irp_va,
+    uint32_t offset,void *destination,uint16_t bytes){
+    return pending_copy_user(table,pid,irp_va,offset,destination,bytes,0u);
+}
+uint32_t port_v37_sysqio_pending_copy_to_user(
+    struct port_v37_sysqio_pending *table,uint32_t pid,uint32_t irp_va,
+    uint32_t offset,const void *source,uint16_t bytes){
+    return pending_copy_user(table,pid,irp_va,offset,(void *)source,bytes,1u);
 }
 
 uint32_t port_v37_sysqio_submit(struct port_v37_sysqio_pending *table,
@@ -118,6 +189,9 @@ uint32_t port_v37_sysqio_pending_abort(struct port_v37_sysqio_pending *table,
         struct port_v37_sysqio_pending_entry *entry=&table->entries[i];
         if(entry->state==1u&&entry->pid==pid&&entry->irp_va==irp_va&&
            entry->request.args.iosb==iosb&&entry->request_mode==mode){
+            if(entry->transfer_busy){
+                leave(table,old);return PORT_V37_SYSQIO_PENDING_DEFER;
+            }
             owned=entry;break;
         }
     }
@@ -132,7 +206,7 @@ uint32_t port_v37_sysqio_pending_abort(struct port_v37_sysqio_pending *table,
 }
 
 int port_v37_sysqio_pending_validate(void *opaque,uint32_t pid,
-    uint32_t irp_va,uint32_t iosb,uint8_t mode){
+    uint32_t irp_va,uint32_t iosb,uint8_t mode,uint32_t status){
     struct port_v37_sysqio_pending *table=opaque;
     if(!table||!table->sync.raise_sync||!table->sync.restore_ipl)return -1;
     const uint32_t old=enter(table);int found=0;
@@ -140,7 +214,15 @@ int port_v37_sysqio_pending_validate(void *opaque,uint32_t pid,
         const struct port_v37_sysqio_pending_entry *entry=&table->entries[i];
         if(entry->state==1u&&entry->pid==pid&&entry->irp_va==irp_va&&
            entry->request.args.iosb==iosb&&entry->request_mode==mode){
-            found=1;break;
+            const uint16_t information=(uint16_t)(status>>16);
+            const uint8_t action=entry->request.dispatch.action_class;
+            const uint8_t has_buffer=(uint8_t)(
+                action==PORT_DQ_FDT_READ||action==PORT_DQ_FDT_WRITE);
+            found=!entry->transfer_busy&&
+                (!has_buffer||(information<=
+                    (uint16_t)entry->request.args.parameter[1]&&
+                 information==entry->transfer_bytes));
+            break;
         }
     }
     leave(table,old);return found?0:-1;
@@ -164,6 +246,16 @@ uint32_t port_v37_sysqio_pending_complete(void *opaque,uint32_t pid,
         leave(table,old);return PORT_V37_IOPOST_BAD;
     }
     struct port_v37_sysqio_pending_entry *entry=&table->entries[slot];
+    const uint16_t information=(uint16_t)(status>>16);
+    if(entry->transfer_busy){
+        leave(table,old);return PORT_V37_IOPOST_DEFER;
+    }
+    if((entry->request.dispatch.action_class==PORT_DQ_FDT_READ||
+        entry->request.dispatch.action_class==PORT_DQ_FDT_WRITE)&&
+       (information>(uint16_t)entry->request.args.parameter[1]||
+        information!=entry->transfer_bytes)){
+        leave(table,old);return PORT_V37_IOPOST_DEFER;
+    }
     entry->state=2u;
     struct port_v37_sysqio_prepared request=entry->request;
     leave(table,old);

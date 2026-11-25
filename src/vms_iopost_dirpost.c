@@ -29,7 +29,7 @@ uint32_t port_v37_iopost_dirpost(uint8_t *irp,size_t irp_bytes,
        (quota_ast&&!ops->queue_ast)||(!quota_ast&&!ops->free_irp))
         return PORT_V37_IOPOST_DIRPOST_DEFER;
     if(use_pinned_qio&&ops->validate_user_qio(ops->context,pid,irp_va,
-                                               iosb,request_mode)!=0)
+          iosb,request_mode,port_v37_read32(irp+IRP_IOST1))!=0)
         return PORT_V37_IOPOST_DIRPOST_DEFER;
     const uint32_t irpe_status=port_v37_iopost_irpe_plan(irp,irp_bytes,
         ops->resolve_irpe,ops->context,ops->maximum_extensions,&irpe_plan);
