@@ -10327,7 +10327,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2762,
+          "pc_line": 2765,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10365,7 +10365,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2762,
+          "pc_line": 2765,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -22438,7 +22438,7 @@
           "pc_file": "src/vms_dqddt_bootread.c",
           "pc_symbol": "port_dqddt_startio",
           "pc_line": 44,
-          "function": "Native DQ_STARTIO dispatches physical READPBLK/WRITEPBLK through activated DDT/FDT pointers; after DQA0 publication, IOC$SEARCHDEV-selected DDB DDT START dispatches both functions through bounded private read/write FIFOs. Public process QIO, ACP, asynchronous scheduling, full RB730 error/controller semantics and process completion remain unimplemented"
+          "function": "Native DQ_STARTIO dispatches physical READPBLK/WRITEPBLK through activated DDT/FDT pointers; after DQA0 publication, IOC$SEARCHDEV-selected DDB DDT START dispatches both functions through bounded private read/write FIFOs. Native ATA separately supports one real IRQ14 asynchronous sector read, but it is not yet bound to the DQA DDT request queue or a process IRP. Public process QIO, ACP, asynchronous DQA scheduling, full RB730 error/controller semantics and process completion remain unimplemented"
         },
         {
           "original_lines": [

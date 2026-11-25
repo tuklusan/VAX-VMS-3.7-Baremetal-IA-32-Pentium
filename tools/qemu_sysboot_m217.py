@@ -88,6 +88,7 @@ def main():
         b'INIT: SYS.EXE materialized native DQ DDT/FDT pointers (IOC publication pending).',
         b'INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.',
         b'INIT: SYS.EXE allocated, completed and returned DQA0 IRP through resident source lookaside.',
+        b'INIT: native ATA async LBN1 read returned before IRQ14; CRB transferred real sector data.',
         b'INIT: SYS.EXE NLDRIVER completed two IRPs via linked DDT/FDT and EXE$FINISHIOC (IPL4 requested).',
         b'INIT: SYS.EXE IOCIOPOST serviced two NLA IRPs through IA-32 CPL0 software INT 0x90 (no process AST).',
         b'INIT: loaded SYS.EXE resident entry executed and verified.',
@@ -152,6 +153,8 @@ def main():
         b'INIT: DQA0 DDB DDT START pointer validation failed.',
         b'INIT: IOC-selected DQA0 DDT STARTIO rejected DQ I/O.',
         b'INIT: DQA0 native DDT IOC publication or SEARCHDEV failed.',
+        b'INIT: native ATA asynchronous read start/busy check failed.',
+        b'INIT: native ATA asynchronous read IRQ14 completion failed.',
         b'INIT: IA-32 privilege transition stack is unprotected.',
         b'PORTLAB> ',b'Login successful',b'Login: ',b'\n$ ']
     passed=False

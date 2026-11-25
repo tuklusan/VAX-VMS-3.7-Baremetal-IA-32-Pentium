@@ -2497,7 +2497,7 @@ dq_fdt_rows=[
  (585,588,'src/vms_dq_fdt_sense.c','port_dq_fdt_sense','Source EXE$SENSEMODE characteristics mask'),
  (589,592,'src/vms_dq_fdt_set.c','port_dq_fdt_set','Source EXE$SETCHAR disk set-mode mask'),
  (593,633,None,None,'Original RB730 driver setup and controller dispatch entry unresolved'),
- (634,639,'src/vms_dqddt_bootread.c','port_dqddt_startio','Native DQ_STARTIO dispatches physical READPBLK/WRITEPBLK through activated DDT/FDT pointers; after DQA0 publication, IOC$SEARCHDEV-selected DDB DDT START dispatches both functions through bounded private read/write FIFOs. Public process QIO, ACP, asynchronous scheduling, full RB730 error/controller semantics and process completion remain unimplemented'),
+ (634,639,'src/vms_dqddt_bootread.c','port_dqddt_startio','Native DQ_STARTIO dispatches physical READPBLK/WRITEPBLK through activated DDT/FDT pointers; after DQA0 publication, IOC$SEARCHDEV-selected DDB DDT START dispatches both functions through bounded private read/write FIFOs. Native ATA separately supports one real IRQ14 asynchronous sector read, but it is not yet bound to the DQA DDT request queue or a process IRP. Public process QIO, ACP, asynchronous DQA scheduling, full RB730 error/controller semantics and process completion remain unimplemented'),
  (640,654,'src/vms_dq_bootread_decode.c','port_dq_bootread_decode','IRP MEDIA physical LBN extraction for bounded ATA LBA28; resident early INIT verifies LBN1 and LBN0 independently'),
  (655,671,'src/vms_dq_bootread_commit.c','port_dq_bootread_commit','UCB retry count, BCNT, FEX and media field update, partial DQ PREPROCESS'),
  (672,677,None,None,'Unimplemented RB730 branch/diagnostic bits and controller hardware'),

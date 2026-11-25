@@ -56,6 +56,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #include "vms_qio.h"
 #include "vms_channels.h"
 #include "vms_dq_crb.h"
+#include "vms_ata_x86.h"
 #include "vms_dq_ioc.h"
 #include "vms_dq_ioc_write.h"
 #include "vms_f11_acp87.h"
@@ -124,10 +125,6 @@ extern uint32_t arch_mutex_waits(void);
 extern uint32_t arch_mutex_wakes(void);
 extern uint32_t arch_mutex_remaining(void);
 extern uint32_t arch_mutex_held(void);
-extern int port_ata_x86_read28(uint32_t lba,uint16_t dst[256]);
-extern int port_ata_x86_write28(uint32_t lba,const uint16_t src[256]);
-extern uint32_t port_ata_x86_irq_count(void);
-extern void port_ata_x86_irq(void);
 extern int arch_disk_irq_bind_crb(struct port_dq_crb *);
 extern uint32_t arch_disk_irq_crb_count(void);
 extern int port_ne2k_x86_probe(struct port_ne2k *nic);
@@ -195,6 +192,12 @@ static uint32_t nsp_data_received,nsp_data_rejected,nsp_dataacks_sent,nsp_dataac
 static uint16_t nsp_data_last_sequence,nsp_data_tx_sequence;
 static void hex8(uint8_t value);
 static uint16_t ata_sector[256];
+static uint16_t ata_async_sector[256];
+static volatile uint32_t ata_async_completions;
+static volatile int ata_async_status;
+static void ata_async_completed(void *context,int status){
+    (void)context;ata_async_status=status;ata_async_completions++;
+}
 static uint16_t qio_sector[256];
 static struct port_qio_service qio_service;
 static struct port_channel_table qio_channels;
@@ -3985,6 +3988,36 @@ void kmain(void) {
     }
     bootstrap_message("INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.");
     bootstrap_message("INIT: SYS.EXE allocated, completed and returned DQA0 IRP through resident source lookaside.");
+
+    /* The normal PIO helpers wait for their IRQ. Exercise the separate
+     * IOC-style start path: return with one real ATA request armed, then let
+     * the IRQ14/CRB handler transfer the sector and record completion. */
+    ata_async_completions=0u;ata_async_status=PORT_ATA_TIMEOUT;
+    const uint32_t async_irq_before=port_ata_x86_irq_count();
+    uint32_t async_eflags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(async_eflags)::"memory");
+    const int async_start=port_ata_x86_read28_async(1u,ata_async_sector,
+        ata_async_completed,0);
+    const uint32_t async_completed_before_irq=ata_async_completions;
+    const int async_second_start=port_ata_x86_read28_async(1u,ata_async_sector,
+        ata_async_completed,0);
+    if(async_eflags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
+    if(async_start!=PORT_ATA_X86_ASYNC_OK||
+       async_second_start!=PORT_ATA_X86_ASYNC_BUSY||
+       async_completed_before_irq){
+        bootstrap_message("INIT: native ATA asynchronous read start/busy check failed.");
+        bootstrap_halt();
+    }
+    for(uint32_t spin=0u;spin<100000000u&&!ata_async_completions;spin++)
+        __asm__ volatile("pause");
+    if(ata_async_completions!=1u||ata_async_status!=PORT_ATA_OK||
+       port_ata_x86_irq_count()!=async_irq_before+1u||
+       ata_async_sector[0]!=1u||
+       arch_disk_irq_crb_count()!=dq_crb_irqs_before+2u){
+        bootstrap_message("INIT: native ATA asynchronous read IRQ14 completion failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: native ATA async LBN1 read returned before IRQ14; CRB transferred real sector data.");
 
     /* Source NLDRIVER.MAR DDT/FDT through SYSQIOREQ.MAR 741-749: two original
      * IRP$L_MEDIA statuses and an IOC$GL_PSBL append in actual loaded
