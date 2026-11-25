@@ -12,6 +12,10 @@ enum {
     PORT_V37_IA32_CONTEXT_STACK=8u
 };
 
+/* Initial frames return across a privilege boundary. Hardware-saved frames
+ * after an interrupt at the same CPL do not contain ESP/SS in the IRET image. */
+#define PORT_V37_IA32_INITIAL_FRAME_VECTOR UINT32_MAX
+
 /* Stack image consumed by arch_isr_common's segment pops, POPAL and IRET.
  * For CPL0 IRET uses EIP/CS/EFLAGS; for CPL1-3 it also consumes ESP/SS. */
 struct port_v37_ia32_restore_frame {
