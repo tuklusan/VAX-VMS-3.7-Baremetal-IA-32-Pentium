@@ -1320,4 +1320,4 @@ Strengthened the source-layout intrusive UCB/IRP queue validator: it now rejects
 
 Verification: `make sysirpqueuecheck` PASS; `make all test sysqioresidentcheck dqddtcheck dqprivateioccheck dqwriteioccheck` PASS (resident SYSQIO checks, full host suite through M49, and DQA/IOC regressions); `make qemu-sysboot-m217` PASS through the real DQA0 DDT/CRB IRQ14 and Files-11 read probes, then stopped at explicit incomplete INIT. Capture `logs/serial/qemu-m217-run-local-20261125T021401513460Z.log`, 5,710 bytes, SHA-256 `f7b8c82f50f6d2bfcbb9d928fff97bdd49888ca2ab69645eebb7c7bbdc79c988`. Coverage validator PASS: 2,074 ranges; 447/4,566 original files indexed; mapped 17,255; partial 29,776; unresolved 52,668; missing 7,799; excluded 26,341; hardware-excluded 917; zero errors. Serial manifest validation PASS (254 logs); kernel image layout verification PASS. QEMU exited. No login, DCL, DECnet Phase IV or SET HOST 0 occurred. Full acceptance remains incomplete.
 
-Implementation and verification-record commits are pending.
+Implementation commit `f852531259fefc28388f08a07d3e9cdee81a4ee7` was pushed to active `main`.
