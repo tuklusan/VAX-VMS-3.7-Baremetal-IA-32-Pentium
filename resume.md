@@ -1780,3 +1780,12 @@ Verification: `make v37schedcheck` PASS; `python3 tools/gen_source_coverage.py`,
 
 Local M379 test commit: `e519b6ff1bda6f35be0310646b20709227a8fb4b`.
 Published GitHub M379 test commit: `9449b69b782363db78afc10a5eb9bc0dc8b5128a`.
+
+## M380 - Validate source wait states before SCH$WAITK, 25 November 2026
+
+The WQH validator previously accepted any nonzero state, allowing the native wait API to enqueue a process under executable or current state values. It now accepts only the contiguous SYSDEFQZ wait-state range COLPG through FPG (1-11), rejecting COM/COMO/CUR and out-of-range values before PCB/PHD mutation. Source state names are exposed in the scheduler header. The host regression verifies a COM WQH is rejected while preserving the current PCB and empty wait queue. This is validation for the scheduler API; actual wait callers, state-to-WQH resolution and live process scheduling remain incomplete.
+
+Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0); coverage generation, range regression, and `python3 tools/validate_source_ranges.py` PASS (2,129 ranges; 451/4,566 originals indexed; zero errors; inventory counts unchanged); `git diff --check` PASS. No QEMU run: the API remains unbound to the guest. No login/DCL/DECnet/SET HOST occurred.
+
+Local M380 implementation commit: `6cf753854f4b7313e8426990610be09968689caf`.
+Published GitHub main M380 implementation commit: `f093fd9f5b85daeb7cb34cacf02f31f76f53d7de`.
