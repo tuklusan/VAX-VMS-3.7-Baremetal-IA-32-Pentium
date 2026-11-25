@@ -1722,3 +1722,13 @@ Verification: make qemu-sysboot-m217 PASS with the new ordered scheduler asserti
 
 Local M373 implementation commit: fef0e092b663f0e49360439e9809e326585fb43e.
 Published GitHub main M373 implementation commit: 8a380dae34d285304ad7126b0110cca436db3df1.
+
+
+## M374 - Add source WQH wait and wake transitions, 25 November 2026
+
+Added a SYSDEFQZ.MDL-layout WQH implementation and host-tested native scheduler transitions. SCH$WAITK saves the interrupted context to PCB/PHD, appends the current PCB with source wait state/count, clears current scheduling ownership, and selects a runnable context. The wake helper removes a validated waiter and reinserts it through the native CHSE priority/COM queue logic. Invalid WQH/list/frame inputs are rejected before mutation; host tests cover queue/state/context save, empty scheduler behavior, ready-queue wake, and corruption rejection. This is not yet called by a live process wait or I/O/AST path. WFLAND/WFLOR/WAITFR integration, wait quota/time charges, pending AST checks/delivery, source event/RPTEVT masks, PID-based WAKE/RESUME, full IPL semantics and process activation remain incomplete.
+
+Verification: `make v37schedcheck` PASS; `make -j2 all test` PASS (exit 0); `make sourcerangecheck`, `python3 tests/test_coverage_ranges.py`, and `git diff --check` PASS. Corrected source mapping to attribute only SYSWAIT.MAR SCH$WAITK queue/context/select lines 311-327 to the partial native routine; RSE.MAR wake event tables remain unresolved because the native helper does not implement those source event actions. Coverage: 2,122 ranges, 451/4,566 originals indexed, zero missing mapped functions; 17,230 mapped, 30,267 partial, 56,921 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded. A single `make qemu-sysboot-m217` PASS verified the existing real DQA0 DDT/IRQ14/ACP and IRQ0 scheduler regression, then observed the explicit incomplete-INIT stop. Capture `logs/serial/qemu-m217-run-local-20261125T172040429206Z.log`, 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`; runner exited and no QEMU process remains. The new wait/wake API is not exercised by the guest; no SYSTEM login, DCL, DECnet or SET HOST occurred.
+
+Local M374 implementation commit: `58e91c4bf491ad6339c88f363cd9f777aea65251`.
+Published GitHub main M374 implementation commit: `f14b04eb89091502ade02b60c7a251f69d3f9be9`.
