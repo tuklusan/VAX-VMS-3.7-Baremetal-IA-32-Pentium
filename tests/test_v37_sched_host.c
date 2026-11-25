@@ -74,6 +74,7 @@ static uint32_t init_pcb(struct fixture *f,unsigned slot,uint32_t pid,
     return PORT_V37_PCB_OK;
 }
 static uint16_t get16(const uint8_t *p){return (uint16_t)p[0]|((uint16_t)p[1]<<8);}
+static void put16(uint8_t *p,uint16_t v){p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);}
 static uint32_t get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
        ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
@@ -251,6 +252,64 @@ int main(void){
             f.wait_queue.backward,get16(f.pcbs[0]+PORT_V37_PCB_STATE),
             scheduler.summary[0],port_v37_sched_check(&scheduler));
         return fail("SYSWAIT wake removes WQH process and returns it via CHSE");
+    }
+    /* Keep a nonresident waiter at the WQH head, then block the resident
+     * process behind it. Waking the tail must preserve the head and count;
+     * waking the nonresident head must route it to COMO and wake the swapper. */
+    const unsigned p3_queue=(unsigned)f.pcbs[3][PORT_V37_PCB_PRI]+32u;
+    const uint32_t p3_head=0x00100000u+
+        p3_queue*(uint32_t)sizeof(struct port_v37_sched_head);
+    scheduler.heads[p3_queue].forward=p3_head;
+    scheduler.heads[p3_queue].backward=p3_head;
+    scheduler.summary[p3_queue>>5]&=~(1u<<(p3_queue&31u));
+    put32(f.pcbs[3]+PORT_V37_PCB_SQFL,f.wait_queue_va);
+    put32(f.pcbs[3]+PORT_V37_PCB_SQBL,f.wait_queue_va);
+    put16(f.pcbs[3]+PORT_V37_PCB_STATE,f.wait_queue.state);
+    f.wait_queue.forward=f.wait_queue.backward=f.pcb_va[3];
+    f.wait_queue.count=1u;
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||selected!=f.pcb_va[0])
+        return fail("select resident process before FIFO WQH append");
+    if(port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
+           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_BLOCKED||
+       f.wait_queue.count!=2u||f.wait_queue.forward!=f.pcb_va[3]||
+       f.wait_queue.backward!=f.pcb_va[0]||
+       get32(f.pcbs[3]+PORT_V37_PCB_SQFL)!=f.pcb_va[0]||
+       get32(f.pcbs[0]+PORT_V37_PCB_SQBL)!=f.pcb_va[3])
+        return fail("SCH$WAITK appends behind existing waiters");
+    const uint32_t swaps_before=f.swapper_wakes;
+    const uint32_t wake_tail=port_v37_sched_wake_waiter(&scheduler,
+        f.wait_queue_va,f.pcb_va[0],1u);
+    const uint32_t check_after_tail=port_v37_sched_check(&scheduler);
+    if(wake_tail!=PORT_V37_SCHED_OK||f.wait_queue.count!=1u||
+       f.wait_queue.forward!=f.pcb_va[3]||f.wait_queue.backward!=f.pcb_va[3]||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       check_after_tail!=PORT_V37_SCHED_OK){
+        fprintf(stderr,"tail=%u count=%u state0=%u pri0=%u q29=%u ready29=%u summary=%08x/%08x links=%08x/%08x check=%u\\n",
+            wake_tail,f.wait_queue.count,get16(f.pcbs[0]+PORT_V37_PCB_STATE),
+            f.pcbs[0][PORT_V37_PCB_PRI],count(&f,29u),
+            scheduler.ready_count[29],scheduler.summary[0],scheduler.summary[1],
+            get32(f.pcbs[0]+PORT_V37_PCB_SQBL),
+            get32(f.pcbs[0]+PORT_V37_PCB_SQFL),check_after_tail);
+        return fail("RSE wake unlinks tail and preserves WQH head");
+    }
+    const uint32_t wake_nonresident=port_v37_sched_wake_waiter(&scheduler,
+        f.wait_queue_va,f.pcb_va[3],0u);
+    if(wake_nonresident!=PORT_V37_SCHED_OK||f.wait_queue.count||
+       f.wait_queue.forward!=f.wait_queue_va||
+       f.wait_queue.backward!=f.wait_queue_va||
+       get16(f.pcbs[3]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COMO||
+       f.swapper_wakes!=swaps_before+1u||
+       port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK){
+        fprintf(stderr,"tail=%u nonres=%u count=%u fwd=%08x back=%08x state=%u swaps=%u p3links=%08x/%08x pri=%u/%u check=%u\\n",
+            wake_tail,wake_nonresident,f.wait_queue.count,
+            f.wait_queue.forward,f.wait_queue.backward,
+            get16(f.pcbs[3]+PORT_V37_PCB_STATE),f.swapper_wakes,
+            get32(f.pcbs[3]+PORT_V37_PCB_SQFL),
+            get32(f.pcbs[3]+PORT_V37_PCB_SQBL),
+            f.pcbs[3][PORT_V37_PCB_PRI],f.pcbs[3][PORT_V37_PCB_PRIB],
+            port_v37_sched_check(&scheduler));
+        return fail("RSE wake preserves WQH FIFO and routes nonresident PCB");
     }
     puts("SYSWAIT SCH$WAITK/WQH wake plus SCHED SCH$RESCHED/SCH$SCHED and RSE SCH$CHSE PASS");
     return 0;
