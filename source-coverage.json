@@ -5885,7 +5885,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_save_current",
-          "pc_line": 263,
+          "pc_line": 309,
           "function": "Validate and save the outgoing IA-32 IRET frame into PCB$L_PHYPCB and PHD KSP/PC, then requeue through SCH$RESCHED; live trap/ IPL entry remains unintegrated"
         },
         {
@@ -5896,7 +5896,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
-          "pc_line": 240,
+          "pc_line": 286,
           "function": "Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction"
         },
         {
@@ -5915,7 +5915,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
-          "pc_line": 192,
+          "pc_line": 238,
           "function": "Highest resident COM queue selection validates the saved IA-32 IRET frame and returns its address with the selected PCB; IRQ0 invokes this transaction, but contextless NULL/SWAPPER are still not activated and TSS/CR3 switching remains incomplete"
         },
         {
@@ -6099,7 +6099,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_current",
-          "pc_line": 316,
+          "pc_line": 362,
           "function": "native functional counterpart to original section"
         },
         {
@@ -10912,7 +10912,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 428,
+          "pc_line": 474,
           "function": "Partial AST event state mask and CHSE wake routing; AST queue/AST delivery semantics remain unresolved"
         },
         {
@@ -10931,7 +10931,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 428,
+          "pc_line": 474,
           "function": "Partial local/common event state dispatch; source event selection is supplied by the caller"
         },
         {
@@ -10942,16 +10942,35 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 428,
+          "pc_line": 474,
           "function": "Partial source state masks and wake dispatch for free-page, WAKE, RESUME and page-fault-complete events; caller supplies the actual wait-queue header and situational priority class"
         },
         {
           "original_lines": [
             232,
+            232
+          ],
+          "status": "unresolved",
+          "reason": "RSE source separation before SETPRI remains unresolved"
+        },
+        {
+          "original_lines": [
+            233,
+            236
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_rse_event",
+          "pc_line": 474,
+          "function": "Partial SETPRI event state dispatch to a precomputed SCH$CHSEP priority transition"
+        },
+        {
+          "original_lines": [
+            237,
             257
           ],
           "status": "unresolved",
-          "reason": "RSE SETPRI and SWPOUT actions and illegal-event handling remain unresolved"
+          "reason": "RSE SWPOUT actions and illegal-event handling remain unresolved"
         },
         {
           "original_lines": [
@@ -10961,7 +10980,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 428,
+          "pc_line": 474,
           "function": "For resident LEF/CEF waiters, update saved PHD PC/R0 to complete the VMS wait syscall before CHSE; full event-flag selection and IPL integration remain unresolved"
         },
         {
@@ -10980,7 +10999,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 428,
+          "pc_line": 474,
           "function": "Route the implemented RSE executable-state events through wait-queue removal and source CHSE scheduling; AST delivery and event-specific completion state remain unresolved"
         },
         {
@@ -11013,13 +11032,32 @@
         {
           "original_lines": [
             395,
-            440
+            409
           ],
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_chse",
           "pc_line": 144,
-          "function": "Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points"
+          "function": "Encode SCH$CHSE priority increment and delegation to source SCH$CHSEP queue transition"
+        },
+        {
+          "original_lines": [
+            410,
+            435
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_set_priority",
+          "pc_line": 192,
+          "function": "Partial precomputed-priority COM/COMO CHSEP removal, COMQS/ready accounting, queue insertion and reschedule/swapper callbacks; IPL bugcheck semantics remain unresolved"
+        },
+        {
+          "original_lines": [
+            436,
+            440
+          ],
+          "status": "unresolved",
+          "reason": "RSE return and BADIPL bugcheck tail remain unresolved"
         },
         {
           "original_lines": [

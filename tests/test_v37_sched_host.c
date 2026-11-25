@@ -369,6 +369,24 @@ int main(void){
        get32(f.phds[0]+PORT_V37_PHD_PC)!=0x45678901u||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("RSE AST wakes MWAIT process without altering its return frame");
+    const uint8_t old_priority=f.pcbs[0][PORT_V37_PCB_PRI];
+    if(port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_SETPRI,0u,
+           f.pcb_va[0],32u)!=PORT_V37_SCHED_BADPARAM||
+       f.pcbs[0][PORT_V37_PCB_PRI]!=old_priority||
+       port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_SETPRI,0u,
+           f.pcb_va[0],20u)!=PORT_V37_SCHED_OK||
+       f.pcbs[0][PORT_V37_PCB_PRI]!=20u||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       count(&f,20u)!=1u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("RSE SETPRI precomputed priority COM queue transition");
+    const unsigned swaps_before_setpri=f.swapper_wakes;
+    if(port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_SETPRI,0u,
+           f.pcb_va[3],17u)!=PORT_V37_SCHED_OK||
+       f.pcbs[3][PORT_V37_PCB_PRI]!=17u||
+       get16(f.pcbs[3]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COMO||
+       f.swapper_wakes!=swaps_before_setpri+1u||count(&f,49u)!=1u||
+       port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("RSE SETPRI nonresident COMO and swapper wake transition");
     puts("SYSWAIT SCH$WAITK/WQH wake plus SCHED SCH$RESCHED/SCH$SCHED and RSE SCH$CHSE PASS");
     return 0;
 }
