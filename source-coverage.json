@@ -9532,6 +9532,48 @@
       "unresolved_integration": "Complete-file remapping, live WCB/FCB callbacks, source BADRVNWCB bugcheck, process UCB context and asynchronous ACP completion remain incomplete."
     },
     {
+      "original_file": "SYS/SRC/IOSUBRAMS.MAR",
+      "original_lines": 406,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            174
+          ],
+          "status": "missing",
+          "reason": "Other IOSUBRAMS routines not ported"
+        },
+        {
+          "original_lines": [
+            175,
+            200
+          ],
+          "status": "excluded",
+          "reason": "MAPVBLK interface and original routine description"
+        },
+        {
+          "original_lines": [
+            201,
+            315
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ioc_mapvblk.c",
+          "pc_symbol": "port_ioc_mapvblk",
+          "pc_line": 89,
+          "function": "WCB chain selection, FM2 scan, adjacent extent, EOF clamp and RVN result; executive structures and bugcheck integration remain partial"
+        },
+        {
+          "original_lines": [
+            316,
+            406
+          ],
+          "status": "missing",
+          "reason": "UPDATRANSP and disk sense routines remain unported"
+        }
+      ],
+      "unresolved_integration": "IOC$MAPVBLK requires native UCB IPL synchronization, actual resident WCB/FCB address resolvers and VMS fatal-structure bugchecks."
+    },
+    {
       "original_file": "F11A/SRC/MOUNT.B32",
       "original_lines": 167,
       "sections": [

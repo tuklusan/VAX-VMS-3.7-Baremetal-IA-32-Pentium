@@ -1699,6 +1699,26 @@ result['files'].append({'original_file':'F11B/SRC/MAPVBN.B32',
     'original_lines':202,'sections':mapvbn_sections,
     'unresolved_integration':'Complete-file remapping, live WCB/FCB callbacks, source BADRVNWCB bugcheck, process UCB context and asynchronous ACP completion remain incomplete.'})
 
+# SYS IOSUBRAMS IOC$MAPVBLK WCB/FM2 logical-block mapping. Runtime locking,
+# structure-fatal handling and resident UCB/RVT callbacks still need binding.
+iocmapvblk_sections=[]
+for first,last,path,symbol,purpose,status in [
+    (1,174,None,None,'Other IOSUBRAMS routines not ported','missing'),
+    (175,200,None,None,'MAPVBLK interface and original routine description','excluded'),
+    (201,315,'src/vms_ioc_mapvblk.c','port_ioc_mapvblk',
+     'WCB chain selection, FM2 scan, adjacent extent, EOF clamp and RVN result; executive structures and bugcheck integration remain partial','partial'),
+    (316,406,None,None,'UPDATRANSP and disk sense routines remain unported','missing')]:
+    if path is None:
+        iocmapvblk_sections.append({'original_lines':[first,last],'status':status,'reason':purpose})
+    else:
+        line=line_for_symbol(path,symbol)
+        if line is None:raise RuntimeError('Missing native symbol '+symbol)
+        iocmapvblk_sections.append({'original_lines':[first,last],'status':status,
+            'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':purpose})
+result['files'].append({'original_file':'SYS/SRC/IOSUBRAMS.MAR','original_lines':406,
+    'sections':iocmapvblk_sections,
+    'unresolved_integration':'IOC$MAPVBLK requires native UCB IPL synchronization, actual resident WCB/FCB address resolvers and VMS fatal-structure bugchecks.'})
+
 # M87: original ODS-1 and ODS-2 ACP file-header, FCB, and I/O paths.
 # The structures and callbacks are in the IA-32 Files-11 ACP source.
 f11_87_files = [
