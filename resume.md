@@ -1619,3 +1619,5 @@ MAP_VBN now treats a successful MAP_WINDOW callback with every requested block s
 Verification: `make files1187check` PASS; `make sourcerangecheck` PASS (2,116 ranges; 450/4,566 originals indexed; zero errors); fresh single-runner `make qemu-sysboot-m217` PASS through the same SYS.EXE ACP/DQA0 IRQ14 boot probe and explicit incomplete-INIT halt. QEMU capture: `logs/serial/qemu-m217-run-local-20261125T142227551232Z.log`, 5,885 bytes, SHA-256 `0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb`; runner exited. Guest does not exercise the all-unmapped callback result. Window retries/turning, live UCB remapping, process-aware ACP I/O remain incomplete.
 
 Local M362 implementation commit: 780ac4a45019159de9a76f1c31f18f32a558eec7.
+
+Published GitHub main implementation commit: dde0262e9922cc647d671fbe356a076ad85101a4.
