@@ -657,6 +657,19 @@ _Alignas(8) static uint8_t executive_vms_system_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_null_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_swapper_pcb[PORT_V37_PCB_BYTES];
 static struct port_v37_scheduler executive_vms_scheduler;
+/* DSBINT/ENBINT translation for UP IA-32: prevent local IRQ/trap interleaving
+ * while the original IPL_SYNCH scheduler/event transaction mutates shared
+ * PCB, CEB and WQH records, then restore the caller's IF state exactly. */
+static uint32_t executive_vms_enter_synchronization(void *unused){
+    (void)unused;uint32_t flags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
+    return flags;
+}
+static void executive_vms_leave_synchronization(void *unused,uint32_t flags){
+    (void)unused;__asm__ volatile("":::"memory");
+    if(flags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
+    else __asm__ volatile("cli":::"memory");
+}
 static uint32_t executive_vms_address(void *unused,const void *p){
     (void)unused;
     return (uintptr_t)p<=UINT32_MAX?(uint32_t)(uintptr_t)p:0u;
@@ -817,8 +830,11 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
                  executive_free_npages-used,&settings,
                  &executive_procvec)!=PORT_INI_PROC_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        const struct port_v37_sched_ops sched_ops={0,
-            executive_vms_address,executive_vms_resolve,0,0};
+        const struct port_v37_sched_ops sched_ops={
+            .context=0,.address=executive_vms_address,
+            .resolve=executive_vms_resolve,
+            .enter_synchronization=executive_vms_enter_synchronization,
+            .leave_synchronization=executive_vms_leave_synchronization};
         if(port_ini_procvec_set_pcb(&executive_procvec,1u,
               (uint32_t)(uintptr_t)executive_vms_swapper_pcb)!=PORT_INI_PROC_OK||
            port_v37_sched_init(&executive_vms_scheduler,&sched_ops)!=

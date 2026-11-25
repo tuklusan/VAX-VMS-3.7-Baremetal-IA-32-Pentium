@@ -44,6 +44,10 @@ struct port_v37_sched_ops {
     uint8_t *(*resolve)(void *,uint32_t,size_t);
     void (*wake_swapper)(void *,uint32_t);
     void (*request_reschedule)(void *);
+    /* SYSWAIT/POSTEF enter the source IPL_SYNCH critical section before
+     * examining shared event flags or mutating WQH/scheduler state. */
+    uint32_t (*enter_synchronization)(void *);
+    void (*leave_synchronization)(void *,uint32_t);
 };
 struct port_v37_scheduler {
     struct port_v37_sched_head heads[PORT_V37_SCH_QUEUES];
@@ -101,8 +105,8 @@ uint32_t port_v37_sched_wake_waiter(struct port_v37_scheduler *,
 uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *,uint8_t event,
     uint32_t wait_queue_address,uint32_t pcb_address,uint8_t priority_class);
 /* SYSWAIT.MAR WFLOR/WFLAND local and common cluster wait. Event flags and
- * WQH/CEB records are SYSDEF layouts; *service_status is valid only when
- * the scheduler returns OK, and then contains an SS$ condition code. */
+ * WQH/CEB records are SYSDEF layouts. The scheduler requires synchronization
+ * callbacks; *service_status is valid only when it returns OK. */
 uint32_t port_v37_sched_wait_event(struct port_v37_scheduler *,
     uint32_t local_lef_wqh,uint32_t interrupted_frame,uint32_t efn,
     uint32_t mask,int wait_all,uint32_t *selected_pcb,
