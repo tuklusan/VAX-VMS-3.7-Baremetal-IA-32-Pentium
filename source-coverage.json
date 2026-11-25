@@ -5946,7 +5946,7 @@
           "reason": "assembler end"
         }
       ],
-      "unresolved_integration": "The scheduler validates/saves native PCB/PHD contexts and selects resident COM entries; live VMS trap dispatch still does not invoke these operations, update TSS/CR3, or IRET into the selected frame; executive wait/wake queues remain unbound."
+      "unresolved_integration": "The scheduler validates/saves native PCB/PHD contexts and provides an interrupt-level SCH$RESCHED/SCH$SCHED transaction; the live IA-32 IRQ path still does not invoke it, update TSS/CR3, or IRET into the selected frame; executive wait/wake queues remain unbound."
     },
     {
       "original_file": "SYS/SRC/NULLPROC.MAR",
