@@ -1557,3 +1557,11 @@ Extended the synthetic FH2 fixture to read 64 bytes straddling the primary heade
 
 Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0). No QEMU runner was needed for this host-test-only change. The M354 guest boot result remains recorded above. Local M355 commit: bd14d475a74ad37da74a670d0b3deaa302c6e819; published GitHub main commit: a5ad28978aa1bede9707d9129dc1aa1e73b63e02.
 
+
+## M356 - Record source MAP_VBN coverage precisely, 25 November 2026
+
+Added a source-to-native record for F11B/SRC/MAPVBN.B32. It marks native FH2 VBN selection, extension-FID reads, window map callbacks and data-sector reads as partial while keeping source window turning, remapping, retry behavior, live UCB selection and process completion explicitly unresolved. Coverage remains partial for the source routine as a whole.
+
+
+Local M356 commit: e6488c14ecb618782a6bf19f98d23b756d0589a7.
+Verification: make sourcerangecheck PASS (2,116 ranges; 450/4,566 original files indexed; zero errors; 17,255 mapped, 30,163 partial, 56,921 unresolved, 7,752 missing, 26,412 excluded, 917 hardware-excluded). No runtime source changed; prior M355 host and M354 QEMU results remain recorded above.

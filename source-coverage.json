@@ -9457,6 +9457,73 @@
       "unresolved_integration": "Native Files-11 ACP process, file-control and disk driver links are not yet active in the guest. The original source is ported; callbacks must be attached to the live executive."
     },
     {
+      "original_file": "F11B/SRC/MAPVBN.B32",
+      "original_lines": 202,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            66
+          ],
+          "status": "excluded",
+          "reason": "Original notices, declarations and routine description"
+        },
+        {
+          "original_lines": [
+            67,
+            89
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_f11_acp87.c",
+          "pc_symbol": "port_f11b_read_vbn",
+          "pc_line": 570,
+          "function": "File VBN validation and extension-FID selection; native ACP uses bounded FH2 header traversal"
+        },
+        {
+          "original_lines": [
+            90,
+            111
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_f11_acp87.c",
+          "pc_symbol": "acp_read_extension_header",
+          "pc_line": 522,
+          "function": "Extension volume header read through Files-11 index mapping; complete process volume/window switching is absent"
+        },
+        {
+          "original_lines": [
+            112,
+            167
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_f11_acp86.c",
+          "pc_symbol": "port_f11b_map_window",
+          "pc_line": 191,
+          "function": "Map callback and unmapped-block result; source window turn/retry and remapping are not wired"
+        },
+        {
+          "original_lines": [
+            168,
+            197
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_f11_acp87.c",
+          "pc_symbol": "port_f11b_read_vbn",
+          "pc_line": 570,
+          "function": "Native FH2 retrieval-map LBN resolution and data reads across extension boundaries"
+        },
+        {
+          "original_lines": [
+            198,
+            202
+          ],
+          "status": "excluded",
+          "reason": "Original routine and module terminators"
+        }
+      ],
+      "unresolved_integration": "Live WCB windows, source MAP_WINDOW callbacks, remap/turn retry, process UCB context and asynchronous ACP completion remain incomplete."
+    },
+    {
       "original_file": "F11A/SRC/MOUNT.B32",
       "original_lines": 167,
       "sections": [

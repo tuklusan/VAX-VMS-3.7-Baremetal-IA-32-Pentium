@@ -1670,6 +1670,34 @@ for orig,total,first,last,sym in f11_86_files:
         (last+1,total,None,None,'Original module terminator or blank source')
     ],integration)
 
+# F11B MAP_VBN now has a bounded ACP data-read path that follows FH2
+# extension-FID chains. It maps native retrieval pointers and sectors, while
+# the source window turn/retry, complete remap, and current-UCB assertions
+# remain unimplemented.
+mapvbn_sections=[]
+for first,last,path,symbol,purpose,status in [
+    (1,66,None,None,'Original notices, declarations and routine description','excluded'),
+    (67,89,'src/vms_f11_acp87.c','port_f11b_read_vbn',
+     'File VBN validation and extension-FID selection; native ACP uses bounded FH2 header traversal','partial'),
+    (90,111,'src/vms_f11_acp87.c','acp_read_extension_header',
+     'Extension volume header read through Files-11 index mapping; complete process volume/window switching is absent','partial'),
+    (112,167,'src/vms_f11_acp86.c','port_f11b_map_window',
+     'Map callback and unmapped-block result; source window turn/retry and remapping are not wired','partial'),
+    (168,197,'src/vms_f11_acp87.c','port_f11b_read_vbn',
+     'Native FH2 retrieval-map LBN resolution and data reads across extension boundaries','partial'),
+    (198,202,None,None,'Original routine and module terminators','excluded')]:
+    if path is None:
+        mapvbn_sections.append({'original_lines':[first,last],'status':status,
+                                'reason':purpose})
+    else:
+        line=line_for_symbol(path,symbol)
+        if line is None:raise RuntimeError('Missing native symbol '+symbol)
+        mapvbn_sections.append({'original_lines':[first,last],'status':status,
+            'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':purpose})
+result['files'].append({'original_file':'F11B/SRC/MAPVBN.B32',
+    'original_lines':202,'sections':mapvbn_sections,
+    'unresolved_integration':'Live WCB windows, source MAP_WINDOW callbacks, remap/turn retry, process UCB context and asynchronous ACP completion remain incomplete.'})
+
 # M87: original ODS-1 and ODS-2 ACP file-header, FCB, and I/O paths.
 # The structures and callbacks are in the IA-32 Files-11 ACP source.
 f11_87_files = [
