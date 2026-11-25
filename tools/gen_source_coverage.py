@@ -313,6 +313,20 @@ result['files'].append({'original_file':'LOGIN/SRC/INTERACT.B32',
                         'unresolved_integration':
                         'SYSALF native indexed file backend and real DCL image startup are absent; '
                         'guest COM1 terminal and native disk UAF access execute interactive path'})
+result['files'].append({
+    'original_file':'LOGIN/SRC/LOGIN.B32','original_lines':1455,
+    'sections':[
+      {'original_lines':[1,911],'status':'unresolved',
+       'reason':'Other original LOGIN startup, process activation, privilege and CLI paths remain unported'},
+      {'original_lines':[912,1010],'status':'partial',
+       'pc_file':'src/vms_uaf_v37.c',
+       'pc_symbol':'vms37_uaf_check_login_access',
+       'pc_line':line_for_symbol('src/vms_uaf_v37.c',
+                                 'vms37_uaf_check_login_access'),
+       'function':'Decode source UAF primary/secondary day-hour masks and deny network/dialup terminal classes; live clock, GETDVI classification and LOGIN call integration remain incomplete'},
+      {'original_lines':[1011,1455],'status':'unresolved',
+       'reason':'Remaining original LOGIN startup and process activation are not ported'}],
+    'unresolved_integration':'check_user_hours is a tested UAF policy helper only; real LOGIN process integration remains incomplete'})
 # SYSDEF.MDL defines the original 284-byte fixed UAF record fields.
 # Only this range is mapped; the rest of SYSDEF.MDL is unfinished.
 result['files'].append({

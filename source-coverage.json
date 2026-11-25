@@ -1010,6 +1010,40 @@
       "unresolved_integration": "SYSALF native indexed file backend and real DCL image startup are absent; guest COM1 terminal and native disk UAF access execute interactive path"
     },
     {
+      "original_file": "LOGIN/SRC/LOGIN.B32",
+      "original_lines": 1455,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            911
+          ],
+          "status": "unresolved",
+          "reason": "Other original LOGIN startup, process activation, privilege and CLI paths remain unported"
+        },
+        {
+          "original_lines": [
+            912,
+            1010
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_uaf_v37.c",
+          "pc_symbol": "vms37_uaf_check_login_access",
+          "pc_line": 38,
+          "function": "Decode source UAF primary/secondary day-hour masks and deny network/dialup terminal classes; live clock, GETDVI classification and LOGIN call integration remain incomplete"
+        },
+        {
+          "original_lines": [
+            1011,
+            1455
+          ],
+          "status": "unresolved",
+          "reason": "Remaining original LOGIN startup and process activation are not ported"
+        }
+      ],
+      "unresolved_integration": "check_user_hours is a tested UAF policy helper only; real LOGIN process integration remains incomplete"
+    },
+    {
       "original_file": "SHRLIB/SYSDEF.MDL",
       "status": "partial; DYN type numbers and UAF layout only",
       "original_lines": 6969,
