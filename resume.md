@@ -1977,3 +1977,15 @@ M399 implementation commit: `166ada0127757470697b5c227490d70af2130a3b`.
 Published GitHub main M399 implementation commit: pending.
 
 No process activation, public SYS$QIO, SYSTEM login, DCL, DECnet, or SET HOST is claimed. Acceptance work remains incomplete.
+
+
+## M400 - Record PAGEDYN source coverage precisely, 25 November 2026
+
+Updated the source-coverage generator to map the original SYSPARAM.MAR PAGEDYN declaration (default 80,000 bytes, minimum 8,192) to the native default table and PARAMS.DAT decoder. The integration note now distinguishes decoder support from boot-time lookup/application, which remains absent. No new runtime behavior is claimed.
+
+Verification: `make inisysparamscheck`, `python3 tools/gen_source_coverage.py`, `python3 tests/test_coverage_ranges.py`, and `python3 tools/validate_source_ranges.py` PASS (2,137 ranges; 451/4,566 indexed original files; zero errors; 17,230 mapped, 30,321 partial, 56,867 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. No QEMU run: coverage metadata changed only.
+
+M400 coverage commit: `66144222eb4b938d86b1c99fd090cc6b0059cf16`.
+Published GitHub main M400 coverage commit: pending.
+
+PAGEDYN placement/allocation and boot parameter-file lookup/application remain incomplete. INIT still does not activate resident contexts; public SYS$QIO, process ACP/AST completion, SYSTEM login, DCL, DECnet Phase IV and SET HOST 0 remain incomplete.
