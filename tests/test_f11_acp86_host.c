@@ -131,6 +131,9 @@ int main(int argc,char **argv){
     mm.mapped=0u;
     assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==122u);
     assert(left==0u);
+    mm.mapped=1536u;
+    assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==-1);
+    assert(left==3u);
     mm.mapped=512u;mm.success=0;
     assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==-1);
     assert(left==3u);
