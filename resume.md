@@ -2048,3 +2048,14 @@ Local M405 implementation commit: `8daf3198dda7b80fd22e7b22974d9d6a687da433`.
 Published GitHub main M405 implementation commit: `8daf3198dda7b80fd22e7b22974d9d6a687da433`.
 
 Remaining acceptance work: paging PFN/SPT semantics, POOLPGING and runtime pool callers; SWAPPER/NULL PHD and IA-32 context activation; public SYS$QIO with DQA0 dispatch and process-aware AST completion; Files-11 ACP request integration; scheduler and process image activation; SYSTEM login, DCL, DECnet Phase IV, genuine SET HOST 0, second login/DCL and logout. Source coverage remains incomplete (8,032 missing and 56,866 unresolved ranges in indexed inventory).
+
+## M406 - Decode original logical-name hash parameters, 26 November 2026
+
+Added SYSPARAM defaults for LOGSHASHTBL (128 SYSTEM entries), LOGGHASHTBL (32 GROUP entries), and LOGPHASHTBL (128 PROCESS entries), and added all three names to the bounded SYSBOOT PARAMS.DAT decoder with the source range 1–16,383. Source coverage now maps their original SYSPARAM declarations. This establishes parameter values only; boot-time parameter-file lookup/application and SWAPINIT's allocation/linkage of the three tables remain unimplemented.
+
+Verification: focused `make inisysparamscheck && ./build/inisysparamscheck` PASS; `make -j2 all` PASS; full `make -j2 test` exit 0; coverage generator, overlap/range regression, and source validator PASS (2,146 ranges, 451/4,566 original files indexed, zero errors; 17,230 mapped, 30,361 partial, 56,827 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. No QEMU run: this change affects SYSPARAM decoding only and is not yet consumed by boot. No DEC source or binary image was added.
+
+Local M406 implementation commit: `5c81ea6e7e7e369b9697e98d6f29ffbfedc4ba4c`.
+Published GitHub main M406 implementation commit: `5c81ea6e7e7e369b9697e98d6f29ffbfedc4ba4c`.
+
+Remaining work includes SYSBOOT's optional USE PARAMS.DAT path; SWAPINIT allocation and activation of logical-name tables and process creation; NULL/SWAPPER PHD/native contexts; public SYS$QIO to DQA0, Files-11 ACP dispatch, process AST completion, scheduler and image activation; SYSTEM login, DCL, DECnet Phase IV and genuine SET HOST 0 with second-session LOGOUT verification. Source inventory remains incomplete (8,032 missing and 56,827 unresolved ranges among indexed files).
