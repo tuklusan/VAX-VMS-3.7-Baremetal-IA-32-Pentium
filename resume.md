@@ -1769,4 +1769,5 @@ Extended partial SCH$RSE event handling to local-event (LEF), common-event (CEF)
 
 Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0); `make sourcerangecheck`, `python3 tests/test_coverage_ranges.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS. Coverage: 2,129 ranges, 451/4,566 originals indexed, zero validation errors; 17,230 mapped, 30,298 partial, 56,890 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded. No QEMU run: this change only affects an unbound scheduler API and the existing guest cannot exercise it. No process activation, login, DCL, DECnet or SET HOST occurred.
 
-Local M378 implementation commit: `e539dd70677d9fc844af5ce5f65832b0d1fbf89c`.Published GitHub main M378 implementation commit: `226f932c466b32b2c9403b0c78824e9f5b2118c9`.
+Local M378 implementation commit: `e539dd70677d9fc844af5ce5f65832b0d1fbf89c`.
+Published GitHub main M378 implementation commit: `226f932c466b32b2c9403b0c78824e9f5b2118c9`.
