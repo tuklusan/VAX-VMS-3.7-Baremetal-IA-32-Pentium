@@ -26,12 +26,12 @@ static uint32_t physical(void *ctx,void *u,uint32_t lbn,uint32_t *p,uint16_t *fu
 static uint32_t insert(void *ctx,struct port_f11_86_request *r){
     struct iomock *m=ctx;m->insert++;assert(r->func==72u);return 1;
 }
-struct mapmock {unsigned calls;uint32_t mapped,vbn,bytes;void *ucb;int success;};
+struct mapmock {unsigned calls;uint32_t mapped,vbn,bytes,lbn;void *ucb;int success;};
 static uint32_t map_vblk(void *ctx,void *w,uint32_t vbn,uint32_t bytes,
                          void **u,uint32_t *lbn,uint32_t *remaining){
     struct mapmock *m=ctx;assert(w==(void *)0x5u);
     m->calls++;m->vbn=vbn;m->bytes=bytes;
-    *u=m->ucb;*lbn=122u;*remaining=m->mapped;
+    *u=m->ucb;*lbn=m->lbn;*remaining=m->mapped;
     return m->success?1u:12u;
 }
 struct hdrmock {unsigned calls;struct port_f11_86_fid last;unsigned segment;int ods1;};
@@ -115,7 +115,7 @@ int main(int argc,char **argv){
     req.bytes=1600u;req.ucb=(void *)0x9u;
     assert(port_f11b_requeue(&req,(void *)0xau,22u,1u,&io)==1u);
     assert(req.bytes==1536u&&req.ucb==(void *)0xau&&im.insert==2u);
-    struct mapmock mm={0};mm.mapped=512u;mm.ucb=(void *)0x7u;mm.success=1;
+    struct mapmock mm={0};mm.mapped=512u;mm.lbn=122u;mm.ucb=(void *)0x7u;mm.success=1;
     const struct port_f11_86_mapops mo={map_vblk,&mm};
     uint32_t left=0;void *newucb=0;
     assert(port_f11a_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&mo)==122u);
@@ -128,6 +128,16 @@ int main(int argc,char **argv){
     mm.success=1;mm.mapped=513u;
     assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==-1);
     assert(left==3u&&mm.bytes==1536u);
+    mm.mapped=0u;
+    assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==122u);
+    assert(left==0u);
+    mm.mapped=512u;mm.success=0;
+    assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==-1);
+    assert(left==3u);
+    mm.success=1;mm.lbn=UINT32_MAX;
+    assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==-1);
+    assert(left==3u);
+    mm.lbn=122u;
     unsigned map_calls=mm.calls;
     assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,UINT32_MAX,&left,&newucb,&mo)==-1);
     assert(mm.calls==map_calls&&left==UINT32_MAX);
