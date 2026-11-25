@@ -1818,3 +1818,6 @@ Local M383 implementation commit: 691010cd7f0f35fe8fe5efc921aa6c315ed3cfd0.
 
 Published GitHub main M383 implementation commit: 202ef82276eeb7e22d3e77cee7905a2db9204749.
 Local M383 resume commit: 5c1bac0042c7efcc755dd2b5e04ac748ee62d317.
+
+Published GitHub main M383 full-tree commit: baab17807fa06952e727542facb69019f08d591d.
+Local history-preserving merge commit: f385d5902687eeacfa00d21cd609e27433bba5ad.
