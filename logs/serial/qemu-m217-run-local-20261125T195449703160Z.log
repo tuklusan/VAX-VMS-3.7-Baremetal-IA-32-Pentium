@@ -1,0 +1,15 @@
+IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.
+SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.
+SYSBOOT: Files-11 SYS.EXE native image loaded.
+INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.
+SYSBOOT: Files-11 SYSLOA386.EXE native image loaded.
+INIT: SYS.EXE linked live SYSLOA386 processor vectors.
+SYSBOOT: Files-11 INILOA.EXE native image loaded.
+INIT: INILOA IOMAP executed on real IA-32 boot adapter.
+INIT: loaded SYS.EXE built lock ID, resource hash and deadlock bitmap tables.
+INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.
+INIT: IA-32 IRQ0 bound resident VMS scheduler; PHD/context activation pending.
+INIT: loaded SYS.EXE initialized process header vector and swapper PTE records.
+INIT: loaded SYS.EXE initialized modified-page writer PTE/index map.
+INIT: loaded SYS.EXE allocated unbound pagefile pointer vector.
+INIT: IA-32 privilege transition stack is unprotected.

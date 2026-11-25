@@ -68,6 +68,9 @@ extern void arch_probe_ud2(void);
 extern void arch_probe_int3_after(void);
 extern void arch_resume_initial_frame(
     struct port_v37_ia32_restore_frame *frame);
+static int arch_prepare_vms_restore_frame(
+    struct port_v37_ia32_restore_frame *frame);
+static void monitor_kernel_stack(void);
 extern void arch_vms_ring1_probe_entry(void);
 extern void arch_vms_ring2_probe_entry(void);
 extern void arch_vms_ring_probe_exit(void);
@@ -138,6 +141,9 @@ int arch_vms_ring_probe(void){
     }
     if(valid){
         arch_resume_initial_frame(vms_ring_probe_frames[1]);
+        /* The probe selected a private VMS-mode stack for its nested gate;
+         * restore the monitor's TSS stack before ordinary boot continues. */
+        monitor_kernel_stack();
         if(vms_ring_probe_seen[1]!=1u||vms_ring_probe_seen[2]!=1u)
             valid=0;
     }
@@ -275,6 +281,21 @@ struct tss32 {
 } __attribute__((packed));
 _Static_assert(sizeof(struct tss32)==104, "TSS32 layout");
 static struct tss32 tss;
+/* When SCH$SCHED selects an access-mode 1-3 process, subsequent interrupt
+ * gates enter CPL0 through this process's saved kernel-stack top. Its IRET
+ * image is complete because every installed IDT gate targets selector 0x08. */
+static int arch_prepare_vms_restore_frame(
+    struct port_v37_ia32_restore_frame *frame){
+    if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
+        return 0;
+    if(frame->registers.cs&3u){
+        const uintptr_t top=(uintptr_t)frame+sizeof(*frame);
+        if(top>UINT32_MAX)return 0;
+        tss.esp0=(uint32_t)top;
+    }
+    arch_selected_restore_frame=frame;
+    return 1;
+}
 static uint8_t privilege_stack[4096] __attribute__((aligned(16)));
 /* Guard page + task-owned 4K supervisor interrupt stack for each PCB. */
 static struct port_kernel_stack task_kernel_stack[2];
@@ -1055,7 +1076,21 @@ int arch_trap(struct port_trap_frame *f) {
                 for(;;)__asm__ volatile("cli; hlt");
             }
             ++vms_ring_probe_seen[mode];
-            if(mode==1u)return ARCH_TRAP_RESTORE_SELECTED_FRAME;
+            if(mode==1u){
+                if(!arch_prepare_vms_restore_frame(vms_ring_probe_frames[2])){
+                    arch_report_fault(f->vector,f->error,f->eip);
+                    for(;;)__asm__ volatile("cli; hlt");
+                }
+                return ARCH_TRAP_RESTORE_SELECTED_FRAME;
+            }
+            const uintptr_t vms_frame=(uintptr_t)f-
+                offsetof(struct port_v37_ia32_restore_frame,registers);
+            if(vms_frame!=(uintptr_t)vms_ring_probe_frames[2]||
+               tss.esp0!=(uint32_t)(vms_frame+
+                   sizeof(struct port_v37_ia32_restore_frame))){
+                arch_report_fault(f->vector,f->error,f->eip);
+                for(;;)__asm__ volatile("cli; hlt");
+            }
             f->eip=(uint32_t)(uintptr_t)arch_vms_ring_probe_exit;
             f->cs=0x08u;
             f->eflags&=~UINT32_C(0x00027000);
@@ -1452,7 +1487,7 @@ int arch_trap(struct port_trap_frame *f) {
                 /* The source PCB stays queued until INIT supplies its PHD
                  * and native context; do not fabricate an idle frame. */
             }else if(status==PORT_V37_SCHED_OK){
-                if(!pcb||!next||!arch_prepare_restore_frame(
+                if(!pcb||!next||!arch_prepare_vms_restore_frame(
                       (struct port_v37_ia32_restore_frame *)(uintptr_t)next)){
                     arch_report_fault(f->vector,f->error,f->eip);
                     for(;;)__asm__ volatile("cli; hlt");
