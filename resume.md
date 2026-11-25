@@ -1974,7 +1974,7 @@ Added the original 80,000-byte PAGEDYN default from SYSPARAM.MAR to the native I
 Verification: focused `make inisysparamscheck` PASS; full `make -j2 all test` completed successfully after fixing the test fixture terminator allocation exposed by its larger record; coverage generation/validation PASS (2,135 ranges; zero errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. No QEMU run: parameter decoding only changed and paged-pool settings are not consumed in the guest.
 
 M399 implementation commit: `166ada0127757470697b5c227490d70af2130a3b`.
-Published GitHub main M399 implementation commit: pending.
+Published GitHub main M399 implementation commit: `166ada0127757470697b5c227490d70af2130a3b`.
 
 No process activation, public SYS$QIO, SYSTEM login, DCL, DECnet, or SET HOST is claimed. Acceptance work remains incomplete.
 
@@ -1986,6 +1986,6 @@ Updated the source-coverage generator to map the original SYSPARAM.MAR PAGEDYN d
 Verification: `make inisysparamscheck`, `python3 tools/gen_source_coverage.py`, `python3 tests/test_coverage_ranges.py`, and `python3 tools/validate_source_ranges.py` PASS (2,137 ranges; 451/4,566 indexed original files; zero errors; 17,230 mapped, 30,321 partial, 56,867 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. No QEMU run: coverage metadata changed only.
 
 M400 coverage commit: `66144222eb4b938d86b1c99fd090cc6b0059cf16`.
-Published GitHub main M400 coverage commit: pending.
+Published GitHub main M400 coverage commit: `66144222eb4b938d86b1c99fd090cc6b0059cf16`.
 
 PAGEDYN placement/allocation and boot parameter-file lookup/application remain incomplete. INIT still does not activate resident contexts; public SYS$QIO, process ACP/AST completion, SYSTEM login, DCL, DECnet Phase IV and SET HOST 0 remain incomplete.
