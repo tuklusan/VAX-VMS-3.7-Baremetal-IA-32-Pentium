@@ -1,5 +1,6 @@
 #include "vms_ioc_mapvblk.h"
 #include "vms_v37_dyn_tags.h"
+#include "vms_ini_syswcb.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -90,6 +91,21 @@ int main(void){
     assert(port_ioc_mapvblk(1u,512u,0x1000u,0x11110000u,&ops,&r)==PORT_IOC_MAPVBLK_BADWCB);
     assert(f.enters==before+1u&&f.leaves==f.enters);
     assert(port_ioc_mapvblk(1u,512u,0x1000u,0x11110000u,0, &r)==PORT_IOC_MAPVBLK_BADPARAM);
-    puts("IOSUBRAMS IOC$MAPVBLK WCB/FМ2/EOF/contiguity/RVN/sequential checks PASS");
+
+    /* Consume the exact compact WCB record emitted by INIT's SYSWCB
+     * transformer, rather than a separately hand-packed equivalent. */
+    uint8_t boot_map[96]={0},template[48];
+    put32(boot_map,24u);put32(boot_map+4u,7u);put32(boot_map+8u,128u);
+    put32(boot_map+12u,10u);put32(boot_map+16u,140u);
+    put32(boot_map+20u,3u);put32(boot_map+24u,160u);
+    assert(port_ini_syswcb_template_init(template,sizeof template)==PORT_INI_SYSWCB_OK);
+    const struct port_ini_syswcb_layout layout={48u,8u,22u};
+    struct port_ini_syswcb generated={0};
+    assert(port_ini_syswcb_from_boot_map(boot_map,sizeof boot_map,template,
+        sizeof template,&layout,&generated)==PORT_INI_SYSWCB_OK);
+    memcpy(f.first,generated.record,generated.record_length);
+    assert(port_ioc_mapvblk(10u,512u,0x1000u,0x11110000u,&ops,&r)==PORT_IOC_MAPVBLK_OK);
+    assert(r.lbn==142u&&r.unmapped_bytes==0u);
+    puts("IOSUBRAMS IOC$MAPVBLK WCB/FM2/EOF/contiguity/RVN/SYSWCB checks PASS");
     return 0;
 }

@@ -1396,7 +1396,7 @@ iocphyscheck: $(M120_IOC_OBJS) | build
 
 .PHONY: iocmapvblkcheck
 iocmapvblkcheck: build/vms_ioc_mapvblk.o | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_ioc_mapvblk.c tests/test_ioc_mapvblk_host.c -o build/iocmapvblkcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_ioc_mapvblk.c src/vms_ini_syswcb.c tests/test_ioc_mapvblk_host.c -o build/iocmapvblkcheck
 	./build/iocmapvblkcheck
 build/vms_ioc_mapvblk.o: src/vms_ioc_mapvblk.c src/vms_ioc_mapvblk.h src/vms_v37_dyn_tags.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
