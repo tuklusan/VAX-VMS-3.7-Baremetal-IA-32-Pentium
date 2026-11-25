@@ -2727,6 +2727,30 @@ if cursor<=3007:
 result['files'].append({'original_file':'SYS/SRC/SYSPARAM.MAR',
     'original_lines':3007,'sections':sysparam_sections,
     'unresolved_integration':'Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including all three logical-name hash table sizes, but native boot does not yet locate/apply that file and SWAPINIT has not yet allocated or linked the configured tables; other SYSPARAM cells and consumers remain unported.'})
+
+# SWAPPER.MAR: native SWAPINIT starts with paged-pool setup, then prepares
+# logical-name hash geometry and allocates SYSTEM/GROUP RSHT records.
+swapinit_line=line_for_symbol('src/vms_exe_swapinit_hash.c',
+                              'port_exe_swapinit_hash_init')
+swapinit_sections=[]
+for first,last,status,reason in [
+    (1,248,'unresolved','Source module documentation and paged pool base/size setup; pool backing is initialized earlier by INIT but this SWAPINIT step is not called'),
+    (249,257,'partial','Round SYSTEM, GROUP and PROCESS hash entry counts up to powers of two and retain each exponent'),
+    (258,272,'partial','Allocate zeroed SYSTEM and GROUP hash table records from PAGEDYN; PROCESS geometry is retained for per-process tables'),
+    (273,316,'unresolved','Link SYS$DISK/SYS$SYSDISK through LOG$INSLOGN and create TT0 with $CREPRC; neither startup action is integrated'),
+    (317,323,'partial','Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved'),
+    (324,1683,'unresolved','SWAPPER main loop, balancing, page-file I/O and process swap-in/out remain unported')]:
+    if status=='unresolved':
+        swapinit_sections.append({'original_lines':[first,last],
+            'status':'unresolved','reason':reason})
+    else:
+        swapinit_sections.append({'original_lines':[first,last],
+            'status':'partial','pc_file':'src/vms_exe_swapinit_hash.c',
+            'pc_symbol':'port_exe_swapinit_hash_init','pc_line':swapinit_line,
+            'function':reason+'; SYS.EXE exports the routine but no SWAPPER context calls it yet'})
+result['files'].append({'original_file':'SYS/SRC/SWAPPER.MAR',
+    'original_lines':1683,'sections':swapinit_sections,
+    'unresolved_integration':'Native SYS.EXE includes a callable SWAPINIT hash-table initializer with source power-of-two sizing and SYSTEM/GROUP RSHT allocation. INIT does not invoke it in SWAPPER process context; SYS$DISK name insertion, TT0 process creation, swapper loop, paging and process activation are unresolved.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')

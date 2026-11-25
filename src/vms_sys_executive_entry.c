@@ -56,6 +56,19 @@ static uint8_t executive_packet_pages[170u*1024u] __attribute__((aligned(512)));
 static uint8_t *executive_np_base;
 static struct port_exe_paged_pool executive_paged_pool;
 static uint32_t executive_paged_pool_ready;
+static struct port_exe_swapinit_hash_set executive_swapinit_hash_tables;
+static uint32_t executive_swapinit_hash_ready;
+static uint32_t port_exe_swapinit_log_tables(const uint32_t requested[3],
+    const struct port_exe_swapinit_hash_set **tables){
+    if(!executive_paged_pool_ready||executive_swapinit_hash_ready||
+       !requested||!tables)return PORT_EXE_SWAPINIT_HASH_BAD;
+    const uint32_t status=port_exe_swapinit_hash_init(&executive_paged_pool,
+        requested,&executive_swapinit_hash_tables);
+    if(status!=PORT_EXE_SWAPINIT_HASH_OK)return status;
+    executive_swapinit_hash_ready=1u;
+    *tables=&executive_swapinit_hash_tables;
+    return PORT_EXE_SWAPINIT_HASH_OK;
+}
 uint32_t port_exe_alopaged(uint32_t requested,void **address,
                            uint32_t *allocated_bytes){
     if(!executive_paged_pool_ready)return PORT_EXE_PAGED_BAD;
@@ -2673,6 +2686,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
     p->result->system_time_low=executive_clock.low;
     p->result->system_time_high=executive_clock.high;
     p->result->resident_clock=&executive_clock;
+    p->result->swapinit_log_tables=port_exe_swapinit_log_tables;
     p->result->pit_tick=executive_pit_clock_tick;
     p->result->sysloa_linked=1u;
     p->result->sysloa_idtr_base=cpu_info.idt_base;

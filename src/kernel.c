@@ -4551,11 +4551,15 @@ void kmain(void) {
            PORT_SYS_ELF_LIMIT-sizeof(struct port_exe_systime) ||
        (uintptr_t)sys_result.pit_tick<PORT_SYS_ELF_START ||
        (uintptr_t)sys_result.pit_tick>=PORT_SYS_ELF_LIMIT ||
+       !sys_result.swapinit_log_tables ||
+       (uintptr_t)sys_result.swapinit_log_tables<PORT_SYS_ELF_START ||
+       (uintptr_t)sys_result.swapinit_log_tables>=PORT_SYS_ELF_LIMIT ||
        (sys_result.resident_clock->sequence&1u)){
         bootstrap_message("INIT: SYS.EXE resident initialization failed.");
         bootstrap_halt();
     }
     bootstrap_message("INIT: loaded SYS.EXE resident entry executed and verified.");
+    bootstrap_message("INIT: resident SWAPPER hash-table entry is available; SWAPPER has not been activated.");
     bootstrap_message("INIT: linked SYSLOA386 read real IDT, CR0, CR3, TSS, PIT and Files-11 boot home.");
     /* The original resident SYS.EXE owns system time after INIT, not the
      * earlier boot clock. Verify actual IRQ0 interrupts change resident bytes. */
