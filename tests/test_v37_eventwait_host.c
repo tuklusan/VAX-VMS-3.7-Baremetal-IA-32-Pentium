@@ -145,6 +145,13 @@ int main(void){
     if(port_v37_sched_chse(&f.scheduler,PCB_VA,0u)!=PORT_V37_SCHED_OK||
        get16(f.pcb+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
        !start_current(&f,&pcb,&frame))return fail("final ready queue selection");
+    put16(f.ceb+8u,PORT_V37_CEB_MIN_BYTES-1u);
+    ss=0xdeadbeefu;
+    if(port_v37_sched_wait_event(&f.scheduler,0u,FRAME_VA,64u,1u,0,
+           &pcb,&frame,&ss)!=PORT_V37_SCHED_CORRUPT||ss!=0xdeadbeefu||
+       get32(f.ceb+PORT_V37_CEB_EFC)!=3u)
+        return fail("truncated CEB rejected before service or flag mutation");
+    put16(f.ceb+8u,PORT_V37_CEB_BYTES);
     f.ceb[PORT_V37_CEB_TYPE]=PORT_V37_CEB_SLAVE;
     ss=0xdeadbeefu;
     if(port_v37_sched_wait_event(&f.scheduler,0u,FRAME_VA,64u,1u,0,

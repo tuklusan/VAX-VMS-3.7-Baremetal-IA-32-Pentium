@@ -558,8 +558,10 @@ static uint32_t event_records(struct port_v37_scheduler *s,uint8_t *pcb,
     const uint32_t ceb_address=get32(pcb+PORT_V37_PCB_EFC2P+
                                      (cluster-2u)*4u);
     if(!ceb_address)return PORT_V37_SCHED_UNASSIGNED;
-    uint8_t *ceb=resolve(s,ceb_address,PORT_V37_CEB_BYTES);
+    uint8_t *ceb=resolve(s,ceb_address,PORT_V37_CEB_MIN_BYTES);
     if(!ceb)return PORT_V37_SCHED_UNRESOLVED;
+    if(get16(ceb+8u)<PORT_V37_CEB_MIN_BYTES)
+        return PORT_V37_SCHED_CORRUPT;
     const uint8_t type=ceb[PORT_V37_CEB_TYPE];
     if(type!=PORT_V37_CEB_NORMAL&&type!=PORT_V37_CEB_SLAVE&&
        type!=PORT_V37_CEB_SHARED)return PORT_V37_SCHED_CORRUPT;
