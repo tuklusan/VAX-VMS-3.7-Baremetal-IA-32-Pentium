@@ -90,6 +90,24 @@ uint32_t port_v37_sysqio_pending_track(struct port_v37_sysqio_pending *table,
     return PORT_V37_SYSQIO_PENDING_OK;
 }
 
+uint32_t port_v37_sysqio_submit(struct port_v37_sysqio_pending *table,
+    uint32_t pid,uint32_t irp_va,uint8_t *irp,size_t irp_bytes,
+    struct port_v37_sysqio_prepared *prepared,
+    port_v37_sysqio_driver_submit_fn submit,void *context){
+    if(!table||!irp||!prepared||!submit||irp_bytes<IRP_RMOD+1u)
+        return PORT_V37_SYSQIO_SUBMIT_BAD;
+    const uint32_t tracked=port_v37_sysqio_pending_track(table,pid,irp_va,
+        irp,irp_bytes,prepared);
+    if(tracked!=PORT_V37_SYSQIO_PENDING_OK)
+        return PORT_V37_SYSQIO_SUBMIT_TRACK;
+    if(submit(context,pid,irp_va,irp,irp_bytes)==0)
+        return PORT_V37_SYSQIO_SUBMIT_OK;
+    const uint32_t rolled_back=port_v37_sysqio_pending_abort(table,pid,
+        irp_va,port_v37_read32(irp+IRP_IOSB),(uint8_t)(irp[IRP_RMOD]&3u));
+    return rolled_back==PORT_V37_SYSQIO_PENDING_OK?
+        PORT_V37_SYSQIO_SUBMIT_REJECTED:PORT_V37_SYSQIO_SUBMIT_BAD;
+}
+
 uint32_t port_v37_sysqio_pending_abort(struct port_v37_sysqio_pending *table,
     uint32_t pid,uint32_t irp_va,uint32_t iosb,uint8_t mode){
     if(!table||!table->sync.raise_sync||!table->sync.restore_ipl||!pid||

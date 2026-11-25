@@ -2395,7 +2395,9 @@ qio_rows=[
  (736,740,'src/vms_qio_abortio.c','port_v37_qio_abortio','Clear IRP IOSB pointer, return AST quota reservation once, append IOC post queue and request IPL4; live PCB lookup and process post delivery remain unbound','partial'),
  (741,742,'src/vms_qio_finishioc.c','port_v37_qio_finishioc','EXE$FINISHIOC clears R1 before common finish path','partial'),
  (743,749,'src/vms_qio_finishio.c','port_v37_qio_finishio','UCB OPCNT, IRP media status, append IOC post FIFO and defer IPL4','partial'),
- (750,908,None,None,'Original queued device/ACP I/O, postprocessing, return and insertion routines unresolved','unresolved')]
+ (750,770,None,None,'Source documentation between finish and device-queue action','unresolved'),
+ (771,773,'src/vms_sysqio_pending.c','port_v37_sysqio_submit','Transfer prepared process page-pin ownership to the pending registry before invoking the driver callback; rejected callbacks release the transferred pins. The callback still lacks a live DQA0 priority queue/IOC$INITIATE binding','partial'),
+ (774,908,None,None,'Original ALTSTART, ACP queue, unit priority queue, wakeup and insertion routines unresolved','unresolved')]
 qio_sec=[]
 for lo,hi,pc,sym,description,status in qio_rows:
     if pc:

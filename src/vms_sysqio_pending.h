@@ -7,6 +7,13 @@
 enum { PORT_V37_SYSQIO_PENDING_OK=1u,PORT_V37_SYSQIO_PENDING_BAD=2u,
        PORT_V37_SYSQIO_PENDING_FULL=4u,PORT_V37_SYSQIO_PENDING_DUP=6u,
        PORT_V37_SYSQIO_PENDING_NOTFOUND=8u };
+enum { PORT_V37_SYSQIO_SUBMIT_OK=1u,PORT_V37_SYSQIO_SUBMIT_BAD=2u,
+       PORT_V37_SYSQIO_SUBMIT_TRACK=4u,
+       PORT_V37_SYSQIO_SUBMIT_REJECTED=6u };
+/* The driver callback must return zero only after accepting the request. A
+ * nonzero return promises that no completion can race the caller's rollback. */
+typedef int (*port_v37_sysqio_driver_submit_fn)(void *,uint32_t,uint32_t,
+    uint8_t *,size_t);
 struct port_v37_sysqio_pending_entry {
     struct port_v37_sysqio_prepared request;
     uint32_t pid,irp_va;
@@ -23,6 +30,12 @@ void port_v37_sysqio_pending_init(struct port_v37_sysqio_pending *,
 uint32_t port_v37_sysqio_pending_track(struct port_v37_sysqio_pending *,
     uint32_t,uint32_t,const uint8_t *,size_t,
     struct port_v37_sysqio_prepared *);
+/* Install process/page-pin ownership before invoking the DDT. Rejected
+ * submissions roll back that ownership; accepted requests retain it through
+ * DIRPOST completion. */
+uint32_t port_v37_sysqio_submit(struct port_v37_sysqio_pending *,uint32_t,
+    uint32_t,uint8_t *,size_t,struct port_v37_sysqio_prepared *,
+    port_v37_sysqio_driver_submit_fn,void *);
 /* Roll back a request whose DDT submission failed before it became active.
  * Only a tracked, not-yet-completing owner can release the retained pins. */
 uint32_t port_v37_sysqio_pending_abort(struct port_v37_sysqio_pending *,
