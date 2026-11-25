@@ -180,8 +180,14 @@ struct port_sys_exec_result {
         const struct port_dqddt_native *,const struct port_dq_fdt *,
         const struct port_dq_bootread_request *,uint32_t,uint16_t [256],
         port_dqddt_async_start_fn,void (*)(void *,int),void *);
+    uint32_t (*dq_ddt_startio_async_write)(const struct port_dqddt_stage *,
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,uint32_t,
+        port_dqddt_async_write_start_fn,void (*)(void *,int),void *,void *);
     uint32_t (*dq_bootread_commit)(const struct port_dq_bootread_request *,
         const uint16_t [256],struct port_dq_bootread_result *);
+    uint32_t (*dq_bootwrite_commit)(const struct port_dq_bootread_request *,
+        struct port_dq_bootread_result *);
     const struct port_dq_crb *dq_crb;
     /* Private stage-validated READPBLK bridge result, not DDB/CRB binding. */
     const struct port_dq_bootread_result *dq_ddt_bootread;

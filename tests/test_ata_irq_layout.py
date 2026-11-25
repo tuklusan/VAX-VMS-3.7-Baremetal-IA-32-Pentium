@@ -14,5 +14,5 @@ assert 'port_ata_x86_irq' in ata and 'ATA_STATUS' in ata
 assert 'irq_armed=1' in ata and 'irq_done=1' in ata
 assert 'port_ata_x86_write28_async' in ata
 assert 'if(async_write_source)' in ata
-assert 'INIT: asynchronous ATA WRITE completed by IRQ14; scratch restored.' in (root / 'src/kernel.c').read_text()
+assert 'INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.' in (root / 'src/kernel.c').read_text()
 print('Primary ATA IRQ14 vector, PIC routing, handler and completion checks PASS')

@@ -2489,16 +2489,10 @@ static void m328_async_write_done(void *opaque,int status){
     if(result){result->status=status;__asm__ volatile("" ::: "memory");
         result->done=1u;}
 }
-static int m328_async_write_sector(uint32_t lbn,const uint16_t words[256]){
-    struct m328_async_write_result result={0u,PORT_ATA_TIMEOUT};
-    if(port_ata_x86_write28_async(lbn,words,m328_async_write_done,&result)!=
-         PORT_ATA_X86_ASYNC_OK)return -1;
-    for(uint32_t i=0u;i<100000000u;i++){
-        if(result.done){__asm__ volatile("" ::: "memory");
-            return result.status;}
-        __asm__ volatile("pause");
-    }
-    return PORT_ATA_TIMEOUT;
+static int m328_ata_async_write_start(void *opaque,uint32_t lbn,
+    const uint16_t words[256],void (*done)(void *,int),void *done_context){
+    (void)opaque;
+    return port_ata_x86_write28_async(lbn,words,done,done_context);
 }
 static void m202_put16(uint8_t *p,uint16_t value){
     p[0]=(uint8_t)value;p[1]=(uint8_t)(value>>8u);
@@ -2509,6 +2503,61 @@ static void m202_put32(uint8_t *p,uint32_t value){
 static uint32_t m202_get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8u)|
         ((uint32_t)p[2]<<16u)|((uint32_t)p[3]<<24u);
+}
+static int m328_dqa_async_write_sector(const struct port_dqddt_stage *stage,
+    const struct port_dq_fdt *fdt,const uint8_t *device_db,
+    const struct port_v37_device_result *device_info,
+    const struct port_dqddt_native *native,
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+       const struct port_v37_device_result *,const char *,size_t,
+       struct port_v37_ioc_result *),
+    uint32_t (*start_write)(const struct port_dqddt_stage *,
+       const struct port_dqddt_native *,const struct port_dq_fdt *,
+       const struct port_dq_bootread_request *,uint32_t,
+       port_dqddt_async_write_start_fn,void (*)(void *,int),void *,void *),
+    uint32_t (*commit_write)(const struct port_dq_bootread_request *,
+       struct port_dq_bootread_result *),uint32_t lbn,
+    const uint16_t words[256]){
+    if(!stage||!fdt||!device_db||!device_info||!native||!ioc_search||
+       !start_write||!commit_write||!words)
+        return -1;
+    struct port_v37_ioc_result selected={0};
+    if(ioc_search(device_db,PORT_V37_DEVICE_BYTES,device_info->list_head,
+         device_info,"DQA0",4u,&selected)!=PORT_V37_IOC_OK||
+       selected.ddb!=device_info->ddb[0]||selected.ucb!=device_info->ucb[0]||
+       selected.unit!=0u||!selected.driver_bound||
+       m202_get32(device_db+PORT_V37_DDB_BOOT_OFF+12u)!=native->base)
+        return -1;
+    uint8_t irp[PORT_V37_IRP_SIZE] __attribute__((aligned(4)))={0};
+    m202_put16(irp+8u,PORT_V37_IRP_SIZE);
+    irp[10u]=PORT_V37_DYN_IRP;
+    m202_put32(irp+PORT_V37_IRP_UCB,selected.ucb);
+    m202_put16(irp+PORT_V37_IRP_FUNC,PORT_DQ_WRITEPBLK);
+    m202_put16(irp+42u,PORT_DQ_PHYSIO);
+    m202_put16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
+    m202_put32(irp+PORT_V37_IRP_MEDIA,lbn);
+    struct port_dq_bootread_request request={
+        .fdt=fdt,.device_db=device_db,.device_info=device_info,.irp=irp,
+        .irp_bytes=sizeof irp,.sector=(uint16_t *)(uintptr_t)words,
+        .sector_bytes=PORT_DQ_BOOTREAD_BYTES,.boot_unit=0u,
+        .write_sector=m202_ata_write_sector};
+    struct port_dq_bootread_result result={0};
+    struct m328_async_write_result completion={0u,PORT_ATA_TIMEOUT};
+    const uint32_t started=start_write(stage,native,fdt,
+        &request,lbn,m328_ata_async_write_start,m328_async_write_done,
+        &completion,0);
+    if(started!=PORT_DQ_BOOTREAD_OK)return -1;
+    for(uint32_t i=0u;i<100000000u&&!completion.done;i++)
+        __asm__ volatile("pause");
+    __asm__ volatile("" ::: "memory");
+    if(!completion.done||completion.status!=PORT_ATA_OK||
+       commit_write(&request,&result)!=PORT_DQ_BOOTREAD_OK||
+       result.lbn!=lbn||result.bytes!=PORT_DQ_BOOTREAD_BYTES||
+       result.io_function!=PORT_DQ_WRITEPBLK||
+       result.irp_status!=PORT_SYS85_NORMAL||
+       result.irp_second!=PORT_DQ_BOOTREAD_BYTES)
+        return -1;
+    return 0;
 }
 static int m202_dispatch_io(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
@@ -2860,7 +2909,13 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
     const struct port_dqddt_native *native,
     uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
        const struct port_v37_device_result *,const char *,size_t,
-       struct port_v37_ioc_result *)){
+       struct port_v37_ioc_result *),
+    uint32_t (*start_write)(const struct port_dqddt_stage *,
+       const struct port_dqddt_native *,const struct port_dq_fdt *,
+       const struct port_dq_bootread_request *,uint32_t,
+       port_dqddt_async_write_start_fn,void (*)(void *,int),void *,void *),
+    uint32_t (*commit_write)(const struct port_dq_bootread_request *,
+       struct port_dq_bootread_result *)){
     enum {SCRATCH_LBN=8063u};
     if(!m202_qemu_fw_cfg()){
         bootstrap_message("INIT: M202 QEMU fw_cfg signature not present; ATA write probe skipped.");
@@ -2913,22 +2968,26 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
         return -1;
     /* Exercise the IRQ-completed write command only on the explicitly marked
      * disposable QEMU scratch sector, then verify and restore its full data. */
-    if(m328_async_write_sector(SCRATCH_LBN,probe)!=PORT_ATA_OK){
+    if(m328_dqa_async_write_sector(stage,fdt,device_db,device_info,native,
+          ioc_search,start_write,commit_write,SCRATCH_LBN,probe)){
         bootstrap_message("INIT: asynchronous ATA scratch write failed.");
         (void)port_ata_x86_write28(SCRATCH_LBN,saved);
         return -1;
     }
     if(port_ata_x86_read28(SCRATCH_LBN,observed)){
         bootstrap_message("INIT: asynchronous ATA write readback failed.");
-        (void)m328_async_write_sector(SCRATCH_LBN,saved);
+        (void)m328_dqa_async_write_sector(stage,fdt,device_db,device_info,
+            native,ioc_search,start_write,commit_write,SCRATCH_LBN,saved);
         return -1;
     }
     for(unsigned i=0;i<256u;i++)if(observed[i]!=probe[i]){
         bootstrap_message("INIT: asynchronous ATA write data mismatch.");
-        (void)m328_async_write_sector(SCRATCH_LBN,saved);
+        (void)m328_dqa_async_write_sector(stage,fdt,device_db,device_info,
+            native,ioc_search,start_write,commit_write,SCRATCH_LBN,saved);
         return -1;
     }
-    if(m328_async_write_sector(SCRATCH_LBN,saved)!=PORT_ATA_OK||
+    if(m328_dqa_async_write_sector(stage,fdt,device_db,device_info,native,
+          ioc_search,start_write,commit_write,SCRATCH_LBN,saved)||
        port_ata_x86_read28(SCRATCH_LBN,observed)){
         bootstrap_message("INIT: asynchronous ATA scratch restore failed.");
         (void)port_ata_x86_write28(SCRATCH_LBN,saved);
@@ -2938,7 +2997,7 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
         bootstrap_message("INIT: asynchronous ATA scratch restore mismatch.");
         return -1;
     }
-    bootstrap_message("INIT: asynchronous ATA WRITE completed by IRQ14; scratch restored.");
+    bootstrap_message("INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.");
     return 1;
 }
 /* FIL$RDWRTLBN calls the BIOS-independent boot driver. The IA-32 driver
@@ -4456,7 +4515,9 @@ void kmain(void) {
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,
         dq_publish_result.device_db,dq_publish_result.dq_native_ddt,
-        dq_publish_result.ioc_search);
+        dq_publish_result.ioc_search,
+        dq_publish_result.dq_ddt_startio_async_write,
+        dq_publish_result.dq_bootwrite_commit);
     if(ata_write_probe<0){
         bootstrap_message("INIT: marked QEMU ATA PIO write/readback/restore regression failed.");
         bootstrap_halt();

@@ -99,7 +99,7 @@ def main():
         b'INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.',
         b'INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.',
         b'INIT: DQA0 UCB busy serialized two retained DDT READPBLK IRPs through IRQ14 and deferred IOC post.',
-        b'INIT: asynchronous ATA WRITE completed by IRQ14; scratch restored.',
+        b'INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
         b'INIT stopped: remaining original initialization dependencies incomplete.']
     failures=[

@@ -36,6 +36,13 @@ static int mock_async_start(void *v,uint32_t lbn,uint16_t sector[256],
     if(f->reject)return f->reject;
     f->done=done;f->done_context=done_context;return 0;
 }
+static int mock_async_write_start(void *v,uint32_t lbn,
+    const uint16_t sector[256],void (*done)(void *,int),void *done_context){
+    struct async_start_fixture *f=v;
+    f->starts++;f->lbn=lbn;f->sector=(uint16_t *)(uintptr_t)sector;
+    if(f->reject)return f->reject;
+    f->done=done;f->done_context=done_context;return 0;
+}
 static void mock_async_done(void *v,int status){
     struct async_start_fixture *f=v;(void)status;f->completions++;
 }
@@ -261,6 +268,21 @@ int main(void){
         async_sector,mock_async_start,mock_async_done,&async)==
         PORT_DQ_BOOTREAD_BAD);
     CHECK(async.starts==2u);
+    uint16_t write_sector[256]={0};
+    async_request.sector=write_sector;
+    async_request.write_sector=mock_write;
+    CHECK(port_dqddt_startio_async_write(&d,&native,&fdt,&async_request,7u,
+        mock_async_write_start,mock_async_done,&async,&async)==
+        PORT_DQ_BOOTREAD_OK);
+    CHECK(async.starts==3u&&async.lbn==7u&&async.sector==write_sector&&
+        async.completions==1u&&async.done!=0);
+    async.done(async.done_context,0);
+    CHECK(async.completions==2u);
+    async.reject=-1;
+    CHECK(port_dqddt_startio_async_write(&d,&native,&fdt,&async_request,7u,
+        mock_async_write_start,mock_async_done,&async,&async)==
+        PORT_DQ_BOOTREAD_FAILED);
+    CHECK(async.starts==4u&&async.completions==2u);
     const uint32_t bound_base=port_v37_read32(db+PORT_V37_DDB_BOOT_OFF+12u);
     CHECK(port_dqddt_publish_ioc(db,sizeof db_words,
         (uint32_t)(uintptr_t)db,&info,&d,&fdt,&native,&crb)==
