@@ -1752,3 +1752,13 @@ Verification: `make v37schedcheck` PASS; `make -j2 all test` PASS (exit 0); `pyt
 
 Local M376 implementation commit: `25cdfe1641e94074298375af63fc854a98346fbc`.
 Published GitHub main M376 implementation commit: 434a386ca8b33e53f603344fe1806841104bb28a.
+
+
+## M377 - Implement partial SCH$RSE wake-event dispatch, 25 November 2026
+
+Added native state-mask dispatch for source FPGA, WAKE, RESUME and PFCOM events. Events for a PCB in an unrelated state are ignored without queue mutation; matching waiters are removed from their supplied WQH and made eligible through CHSE, including nonresident COMO/swapper wake handling. Host tests cover a PFCOM state mismatch and a matching WAKE after SCH$WAITK. Source AST and local/common event-flag completion, SETPRI/SWPOUT, PID lookup, wait-queue address selection, event-return register state and full IPL handling remain incomplete; this is not wired to live I/O/AST completion.
+
+Verification: `make v37schedcheck` PASS; `make sourcerangecheck`, `python3 tests/test_coverage_ranges.py`, `make -j2 all test` PASS (exit 0), and `git diff --check` PASS. Coverage: 2,126 ranges, 451/4,566 originals indexed, zero validation errors; 17,230 mapped, 30,288 partial, 56,900 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded. One `make qemu-sysboot-m217` PASS reproduced the DQA0 DDT/IRQ14/ACP/IRQ0 boot regression and explicit incomplete-INIT stop. Capture `logs/serial/qemu-m217-run-local-20261125T174200593836Z.log`, 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`; QEMU runner exited. The new RSE routine remains host-only. No process activation, login, DCL, DECnet or SET HOST occurred.
+
+Local M377 implementation commit: `daaa61f3183128d1b949c4fe3030e3802933c454`.
+Published GitHub main M377 implementation commit: e76e10b5049fae0ab5e01ccf383e9ad96893b941.
