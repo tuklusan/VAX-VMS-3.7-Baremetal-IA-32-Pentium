@@ -5893,7 +5893,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
-          "pc_line": 188,
+          "pc_line": 198,
           "function": "Requeue current resident PCB at the COM queue tail and set queue summary; caller context save and hardware interrupt entry remain unimplemented"
         },
         {
@@ -5912,8 +5912,8 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
-          "pc_line": 149,
-          "function": "Highest resident COM queue selection, CUR state, current PCB/priority and floating priority; native context restore/PCBB programming remain unimplemented"
+          "pc_line": 150,
+          "function": "Highest resident COM queue selection validates the saved IA-32 IRET frame and returns its address with the selected PCB; trap dispatch and PCBB/CR3 programming remain unintegrated"
         },
         {
           "original_lines": [
@@ -5922,9 +5922,9 @@
           ],
           "status": "partial",
           "pc_file": "src/vms_v37_ia32_context.c",
-          "pc_symbol": "port_v37_ia32_context_init",
-          "pc_line": 8,
-          "function": "construct initial IA-32 IRET frame with matching VMS CPL; QEMU dispatches a selected CPL2 frame from a CPL1 trap, but VMS PCB context save/restore and scheduler integration remain unresolved"
+          "pc_symbol": "port_v37_ia32_context_validate",
+          "pc_line": 57,
+          "function": "Validate mode-matched segment selectors, EFLAGS and return stack before scheduler selection; context save and live scheduler-to-trap switch remain unintegrated"
         },
         {
           "original_lines": [
@@ -5943,7 +5943,7 @@
           "reason": "assembler end"
         }
       ],
-      "unresolved_integration": "The two-task diagnostic adapter is linked in the kernel; resident VMS PCB layout, executive wait/wake queues and normal reschedule-interrupt entry remain unbound."
+      "unresolved_integration": "SCH$SCHED returns a checked PCB plus IA-32 restore-frame address, but the live trap path does not yet save the current source PCB context, update TSS/CR3, or IRET into the selected frame; executive wait/wake queues remain unbound."
     },
     {
       "original_file": "SYS/SRC/NULLPROC.MAR",
@@ -10898,7 +10898,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_chse",
-          "pc_line": 101,
+          "pc_line": 102,
           "function": "Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial"
         },
         {
@@ -10917,7 +10917,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_chse",
-          "pc_line": 101,
+          "pc_line": 102,
           "function": "Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points"
         },
         {

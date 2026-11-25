@@ -1,5 +1,6 @@
 #include "vms_v37_sched.h"
 #include "vms_v37_dyn_tags.h"
+#include "vms_v37_ia32_context.h"
 
 enum {
     SQFL=PORT_V37_PCB_SQFL,SQBL=PORT_V37_PCB_SQBL,
@@ -147,9 +148,11 @@ uint32_t port_v37_sched_chse(struct port_v37_scheduler *s,uint32_t address,
 }
 
 uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
-                               uint32_t *selected_address){
-    if(!s||!s->initialized||!selected_address)return PORT_V37_SCHED_BADPARAM;
-    *selected_address=0u;
+                               uint32_t *selected_address,
+                               uint32_t *restore_frame){
+    if(!s||!s->initialized||!selected_address||!restore_frame)
+        return PORT_V37_SCHED_BADPARAM;
+    *selected_address=0u;*restore_frame=0u;
     uint32_t bits=s->summary[0];
     if(!bits)return PORT_V37_SCHED_EMPTY;
     unsigned q=0u;
@@ -166,8 +169,14 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
         return PORT_V37_SCHED_CORRUPT;
     /* SCH$SCHED executes LDPCTX after selecting. A PCB without its original
      * PHD and native processor context cannot be made current on IA-32. */
-    if(!get32(pcb+PORT_V37_PCB_PHD)||!get32(pcb+PORT_V37_PCB_PHYPCB))
+    const uint32_t phy_pcb=get32(pcb+PORT_V37_PCB_PHYPCB);
+    struct port_v37_ia32_restore_frame *const frame=
+        (struct port_v37_ia32_restore_frame *)resolve(s,phy_pcb,
+            sizeof(struct port_v37_ia32_restore_frame));
+    if(!get32(pcb+PORT_V37_PCB_PHD)||!frame)
         return PORT_V37_SCHED_NO_CONTEXT;
+    if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
+        return PORT_V37_SCHED_CORRUPT;
     if(!s->ready_count[q])return PORT_V37_SCHED_CORRUPT;
     uint32_t status=list_remove(s,address,pcb);
     if(status!=PORT_V37_SCHED_OK)return status;
@@ -182,6 +191,7 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
     s->current_pcb=address;
     s->current_priority=priority;
     *selected_address=address;
+    *restore_frame=phy_pcb;
     return PORT_V37_SCHED_OK;
 }
 
