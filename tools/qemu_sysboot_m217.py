@@ -101,109 +101,11 @@ def main():
         b'INIT: DQA0 UCB busy serialized two retained DDT READPBLK IRPs through IRQ14 and deferred IOC post.',
         b'INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
+        b'INIT: live IRQ0 called SCH$RESCHED/SCH$SCHED; NULL/SWAPPER PHD contexts are still absent.',
         b'INIT stopped: remaining original initialization dependencies incomplete.']
     failures=[
         b'*** x86 fault:',
         b'SYSBOOT: SYS.EXE retrieval map invalid.',
         b'-F-Unable to locate SYS.EXE',
         b'-F-Unable to locate usable SYSLOA386.EXE',
-        b'-F-Unable to locate INILOA.EXE',
-        b'SYSBOOT: SYSLOA386.EXE image validation or loading failed.',
-        b'INIT: SYSLOA386 self-describing vector image invalid.',
-        b'INIT: resident SYS.EXE SYSLOA386 vector linking failed.',
-        b'INIT: SYS.EXE packet queue initialization failed.',
-        b'INIT: resident SYS.EXE lock database setup failed.',
-        b'INIT: resident SYS.EXE PCB sequence vectors failed.',
-        b'INIT: resident SYS.EXE PHV and swap PTE record validation failed.',
-        b'INIT: resident SYS.EXE modified-page writer record validation failed.',
-        b'INIT: resident SYS.EXE interrupt stack depth setup failed.',
-        b'INIT: resident SYS.EXE SYSWCB map overlay validation failed.',
-        b'INIT: resident SYS.EXE pointer vector setup failed.',
-        b'INIT: resident SYS.EXE logical record staging failed.',
-        b'INIT: resident SYS.EXE DPT prologue staging failed.',
-        b'INIT: resident SYS.EXE null driver FDT validation failed.',
-        b'INIT: resident SYS.EXE boot adapter scan failed.',
-        b'INIT: resident source DQ FDT staging validation failed.',
-        b'INIT: resident DQ physical boot READPBLK failed.',
-        b'INIT: resident DQ physical LBN0 READPBLK failed.',
-        b'INIT: resident SYS.EXE INDEXF.SYS physical FH2 read failed.',
-        b'INIT: resident SYS.EXE MFD FH2 indexed physical read failed.',
-        b'INIT: resident SYS.EXE Files-11 MFD/SYSEXE directory traversal failed.',
-        b'INIT: resident SYS.EXE physical ELF32 source probe failed.',
-        b'INIT: resident native auxiliary disk text verification failed.',
-        b'INIT: resident FIN_DATABASE source boot DDB/logical record staging failed.',
-        b'INIT: resident source LOGNAMSUB bootstrap translation failed.',
-        b'INIT: SYS.EXE DEVICEDAT DDB/UCB prelink validation failed.',
-        b'INIT: resident CONINTDSP source port action checks failed.',
-        b'INIT: resident SYS.EXE physical IOC name search validation failed.',
-        b'INIT: resident IOC logical to physical boot name lookup failed.',
-        b'INIT: resident DQ DDT source table staging failed.',
-        b'INIT: resident RELOCDRV original DQ INITDRV table failed.',
-        b'INIT: resident SYS.EXE NLDRIVER to IOC post queue failed.',
-        b'INIT: resident private IOC$RELOC_DDT failed.',
-        b'INIT: resident IOCIOPOST source kernel end-action processing failed.',
-        b'INIT: resident IOCIOPOST native software interrupt failed.',
-        b'INIT: SYS.EXE resident initialization failed.',
-        b'INIT: SYS.EXE PIT clock handoff failed.',
-        b'INIT: primary ATA IRQ14 did not complete a sector read.',
-        b'INIT: live SYS.EXE PIT clock did not advance.',
-        b'INIT: marked QEMU ATA PIO write/readback/restore regression failed.',
-        b'INIT: asynchronous ATA scratch write failed.',
-        b'INIT: asynchronous ATA write readback failed.',
-        b'INIT: asynchronous ATA write data mismatch.',
-        b'INIT: asynchronous ATA scratch restore failed.',
-        b'INIT: asynchronous ATA scratch restore mismatch.',
-        b'INIT: DQA0 DDT native pointer/CRB publication validation failed.',
-        b'INIT: IOC$SEARCHDEV did not find published DQA0.',
-        b'INIT: IOC$SEARCHDEV did not select bound DQA0 for DQ I/O.',
-        b'INIT: DQA0 DDB DDT START pointer validation failed.',
-        b'INIT: IOC-selected DQA0 DDT STARTIO rejected DQ I/O.',
-        b'INIT: DQA0 native DDT IOC publication or SEARCHDEV failed.',
-        b'INIT: private asynchronous DQ IOC request setup failed.',
-        b'INIT: asynchronous DQ IOC start/busy check failed.',
-        b'INIT: async DQ IOC post failed.',
-        b'INIT: published DQA0 async DDT/IOC/IRQ completion failed phase',
-        b'INIT: IA-32 privilege transition stack is unprotected.',
-        b'PORTLAB> ',b'Login successful',b'Login: ',b'\n$ ']
-    passed=False
-    try:
-        until=time.monotonic()+80
-        while time.monotonic()<until:
-            if any(x in observed for x in failures):break
-            if all(x in observed for x in expected):
-                positions=[observed.index(x) for x in expected]
-                passed=positions==sorted(positions)
-                break
-            if p.poll() is not None:break
-            ready,_,_=select.select([p.stdout],[],[],0.25)
-            if ready:
-                chunk=os.read(p.stdout.fileno(),4096)
-                if not chunk:break
-                observed.extend(chunk)
-    finally:
-        p.terminate()
-        try:p.wait(timeout=3)
-        except subprocess.TimeoutExpired:p.kill();p.wait()
-        # Preserve COM1 bytes exactly; QEMU stderr is a separate diagnostic.
-        qemu_stderr=p.stderr.read(8192)
-        serial_path=ROOT/'qemu-m217-serial.log'
-        serial_path.write_bytes(observed)
-        # Always retain the real transcript, including failed QEMU attempts.
-        # GitHub run attempts get distinct keys; local runs get UTC keys.
-        ci_run=os.environ.get('GITHUB_RUN_ID')
-        ci_attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
-        identifier=(ci_run + ('-attempt'+ci_attempt if ci_attempt!='1' else '')
-                    if ci_run else 'local-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'))
-        run_url=('https://github.com/tuklusan/VAX-VMS-3.7-Baremetal-IA-32-Pentium/actions/runs/'+ci_run
-                 if ci_run else '')
-        capture(ROOT,serial_path,217,identifier,run_url,
-                'harness-pass' if passed else 'harness-fail')
-        scratch_disk.unlink(missing_ok=True)
-    if passed:
-        print('QEMU M217: 700-byte Files-11 chain read across two IOC-selected DQA0 DDT sectors via IRQ14 PASS')
-        return 0
-    print('QEMU M217: real guest execution or source-order check failed',file=sys.stderr)
-    print(observed[-8192:].decode('ascii','replace'),file=sys.stderr)
-    print(qemu_stderr.decode('ascii','replace'),file=sys.stderr)
-    return 1
-if __name__=='__main__':raise SystemExit(main())
+      
