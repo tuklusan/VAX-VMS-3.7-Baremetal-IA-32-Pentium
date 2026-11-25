@@ -1524,3 +1524,13 @@ Verification: `make interactcheck v37uafcheck` PASS; `make -j2 CC=gcc-12 all tes
 Public-content audit: this checkpoint adds native login policy code, host tests, coverage index/generator updates and raw serial evidence only. No original DEC source/data, disk images, credentials or private keys are included. Implementation commit: `5a1cfed9adefaa0447afb5a06a9773ec3446875e`.
 
 Still incomplete: authentic RMS SYSUAF lookup, operator day override and general GETDVI terminal classification, native process activation/login and DCL, live public SYS$QIO/ACP/AST/scheduling, complete INIT, DECnet Phase IV and real SET HOST 0.
+
+## M351 — Use the executive clock for LOGIN access policy, 25 November 2026
+
+Changed the TTA0 LOGIN policy callback to read a stable VMS-time quadword from the active SYS.EXE executive clock using its sequence protocol; it falls back to the initialized RTC only before an executive clock is available. Weekday/hour calculations use that single snapshot, so the policy does not mix values across a tick or midnight. An unstable snapshot fails closed. This refines only the native console-login path; the M217 QEMU boot halts before LOGIN and does not exercise this callback.
+
+Verification: `make execlockcheck` PASS; clean `make -j2 CC=gcc-12 all test` PASS (full host/layout suite; kernel 135,336 bytes); source coverage generation/validation PASS (2,110 ranges; 449/4,566 indexed; zero errors; 17,255 mapped, 30,032 partial, 56,921 unresolved, 7,752 missing, 26,341 excluded, 917 hardware-excluded); serial-manifest validation PASS. Fresh single-runner `make qemu-sysboot-m217` PASS through the established DQA0/IRQ14/Files-11 checks, then the explicit incomplete-INIT stop. Capture `logs/serial/qemu-m217-run-local-20261125T132604760183Z.log`, 5,788 bytes, SHA-256 `fccbda36c6742e594849f10b4131c241fa8f059ee6dcb41b3af32d4bc9579232`; QEMU exited.
+
+Public audit: only kernel C, coverage generator/index, and QEMU serial log/manifest are included; no original DEC source/data, disk image, or secret is staged. Implementation commit: `79cf0bd0f222d264450189e1d8520e49095418a1`.
+
+Authentic RMS SYSUAF, general terminal classification and operator override, VMS process activation/login/DCL, public SYS$QIO process dispatch, full ACP and AST completion, remaining INIT, DECnet Phase IV and genuine SET HOST 0 remain incomplete.
