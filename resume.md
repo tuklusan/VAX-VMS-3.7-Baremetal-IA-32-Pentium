@@ -1821,3 +1821,11 @@ Local M383 resume commit: 5c1bac0042c7efcc755dd2b5e04ac748ee62d317.
 
 Published GitHub main M383 full-tree commit: baab17807fa06952e727542facb69019f08d591d.
 Local history-preserving merge commit: f385d5902687eeacfa00d21cd609e27433bba5ad.
+
+## M384 - Reject malformed saved IRET frames during LEF wake, 25 November 2026
+
+Added a scheduler regression that corrupts the saved LEF waiter CS while retaining kernel data selectors, then verifies RSE event completion rejects the malformed IA-32 IRET frame before changing PHD PC/R0, saved EAX, PCB wait state, or WQH membership. Restoring the original CS allows the existing WQH-corruption rollback and valid event completion tests to proceed. This adds validation coverage for saved-frame rejection; it does not wire wait/wake into live process execution.
+
+Verification: make v37schedcheck, full make -j2 all test (exit 0), and git diff --check PASS. Source coverage unchanged at 2,135 ranges, 451/4,566 original files indexed, zero errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded. No QEMU run: this change only extends the host scheduler regression and does not change the guest image. No process activation, login/DCL, DECnet, or SET HOST is claimed.
+
+Local M384 test commit: 977ccfa1573cc07bf8eb08bb416764d4692d22a6.
