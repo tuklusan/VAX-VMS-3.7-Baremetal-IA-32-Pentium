@@ -573,6 +573,7 @@ int main(void){
           &pool,&pool_sync,&integrated,&prepared_irp,&prepared_va,
           &ast_status)!=PORT_V37_SYSQIO_PREPARE_BEGIN||prepared_irp||
        prepared_va||proc.direct_io_count!=1||proc.ast_count!=1||
+       ast_status!=PORT_SYS85_BADPARAM||
        memcmp(&integrated,&untouched,sizeof integrated))
         return 84;
     /* A rejected request must not leave a stale caller-owned IRP pointer.

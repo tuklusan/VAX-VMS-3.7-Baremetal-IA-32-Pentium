@@ -67,6 +67,7 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
     if(!packet||!packet_va)return PORT_V37_SYSQIO_PREPARE_BEGIN;
     if(!process||!ops||!spec||!pool||!sync||!prepared||!service_status){
         *packet=0;*packet_va=0u;
+        if(service_status)*service_status=PORT_SYS85_BADPARAM;
         return PORT_V37_SYSQIO_PREPARE_BEGIN;
     }
     struct port_v37_sysqio_prepared request;
