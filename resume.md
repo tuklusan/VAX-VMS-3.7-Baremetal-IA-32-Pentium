@@ -2001,3 +2001,15 @@ Local M401 implementation commit: `24eac3940f0a9f95f39a13eee4233813c5413d47`.
 Published GitHub main M401 implementation commit: `24eac3940f0a9f95f39a13eee4233813c5413d47`.
 
 Remaining acceptance work is unchanged: INIT lacks NULL/SWAPPER PHD/context activation; public SYS$QIO and process-aware AST completion, Files-11 ACP request integration, scheduler/process image activation, genuine login and DCL, DECnet Phase IV, and real SET HOST 0 remain incomplete. Source coverage remains incomplete (8,032 missing and 56,882 unresolved ranges in the indexed inventory).
+
+
+## M402 - Place INIT allocations inside the source NPAGEDYN interval, 25 November 2026
+
+Corrected SYSBOOT/SYS.EXE pool geometry: INIT now passes the configured default NPAGEDYN byte count into the source packet layout, validates the contiguous resident interval below SRP/IRP/LRP, and starts all lock database, process-vector, PHV/swap, MPW, page-file-vector, logical-name and variable nonpaged-pool allocations at that interval's base. Previously those structures started at the beginning of the 96 KiB backing array and could consume bytes below the source interval. Virtual NPAGEDYN equals its resident size; page-table mapping, PAGEDYN placement, PARAMS.DAT boot invocation, pool extension/waits, and SWAPPER use remain incomplete. This fixes placement inside the native backing range, not full source INIT or process activation.
+
+Verification: `make -j2 all` PASS; `make -j2 all test` exited 0; `python3 tools/gen_source_coverage.py`, `python3 tests/test_coverage_ranges.py`, and `python3 tools/validate_source_ranges.py` PASS (2,140 ranges; 451/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,306 partial, 56,882 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). Two sequential `make qemu-sysboot-m217` runs passed the real IA-32 DQA0 DDT/IRQ14/Files-11 ACP boot checks, then stopped at the established INIT boundary: live IRQ0 entered scheduler code but NULL/SWAPPER contexts remain absent. Captures: `logs/serial/qemu-m217-run-local-20261125T231838592265Z.log` (6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`) and `logs/serial/qemu-m217-run-local-20261125T232028724463Z.log` (6,146 bytes, SHA-256 `d8e6c3342d8f507030236d245e1e9be430f47fd00260294bfe86bb581b0a7cba`). The QEMU runner exited; none remains. No login, DCL, DECnet, or SET HOST success is claimed.
+
+Local M402 implementation commit: `0d0a49f35ec072eaa7f95a079d51007acdc45fce`.
+Published GitHub main M402 implementation commit: `0d0a49f35ec072eaa7f95a079d51007acdc45fce`.
+
+Remaining acceptance work: parameter-file discovery/application; mapped physical/nonpaged and paged pools; SWAPPER/NULL PHD and IA-32 contexts; public SYS$QIO with DQA0 request dispatch and process-aware AST completion; Files-11 ACP integration; scheduler and process image activation; SYSTEM login, DCL, DECnet Phase IV, and genuine SET HOST 0. Source coverage remains incomplete (8,032 missing and 56,882 unresolved ranges in the indexed inventory).
