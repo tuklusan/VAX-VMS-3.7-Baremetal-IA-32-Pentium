@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "vms_sysboot_pktmem.h"
+#include "vms_ini_sysparams.h"
+#include "vms_qio_post.h"
 #define CHECK(x) do { if(!(x)){fprintf(stderr,"FAIL %s:%d: %s\n",__FILE__,__LINE__,#x);return 1;}} while(0)
 int main(void){
     struct port_boo_packet_settings s={
@@ -56,6 +58,32 @@ int main(void){
     s.nonpaged_dynamic_bytes=100u;s.nonpaged_virtual_bytes=100u;
     CHECK(port_boo_packet_layout(&s,&b,&p)==PORT_BOO_PACKET_OK);
     CHECK(p.nonpaged_dynamic_bytes==0u);
+    const uint32_t backing_start=0x00600000u;
+    struct port_boo_packet_settings defaults={
+        .top_address=backing_start+170u*1024u,
+        .irp_length=PORT_V37_IRP_SIZE,
+        .irp_count=PORT_VMS37_DEFAULT_IRPCOUNT,
+        .irp_virtual_count=PORT_VMS37_DEFAULT_IRPCOUNT,
+        .lrp_requested_size=PORT_VMS37_DEFAULT_LRPSIZE,
+        .lrp_count=PORT_VMS37_DEFAULT_LRPCOUNT,
+        .lrp_virtual_count=PORT_VMS37_DEFAULT_LRPCOUNT,
+        .srp_requested_size=PORT_VMS37_DEFAULT_SRPSIZE,
+        .srp_count=PORT_VMS37_DEFAULT_SRPCOUNT,
+        .srp_virtual_count=PORT_VMS37_DEFAULT_SRPCOUNT,
+        .nonpaged_dynamic_bytes=PORT_VMS37_DEFAULT_NPAGEDYN,
+        .nonpaged_virtual_bytes=PORT_VMS37_DEFAULT_NPAGEDYN,
+        .paged_dynamic_bytes=PORT_VMS37_DEFAULT_PAGEDYN};
+    struct port_boo_packet_layout native={0};
+    struct port_boo_parameters native_boo={0};
+    CHECK(port_boo_packet_layout(&defaults,&native,&native_boo)==
+          PORT_BOO_PACKET_OK);
+    CHECK(native.nonpaged_end-native.nonpaged_start==
+          (PORT_VMS37_DEFAULT_NPAGEDYN&~511u));
+    CHECK(native.paged_dynamic_start>=backing_start);
+    CHECK(native.paged_dynamic_start+
+          (PORT_VMS37_DEFAULT_PAGEDYN&~511u)==native.nonpaged_start);
+    CHECK(native.nonpaged_end==native.lrp.first_address);
+    CHECK(native.srp.reserved_end==defaults.top_address);
     puts("original SYSBOOT 512-page/16-packet IRP-LRP-SRP virtual and resident allocation PASS");
     return 0;
 }

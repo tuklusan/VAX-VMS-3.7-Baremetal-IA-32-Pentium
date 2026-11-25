@@ -5,7 +5,8 @@
 /* BOOTS/SRC/SYSBOOT.MAR: NPAGE_SPT, IRP_SPT, LRP_SPT, SRP_SPR and
  * ALLOC_SRP/ALLOC_IRP/ALLOC_LRP. A 512-byte page and a 16-byte packet
  * alignment are part of the original boot ABI. Sizes come from SYSGEN;
- * the native caller, not this routine, supplies the actual mapped pages. */
+ * the native caller supplies contiguous resident backing for the current
+ * nonpaged and non-paging-PAGEDYN paths. SPT/PFN mapping is separate. */
 enum { PORT_BOO_PACKET_OK=1u, PORT_BOO_PACKET_BADPARAM=2u,
        PORT_BOO_PACKET_NOMEM=4u, PORT_BOO_PACKET_PAGE=512u };
 struct port_boo_packet_settings {

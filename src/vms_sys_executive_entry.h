@@ -259,6 +259,8 @@ struct port_sys_exec_result {
     port_v37_sched_interrupt_fn vms_sched_interrupt;
     /* SYSBOOT carved interval backing the source NPAGEDYN pool. */
     uint32_t npaged_pool_base,npaged_pool_bytes;
+    /* SYSBOOT carved resident PAGEDYN interval; user/mapping consumers remain. */
+    uint32_t paged_pool_base,paged_pool_bytes;
 };
 struct port_sys_exec_start {
     uint32_t signature,version;

@@ -34,6 +34,7 @@
 #include "vms_qio_post.h"
 #include "vms_qio_irp_pool.h"
 #include "vms_exe_np_pool.h"
+#include "vms_exe_paged_pool.h"
 #include "vms_nl_ddt.h"
 #include "vms_iopost_end.h"
 #include "vms_sysboot_elf.h"
@@ -51,8 +52,10 @@ static struct port_sysloa_table executive_sysloa;
 /* This memory is genuinely loaded and zeroed by the SYSBOOT ELF loader,
  * mapped supervisor-only in the guest. Replacing its provisional size
  * limits with SYSGEN-selected BOO$ offsets remains later integration. */
-static uint8_t executive_packet_pages[96u*1024u] __attribute__((aligned(512)));
+static uint8_t executive_packet_pages[170u*1024u] __attribute__((aligned(512)));
 static uint8_t *executive_np_base;
+static struct port_exe_paged_pool executive_paged_pool;
+static uint32_t executive_paged_pool_ready;
 static struct port_ini_packet_list executive_irps,executive_lrps,executive_srps;
 static uint32_t executive_packet_ready;
 /* INIT's later nonpaged records occupy only the free low end of the
@@ -708,7 +711,7 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
        settings.srp_count!=settings.srp_virtual_count ||
        !settings.nonpaged_dynamic_bytes ||
        settings.nonpaged_virtual_bytes!=settings.nonpaged_dynamic_bytes ||
-       settings.paged_dynamic_bytes)
+       !settings.paged_dynamic_bytes || executive_paged_pool_ready)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
     struct port_boo_packet_layout m={0};
     struct port_boo_parameters boo={0};
@@ -748,8 +751,20 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
         return PORT_SYS_EXEC_BAD_PARAMETERS;
     const uint32_t resident_free=m.nonpaged_end-m.nonpaged_start;
     if(resident_free!=settings.nonpaged_dynamic_bytes ||
-       m.nonpaged_end>top)
+       m.nonpaged_end>top || m.paged_dynamic_start<start ||
+       m.paged_dynamic_start+(settings.paged_dynamic_bytes&~511u)!=
+           m.nonpaged_start)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
+    /* With POOLPGING clear, INIT maps PAGEDYN resident. This backing is the
+     * SYS.EXE BSS interval carved by SYSBOOT; PTE allocation/pageable-pool
+     * consumers remain outside this boundary. */
+    const uint32_t paged_bytes=m.nonpaged_start-m.paged_dynamic_start;
+    if(paged_bytes!=(settings.paged_dynamic_bytes&~511u) ||
+       port_exe_paged_pool_init(&executive_paged_pool,
+          (void *)(uintptr_t)m.paged_dynamic_start,paged_bytes,
+          &executive_qio_pool_sync)!=PORT_EXE_PAGED_OK)
+        return PORT_SYS_EXEC_BAD_PARAMETERS;
+    executive_paged_pool_ready=1u;
     /* SYSBOOT lays out NPAGEDYN below the packet ranges. Keep INIT's native
      * dynamic allocations inside that exact source-sized interval. */
     executive_np_base=(uint8_t *)(uintptr_t)m.nonpaged_start;
@@ -763,6 +778,8 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
     p->result->srp_count=executive_srps.packet_count;
     p->result->npaged_pool_base=(uint32_t)(uintptr_t)executive_np_base;
     p->result->npaged_pool_bytes=executive_free_npages;
+    p->result->paged_pool_base=m.paged_dynamic_start;
+    p->result->paged_pool_bytes=paged_bytes;
     p->result->signature=PORT_SYS_EXEC_PACKET_RESULT_TAG;
     return PORT_SYS_EXEC_NORMAL;
 }

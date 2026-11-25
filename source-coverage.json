@@ -10517,10 +10517,29 @@
         {
           "original_lines": [
             573,
+            634
+          ],
+          "status": "unresolved",
+          "reason": "System PFN bitmap and free-page conversion into the resident physical-page database are not implemented"
+        },
+        {
+          "original_lines": [
+            635,
+            650
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sys_executive_entry.c",
+          "pc_symbol": "port_exe_initialize_lookaside",
+          "pc_line": 697,
+          "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
+        },
+        {
+          "original_lines": [
+            651,
             663
           ],
           "status": "unresolved",
-          "reason": "Paging, PFN and nonpaged pool setup unresolved"
+          "reason": "POOLPGING pageable mapping, FILLSPT branch and INI_IRP handoff remain unresolved"
         },
         {
           "original_lines": [
@@ -22446,7 +22465,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 631,
+          "pc_line": 634,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -23146,7 +23165,7 @@
           "pc_file": "src/vms_exe_paged_pool.c",
           "pc_symbol": "port_exe_paged_alloc",
           "pc_line": 12,
-          "function": "EXE$ALOPAGED rounds requests to 16 bytes, uses the fixed resident paged free list and restores the synchronization IPL; paged-pool setup/placement, SCH$LOCKW wait, extension and resource wake remain unimplemented"
+          "function": "EXE$ALOPAGED rounds requests to 16 bytes, uses the SYSBOOT-carved resident PAGEDYN free list and restores synchronization IPL; no live VMS caller, SCH$LOCKW wait, extension or resource wake is wired"
         },
         {
           "original_lines": [
@@ -23195,7 +23214,7 @@
           "pc_file": "src/vms_exe_paged_pool.c",
           "pc_symbol": "port_exe_paged_free",
           "pc_line": 30,
-          "function": "EXE$DEAPAGED 16-byte alignment/size return to the paged free list; IRP header decoding, SCH$LOCKW, PGDYN resource wake and caller wiring remain unresolved"
+          "function": "EXE$DEAPAGED 16-byte alignment/size return to the SYSBOOT-carved resident PAGEDYN free list; IRP header decoding, SCH$LOCKW, PGDYN resource wake and live caller wiring remain unresolved"
         },
         {
           "original_lines": [
@@ -23225,7 +23244,7 @@
           "reason": "Paged/shared pool return, queue synchronization and pool extension unresolved"
         }
       ],
-      "unresolved_integration": "Native SYS.EXE consumes the source-sized NPAGEDYN range selected by SYSBOOT for INIT lock database, process vector, PHV/swap map, MPW, page-file vector, logical names and nonpaged lookaside backing. A host-tested fixed paged-pool allocation/free boundary is linked but not initialized or called by SWAPPER; its placement/mapping/extension, mutex waits/wakeup and real paged users remain unresolved. Nonpaged pool extension/resource waits and public SYS$QIO integration also remain incomplete."
+      "unresolved_integration": "Native SYS.EXE initializes the source-sized PAGEDYN interval carved from its resident BSS and provides host-tested 16-byte allocation/free routines; no current guest caller consumes this pool. PAGEDYN SPT/PFN mapping, POOLPGING, extension, mutex waits/wakeup and real paged-pool users remain unresolved. The source-sized NPAGEDYN interval backs INIT structures, but nonpaged extension/resource waits and public SYS$QIO integration also remain incomplete."
     },
     {
       "original_file": "SYS/SRC/SYSPARAM.MAR",

@@ -3250,7 +3250,8 @@ void kmain(void) {
         .srp_count=init_params.srp_count,
         .srp_virtual_count=init_params.srp_count,
         .nonpaged_dynamic_bytes=init_params.nonpaged_dynamic_bytes,
-        .nonpaged_virtual_bytes=init_params.nonpaged_dynamic_bytes};
+        .nonpaged_virtual_bytes=init_params.nonpaged_dynamic_bytes,
+        .paged_dynamic_bytes=init_params.paged_dynamic_bytes};
     static struct port_sys_exec_result packet_result;
     const struct port_sys_exec_start packet_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
@@ -3276,7 +3277,12 @@ void kmain(void) {
        packet_result.npaged_pool_bytes!=init_params.nonpaged_dynamic_bytes ||
        packet_result.npaged_pool_base<PORT_SYS_ELF_START ||
        (uint64_t)packet_result.npaged_pool_base+
-           packet_result.npaged_pool_bytes>PORT_SYS_ELF_LIMIT){
+           packet_result.npaged_pool_bytes>PORT_SYS_ELF_LIMIT ||
+       packet_result.paged_pool_bytes!=
+           (init_params.paged_dynamic_bytes&~511u) ||
+       packet_result.paged_pool_base<PORT_SYS_ELF_START ||
+       (uint64_t)packet_result.paged_pool_base+
+           packet_result.paged_pool_bytes!=packet_result.npaged_pool_base){
         bootstrap_message("INIT: SYS.EXE packet queue initialization failed.");
         bootstrap_halt();
     }
