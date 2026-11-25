@@ -207,7 +207,8 @@ static uint32_t next_header(const uint8_t *old,void *fcb,
     else if(level2){
         if(!old)return 0;
         fid.number=rd16(old+14u);fid.sequence=rd16(old+16u);
-        fid.volume=rd16(old+18u);fid.number_extension=old[19u];
+        fid.volume=extended?old[18u]:rd16(old+18u);
+        fid.number_extension=old[19u];
         seg=(uint16_t)(rd16(old+4u)+1u);
     }else{
         if(!old)return 0;

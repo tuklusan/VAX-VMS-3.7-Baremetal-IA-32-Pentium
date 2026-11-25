@@ -263,18 +263,20 @@ int main(int argc,char **argv){
     assert(!memcmp(acp_bytes,expected,sizeof expected));
     /* FIL$RDCHKFILHDR follows FH2$W_EXT_FID and advances the segment. */
     m.extension_lbn=7000u;
-    m.extension_vbn=6u+vol.index_bitmap_blocks+4u*vol.cluster;
+    vol.extended_fid=1u;
+    m.extension_vbn=(1u<<16)|(6u+vol.index_bitmap_blocks+4u*vol.cluster);
     memcpy(m.extension_header,m.header,512);
     wr16(m.extension_header+4u,1u);
     wr16(m.extension_header+8u,6u);
     wr16(m.extension_header+10u,1u);
     wr16(m.extension_header+12u,0u);
+    m.extension_header[13u]=1u;
     memset(m.extension_header+14u,0,6u);
     port_f11b_checksum(m.extension_header);
     wr16(m.header+14u,6u);
     wr16(m.header+16u,1u);
     wr16(m.header+18u,0u);
-    m.header[19u]=0u;
+    m.header[19u]=1u;
     port_f11b_checksum(m.header);
     uint8_t extension_bytes[64],extension_expected[64];
     unsigned reads_before_extension=m.reads;
@@ -307,6 +309,7 @@ int main(int argc,char **argv){
     assert(port_f11b_read_vbn(&close_context,read_fcb,
         read_fcb->file_blocks*2u*512u,1u,acp_bytes,
         sizeof acp_bytes,&acp_completed)==PORT_F11_87_BADFILEHDR);
+    vol.extended_fid=0u;
     unsigned free_before_close=m.deallocation;
     unsigned transactions_before_close=vol.transactions;
     assert(port_f11b_deaccess(&close_context,&no_attributes)==PORT_F11_87_NORMAL);
