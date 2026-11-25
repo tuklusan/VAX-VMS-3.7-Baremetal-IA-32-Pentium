@@ -29,8 +29,9 @@ uint32_t port_vms37_init_params_apply_file(
     for(;;){
         if(bytes-offset<4u)return PORT_VMS37_SYSPARAM_FILE_TRUNCATED;
         if(read_le32(file+offset)==0u){
-            for(size_t i=offset;i<bytes;i++)
-                if(file[i])return PORT_VMS37_SYSPARAM_FILE_BAD;
+            /* BOO$USEFILE tests only the longword at the current record
+             * pointer.  READFILE's buffer tail is not part of the list and
+             * may contain unrelated bytes. */
             *params=candidate;
             for(unsigned i=0;i<sizeof startup;i++)startup_file[i]=startup[i];
             *applied_count=applied;

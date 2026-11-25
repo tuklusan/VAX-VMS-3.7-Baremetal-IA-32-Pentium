@@ -35,8 +35,9 @@ int main(void){
     off+=add_param(file+off,"NPAGEDYN",1024u);
     off+=add_param(file+off,"LRPCOUNT",7u);
     off+=add_param(file+off,"NOT_A_PARAMETER",12u);
+    file[off+4u]=0xa5u; /* BOO$USEFILE stops at the zero longword. */
     uint32_t applied=0;
-    if(port_vms37_init_params_apply_file(&p,file,off+4u,startup,
+    if(port_vms37_init_params_apply_file(&p,file,off+5u,startup,
           &applied)!=PORT_VMS37_SYSPARAM_FILE_OK||
        applied!=3u||p.max_processes!=8192u||
        p.nonpaged_dynamic_bytes!=16384u||p.lrp_count!=7u||
@@ -52,7 +53,7 @@ int main(void){
         return 1;
     }
     file[32u]=16u;
-    if(port_vms37_init_params_apply_file(&p,file,off+4u,startup,
+    if(port_vms37_init_params_apply_file(&p,file,off+5u,startup,
           &applied)!=PORT_VMS37_SYSPARAM_FILE_BAD||
        memcmp(&p,&unchanged,sizeof p)!=0){
         fputs("VMS SYSBOOT malformed parameter name was not rejected\n",stderr);
