@@ -335,6 +335,44 @@ uint32_t port_v37_sched_save_current(struct port_v37_scheduler *s,
     return status;
 }
 
+/* If SCH$SCHED reaches an older, contextless COM entry after saving the
+ * interrupted process, the IA-32 trap path must still return to the live
+ * frame. Restore the just-saved process as CUR so the scheduler's PCB state
+ * agrees with the frame that arch_isr_common will resume. A valid VMS boot
+ * supplies every runnable context; this rollback contains the native INIT
+ * boundary without consuming or inventing the missing process context. */
+static uint32_t resume_interrupted_current(struct port_v37_scheduler *s,
+    uint32_t address,uint32_t frame_address){
+    uint8_t *const pcb=resolve(s,address,PORT_V37_PCB_BYTES);
+    if(!pcb||get16(pcb+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       !(get32(pcb+PCBSTS)&PORT_V37_SCH_RESIDENT)||
+       get32(pcb+PORT_V37_PCB_PHYPCB)!=frame_address||
+       pcb[PORT_V37_PCB_PRI]>=PORT_V37_SCH_PRIORITIES)
+        return PORT_V37_SCHED_CORRUPT;
+    const uint8_t priority=pcb[PORT_V37_PCB_PRI];
+    uint8_t *const phd=resolve(s,get32(pcb+PORT_V37_PCB_PHD),
+                                PORT_V37_PHD_BYTES);
+    struct port_v37_ia32_restore_frame *const frame=
+        (struct port_v37_ia32_restore_frame *)resolve(s,frame_address,
+            sizeof(struct port_v37_ia32_restore_frame));
+    if(!phd||get32(phd+PORT_V37_PHD_KSP)!=frame_address||!frame||
+       port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK||
+       !s->ready_count[priority])
+        return PORT_V37_SCHED_CORRUPT;
+    int found=0;
+    uint32_t status=list_contains(s,priority,address,&found);
+    if(status!=PORT_V37_SCHED_OK||!found)
+        return status==PORT_V37_SCHED_OK?PORT_V37_SCHED_CORRUPT:status;
+    status=list_remove(s,address,pcb);
+    if(status!=PORT_V37_SCHED_OK)return status;
+    if(list_empty(s,priority))set_summary(s,priority,0);
+    s->ready_count[priority]--;
+    put16(pcb+PCBSTATE,PORT_V37_SCH_CUR);
+    s->current_pcb=address;
+    s->current_priority=priority;
+    return PORT_V37_SCHED_OK;
+}
+
 uint32_t port_v37_sched_interrupt(struct port_v37_scheduler *s,
     uint32_t interrupted_frame,uint32_t *selected_pcb,
     uint32_t *selected_frame){
@@ -342,7 +380,8 @@ uint32_t port_v37_sched_interrupt(struct port_v37_scheduler *s,
         return PORT_V37_SCHED_BADPARAM;
     if(s->native_interrupt_count!=UINT32_MAX)s->native_interrupt_count++;
     *selected_pcb=0u;*selected_frame=0u;
-    if(s->current_pcb){
+    const uint32_t interrupted_pcb=s->current_pcb;
+    if(interrupted_pcb){
         const uint32_t saved=port_v37_sched_save_current(s,interrupted_frame);
         if(saved!=PORT_V37_SCHED_OK){
             if(saved==PORT_V37_SCHED_NO_CONTEXT&&
@@ -353,9 +392,13 @@ uint32_t port_v37_sched_interrupt(struct port_v37_scheduler *s,
     }
     const uint32_t selected=port_v37_sched_select(s,selected_pcb,
                                                   selected_frame);
-    if(selected==PORT_V37_SCHED_NO_CONTEXT&&
-       s->native_no_context_count!=UINT32_MAX)
-        s->native_no_context_count++;
+    if(selected==PORT_V37_SCHED_NO_CONTEXT){
+        if(s->native_no_context_count!=UINT32_MAX)
+            s->native_no_context_count++;
+        if(interrupted_pcb&&resume_interrupted_current(s,interrupted_pcb,
+              interrupted_frame)!=PORT_V37_SCHED_OK)
+            return PORT_V37_SCHED_CORRUPT;
+    }
     return selected;
 }
 
