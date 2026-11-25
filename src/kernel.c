@@ -3455,8 +3455,9 @@ void kmain(void) {
     /* INIT.MAR INI_MPW: truncate MPWPFC to a multiple of eight and add
      * seven slots for bit-level pagefile allocation. The resident SYS.EXE
      * owns both arrays. No modified-page writer process exists yet. */
-    static const struct port_ini_mpw_settings mpw_settings={
-        .requested_fault_cluster=96u,.dyn_mpwmap_type=0u};
+    const struct port_ini_mpw_settings mpw_settings={
+        .requested_fault_cluster=init_params.modified_page_fault_cluster,
+        .dyn_mpwmap_type=0u};
     static struct port_sys_exec_result mpw_result;
     const struct port_sys_exec_start mpw_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
