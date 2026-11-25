@@ -1914,3 +1914,12 @@ Verification: focused `make sysqioargscheck` PASS; full `make -j2 all test` PASS
 
 Local M393 implementation commit: `7e497c5a0780820433fec583793e312c62fcc669`.
 Published GitHub main M393 implementation commit: `0f603b7ab5f61526b00fc4c1f3da41ac13e7f004`.
+
+## M394 - Preserve the interrupted PCB when SCH$SCHED finds no native context, 25 November 2026
+
+Fixed the scheduler interrupt path's unhandled transition: when a running process is saved and the highest-priority ready PCB has no PHD/IA-32 restore frame, SCH$SCHED returns `NO_CONTEXT` without dequeuing that candidate. The interrupt path now restores the interrupted PCB from COM to CUR, reverses its ready-count/queue insertion, and leaves the contextless candidate queued. This keeps PCB/current-process state consistent with the IRET frame that the architecture resumes; it neither invents a context nor consumes the incomplete PCB. Host regression covers the higher-priority missing-context candidate and saturates the diagnostic counter to verify rollback still occurs at counter maximum.
+
+Verification after the final code edit: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0); `python3 tools/gen_source_coverage.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS (2,135 ranges; 451/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). Two sequential `make qemu-sysboot-m217` runs PASS. The final run read 700 bytes of SYS.EXE across two IOC-selected DQA0 sectors through real IRQ14, then retained the existing incomplete-INIT stop; this boot has no activated VMS current PCB and does not exercise the new rollback path. Final capture `logs/serial/qemu-m217-run-local-20261125T193725240662Z.log`: 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`. Serial manifest verification PASS (329 raw logs). QEMU exited; no runner remains. No process activation, SYSTEM login, DCL, DECnet, or SET HOST is claimed.
+
+Local M394 implementation commit: `f16e5766a8978cfc78e54bf991068643170713e2` (first capture retained in `76aaf3e7229e1d33f6f4f054a9ab7fe85aec1c18`).
+Published GitHub main M394 implementation commit: `878008714f47fffcacafeb4e15099e85f908424b`.
