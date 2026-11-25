@@ -1789,3 +1789,12 @@ Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0);
 
 Local M380 implementation commit: `6cf753854f4b7313e8426990610be09968689caf`.
 Published GitHub main M380 implementation commit: `f093fd9f5b85daeb7cb34cacf02f31f76f53d7de`.
+
+## M381 - Add partial SCH$RSE AST wake dispatch, 25 November 2026
+
+Added the RSE AST event mask for the original eligible wait states (CEF, COLPG, FPG, HIB/HIBO, LEF/LEFO, MWAIT and PFW). A matching blocked process is moved through the existing WQH removal and CHSE path without altering its saved syscall return frame; unmatched states remain ignored. Host regression verifies MWAIT wake behavior and unchanged saved PC. AST request queueing, pending-state maintenance, AST delivery on process return, source WQH lookup, live AST integration and other RSE events remain incomplete; this only covers the scheduler wake portion.
+
+Verification: `make v37schedcheck` and full `make -j2 all test` PASS (exit 0); coverage generation, range regression, and source-range validation PASS (2,131 ranges; 451/4,566 original files indexed; zero errors; 17,230 mapped, 30,312 partial, 56,876 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. No QEMU run because the event API remains unbound to guest processes. No AST delivery, process activation, login/DCL, DECnet or SET HOST is claimed.
+
+Local M381 implementation commit: `bda81ffff38858be142603ac366aa1700b7a3257`.
+Published GitHub main M381 implementation commit: `bd18ab3bc7c0bea200456bc5b40116e2cc54b34b`.
