@@ -965,7 +965,7 @@ for first,last,path,symbol,reason,status in sysboot_read_ranges:
 result['files'].append({'original_file':'BOOTS/SRC/SYSBOOT.MAR',
                        'original_lines':2897,'sections':sections,
                        'platform_changes':['Native IA-32 SYS.EXE is a separately linked ELF32 file installed in the original Files-11 directory; the VAX image record format is CPU-specific', 'SYSBOOT ELF32 LOAD_CODE streams real PT_LOAD bytes from the F11 VBN map into reserved supervisor RAM'],
-                       'unresolved_integration':'SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. A named Files-11 parameter-file reader merges only the INIT subset; the SYSBOOT command interpreter, complete BOO$SEARCH descriptor table and guest-time invocation remain unported. WCB overlay and packet pool PFN/SPT mapping remain incomplete; process startup is unresolved.'})
+    'unresolved_integration':'SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. Native INIT consumes the source-sized NPAGEDYN interval below the SRP/IRP/LRP ranges for its resident executive structures. A named Files-11 parameter-file reader merges only the INIT subset; the SYSBOOT command interpreter, complete BOO$SEARCH descriptor table and guest-time invocation remain unported. WCB overlay and packet pool PFN/SPT mapping remain incomplete; process startup is unresolved.'})
 
 fileread_sections=[
     (1,740,None,None,'other FILEREAD declarations, cache setup, full filename parser and open logic','missing'),
@@ -2682,7 +2682,7 @@ for first,last,path,sym,why in [
             'pc_file':path,'pc_symbol':sym,'pc_line':ln,'function':why})
 result['files'].append({'original_file':'SYS/SRC/MEMORYALC.MAR',
     'original_lines':919,'sections':memalc_sections,
-    'unresolved_integration':'Native SYS.EXE contains a host-tested paged-pool allocation/free boundary and a separate nonpaged pool/lookaside implementation. The paged routines are not initialized or called by SWAPPER; pool placement, mapping/extension, mutex waits/wakeup and real paged-pool users remain unresolved. Nonpaged pool extension/resource waits and public SYS$QIO integration also remain incomplete.'})
+    'unresolved_integration':'Native SYS.EXE consumes the source-sized NPAGEDYN range selected by SYSBOOT for INIT lock database, process vector, PHV/swap map, MPW, page-file vector, logical names and nonpaged lookaside backing. A host-tested fixed paged-pool allocation/free boundary is linked but not initialized or called by SWAPPER; its placement/mapping/extension, mutex waits/wakeup and real paged users remain unresolved. Nonpaged pool extension/resource waits and public SYS$QIO integration also remain incomplete.'})
 
 # SYSPARAM.MAR supplies system defaults consumed by INIT. The native subset
 # records the original declarations, while SYSBOOT PARAMS.DAT overrides and

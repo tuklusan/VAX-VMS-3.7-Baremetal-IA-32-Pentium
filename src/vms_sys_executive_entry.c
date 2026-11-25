@@ -52,6 +52,7 @@ static struct port_sysloa_table executive_sysloa;
  * mapped supervisor-only in the guest. Replacing its provisional size
  * limits with SYSGEN-selected BOO$ offsets remains later integration. */
 static uint8_t executive_packet_pages[96u*1024u] __attribute__((aligned(512)));
+static uint8_t *executive_np_base;
 static struct port_ini_packet_list executive_irps,executive_lrps,executive_srps;
 static uint32_t executive_packet_ready;
 /* INIT's later nonpaged records occupy only the free low end of the
@@ -705,7 +706,8 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
     if(settings.irp_count!=settings.irp_virtual_count ||
        settings.lrp_count!=settings.lrp_virtual_count ||
        settings.srp_count!=settings.srp_virtual_count ||
-       settings.nonpaged_dynamic_bytes || settings.nonpaged_virtual_bytes ||
+       !settings.nonpaged_dynamic_bytes ||
+       settings.nonpaged_virtual_bytes!=settings.nonpaged_dynamic_bytes ||
        settings.paged_dynamic_bytes)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
     struct port_boo_packet_layout m={0};
@@ -713,6 +715,7 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
     if(port_boo_packet_layout(&settings,&m,&boo)!=PORT_BOO_PACKET_OK ||
        m.lrp.first_address<start || m.srp.reserved_end>top ||
        m.nonpaged_start<start ||
+       m.nonpaged_end!=m.lrp.first_address ||
        m.srp.resident_end>top ||
        m.irp.resident_end>top || m.lrp.resident_end>top)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -743,14 +746,14 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
        port_ini_packet_init(&areas[1],&executive_lrps)!=PORT_INI_PACKETS_OK ||
        port_ini_packet_init(&areas[2],&executive_srps)!=PORT_INI_PACKETS_OK)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
-    struct port_vms37_init_params init_params;
-    const uint32_t resident_free=m.nonpaged_start-(uint32_t)start;
-    if(port_vms37_init_param_defaults(&init_params)!=PORT_VMS37_SYSPARAM_OK||
-       resident_free<init_params.nonpaged_dynamic_bytes)
+    const uint32_t resident_free=m.nonpaged_end-m.nonpaged_start;
+    if(resident_free!=settings.nonpaged_dynamic_bytes ||
+       m.nonpaged_end>top)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
-    /* INIT allocations consume the configured NPAGEDYN region; leave the
-     * extra native backing slack outside the original pool limit. */
-    executive_free_npages=init_params.nonpaged_dynamic_bytes;
+    /* SYSBOOT lays out NPAGEDYN below the packet ranges. Keep INIT's native
+     * dynamic allocations inside that exact source-sized interval. */
+    executive_np_base=(uint8_t *)(uintptr_t)m.nonpaged_start;
+    executive_free_npages=resident_free;
     executive_packet_ready=1u;
     p->result->irp_queue=&executive_irps;
     p->result->lrp_queue=&executive_lrps;
@@ -777,7 +780,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
          * the $ENQ and SPT consumers are not ported yet. */
         if(!executive_packet_ready || executive_lockdb_ready ||
            !p->lock_settings || !executive_free_npages ||
-           port_ini_lockdb_init(executive_packet_pages,
+           port_ini_lockdb_init(executive_np_base,
                executive_free_npages,p->lock_settings,
                &executive_lockdb)!=PORT_INI_LOCKDB_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -826,7 +829,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         settings.system_pcb_address=(uint32_t)(uintptr_t)executive_vms_system_pcb;
         settings.null_pcb_address=(uint32_t)(uintptr_t)executive_vms_null_pcb;
-        if(port_ini_procvec_init(executive_packet_pages+used,
+        if(port_ini_procvec_init(executive_np_base+used,
                  executive_free_npages-used,&settings,
                  &executive_procvec)!=PORT_INI_PROC_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -880,7 +883,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         uint32_t used=lockused+pvused;
         if(used>=executive_free_npages ||
-           port_ini_phvswap_init(executive_packet_pages+used,
+           port_ini_phvswap_init(executive_np_base+used,
                  executive_free_npages-used,p->phv_settings,
                  &executive_phvswap)!=PORT_INI_PHVSWAP_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -910,7 +913,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         uint32_t used=lock+proc+phv;
         if(used>=executive_free_npages ||
-           port_ini_mpw_init(executive_packet_pages+used,
+           port_ini_mpw_init(executive_np_base+used,
                executive_free_npages-used,p->mpw_settings,
                &executive_mpw)!=PORT_INI_MPW_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -944,7 +947,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         uint32_t used=lock+proc+phv+mpw;
         if(used>=executive_free_npages ||
-           port_ini_pflvec_init(executive_packet_pages+used,
+           port_ini_pflvec_init(executive_np_base+used,
                     executive_free_npages-used,&settings,
                     &executive_pflvec)!=PORT_INI_PFL_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -1107,9 +1110,9 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         port_ini_log_templates(executive_disklog,executive_sysdevlog);
         struct port_ini_syslog_settings settings={
             .size_field_offset=PORT_INI_LOG_SIZE_OFFSET,
-            .pool_address=(uint32_t)(uintptr_t)(executive_packet_pages+used),
+            .pool_address=(uint32_t)(uintptr_t)(executive_np_base+used),
             .allocation_alignment=16u};
-        if(port_ini_syslog_init(executive_packet_pages+used,size-used,
+        if(port_ini_syslog_init(executive_np_base+used,size-used,
                executive_disklog,sizeof executive_disklog,
                executive_sysdevlog,sizeof executive_sysdevlog,&settings,
                &executive_syslog)!=PORT_INI_SYSLOG_OK)
@@ -1122,7 +1125,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         const uint32_t pool_bytes=((size-(uint32_t)pool_offset)&~7u);
         if(port_exe_np_pool_init(&executive_np_pool,
-               executive_packet_pages+(uint32_t)pool_offset,pool_bytes,
+               executive_np_base+(uint32_t)pool_offset,pool_bytes,
                &executive_qio_pool_sync)!=PORT_EXE_NP_POOL_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         executive_np_pool_ready=1u;

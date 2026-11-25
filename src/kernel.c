@@ -3230,16 +3230,18 @@ void kmain(void) {
      * SYS.EXE before the CPU-specific load vector table is linked. Counts,
      * sizes and the resident nonpaged limit use original SYSPARAM defaults;
      * PARAMS.DAT overrides and virtual NPAGEVIR mapping remain unresolved. */
-    static const struct port_boo_packet_settings packet_profile={
+    const struct port_boo_packet_settings packet_profile={
         .irp_length=PORT_V37_IRP_SIZE,
-        .irp_count=PORT_VMS37_DEFAULT_IRPCOUNT,
-        .irp_virtual_count=PORT_VMS37_DEFAULT_IRPCOUNT,
-        .lrp_requested_size=PORT_VMS37_DEFAULT_LRPSIZE,
-        .lrp_count=PORT_VMS37_DEFAULT_LRPCOUNT,
-        .lrp_virtual_count=PORT_VMS37_DEFAULT_LRPCOUNT,
-        .srp_requested_size=PORT_VMS37_DEFAULT_SRPSIZE,
-        .srp_count=PORT_VMS37_DEFAULT_SRPCOUNT,
-        .srp_virtual_count=PORT_VMS37_DEFAULT_SRPCOUNT};
+        .irp_count=init_params.irp_count,
+        .irp_virtual_count=init_params.irp_count,
+        .lrp_requested_size=init_params.lrp_size,
+        .lrp_count=init_params.lrp_count,
+        .lrp_virtual_count=init_params.lrp_count,
+        .srp_requested_size=init_params.srp_size,
+        .srp_count=init_params.srp_count,
+        .srp_virtual_count=init_params.srp_count,
+        .nonpaged_dynamic_bytes=init_params.nonpaged_dynamic_bytes,
+        .nonpaged_virtual_bytes=init_params.nonpaged_dynamic_bytes};
     static struct port_sys_exec_result packet_result;
     const struct port_sys_exec_start packet_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
