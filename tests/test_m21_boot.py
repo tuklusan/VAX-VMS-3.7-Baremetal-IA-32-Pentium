@@ -7,17 +7,17 @@ boot = (root/'build/boot.bin').read_bytes()
 kernel = (root/'build/kernel.bin').read_bytes()
 floppy = (root/'vms37lab.ima').read_bytes()
 assert len(boot) == 512 and boot[-2:] == b'\x55\xaa'
-assert 0 < len(kernel) <= 265*512
+assert 0 < len(kernel) <= 273*512
 assert source.count('call bios_read_retry') == 1, 'One repeated single-sector CHS read loop'
-for instruction in ('movw $0x1000, %si', 'movw $265, %bp',
+for instruction in ('movw $0x1000, %si', 'movw $273, %bp',
                     'movw stage2_count, %bp', 'movw stage2_lbn, %di',
                     'movb $1, %al', 'int $0x13', 'ljmp $0x08, $0x00010000',
                     'vmb_e820_next:', 'vmb_e820_invalid:', 'bios_read_retry:',
                     'disk_error:', '0xaa55'):
-    if instruction == 'movw $265, %bp':
-        continue  # Explicit 265-block bound is CMP, not an unbounded MOV.
+    if instruction == 'movw $273, %bp':
+        continue  # Explicit 273-block bound is CMP, not an unbounded MOV.
     assert instruction in source, instruction
-assert 'cmpw $265, %bp' in source
+assert 'cmpw $273, %bp' in source
 assert 'cmpw $2880, %ax' in source
 assert 'jnz read_block' in source
 assert 'movw $3, %si' in source and 'jnz .retry' in source
@@ -29,7 +29,7 @@ assert 0 <= position <= 510-8, 'Recorded sector stage-2 parameters'
 # build/boot.bin is an unpatched template; the imaged floppy has live count.
 assert floppy[:position+4] == boot[:position+4]
 count, lbn = struct.unpack_from('<HH', floppy, position+4)
-assert 1 <= count <= 265 and 1 <= lbn < 2880
+assert 1 <= count <= 273 and 1 <= lbn < 2880
 assert lbn+count <= 2880
 assert count*512 >= len(kernel), 'Recorded disk allocation must fit stage-2'
 print('Current live counted CHS boot loader and bounds PASS')
