@@ -138,8 +138,13 @@ int main(int argc,char **argv){
     put16(old+14,19u);put16(old+16,2u);put16(old+18,0u);put16(old+4,6u);
     assert(port_f11b_next_header(old,&fc,0,0,0,&ho,result,&found)==1u);
     assert(found&&hm.last.number==19u&&hm.last.sequence==2u&&hm.calls==3u);
+    put16(old+14,27u);put16(old+16,4u);old[18]=2u;old[19]=0xa5u;
+    hm.segment=7u;
+    assert(port_f11b_next_header(old,&fc,0,0,1,&ho,result,&found)==1u);
+    assert(found&&hm.last.number==27u&&hm.last.sequence==4u&&
+           hm.last.volume==2u&&hm.last.number_extension==0xa5u);
     put16(old+14,0u);old[19]=0u;
-    assert(port_f11b_next_header(old,&fc,0,0,0,&ho,result,&found)==1u&&!found);
+    assert(port_f11b_next_header(old,&fc,0,0,1,&ho,result,&found)==1u&&!found);
     uint64_t ticks=0;
     assert(port_time_calendar_to_ticks(2024,2,29,6,7,8,&ticks));
     uint8_t b[13];
