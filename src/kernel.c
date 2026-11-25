@@ -3456,7 +3456,7 @@ void kmain(void) {
      * seven slots for bit-level pagefile allocation. The resident SYS.EXE
      * owns both arrays. No modified-page writer process exists yet. */
     static const struct port_ini_mpw_settings mpw_settings={
-        .requested_fault_cluster=32u,.dyn_mpwmap_type=0u};
+        .requested_fault_cluster=96u,.dyn_mpwmap_type=0u};
     static struct port_sys_exec_result mpw_result;
     const struct port_sys_exec_start mpw_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
@@ -3465,12 +3465,12 @@ void kmain(void) {
     if(loaded_sys(&mpw_request)!=PORT_SYS_EXEC_NORMAL ||
        mpw_result.signature!=PORT_SYS_EXEC_MPW_RESULT_TAG ||
        !mpw_result.modified_page_writer_map ||
-       mpw_result.modified_page_writer_map->effective_fault_cluster!=32u ||
-       mpw_result.modified_page_writer_map->swap_increment!=32u ||
-       mpw_result.modified_page_writer_map->allocated_slots!=39u ||
-       mpw_result.modified_page_writer_map->allocated_bytes!=246u ||
-       *(const uint32_t *)(const void *)(mpw_result.modified_page_writer_map->pte_base+38u*4u)!=0u ||
-       *(const uint16_t *)(const void *)(mpw_result.modified_page_writer_map->phv_index_base+38u*2u)!=0u){
+       mpw_result.modified_page_writer_map->effective_fault_cluster!=96u ||
+       mpw_result.modified_page_writer_map->swap_increment!=96u ||
+       mpw_result.modified_page_writer_map->allocated_slots!=103u ||
+       mpw_result.modified_page_writer_map->allocated_bytes!=630u ||
+       *(const uint32_t *)(const void *)(mpw_result.modified_page_writer_map->pte_base+102u*4u)!=0u ||
+       *(const uint16_t *)(const void *)(mpw_result.modified_page_writer_map->phv_index_base+102u*2u)!=0u){
         bootstrap_message("INIT: resident SYS.EXE modified-page writer record validation failed.");
         bootstrap_halt();
     }

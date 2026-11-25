@@ -23069,6 +23069,25 @@
         {
           "original_lines": [
             945,
+            1003
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            1004,
+            1011
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "MPW_WRTCLUSTER default 96 pages copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            1012,
             1518
           ],
           "status": "unresolved",
@@ -23151,7 +23170,7 @@
           "reason": "Other system parameters and configured PARAMS.DAT overrides not ported"
         }
       ],
-      "unresolved_integration": "Only original INIT defaults for process, lock, PHV and swap-map sizing are represented. SYSBOOT PARAMS.DAT overrides and the remaining SYSPARAM cells are unported."
+      "unresolved_integration": "Only original INIT defaults for process, lock, packet, modified-page-writer, PHV and swap-map sizing are represented. SYSBOOT PARAMS.DAT overrides and the remaining SYSPARAM cells are unported."
     }
   ]
 }

@@ -2614,6 +2614,7 @@ sysparam_defaults=[
     (893,899,'LRPSIZE default 576 bytes'),
     (915,921,'SRPCOUNT default 120'),
     (938,944,'SRPSIZE default 96 bytes'),
+    (1004,1011,'MPW_WRTCLUSTER default 96 pages'),
     (1519,1526,'REALTIME_SPTS default 0'),
     (1544,1551,'LOCKIDTBL default 128'),
     (1557,1564,'RESHASHTBL default 32'),
@@ -2636,7 +2637,7 @@ if cursor<=3007:
         'status':'unresolved','reason':'Other system parameters and configured PARAMS.DAT overrides not ported'})
 result['files'].append({'original_file':'SYS/SRC/SYSPARAM.MAR',
     'original_lines':3007,'sections':sysparam_sections,
-    'unresolved_integration':'Only original INIT defaults for process, lock, PHV and swap-map sizing are represented. SYSBOOT PARAMS.DAT overrides and the remaining SYSPARAM cells are unported.'})
+    'unresolved_integration':'Only original INIT defaults for process, lock, packet, modified-page-writer, PHV and swap-map sizing are represented. SYSBOOT PARAMS.DAT overrides and the remaining SYSPARAM cells are unported.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')

@@ -7,6 +7,7 @@ int main(void){
        p.max_processes!=72u||p.realtime_spts!=0u||p.irp_count!=60u||
        p.lrp_count!=4u||p.lrp_size!=576u||p.srp_count!=120u||
        p.srp_size!=96u||p.nonpaged_dynamic_bytes!=64000u||
+       p.modified_page_fault_cluster!=96u||
        p.lock_id_slots!=128u||
        p.resource_hash_slots!=32u||p.deadlock_wait_seconds!=10u||
        p.balance_set_count!=36u||p.max_working_set!=1024u||

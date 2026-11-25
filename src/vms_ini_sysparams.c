@@ -14,6 +14,7 @@ uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *p){
         .srp_count=120u,                /* SRPCOUNT */
         .srp_size=96u,                  /* SRPSIZE */
         .nonpaged_dynamic_bytes=64000u, /* NPAGEDYN */
+        .modified_page_fault_cluster=96u, /* MPW_WRTCLUSTER */
         .lock_id_slots=128u,            /* LOCKIDTBL */
         .resource_hash_slots=32u,       /* RESHASHTBL */
         .deadlock_wait_seconds=10u,     /* DEADLOCK_WAIT */
