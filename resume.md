@@ -1685,3 +1685,12 @@ Verification: make -j2 all test PASS (host, static layout, and sanitizer checks;
 
 Local M369 implementation commit: 8a763966dbe0b167ff9a69faf29e483026d57964.
 Published GitHub main implementation commit: d893603f0a7561fead53677486b3a9ad72cdae62.
+
+## M370 - Save outgoing native context in PCB/PHD, 25 November 2026
+
+Added `port_v37_sched_save_current`: it validates the interrupted IA-32 restore frame, records its address in `PCB$L_PHYPCB`, writes native KSP/PC in the bound source PHD, and then requeues the current resident PCB. If the queue operation fails, the PCB/PHD context fields roll back. Host tests cover valid context save, malformed-frame rejection without mutation, queue-corruption rollback, and existing SCH$RESCHED/SCH$SCHED order. The live IDT/PIT trap still does not call this service or select the next frame; no process is activated.
+
+Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0); `python3 tools/gen_source_coverage.py`, `python3 tools/validate_source_ranges.py`, `python3 tests/test_coverage_ranges.py`, and `git diff --check` PASS. Audit: 2,121 ranges, 451/4,566 original files indexed, zero errors; 17,255 mapped, 30,267 partial, 56,921 unresolved, 8,032 missing, 26,434 excluded, 917 hardware-excluded. This scheduler-only change is not wired into the guest, so no new QEMU result is attributed to M370; the latest M369 QEMU remains an incomplete-INIT boot, with no login/DCL/DECnet.
+
+Local M370 implementation commit: `25608c644a7fff91cc71590f342dcde3b2d43cd9`.
+Published GitHub main implementation commit: pending.
