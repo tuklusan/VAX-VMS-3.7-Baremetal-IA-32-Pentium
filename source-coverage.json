@@ -1644,7 +1644,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 711,
+          "pc_line": 713,
           "function": "Set a source-layout local event bit and wake a satisfied LEF waiter; PID lookup and live SETEF dispatch remain absent"
         },
         {
@@ -1655,7 +1655,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 711,
+          "pc_line": 713,
           "function": "Set a source-layout normal/master CEF bit and scan its WQH for satisfied resident waiters; nonresident CEF waiters use source EVENTE/CHSE to COMO without completing saved result; slave CEB replication remains unsupported"
         },
         {
@@ -1674,7 +1674,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "event_condition",
-          "pc_line": 573,
+          "pc_line": 575,
           "function": "Evaluate the source EFWM and WALL wait-any/wait-all predicate for a resident PCB"
         },
         {
@@ -6088,7 +6088,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_event",
-          "pc_line": 697,
+          "pc_line": 699,
           "function": "native functional counterpart to original section"
         },
         {
