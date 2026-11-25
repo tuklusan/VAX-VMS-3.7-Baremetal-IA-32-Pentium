@@ -1840,3 +1840,12 @@ Verification: `make -j2 all test` exit 0; focused `make v37schedcheck v37eventwa
 
 Local M385 implementation commit: 8ecb92fe49b8e3b026b7eb0f5d6d0dcaf5885905.
 Published GitHub main M385 implementation commit: f298b2d482c6f075a3f0d1d910e892267d2b8762.
+
+## M386 - Wake nonresident CEF waiters through CHSE, 25 November 2026
+
+Matched original RSE.MAR CEF behavior: resident CEF waiters receive SS$_NORMAL in their saved native return context; nonresident CEF waiters take EVENTE/CHSE to COMO without modifying unavailable process return state. POSTEF now evaluates both resident and nonresident CEF waiters. The host regression makes a WFLAND waiter nonresident before the satisfying event and verifies COMO wake, empty CEB WQH, and unchanged saved PC/R0/EAX. Slave CEB interprocessor request/replication and live guest event-service dispatch remain incomplete.
+
+Verification: focused `make v37schedcheck v37eventwaitcheck` PASS; full `make -j2 all test` exit 0; `python3 tools/gen_source_coverage.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS (2,135 ranges, 451/4,566 original files indexed, zero validation errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). One `make qemu-sysboot-m217` PASS; log `logs/serial/qemu-m217-run-local-20261125T185204880022Z.log`, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6. Guest reaches the existing DQA0/IRQ14/ACP and IRQ0 scheduler checkpoints, then explicit incomplete-INIT stop; it does not exercise CEF wake. No QEMU process remains. No login/DCL/DECnet/SET HOST is claimed.
+
+Local M386 implementation commit: 25bac35d928cbd7fa1b1f2f6fba925951d1955f8.
+Published GitHub main M386 implementation commit: 08283fb15dac8650bea246795f5c15bc136dbbeb.
