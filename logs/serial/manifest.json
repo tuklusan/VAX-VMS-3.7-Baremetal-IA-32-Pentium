@@ -2728,6 +2728,60 @@
       "path": "logs/serial/qemu-m217-run-local-20261125T143806531085Z.log",
       "bytes": 5885,
       "sha256": "0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T145648812112Z",
+      "run_url": "",
+      "test_result": "harness-fail",
+      "path": "logs/serial/qemu-m217-run-local-20261125T145648812112Z.log",
+      "bytes": 4934,
+      "sha256": "e53a8c5923bc3796aaee7f4df9fd15dbaa7def7cb9ce35718b25e04e3cdadcaf"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T145930917322Z",
+      "run_url": "",
+      "test_result": "harness-fail",
+      "path": "logs/serial/qemu-m217-run-local-20261125T145930917322Z.log",
+      "bytes": 4934,
+      "sha256": "e53a8c5923bc3796aaee7f4df9fd15dbaa7def7cb9ce35718b25e04e3cdadcaf"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T150142589675Z",
+      "run_url": "",
+      "test_result": "harness-fail",
+      "path": "logs/serial/qemu-m217-run-local-20261125T150142589675Z.log",
+      "bytes": 4896,
+      "sha256": "d577de0a4180e9427d4234a4933e86dc1c2f92b269f864e4f0a0c0346d886a9d"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T150219100580Z",
+      "run_url": "",
+      "test_result": "harness-fail",
+      "path": "logs/serial/qemu-m217-run-local-20261125T150219100580Z.log",
+      "bytes": 4925,
+      "sha256": "b5e9b259ab74313693e4cd7a89651275ce5506967312920254539fd2d1bc03ce"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T150341778937Z",
+      "run_url": "",
+      "test_result": "harness-fail",
+      "path": "logs/serial/qemu-m217-run-local-20261125T150341778937Z.log",
+      "bytes": 4925,
+      "sha256": "b5e9b259ab74313693e4cd7a89651275ce5506967312920254539fd2d1bc03ce"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T150413292072Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m217-run-local-20261125T150413292072Z.log",
+      "bytes": 5975,
+      "sha256": "edfa0c71aceb8c927480e60d42174b023f9da1d8ab274d6307876aff45b84193"
     }
   ]
 }

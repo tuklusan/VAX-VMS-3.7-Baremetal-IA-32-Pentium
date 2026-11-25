@@ -4514,13 +4514,31 @@ void kmain(void) {
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&dq_publish_result,
         .phase=PORT_SYS_EXEC_INIT_DQ_DDT_PUBLISH,.dq_boot_io=&dq_boot_io};
-    if(loaded_sys(&dq_publish_request)!=PORT_SYS_EXEC_NORMAL||
+    const uint32_t dq_publish_status=loaded_sys(&dq_publish_request);
+    if(dq_publish_status!=PORT_SYS_EXEC_NORMAL||
        dq_publish_result.signature!=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG){
-        bootstrap_message("INIT: DQA0 DDT publication phase rejected its source prerequisites.");
+        if((dq_publish_result.signature&UINT32_C(0xffff0000))==
+              UINT32_C(0x4d500000)){
+            static const char digits[]="0123456789ABCDEF";
+            char message[]="INIT: DQA0 publish mask XX.";
+            message[24]=digits[(dq_publish_result.signature>>4)&15u];
+            message[25]=digits[dq_publish_result.signature&15u];
+            bootstrap_message(message);
+        }else if((dq_publish_result.signature&UINT32_C(0xffff0000))==
+                 UINT32_C(0x4d510000)){
+            static const char digits[]="0123456789ABCDEF";
+            char message[]="INIT: ACP WCB mapper error X.";
+            message[27]=digits[dq_publish_result.signature&15u];
+            bootstrap_message(message);
+        }else{
+            bootstrap_message("INIT: DQA0 DDT publication phase rejected its source prerequisites.");
+        }
         bootstrap_halt();
     }
     if(dq_publish_result.dqa_ioc_status==PORT_DQDDT_BIND_BAD){
-        bootstrap_message("INIT: DQA0 DDT native pointer/CRB publication validation failed.");
+        bootstrap_message(dq_publish_result.dqa_ioc_error_stage==1u?
+          "INIT: DQA0 native DDT/CRB bind validation failed.":
+          "INIT: IOC$SEARCHDEV failed after DQA0 DDT publication.");
         bootstrap_halt();
     }
     if(dq_publish_result.dqa_ioc_status!=PORT_V37_IOC_OK){
@@ -4553,6 +4571,7 @@ void kmain(void) {
        dq_publish_result.dq_acp_failed_fcb_reclaimed!=1u||
        dq_publish_result.dq_acp_readonly_wcb_closed!=1u||
        dq_publish_result.dq_acp_fib_identified_sys_file!=1u||
+       dq_publish_result.dq_acp_wcb_map_hits==0u||
        dq_publish_result.dq_acp_file_blocks==0u||
        dq_publish_result.dqa_ioc_ddb!=dq_publish_result.device_db->ddb[0]||
        dq_publish_result.dqa_ioc_ucb!=dq_publish_result.device_db->ucb[0]||
@@ -4571,6 +4590,7 @@ void kmain(void) {
     bootstrap_message("INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.");
     bootstrap_message("INIT: ACP GETFIB returned the resident SYS.EXE FID from its allocated WCB.");
     bootstrap_message("INIT: Files-11 ACP read 700 SYS.EXE bytes via DQA0 DDT/IRQ14 and matched the FH2-chain sample.");
+    bootstrap_message("INIT: SYSWCB IOC$MAPVBLK mapping selected ACP SYS.EXE sectors before DQA0 DDT dispatch.");
 
     /* This asynchronous physical IRP is admitted only after the live DQA0
      * DDB/UCB DDT publication and IOC$SEARCHDEV checks have succeeded. */

@@ -11,6 +11,7 @@
 #include "vms_ini_pc_bus.h"
 #include "vms_con_port.h"
 #include "vms_ioc_phys.h"
+#include "vms_ioc_mapvblk.h"
 #include "vms_devlog_search.h"
 #include "vms_dqddt.h"
 #include "vms_dq_ioc.h"
@@ -380,8 +381,111 @@ struct executive_postpub_f11_context {
 struct executive_acp_io_context {
     struct executive_postpub_f11_context disk;
     const uint8_t *index_header;
+    const struct port_ini_syswcb *system_wcb;
+    uint32_t *diagnostic;
+    uint32_t ucb;
+    uint32_t wcb_map_hits;
     uint16_t volume;
 };
+enum { EXEC_ACP_WCB_NO_EXTENT=UINT32_C(0xfffffffe) };
+static uint32_t executive_ioc_resolve_wcb(void *opaque,uint32_t address,
+        size_t minimum,size_t *capacity){
+    const struct executive_acp_io_context *ctx=opaque;
+    if(!ctx||!ctx->system_wcb||!ctx->system_wcb->record||!capacity||
+       address!=(uint32_t)(uintptr_t)ctx->system_wcb->record||
+       minimum>ctx->system_wcb->record_length)
+        return 0u;
+    *capacity=ctx->system_wcb->record_length;
+    return 1u;
+}
+static const uint8_t *executive_ioc_wcb_record(void *opaque,uint32_t address,
+        size_t minimum,size_t *capacity){
+    const struct executive_acp_io_context *ctx=opaque;
+    if(!executive_ioc_resolve_wcb(opaque,address,minimum,capacity))return 0;
+    return ctx->system_wcb->record;
+}
+static uint32_t executive_ioc_map_enter(void *opaque,uint32_t ucb,
+                                         uint32_t *cookie){
+    const struct executive_acp_io_context *ctx=opaque;
+    if(!ctx||ucb!=ctx->ucb||!cookie)return 0u;
+    *cookie=executive_qio_raise_sync(0);
+    return 1u;
+}
+static void executive_ioc_map_leave(void *opaque,uint32_t ucb,
+                                     uint32_t cookie){
+    (void)opaque;(void)ucb;
+    executive_qio_restore_ipl(0,cookie);
+}
+static uint32_t executive_ioc_is_sequential(void *opaque,uint32_t ucb){
+    const struct executive_acp_io_context *ctx=opaque;
+    return ctx&&ucb==ctx->ucb?0u:1u;
+}
+static uint32_t executive_ioc_file_size(void *opaque,uint32_t fcb,
+                                         uint32_t *blocks){
+    (void)opaque;(void)fcb;(void)blocks;
+    return 0u; /* SYSWCB carries NOTFCP; source must not dereference an FCB. */
+}
+static uint32_t executive_ioc_relative_ucb(void *opaque,uint32_t rvt,
+        uint8_t rvn,uint32_t *ucb){
+    (void)opaque;(void)rvt;(void)rvn;(void)ucb;
+    return 0u; /* This boot volume is RVN 0; no volume set is mounted yet. */
+}
+static void executive_ioc_map_hit(void *opaque){
+    struct executive_acp_io_context *ctx=opaque;
+    if(ctx&&ctx->wcb_map_hits!=UINT32_MAX)ctx->wcb_map_hits++;
+}
+/* Resolve an ACP physical LBN back to SYS.EXE's VBN, then use the source
+ * SYSWCB through IOC$MAPVBLK to select the LBN used by the live DQA0 DDT. */
+static uint32_t executive_acp_wcb_lbn(struct executive_acp_io_context *ctx,
+        uint32_t source_lbn,uint32_t *mapped_lbn){
+    if(!ctx||!ctx->system_wcb||!ctx->system_wcb->record||!mapped_lbn||
+       !ctx->ucb||!ctx->system_wcb->mapping_count||source_lbn>0x00ffffffu){
+        if(ctx&&ctx->diagnostic)*ctx->diagnostic=UINT32_C(0x4d510001);
+        return PORT_F11_87_BADPARAM;
+    }
+    uint32_t vbn=0u,offset=0u;
+    for(uint32_t i=0;i<ctx->system_wcb->mapping_count;i++){
+        uint16_t count=0u;uint32_t start=0u;
+        if(port_ini_syswcb_retrieval(ctx->system_wcb,i,&count,&start)!=
+               PORT_INI_SYSWCB_OK||!count||offset>UINT32_MAX-count)
+            {if(ctx->diagnostic)*ctx->diagnostic=UINT32_C(0x4d510002);
+             return PORT_F11_87_BADFILEHDR;}
+        uint32_t first=start&UINT32_C(0x00ffffff);
+        uint32_t rvn=start>>24;
+        if(!rvn&&source_lbn>=first&&source_lbn-first<count){
+            const uint32_t stvbn=(uint32_t)ctx->system_wcb->record[
+                PORT_INI_SYSWCB_STVBN_OFFSET]|
+                ((uint32_t)ctx->system_wcb->record[
+                PORT_INI_SYSWCB_STVBN_OFFSET+1u]<<8)|
+                ((uint32_t)ctx->system_wcb->record[
+                PORT_INI_SYSWCB_STVBN_OFFSET+2u]<<16)|
+                ((uint32_t)ctx->system_wcb->record[
+                PORT_INI_SYSWCB_STVBN_OFFSET+3u]<<24);
+            if(stvbn>UINT32_MAX-offset-(source_lbn-first))
+                {if(ctx->diagnostic)*ctx->diagnostic=UINT32_C(0x4d510003);
+                 return PORT_F11_87_BADFILEHDR;}
+            vbn=stvbn+offset+(source_lbn-first);
+            break;
+        }
+        offset+=count;
+    }
+    if(!vbn)return EXEC_ACP_WCB_NO_EXTENT;
+    const struct port_ioc_mapvblk_ops ops={ctx,executive_ioc_wcb_record,
+        executive_ioc_map_enter,executive_ioc_map_leave,
+        executive_ioc_is_sequential,executive_ioc_file_size,
+        executive_ioc_relative_ucb,executive_ioc_map_hit};
+    struct port_ioc_mapvblk_result result={0};
+    const uint32_t map_status=port_ioc_mapvblk(vbn,512u,
+          (uint32_t)(uintptr_t)ctx->system_wcb->record,ctx->ucb,&ops,&result);
+    if(map_status!=PORT_IOC_MAPVBLK_OK||result.unmapped_bytes||
+       result.ucb!=ctx->ucb||result.lbn!=source_lbn){
+        if(ctx->diagnostic)*ctx->diagnostic=UINT32_C(0x4d510000)|
+            (map_status!=PORT_IOC_MAPVBLK_OK?map_status:5u);
+        return PORT_F11_87_BADFILEHDR;
+    }
+    *mapped_lbn=result.lbn;
+    return PORT_F11_87_NORMAL;
+}
 static void *executive_acp_alloc(void *opaque,uint32_t bytes,uint32_t tag){
     (void)opaque;
     const uint32_t minimum=tag==PORT_F11_87_FCBTYPE?
@@ -424,7 +528,12 @@ static uint32_t executive_acp_read_lbn(void *opaque,uint32_t lbn,
                                        uint8_t output[512]){
     struct executive_acp_io_context *ctx=opaque;
     if(!ctx||!output)return PORT_F11_87_BADPARAM;
-    return executive_postpub_f11_sector(&ctx->disk,lbn,output)==PORT_DQ_DIR_OK?
+    uint32_t mapped_lbn=0u;
+    const uint32_t wcb_status=executive_acp_wcb_lbn(ctx,lbn,&mapped_lbn);
+    if(wcb_status==EXEC_ACP_WCB_NO_EXTENT)mapped_lbn=lbn;
+    else if(wcb_status!=PORT_F11_87_NORMAL)
+        return PORT_F11_87_BADFILEHDR;
+    return executive_postpub_f11_sector(&ctx->disk,mapped_lbn,output)==PORT_DQ_DIR_OK?
         PORT_F11_87_NORMAL:PORT_F11_86_IOERROR;
 }
 static uint32_t executive_acp_switch_volume(void *opaque,uint16_t volume){
@@ -1952,10 +2061,17 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         return PORT_SYS_EXEC_NORMAL;
     }
     if(p->phase==PORT_SYS_EXEC_INIT_DQ_DDT_PUBLISH){
-        if(!executive_dq_crb_read_ready||!executive_dqddt_ready||
-           !executive_relocated_private_ready||!executive_devicedb_ready||
-           !executive_ioc_ready||executive_devicedb_result.incomplete_driver_mask!=7u)
+        const uint32_t prerequisite_mask=
+            (executive_dq_crb_read_ready?1u:0u)|
+            (executive_dqddt_ready?2u:0u)|
+            (executive_relocated_private_ready?4u:0u)|
+            (executive_devicedb_ready?8u:0u)|
+            (executive_ioc_ready?16u:0u)|
+            (executive_devicedb_result.incomplete_driver_mask==7u?32u:0u);
+        if(prerequisite_mask!=63u){
+            p->result->signature=UINT32_C(0x4d500000)|prerequisite_mask;
             return PORT_SYS_EXEC_BAD_PARAMETERS;
+        }
         p->result->device_db=&executive_devicedb_result;
         p->result->device_db_bytes=executive_devicedb_bytes.data;
         p->result->dq_native_ddt=&executive_native_dqddt;
@@ -1969,6 +2085,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
              &executive_devicedb_result,&executive_dqddt,&executive_dq_fdt,
              &executive_native_dqddt,&executive_dq_crb);
         if(p->result->dqa_ioc_status!=PORT_DQDDT_BIND_OK){
+            p->result->dqa_ioc_error_stage=1u;
             p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
             return PORT_SYS_EXEC_NORMAL;
         }
@@ -1981,6 +2098,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            found.ddb!=executive_devicedb_result.ddb[0]||
            found.ucb!=executive_devicedb_result.ucb[0]||found.unit!=0u||
            !found.driver_bound){
+            p->result->dqa_ioc_error_stage=2u;
             p->result->signature=PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG;
             p->result->dqa_ioc_ddb=found.ddb;
             p->result->dqa_ioc_ucb=found.ucb;
@@ -2019,8 +2137,12 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         const uint32_t cluster=port_dq_index_word(home,14u);
         if(bitmap_blocks>UINT8_MAX||cluster>UINT16_MAX)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        struct executive_acp_io_context acp_io={{p->dq_boot_io,0u},
-            index_header,executive_f11_opened_sys.file.volume};
+        struct executive_acp_io_context acp_io={
+            .disk={p->dq_boot_io,0u},.index_header=index_header,
+            .system_wcb=&executive_system_wcb,
+            .diagnostic=&p->result->signature,
+            .ucb=executive_devicedb_result.ucb[0],
+            .volume=executive_f11_opened_sys.file.volume};
         const struct port_f11_87_ops acp_ops={
             .context=&acp_io,.alloc=executive_acp_alloc,
             .dealloc=executive_acp_dealloc,
@@ -2132,6 +2254,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             if(acp_data_sample[i]!=chain_sample[i])
                 return PORT_SYS_EXEC_BAD_PARAMETERS;
         p->result->dq_acp_data_reads=acp_io.disk.reads;
+        p->result->dq_acp_wcb_map_hits=acp_io.wcb_map_hits;
         const struct port_f11_87_deaccess_request readonly_close={0u,0u,0u,0u};
         if(port_f11b_deaccess(&acp_context,&readonly_close)!=
               PORT_F11_87_NORMAL||acp_sys_fcb->accesses||

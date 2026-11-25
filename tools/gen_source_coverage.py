@@ -1706,7 +1706,7 @@ for first,last,path,symbol,purpose,status in [
     (1,174,None,None,'Other IOSUBRAMS routines not ported','missing'),
     (175,200,None,None,'MAPVBLK interface and original routine description','excluded'),
     (201,315,'src/vms_ioc_mapvblk.c','port_ioc_mapvblk',
-     'WCB chain selection, FM2 scan, adjacent extent, EOF clamp and RVN result; executive structures and bugcheck integration remain partial','partial'),
+     'WCB chain selection, FM2 scan, adjacent extent, EOF clamp and RVN result; live SYSWCB-to-ACP/DQA0 translation is exercised, general WCB/FCB/RVT and bugcheck integration remain partial','partial'),
     (316,406,None,None,'UPDATRANSP and disk sense routines remain unported','missing')]:
     if path is None:
         iocmapvblk_sections.append({'original_lines':[first,last],'status':status,'reason':purpose})
@@ -1717,7 +1717,7 @@ for first,last,path,symbol,purpose,status in [
             'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':purpose})
 result['files'].append({'original_file':'SYS/SRC/IOSUBRAMS.MAR','original_lines':406,
     'sections':iocmapvblk_sections,
-    'unresolved_integration':'IOC$MAPVBLK requires native UCB IPL synchronization, actual resident WCB/FCB address resolvers and VMS fatal-structure bugchecks.'})
+    'unresolved_integration':'General process WCB/FCB/RVT resolvers, multi-volume switching, source fatal-structure bugchecks, and public SYS$QIO completion remain incomplete; the resident SYSWCB DQA0 ACP read path is integrated.'})
 
 # M87: original ODS-1 and ODS-2 ACP file-header, FCB, and I/O paths.
 # The structures and callbacks are in the IA-32 Files-11 ACP source.
