@@ -1631,3 +1631,11 @@ Verification: `make files1187check` PASS; `make sourcerangecheck` PASS (2,117 so
 Local M363 implementation commit: 298066d42c30eb9b1c78340a490543a65be767fe.
 
 Published GitHub main implementation commit: ac8cdd655cc8fe77da51f158fca5667f7105b684.
+
+## M364 - Port IOSUBRAMS IOC$MAPVBLK logical-block mapping, 25 November 2026
+
+Added a native WCB/FM2 mapper covering WCB validation and segment selection, retrieval-pointer traversal, one immediately contiguous extent, EOF clamping, RVN-to-UCB resolution, sequential-device mapping, original-UCB fallback and balanced IPL enter/leave callbacks. Host tests exercise mapped/unmapped extents, EOF, linked WCBs, RVN, sequential mapping, malformed WCB and callback balancing. This function is currently an isolated native routine: live UCB/WCB/FCB/RVT resolvers, executive bugcheck wiring, and DDT/CRB public I/O integration are not connected. The remaining IOSUBRAMS routines are unported.
+
+Verification: `make iocmapvblkcheck` PASS; `make sourcerangecheck` PASS (2,121 ranges; 451/4,566 original files indexed; zero validation errors; 17,255 mapped, 30,263 partial, 56,921 unresolved, 8,032 missing, 26,438 excluded, 917 hardware-excluded); `make -j2 CC=gcc-12 all test` PASS (exit 0, native image, host, static-layout and sanitizer checks); fresh single-runner `make qemu-sysboot-m217` PASS through the existing 700-byte ACP read across IOC-selected DQA0 DDT sectors via IRQ14, then the explicit incomplete-INIT stop. The QEMU guest does not exercise IOC$MAPVBLK. Capture: `logs/serial/qemu-m217-run-local-20261125T143703668577Z.log`, 5,885 bytes, SHA-256 `0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb`; runner exited and no QEMU process remains.
+
+Still incomplete: live IOC$MAPVBLK integration, public SYS$QIO/process I/O, Files-11 ACP packet and AST completion, native INIT, scheduling/image activation, authentic SYSTEM login/DCL, DECnet Phase IV and real SET HOST 0.

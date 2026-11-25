@@ -239,7 +239,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: inisysparamscheck sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37phdcheck v37ia32ctxcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck sysirpqueuecheck irpalloccheck exenppoolcheck
+test: inisysparamscheck sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37phdcheck v37ia32ctxcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck iocmapvblkcheck sysqioargscheck sysirpqueuecheck irpalloccheck exenppoolcheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 
@@ -1393,6 +1393,13 @@ build/vms_sysassign.o: src/vms_sysassign.c src/vms_sysassign.h src/vms_ioc_phys.
 iocphyscheck: $(M120_IOC_OBJS) | build
 	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M120_IOC_SRCS) $(M118_DB_SRCS) tests/test_ioc_phys_host.c -o build/iocphyscheck
 	./build/iocphyscheck
+
+.PHONY: iocmapvblkcheck
+iocmapvblkcheck: build/vms_ioc_mapvblk.o | build
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_ioc_mapvblk.c tests/test_ioc_mapvblk_host.c -o build/iocmapvblkcheck
+	./build/iocmapvblkcheck
+build/vms_ioc_mapvblk.o: src/vms_ioc_mapvblk.c src/vms_ioc_mapvblk.h src/vms_v37_dyn_tags.h | build
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # M121: source SYSQIOREQ.MAR EXE$FINISHIOC to IOC post queue, used
 # by NLDRIVER.MAR; this is not a user $QIO/AST delivery interface.
