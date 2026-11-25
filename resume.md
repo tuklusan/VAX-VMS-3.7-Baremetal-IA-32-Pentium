@@ -1797,3 +1797,4 @@ Added the RSE AST event mask for the original eligible wait states (CEF, COLPG, 
 Verification: `make v37schedcheck` and full `make -j2 all test` PASS (exit 0); coverage generation, range regression, and source-range validation PASS (2,131 ranges; 451/4,566 original files indexed; zero errors; 17,230 mapped, 30,312 partial, 56,876 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. No QEMU run because the event API remains unbound to guest processes. No AST delivery, process activation, login/DCL, DECnet or SET HOST is claimed.
 
 Local M381 implementation commit: `bda81ffff38858be142603ac366aa1700b7a3257`.
+Published GitHub main M381 implementation commit: `bd18ab3bc7c0bea200456bc5b40116e2cc54b34b`.
