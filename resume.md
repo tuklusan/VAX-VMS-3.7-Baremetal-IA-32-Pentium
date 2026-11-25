@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M347
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M367
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -1661,4 +1661,10 @@ Verification: `make -j2 CC=gcc-12 all test` PASS (exit 0); `make sourcerangechec
 Still incomplete: general process WCB/FCB/RVT resolution, multi-volume mapping, source BUG_CHECK paths, public SYS$QIO completion/AST delivery, remaining INIT, process scheduling/image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0.
 
 Local M366 implementation commit: c231024803c834cb680b8a6116cd4900b8ddefa6; published GitHub main implementation commit: 2b0e54d8615809637a94c7aecbaa4a8e14cf3406.
+
+## M367 - Independent M366 build and QEMU revalidation, 25 November 2026
+
+No source changes. Re-ran `make -j2 CC=gcc-12 all test` and `make sourcerangecheck`; both PASS. The audit reports 2,121 ranges, 451/4,566 originals indexed, zero validation errors; 17,255 mapped, 30,263 partial, 56,921 unresolved, 8,032 missing, 26,438 excluded, and 917 hardware-excluded. Two sequential, non-overlapping `make qemu-sysboot-m217` runs PASSed the 700-byte Files-11 SYS.EXE chain read across IOC-selected DQA0 DDT sectors via IRQ14, then reached the explicit incomplete-INIT halt. Captures `logs/serial/qemu-m217-run-local-20261125T151413251291Z.log` and `logs/serial/qemu-m217-run-local-20261125T151522908674Z.log` each contain 5,975 bytes, SHA-256 `edfa0c71aceb8c927480e60d42174b023f9da1d8ab274d6307876aff45b84193`. Both runners exited; no QEMU process remains. This revalidation does not establish public SYS$QIO, process activation, login, DCL, DECnet, or SET HOST 0.
+
+Local source commit remains `05fd5c33c2aec257dd37dc8239ae9d8d9dce53b3`; published implementation remains `2b0e54d8615809637a94c7aecbaa4a8e14cf3406` (GitHub checkpoint record `d587d4c9c9d8318656227bdd5d2650664e8194dd`).
 
