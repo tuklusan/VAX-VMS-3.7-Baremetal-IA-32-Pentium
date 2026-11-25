@@ -1742,3 +1742,13 @@ Verification: `make v37schedcheck` PASS; `make -j2 all test` PASS (exit 0); `pyt
 
 Local M375 implementation commit: `c89f6c022b13e239cd8486410193ae5c1d109f64`.
 Published GitHub main M375 implementation commit: `180f4ac816ab0ca56edb82bbe31e619363b50e07`.
+
+
+## M376 - Verify ordered resident and nonresident WQH wakeups, 25 November 2026
+
+Extended the scheduler host regression through a two-process source wait queue. A resident PCB waits behind an already blocked nonresident PCB; waking the resident tail leaves the head/count correct and returns it to COM through CHSE. Waking the nonresident head moves it to COMO and invokes the swapper wake callback. The test verifies queue links, state transitions, scheduler summary/accounting and WQH emptiness. This remains a host-tested scheduler API path, not a live VMS process or I/O completion path.
+
+Verification: `make v37schedcheck` PASS; `make -j2 all test` PASS (exit 0); `python3 tools/validate_source_ranges.py` and `git diff --check` PASS (2,122 ranges, zero validation errors; 451/4,566 original files indexed). A single `make qemu-sysboot-m217` PASS verified the existing DQA0 DDT/IRQ14/ACP/IRQ0 boot regression and reached the explicit incomplete-INIT stop. Capture `logs/serial/qemu-m217-run-local-20261125T173716075234Z.log`, 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`; runner exited and no QEMU process remains. No process activation, login, DCL, DECnet or SET HOST occurred.
+
+Local M376 implementation commit: `25cdfe1641e94074298375af63fc854a98346fbc`.
+Published GitHub main M376 implementation commit: 434a386ca8b33e53f603344fe1806841104bb28a.
