@@ -14,6 +14,7 @@ uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *p){
         .srp_count=PORT_VMS37_DEFAULT_SRPCOUNT, /* SRPCOUNT */
         .srp_size=PORT_VMS37_DEFAULT_SRPSIZE,   /* SRPSIZE */
         .nonpaged_dynamic_bytes=PORT_VMS37_DEFAULT_NPAGEDYN, /* NPAGEDYN */
+        .paged_dynamic_bytes=PORT_VMS37_DEFAULT_PAGEDYN, /* PAGEDYN */
         .modified_page_fault_cluster=PORT_VMS37_DEFAULT_MPW_WRTCLUSTER,
         .lock_id_slots=PORT_VMS37_DEFAULT_LOCKIDTBL, /* LOCKIDTBL */
         .resource_hash_slots=PORT_VMS37_DEFAULT_RESHASHTBL, /* RESHASHTBL */

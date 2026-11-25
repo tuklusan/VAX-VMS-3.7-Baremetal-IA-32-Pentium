@@ -51,6 +51,7 @@ uint32_t port_vms37_init_params_apply_file(
             {"SRPCOUNT",&candidate.srp_count,0u,4096u},
             {"SRPSIZE",&candidate.srp_size,96u,144u},
             {"NPAGEDYN",&candidate.nonpaged_dynamic_bytes,16384u,UINT32_MAX},
+            {"PAGEDYN",&candidate.paged_dynamic_bytes,8192u,UINT32_MAX},
             {"MPW_WRTCLUSTER",&candidate.modified_page_fault_cluster,16u,120u},
             {"LOCKIDTBL",&candidate.lock_id_slots,16u,16000u},
             {"RESHASHTBL",&candidate.resource_hash_slots,1u,8192u},

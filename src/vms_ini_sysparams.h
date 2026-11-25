@@ -10,6 +10,7 @@
 #define PORT_VMS37_DEFAULT_SRPCOUNT 120u
 #define PORT_VMS37_DEFAULT_SRPSIZE 96u
 #define PORT_VMS37_DEFAULT_NPAGEDYN 64000u
+#define PORT_VMS37_DEFAULT_PAGEDYN 80000u
 #define PORT_VMS37_DEFAULT_MPW_WRTCLUSTER 96u
 #define PORT_VMS37_DEFAULT_LOCKIDTBL 128u
 #define PORT_VMS37_DEFAULT_RESHASHTBL 32u
@@ -25,6 +26,7 @@ struct port_vms37_init_params {
     uint32_t realtime_spts;
     uint32_t irp_count, lrp_count, lrp_size, srp_count, srp_size;
     uint32_t nonpaged_dynamic_bytes;
+    uint32_t paged_dynamic_bytes;
     uint32_t modified_page_fault_cluster;
     uint32_t lock_id_slots;
     uint32_t resource_hash_slots;
