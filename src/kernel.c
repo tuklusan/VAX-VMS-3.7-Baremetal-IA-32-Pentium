@@ -198,6 +198,11 @@ static volatile int ata_async_status;
 static void ata_async_completed(void *context,int status){
     (void)context;ata_async_status=status;ata_async_completions++;
 }
+struct ata_dq_async_bridge {
+    port_dq_ioc_async_done_fn done;
+    void *done_context;
+};
+static struct ata_dq_async_bridge ata_dq_async_bridge;
 static uint16_t qio_sector[256];
 static struct port_qio_service qio_service;
 static struct port_channel_table qio_channels;
@@ -2616,6 +2621,57 @@ static uint32_t m202_dq_queued_read(void *opaque,uint32_t lbn,
     }
     return 1u;
 }
+
+static void m217_ata_dq_async_complete(void *opaque,int status){
+    struct ata_dq_async_bridge *bridge=opaque;
+    if(bridge&&bridge->done)
+        bridge->done(bridge->done_context,status==PORT_ATA_OK?
+            PORT_DQ_IOC_OK:PORT_DQ_IOC_IO);
+    ata_async_completed(0,status);
+}
+static int m217_ata_dq_async_start(void *opaque,uint32_t lbn,
+    uint16_t sector[256],port_dq_ioc_async_done_fn done,void *done_context){
+    (void)opaque;
+    if(!done)return PORT_ATA_X86_ASYNC_BAD;
+    ata_dq_async_bridge.done=done;
+    ata_dq_async_bridge.done_context=done_context;
+    return port_ata_x86_read28_async(lbn,sector,
+        m217_ata_dq_async_complete,&ata_dq_async_bridge);
+}
+static int m217_async_dq_probe(uint32_t crb_irq_before){
+    struct port_dq_ioc_queue queue;
+    ata_async_completions=0u;ata_async_status=PORT_ATA_TIMEOUT;
+    const uint32_t async_irq_before=port_ata_x86_irq_count();
+    struct port_dq_ioc_iosb iosb={0};
+    if(port_dq_ioc_init(&queue,m202_dq_queued_read,0)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_prepare(&queue,1u,1u,
+          (uint8_t *)(void *)ata_async_sector,sizeof ata_async_sector)!=
+          PORT_DQ_IOC_OK||
+       port_dq_ioc_set_priority(&queue,1u,3u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_enqueue(&queue,1u)!=PORT_DQ_IOC_OK)return -1;
+    uint32_t eflags,tag=0u;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(eflags)::"memory");
+    const uint32_t started=port_dq_ioc_start_async(&queue,
+        m217_ata_dq_async_start,&tag);
+    const uint32_t completed_before_irq=ata_async_completions;
+    const uint32_t busy=port_dq_ioc_start_async(&queue,
+        m217_ata_dq_async_start,&tag);
+    if(eflags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
+    if(started!=PORT_DQ_IOC_OK||tag!=1u||busy!=PORT_DQ_IOC_BUSY||
+       completed_before_irq)return -1;
+    for(uint32_t spin=0u;spin<100000000u&&!ata_async_completions;spin++)
+        __asm__ volatile("pause");
+    if(ata_async_completions!=1u||ata_async_status!=PORT_ATA_OK||
+       port_ata_x86_irq_count()!=async_irq_before+1u||
+       queue.active>=PORT_DQ_IOC_DEPTH||
+       queue.packets[queue.active].state!=PORT_DQ_IOC_FINISHED||
+       port_dq_ioc_post(&queue,&iosb)!=PORT_DQ_IOC_OK||
+       iosb.tag!=1u||iosb.status!=PORT_DQ_IOC_OK||iosb.bytes!=512u||
+       ata_async_sector[0]!=1u||queue.completed!=1u||queue.posted!=1u||
+       queue.reads!=1u||port_dq_ioc_validate(&queue)!=PORT_DQ_IOC_OK||
+       arch_disk_irq_crb_count()!=crb_irq_before+2u)return -1;
+    return 0;
+}
 static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,uint32_t lbn,
@@ -3989,35 +4045,13 @@ void kmain(void) {
     bootstrap_message("INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.");
     bootstrap_message("INIT: SYS.EXE allocated, completed and returned DQA0 IRP through resident source lookaside.");
 
-    /* The normal PIO helpers wait for their IRQ. Exercise the separate
-     * IOC-style start path: return with one real ATA request armed, then let
-     * the IRQ14/CRB handler transfer the sector and record completion. */
-    ata_async_completions=0u;ata_async_status=PORT_ATA_TIMEOUT;
-    const uint32_t async_irq_before=port_ata_x86_irq_count();
-    uint32_t async_eflags;
-    __asm__ volatile("pushfl; popl %0; cli":"=r"(async_eflags)::"memory");
-    const int async_start=port_ata_x86_read28_async(1u,ata_async_sector,
-        ata_async_completed,0);
-    const uint32_t async_completed_before_irq=ata_async_completions;
-    const int async_second_start=port_ata_x86_read28_async(1u,ata_async_sector,
-        ata_async_completed,0);
-    if(async_eflags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
-    if(async_start!=PORT_ATA_X86_ASYNC_OK||
-       async_second_start!=PORT_ATA_X86_ASYNC_BUSY||
-       async_completed_before_irq){
-        bootstrap_message("INIT: native ATA asynchronous read start/busy check failed.");
+    /* The private queue retains its packet from the asynchronous DDT-side
+     * start until process-level IOC posting can safely retire it. */
+    if(m217_async_dq_probe(dq_crb_irqs_before)){
+        bootstrap_message("INIT: async DQ IOC post failed.");
         bootstrap_halt();
     }
-    for(uint32_t spin=0u;spin<100000000u&&!ata_async_completions;spin++)
-        __asm__ volatile("pause");
-    if(ata_async_completions!=1u||ata_async_status!=PORT_ATA_OK||
-       port_ata_x86_irq_count()!=async_irq_before+1u||
-       ata_async_sector[0]!=1u||
-       arch_disk_irq_crb_count()!=dq_crb_irqs_before+2u){
-        bootstrap_message("INIT: native ATA asynchronous read IRQ14 completion failed.");
-        bootstrap_halt();
-    }
-    bootstrap_message("INIT: native ATA async LBN1 read returned before IRQ14; CRB transferred real sector data.");
+    bootstrap_message("INIT: private DQ IOC posted real async sector via IRQ14.");
 
     /* Source NLDRIVER.MAR DDT/FDT through SYSQIOREQ.MAR 741-749: two original
      * IRP$L_MEDIA statuses and an IOC$GL_PSBL append in actual loaded

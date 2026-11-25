@@ -49,7 +49,7 @@ vmb_e820_done:
     movw stage2_count, %bp
     testw %bp, %bp
     jz disk_error
-    cmpw $260, %bp
+    cmpw $265, %bp
     ja disk_error
     movw stage2_lbn, %di
     cmpw $1, %di

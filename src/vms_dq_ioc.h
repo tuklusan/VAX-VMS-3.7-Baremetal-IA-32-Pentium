@@ -16,6 +16,9 @@ enum { PORT_DQ_IOC_EMPTY=0u,PORT_DQ_IOC_PREPARED=1u,
        PORT_DQ_IOC_QUEUED=2u,PORT_DQ_IOC_ACTIVE=3u,
        PORT_DQ_IOC_FINISHED=4u,PORT_DQ_IOC_FAILED=5u };
 typedef uint32_t (*port_dq_ioc_sector_fn)(void *,uint32_t,uint8_t [512]);
+typedef void (*port_dq_ioc_async_done_fn)(void *,uint32_t);
+typedef int (*port_dq_ioc_async_start_fn)(void *,uint32_t,uint16_t [256],
+    port_dq_ioc_async_done_fn,void *);
 struct port_dq_ioc_packet {
     uint32_t tag,lbn,order;
     uint8_t *destination;
@@ -42,6 +45,11 @@ uint32_t port_dq_ioc_prepare(struct port_dq_ioc_queue *,
 uint32_t port_dq_ioc_set_priority(struct port_dq_ioc_queue *,uint32_t,uint8_t);
 uint32_t port_dq_ioc_enqueue(struct port_dq_ioc_queue *,uint32_t);
 uint32_t port_dq_ioc_start(struct port_dq_ioc_queue *,uint32_t *);
+/* Start one priority-selected request against an asynchronous sector engine.
+ * The callback only changes the active packet state; post remains deferred. */
+uint32_t port_dq_ioc_start_async(struct port_dq_ioc_queue *,
+    port_dq_ioc_async_start_fn,uint32_t *);
+uint32_t port_dq_ioc_async_complete(struct port_dq_ioc_queue *,uint32_t);
 uint32_t port_dq_ioc_transfer(struct port_dq_ioc_queue *);
 uint32_t port_dq_ioc_complete(struct port_dq_ioc_queue *,uint32_t *);
 uint32_t port_dq_ioc_cancel(struct port_dq_ioc_queue *,uint32_t);

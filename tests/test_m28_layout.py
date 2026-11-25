@@ -14,5 +14,5 @@ nm=subprocess.check_output(['nm',str(root/'build/kernel.elf')],text=True)
 for x in ['arch_run_user_channel_test','arch_user_channel_probe',
           'arch_user_channel_result','port_channel_deassign']:
  assert x in nm,x
-assert len((root/'build/kernel.bin').read_bytes()) <= 260*512
+assert len((root/'build/kernel.bin').read_bytes()) <= 265*512
 print('M28 native CPL3 channel assign/deassign ABI linked PASS')

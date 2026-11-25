@@ -10327,7 +10327,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2765,
+          "pc_line": 2821,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10365,7 +10365,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2765,
+          "pc_line": 2821,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -22492,24 +22492,43 @@
         {
           "original_lines": [
             752,
-            771
+            767
           ],
           "status": "partial",
           "pc_file": "src/vms_dq_ioc_transfer.c",
           "pc_symbol": "port_dq_ioc_transfer",
           "pc_line": 4,
-          "function": "Source DQ_READPBLK transfer state uses read-only IA-32 ATA LBA28 PIO with IRQ14 completion and a single outstanding private request; original seek/ERR paths remain unresolved"
+          "function": "Source physical READPBLK transfer uses real ATA LBA28 with IRQ14; this synchronous retryable private path does not service public DQA requests"
+        },
+        {
+          "original_lines": [
+            768,
+            771
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_dq_ioc_async.c",
+          "pc_symbol": "port_dq_ioc_start_async",
+          "pc_line": 10,
+          "function": "DQ transfer start now admits one priority-selected private queue packet to the real asynchronous IRQ14 sector engine; no live DDT UCB busy arbitration or process IRP binding"
         },
         {
           "original_lines": [
             772,
-            840
+            781
           ],
           "status": "partial",
-          "pc_file": "src/vms_dq_ioc_run.c",
-          "pc_symbol": "port_dq_ioc_run",
+          "pc_file": "src/vms_dq_ioc_async.c",
+          "pc_symbol": "port_dq_ioc_async_complete",
           "pc_line": 4,
-          "function": "Resident DQ IOC FIFO services private READPBLK through native ATA IRQ14 and attached CRB; published DQA DDT routes physical PBLK actions into bounded FIFOs. Source RB730 ISR/recovery and process-aware/public completion remain unresolved"
+          "function": "Normal completion publishes terminal packet state at IRQ level; caller later runs bounded IOC post. Source IOSB/process channel/AST completion is not connected"
+        },
+        {
+          "original_lines": [
+            782,
+            840
+          ],
+          "status": "unresolved",
+          "reason": "Original CHECKECC and RB730 ECC correction, continuation, and controller status analysis are unimplemented"
         },
         {
           "original_lines": [

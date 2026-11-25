@@ -10,7 +10,7 @@ assert s.count('    call bios_read_retry') == 1  # counted read loop
 assert s.count('    int $0x13') == 2     # one read and one reset per retry
 assert 'read_block:' in s and 'next_block:' in s
 assert '    movw stage2_count, %bp' in s
-assert '    cmpw $260, %bp' in s
+assert '    cmpw $265, %bp' in s
 assert '    movw stage2_lbn, %di' in s
 assert '    movw $3, %si' in s and '    decw %si' in s
 assert '    jnz .retry' in s and '    jmp disk_error' in s

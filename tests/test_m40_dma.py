@@ -17,13 +17,13 @@ assert src.count('    call bios_read_retry')==1
 for instruction in ('    movw $36, %bx', '    divw %bx', '    movb $18, %bl',
                     '    divb %bl', '    movb $1, %al', '    movw $0x1000, %si',
                     '    addw $32, %si', '    incw %di', '    decw %bp',
-                    '    jnz read_block', '    cmpw $260, %bp'):
+                    '    jnz read_block', '    cmpw $265, %bp'):
     assert instruction in src,instruction
 pos=boot.find(b'VMSB')
 assert 0<=pos<=500
 assert image[:pos+4]==boot[:pos+4]
 count,first=struct.unpack_from('<HH', image, pos+4)
-assert 1 <= first < 2880 and 1<=count<=260 and first+count<=2880
+assert 1 <= first < 2880 and 1<=count<=265 and first+count<=2880
 assert (count-1)*512 < len(kernel) <= count*512
 assert image[pos+8:512] == boot[pos+8:512]
 for index in range(count):
@@ -33,11 +33,11 @@ for index in range(count):
     assert 0<=track<80 and head in (0,1) and 1<=sector0+1<=18
     assert (track*2+head)*18+sector0==lba
     phys=0x10000+index*512
-    assert phys>=0x10000 and phys+512<=0x10000+260*512
+    assert phys>=0x10000 and phys+512<=0x10000+265*512
     assert phys//65536==(phys+511)//65536,('DMA boundary',hex(phys))
     assert len(image[lba*512:(lba+1)*512])==512
 # Exercise the maximum supported count at each 64KiB DMA boundary too.
-for index in range(260):
+for index in range(265):
     addr=0x10000+index*512
     assert addr//65536==(addr+511)//65536
 print(f'M40: {count} counted single-sector CHS reads, geometry and 64KiB DMA bounds PASS')

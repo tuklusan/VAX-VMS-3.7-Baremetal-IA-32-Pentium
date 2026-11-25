@@ -9,5 +9,5 @@ assert '*(uint32_t *)(uintptr_t)f->ebx=' not in c
 assert '*(struct port_qio_iosb *)(uintptr_t)arch_io_iosb_dst=' not in c
 nm=subprocess.check_output(['nm',str(r/'build/kernel.elf')],text=True)
 assert 'port_user_copy_to' in nm
-assert len((r/'build/kernel.bin').read_bytes())<=260*512
+assert len((r/'build/kernel.bin').read_bytes())<=265*512
 print('M30 translated CPL3 result-copy linked PASS')

@@ -13,5 +13,5 @@ assert 'int port_serial_getc(' in serial
 names = subprocess.check_output(['nm', str(r/'build/kernel.elf')], text=True)
 assert 'port_serial_x86_getc' in names
 assert 'port_serial_x86_getc_raw' in names
-assert len((r/'build/kernel.bin').read_bytes()) <= 260*512
+assert len((r/'build/kernel.bin').read_bytes()) <= 265*512
 print('M36 raw/cooked UART console poll and fallback linked PASS')
