@@ -10899,10 +10899,29 @@
         {
           "original_lines": [
             1,
+            193
+          ],
+          "status": "unresolved",
+          "reason": "RSE AST declarations and AST state lookup/continuation dispatch remain unresolved"
+        },
+        {
+          "original_lines": [
+            194,
+            207
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_rse_event",
+          "pc_line": 428,
+          "function": "Partial AST event state mask and CHSE wake routing; AST queue/AST delivery semantics remain unresolved"
+        },
+        {
+          "original_lines": [
+            208,
             209
           ],
           "status": "unresolved",
-          "reason": "RSE AST declarations and AST dispatch/delivery remain unresolved"
+          "reason": "RSE source separation before the event-flag table remains unresolved"
         },
         {
           "original_lines": [

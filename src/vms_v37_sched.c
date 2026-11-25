@@ -434,6 +434,11 @@ uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *s,
     uint16_t states=0u;
     uint8_t complete_wait=0u;
     switch(event){
+    case PORT_V37_RSE_AST: states=(uint16_t)((1u<<PORT_V37_SCH_CEF)|
+        (1u<<PORT_V37_SCH_COLPG)|(1u<<PORT_V37_SCH_FPG)|
+        (1u<<PORT_V37_SCH_HIB)|(1u<<PORT_V37_SCH_HIBO)|
+        (1u<<PORT_V37_SCH_LEF)|(1u<<PORT_V37_SCH_LEFO)|
+        (1u<<PORT_V37_SCH_MWAIT)|(1u<<PORT_V37_SCH_PFW));break;
     case PORT_V37_RSE_EVENT_LEF: states=(uint16_t)(1u<<5);complete_wait=1u;break;
     case PORT_V37_RSE_EVENT_CEF: states=(uint16_t)(1u<<3);complete_wait=1u;break;
     case PORT_V37_RSE_EVENT_LEFO: states=(uint16_t)(1u<<6);break;

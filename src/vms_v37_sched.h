@@ -21,7 +21,8 @@ enum {PORT_V37_SCHED_OK=1u,PORT_V37_SCHED_BADPARAM=2u,
       PORT_V37_SCHED_CORRUPT=4u,PORT_V37_SCHED_UNRESOLVED=8u,
       PORT_V37_SCHED_EMPTY=16u,PORT_V37_SCHED_NO_CONTEXT=32u,
       PORT_V37_SCHED_BLOCKED=64u,PORT_V37_SCHED_IGNORED=128u};
-enum {PORT_V37_RSE_EVENT_LEF=1u,PORT_V37_RSE_EVENT_CEF=2u,
+enum {PORT_V37_RSE_AST=0u,PORT_V37_RSE_EVENT_LEF=1u,
+      PORT_V37_RSE_EVENT_CEF=2u,
       PORT_V37_RSE_EVENT_LEFO=3u,PORT_V37_RSE_FPGA=4u,PORT_V37_RSE_WAKE=5u,
       PORT_V37_RSE_RESUME=6u,PORT_V37_RSE_PFCOM=7u};
 
@@ -84,8 +85,8 @@ uint32_t port_v37_sched_wait_current(struct port_v37_scheduler *,
 uint32_t port_v37_sched_wake_waiter(struct port_v37_scheduler *,
     uint32_t wait_queue_address,uint32_t pcb_address,
     uint8_t priority_increment_class);
-/* Partial SCH$RSE event/state dispatch for FPGA, WAKE, RESUME and PFCOM.
- * Other source events, including event-flag and AST delivery, are unresolved. */
+/* Partial SCH$RSE event/state dispatch for AST, event flags, FPGA, WAKE,
+ * RESUME and PFCOM. AST queue delivery and other source events are unresolved. */
 uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *,uint8_t event,
     uint32_t wait_queue_address,uint32_t pcb_address,
     uint8_t priority_increment_class);
