@@ -1563,5 +1563,5 @@ Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0
 Added a source-to-native record for F11B/SRC/MAPVBN.B32. It marks native FH2 VBN selection, extension-FID reads, window map callbacks and data-sector reads as partial while keeping source window turning, remapping, retry behavior, live UCB selection and process completion explicitly unresolved. Coverage remains partial for the source routine as a whole.
 
 
-Local M356 commit: e6488c14ecb618782a6bf19f98d23b756d0589a7.
+Local M356 commit: e6488c14ecb618782a6bf19f98d23b756d0589a7; published GitHub main commit: a21df4cc8d231d5e55f3f06a4840246b81aa725b.
 Verification: make sourcerangecheck PASS (2,116 ranges; 450/4,566 original files indexed; zero errors; 17,255 mapped, 30,163 partial, 56,921 unresolved, 7,752 missing, 26,412 excluded, 917 hardware-excluded). No runtime source changed; prior M355 host and M354 QEMU results remain recorded above.
