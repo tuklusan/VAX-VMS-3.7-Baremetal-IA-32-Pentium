@@ -112,20 +112,31 @@ int main(void){
     if(port_v37_sched_post_event(&f.scheduler,PCB_VA,0u,64u,0u,&ss)!=
            PORT_V37_SCHED_OK||ss!=1u||get16(f.ceb+PORT_V37_CEB_WQH+8u)!=1u)
         return fail("common event leaves AND waiter blocked after first flag");
+    const uint32_t saved_pc=get32(f.phd+PORT_V37_PHD_PC);
+    const uint32_t saved_r0=get32(f.phd+PORT_V37_PHD_R0);
+    const uint32_t saved_eax=f.frame.registers.eax;
+    put32(f.pcb+PORT_V37_PCB_STS,
+        get32(f.pcb+PORT_V37_PCB_STS)&~PORT_V37_PCB_STS_RESIDENT);
     const uint32_t common_post=port_v37_sched_post_event(&f.scheduler,
         PCB_VA,0u,65u,0u,&ss);
     if(common_post!=PORT_V37_SCHED_OK||ss!=1u||
        get16(f.ceb+PORT_V37_CEB_WQH+8u)||
-       get16(f.pcb+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
-       f.frame.registers.eax!=1u){
+       get16(f.pcb+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COMO||
+       get32(f.phd+PORT_V37_PHD_PC)!=saved_pc||
+       get32(f.phd+PORT_V37_PHD_R0)!=saved_r0||
+       f.frame.registers.eax!=saved_eax){
         fprintf(stderr,"post=%u ss=%u count=%u state=%u eax=%x flags=%08x efwm=%08x wall=%x\n",
             common_post,ss,get16(f.ceb+PORT_V37_CEB_WQH+8u),
             get16(f.pcb+PORT_V37_PCB_STATE),f.frame.registers.eax,
             get32(f.ceb+PORT_V37_CEB_EFC),get32(f.pcb+PORT_V37_PCB_EFWM),
             get32(f.pcb+PORT_V37_PCB_STS));
-        return fail("common event completes WFLAND after second flag");
+        return fail("CEF post wakes nonresident WFLAND without touching saved context");
     }
-    if(!start_current(&f,&pcb,&frame))return fail("final ready queue selection");
+    put32(f.pcb+PORT_V37_PCB_STS,
+        get32(f.pcb+PORT_V37_PCB_STS)|PORT_V37_PCB_STS_RESIDENT);
+    if(port_v37_sched_chse(&f.scheduler,PCB_VA,0u)!=PORT_V37_SCHED_OK||
+       get16(f.pcb+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       !start_current(&f,&pcb,&frame))return fail("final ready queue selection");
     if(port_v37_sched_wait_event(&f.scheduler,0u,FRAME_VA,128u,1u,0,
            &pcb,&frame,&ss)!=PORT_V37_SCHED_OK||ss!=PORT_V37_SS_ILLEFC||
        port_v37_sched_wait_event(&f.scheduler,0u,FRAME_VA,96u,1u,0,

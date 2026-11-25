@@ -510,6 +510,11 @@ uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *s,
     const uint16_t state=get16(pcb+PCBSTATE);
     if(state>=16u||!(states&(uint16_t)(1u<<state)))
         return PORT_V37_SCHED_IGNORED;
+    /* RSE's CEF action routes a swapped-out waiter through EVENTE/CHSE.
+     * Its saved syscall result is completed only when resident. */
+    if(event==PORT_V37_RSE_EVENT_CEF&&
+       !(get32(pcb+PCBSTS)&PORT_V37_SCH_RESIDENT))
+        complete_wait=0u;
     uint8_t *phd=0;uint32_t old_pc=0u,old_r0=0u,old_eax=0u;
     struct port_v37_ia32_restore_frame *frame=0;
     if(complete_wait){
@@ -675,8 +680,7 @@ uint32_t port_v37_sched_post_event(struct port_v37_scheduler *s,
         uint8_t *pcb=resolve(s,cursor,PORT_V37_PCB_BYTES);
         if(!pcb)return PORT_V37_SCHED_CORRUPT;
         const uint32_t next=get32(pcb+PORT_V37_PCB_SQFL);
-        if((get32(pcb+PORT_V37_PCB_STS)&PORT_V37_PCB_STS_RESIDENT)&&
-           pcb[PORT_V37_PCB_WEFC]==cluster&&
+        if(pcb[PORT_V37_PCB_WEFC]==cluster&&
            get16(pcb+PORT_V37_PCB_STATE)==PORT_V37_SCH_CEF&&
            event_condition(pcb,previous_flags|bit,
              (get32(pcb+PORT_V37_PCB_STS)&PORT_V37_PCB_STS_WALL)!=0u)){
