@@ -1694,3 +1694,12 @@ Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0);
 
 Local M370 implementation commit: `25608c644a7fff91cc71590f342dcde3b2d43cd9`.
 Published GitHub main implementation commit: `4655d3695800301059ea7dc8fb8b41c2f928869f`.
+
+## M371 - Add interrupt-level scheduler transaction, 25 November 2026
+
+Added `port_v37_sched_interrupt` to execute the resident scheduler's ordered interrupt operation: save/validate and requeue the current PCB context, then select and validate the next resident COM context. It returns without dequeue on context or frame errors. Host tests cover a full save/requeue/select transaction and malformed outgoing context rejection. The routine is linked in SYS.EXE but is not yet called by the live IDT/PIT path; VMS PHD/process activation, TSS/CR3 updates, and frame restoration remain incomplete.
+
+Verification: `make v37schedcheck` PASS; `make -j2 all test` PASS (exit 0); `python3 tools/gen_source_coverage.py`, `python3 tools/validate_source_ranges.py`, `python3 tests/test_coverage_ranges.py`, `make sourcerangecheck`, and `git diff --check` PASS. Audit remains 2,121 ranges across 451/4,566 originals, zero validation errors; 17,255 mapped, 30,267 partial, 56,921 unresolved, 8,032 missing, 26,434 excluded, 917 hardware-excluded. A single-runner `make qemu-sysboot-m217` PASS verified the rebuilt SYS.EXE DQA0/IRQ14 Files-11 read and reached the explicit incomplete-INIT stop; this guest path does not call the new scheduler routine. Capture `logs/serial/qemu-m217-run-local-20261125T155125445802Z.log`, 5,975 bytes, SHA-256 `edfa0c71aceb8c927480e60d42174b023f9da1d8ab274d6307876aff45b84193`; runner exited, no QEMU process remains. Serial manifest verification PASS (313 logs). No SYSTEM login, DCL or DECnet behavior was observed.
+
+Local M371 implementation commit: `439b213fca92bbab70227d85bcd608898d27b3cf`.
+Published GitHub main implementation commit: `d6370c91543f0923f26492fd214d2f086a466da2`.
