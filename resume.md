@@ -1762,3 +1762,11 @@ Verification: `make v37schedcheck` PASS; `make sourcerangecheck`, `python3 tests
 
 Local M377 implementation commit: `daaa61f3183128d1b949c4fe3030e3802933c454`.
 Published GitHub main M377 implementation commit: e76e10b5049fae0ab5e01ccf383e9ad96893b941.
+
+## M378 - Complete saved LEF/CEF wait results, 25 November 2026
+
+Extended partial SCH$RSE event handling to local-event (LEF), common-event (CEF), and nonresident local-event (LEFO) wait states. For resident LEF/CEF waiters, the native path advances saved PHD PC past CHMK, places SS$_NORMAL in saved PHD R0, then removes the process from the supplied WQH and applies source CHSE priority/ready-queue handling. PHD changes are rolled back if wake processing fails. Host regression covers CEF state matching, irrelevant-event rejection, WQH removal, saved return PC/R0 and executable transition. Event-flag bitmap evaluation/selection, common-cluster WQH resolution, LEFO syscall return state, live process waits, full IPL discipline and AST integration remain incomplete; the API is not live-wired.
+
+Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0); `make sourcerangecheck`, `python3 tests/test_coverage_ranges.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS. Coverage: 2,129 ranges, 451/4,566 originals indexed, zero validation errors; 17,230 mapped, 30,298 partial, 56,890 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded. No QEMU run: this change only affects an unbound scheduler API and the existing guest cannot exercise it. No process activation, login, DCL, DECnet or SET HOST occurred.
+
+Local M378 implementation commit: `e539dd70677d9fc844af5ce5f65832b0d1fbf89c`.
