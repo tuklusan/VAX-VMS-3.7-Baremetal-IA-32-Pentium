@@ -1935,3 +1935,13 @@ Local M395 implementation commit: `dffac95d6249e45b909ad253225adb78bffb412c`.
 Published GitHub main M395 implementation commit: `dffac95d6249e45b909ad253225adb78bffb412c`.
 
 Remaining acceptance work is unchanged: INIT has no NULL/SWAPPER PHD/context activation; public SYS$QIO and process-aware AST completion, Files-11 ACP request integration, scheduler/process image activation, genuine login and DCL, DECnet Phase IV, and real SET HOST 0 remain incomplete. Source coverage is not complete (8,032 missing and 56,877 unresolved ranges remain in the indexed inventory).
+
+
+## M396 - Preserve privilege-transition stack validation, 25 November 2026
+
+Reviewed the M395 same-CPL assumption against the installed IA-32 IDT: interrupt gates target selector 0x08 (CPL0). Therefore an interrupt from VMS access modes CPL1-3 crosses to CPL0 and hardware saves the interrupted ESP/SS for IRET. Reverted the attempted relaxation that accepted arbitrary stack words for those modes. Added regressions requiring valid saved stack selectors for CPL1/CPL2 interrupt frames, preserving the required return-stack validation. M395 is superseded on this point; its prior code was invalid and is no longer present at HEAD.
+
+Verification: focused `make v37ia32ctxcheck v37schedcheck` PASS; full `make -j2 all test v37schedcheck` PASS (exit 0); source coverage generation and `python3 tools/validate_source_ranges.py` PASS (2,135 ranges; 451/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. One `make qemu-sysboot-m217` PASS; the guest completed the established DQA0 IRQ14 Files-11 read, then stopped at incomplete INIT. This context validation is not exercised by the boot. Capture `logs/serial/qemu-m217-run-local-20261125T195041925807Z.log`: 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`. No QEMU runner remains. No process activation, SYSTEM login, DCL, DECnet, or SET HOST is claimed.
+
+M396 correction implementation commit: `0f0962a221040a5b921ed6793300ca6ba3bc0f34`.
+Published GitHub main M396 correction commit: `0f0962a221040a5b921ed6793300ca6ba3bc0f34`.
