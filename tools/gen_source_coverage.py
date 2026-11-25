@@ -1885,14 +1885,18 @@ for first,last,path,symbol,description,status in [
  (208,209,None,None,'RSE source separation before the event-flag table remains unresolved','unresolved'),
  (210,213,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial local/common event state dispatch; source event selection is supplied by the caller','partial'),
  (214,231,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial source state masks and wake dispatch for free-page, WAKE, RESUME and page-fault-complete events; caller supplies the actual wait-queue header and situational priority class','partial'),
- (232,257,None,None,'RSE SETPRI and SWPOUT actions and illegal-event handling remain unresolved','unresolved'),
+ (232,232,None,None,'RSE source separation before SETPRI remains unresolved','unresolved'),
+ (233,236,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial SETPRI event state dispatch to a precomputed SCH$CHSEP priority transition','partial'),
+ (237,257,None,None,'RSE SWPOUT actions and illegal-event handling remain unresolved','unresolved'),
  (258,263,'src/vms_v37_sched.c','port_v37_sched_rse_event','For resident LEF/CEF waiters, update saved PHD PC/R0 to complete the VMS wait syscall before CHSE; full event-flag selection and IPL integration remain unresolved','partial'),
  (264,267,None,None,'RSE event-action connector and remaining report semantics are not yet integrated','unresolved'),
  (268,270,'src/vms_v37_sched.c','port_v37_sched_rse_event','Route the implemented RSE executable-state events through wait-queue removal and source CHSE scheduling; AST delivery and event-specific completion state remain unresolved','partial'),
  (271,332,None,None,'SCH$UNWAIT state-to-WQH resolution, common event-cluster queues and remaining event/AST support remain unresolved','unresolved'),
  (333,342,'src/vms_v37_sched.c','port_v37_sched_chse','Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial','partial'),
  (343,394,None,None,'SCH$CHSE IPL checks and preceding/following RSE entry paths remain unresolved','unresolved'),
- (395,440,'src/vms_v37_sched.c','port_v37_sched_chse','Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points','partial'),
+ (395,409,'src/vms_v37_sched.c','port_v37_sched_chse','Encode SCH$CHSE priority increment and delegation to source SCH$CHSEP queue transition','partial'),
+ (410,435,'src/vms_v37_sched.c','port_v37_sched_set_priority','Partial precomputed-priority COM/COMO CHSEP removal, COMQS/ready accounting, queue insertion and reschedule/swapper callbacks; IPL bugcheck semantics remain unresolved','partial'),
+ (436,440,None,None,'RSE return and BADIPL bugcheck tail remain unresolved','unresolved'),
  (441,rse_lines,None,None,'Remaining RSE process state, wait, swap and scheduler routines unresolved','unresolved')]:
     if path:
         ln=line_for_symbol(path,symbol)

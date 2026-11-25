@@ -24,7 +24,8 @@ enum {PORT_V37_SCHED_OK=1u,PORT_V37_SCHED_BADPARAM=2u,
 enum {PORT_V37_RSE_AST=0u,PORT_V37_RSE_EVENT_LEF=1u,
       PORT_V37_RSE_EVENT_CEF=2u,
       PORT_V37_RSE_EVENT_LEFO=3u,PORT_V37_RSE_FPGA=4u,PORT_V37_RSE_WAKE=5u,
-      PORT_V37_RSE_RESUME=6u,PORT_V37_RSE_PFCOM=7u};
+      PORT_V37_RSE_RESUME=6u,PORT_V37_RSE_PFCOM=7u,
+      PORT_V37_RSE_SETPRI=8u};
 
 struct port_v37_sched_head {uint32_t forward,backward;};
 /* SYSDEFQZ.MDL WQH: forward/back links, 16-bit count and wait state. */
@@ -58,6 +59,9 @@ uint32_t port_v37_sched_init(struct port_v37_scheduler *,
  * Arbitrary wait-queue owners and swapper wake semantics remain callbacks. */
 uint32_t port_v37_sched_chse(struct port_v37_scheduler *,uint32_t pcb_address,
     uint8_t priority_increment_class);
+/* SCH$CHSEP precomputed-priority queue transition for COM/COMO processes. */
+uint32_t port_v37_sched_set_priority(struct port_v37_scheduler *,
+    uint32_t pcb_address,uint8_t priority);
 /* SCH$SCHED queue selection through CURPCB/priority bookkeeping. Refuses
  * to consume a runnable PCB until real PHD and IA-32 PHYPCB context exist. */
 uint32_t port_v37_sched_select(struct port_v37_scheduler *,uint32_t *pcb_address,
@@ -87,8 +91,9 @@ uint32_t port_v37_sched_wake_waiter(struct port_v37_scheduler *,
     uint8_t priority_increment_class);
 /* Partial SCH$RSE event/state dispatch for AST, event flags, FPGA, WAKE,
  * RESUME and PFCOM. AST queue delivery and other source events are unresolved. */
+/* For SETPRI, priority_class carries the requested priority 0..31; other
+ * executable-state events use it as SCH$CHSE's increment class. */
 uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *,uint8_t event,
-    uint32_t wait_queue_address,uint32_t pcb_address,
-    uint8_t priority_increment_class);
+    uint32_t wait_queue_address,uint32_t pcb_address,uint8_t priority_class);
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *);
 #endif
