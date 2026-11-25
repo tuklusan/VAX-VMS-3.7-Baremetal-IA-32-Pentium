@@ -510,23 +510,32 @@ uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *s,
     const uint16_t state=get16(pcb+PCBSTATE);
     if(state>=16u||!(states&(uint16_t)(1u<<state)))
         return PORT_V37_SCHED_IGNORED;
-    uint8_t *phd=0;uint32_t old_pc=0u,old_r0=0u;
+    uint8_t *phd=0;uint32_t old_pc=0u,old_r0=0u,old_eax=0u;
+    struct port_v37_ia32_restore_frame *frame=0;
     if(complete_wait){
         const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
+        const uint32_t frame_address=get32(pcb+PORT_V37_PCB_PHYPCB);
         phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
-        if(!phd)return PORT_V37_SCHED_NO_CONTEXT;
+        frame=(struct port_v37_ia32_restore_frame *)resolve(s,frame_address,
+            sizeof(struct port_v37_ia32_restore_frame));
+        if(!phd||!frame)return PORT_V37_SCHED_NO_CONTEXT;
+        if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
+            return PORT_V37_SCHED_CORRUPT;
         old_pc=get32(phd+PORT_V37_PHD_PC);
         old_r0=get32(phd+PORT_V37_PHD_R0);
-        if(old_pc>UINT32_MAX-4u)return PORT_V37_SCHED_CORRUPT;
-        /* SYS$WFL* returns from CHMK through the saved PHD context. */
-        put32(phd+PORT_V37_PHD_PC,old_pc+4u);
+        old_eax=frame->registers.eax;
+        /* The IA-32 interrupt frame already contains the address after INT.
+         * PHD PC mirrors that native return address; R0 maps to saved EAX. */
+        put32(phd+PORT_V37_PHD_PC,frame->registers.eip);
         put32(phd+PORT_V37_PHD_R0,1u); /* SS$_NORMAL */
+        frame->registers.eax=1u;
     }
     const uint32_t status=port_v37_sched_wake_waiter(s,wait_address,
         pcb_address,priority_class);
     if(status!=PORT_V37_SCHED_OK&&phd){
         put32(phd+PORT_V37_PHD_PC,old_pc);
         put32(phd+PORT_V37_PHD_R0,old_r0);
+        frame->registers.eax=old_eax;
     }
     return status;
 }

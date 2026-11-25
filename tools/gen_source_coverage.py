@@ -1888,7 +1888,7 @@ for first,last,path,symbol,description,status in [
  (232,232,None,None,'RSE source separation before SETPRI remains unresolved','unresolved'),
  (233,236,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial SETPRI event state dispatch to a precomputed SCH$CHSEP priority transition','partial'),
  (237,257,None,None,'RSE SWPOUT actions and illegal-event handling remain unresolved','unresolved'),
- (258,263,'src/vms_v37_sched.c','port_v37_sched_rse_event','For resident LEF/CEF waiters, update saved PHD PC/R0 to complete the VMS wait syscall before CHSE; full event-flag selection and IPL integration remain unresolved','partial'),
+ (258,263,'src/vms_v37_sched.c','port_v37_sched_rse_event','For resident LEF/CEF waiters, mirror the already post-INT IA-32 EIP in PHD PC and return SS$_NORMAL through PHD R0/native EAX before CHSE; event-flag selection and IPL integration remain unresolved','partial'),
  (264,267,None,None,'RSE event-action connector and remaining report semantics are not yet integrated','unresolved'),
  (268,270,'src/vms_v37_sched.c','port_v37_sched_rse_event','Route the implemented RSE executable-state events through wait-queue removal and source CHSE scheduling; AST delivery and event-specific completion state remain unresolved','partial'),
  (271,332,None,None,'SCH$UNWAIT state-to-WQH resolution, common event-cluster queues and remaining event/AST support remain unresolved','unresolved'),
