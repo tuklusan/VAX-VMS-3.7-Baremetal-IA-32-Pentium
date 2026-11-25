@@ -1815,3 +1815,6 @@ Corrected M378 saved wait completion for the actual IA-32 interrupt ABI. The x86
 Verification: make v37schedcheck, make -j2 all test (exit 0), coverage generation, 	ests/test_coverage_ranges.py, 	ools/validate_source_ranges.py, and git diff --check PASS. Coverage: 2,135 ranges, 451/4,566 original files indexed, zero errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded. One make qemu-sysboot-m217 PASS on rebuilt image; actual guest reached the explicit incomplete-INIT stop after DQA0/IRQ14/ACP and live IRQ0 callback. Capture logs/serial/qemu-m217-run-local-20261125T181133169793Z.log, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6; runner exited and no QEMU process remains. No process activation, login, DCL, DECnet or SET HOST occurred.
 
 Local M383 implementation commit: 691010cd7f0f35fe8fe5efc921aa6c315ed3cfd0.
+
+Published GitHub main M383 implementation commit: 202ef82276eeb7e22d3e77cee7905a2db9204749.
+Local M383 resume commit: 5c1bac0042c7efcc755dd2b5e04ac748ee62d317.
