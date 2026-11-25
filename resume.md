@@ -1894,3 +1894,14 @@ Verification: `make qemu-sysboot-m217` PASS; serial manifest verification PASS (
 
 Local M391 checkpoint commit: `3d89d0b8679e595896ae69f94d0efb608c7f4923`.
 Published GitHub main M391 checkpoint commit: `4b5fa20070cce150afbec40977309fc31a2d190d`.
+
+## M392 - Clear SYS$QIO outputs for invalid reservation inputs, 25 November 2026
+
+`port_v37_sysqio_prepare_irp` now clears packet and virtual-address outputs when mandatory preparation inputs (other than the output pointers) are invalid. This keeps rejected requests from exposing stale caller values while preserving the verified WAIT no-op contract. Host regression supplies a null IRP specification and checks cleared outputs and unchanged process quota/prepared state. This helper remains disconnected from public SYS$QIO dispatch and guest process I/O.
+
+Verification: focused `make sysqioargscheck` PASS; full `make -j2 all test` PASS (exit 0); `python3 tools/gen_source_coverage.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS (2,135 ranges; 451/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). No QEMU run: host helper-only behavior changed; no guest dispatch was introduced. No process activation, SYSTEM login, DCL, DECnet, or SET HOST is claimed.
+
+Local M392 implementation commit: `21422c6340f46c1fab1e428ed5c6ef59e1def8d0`.
+Published GitHub main M392 implementation commit: `a4acbb942e319c7016bda7e923e3ef34d056c7b2`.
+
+Remaining acceptance work is unchanged: INIT has no NULL/SWAPPER PHD/context activation; public SYS$QIO and process-aware AST completion, Files-11 ACP request integration, scheduler/process image activation, genuine login and DCL, DECnet Phase IV, and real SET HOST 0 remain incomplete. Source coverage is not complete (8,032 missing and 56,877 unresolved ranges remain in the indexed inventory).
