@@ -1650,3 +1650,5 @@ Extended the IOC mapper regression to feed it the exact compact WCB record gener
 
 Verification: `make iocmapvblkcheck` PASS; `make -j2 CC=gcc-12 all test` PASS (exit 0); `make sourcerangecheck` PASS (2,121 ranges; 451/4,566 indexed originals; zero errors). Host-only integration; no QEMU runner required. Remaining live INIT/IOC integration and boot/session acceptance gaps are unchanged.
 
+Local M365 commit: f0a4a4d5d98d256d536946058b208b85684e1c61; published GitHub main commit: d2fcb7f6d6dc7812edd60bf8922327e5d9e63756.
+
