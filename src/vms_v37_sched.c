@@ -29,6 +29,9 @@ static void put32(uint8_t *p,uint32_t x){
     p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
     p[2]=(uint8_t)(x>>16);p[3]=(uint8_t)(x>>24);
 }
+static int source_wait_state(uint16_t state){
+    return state>=PORT_V37_SCH_COLPG&&state<=PORT_V37_SCH_FPG;
+}
 static uint8_t *resolve(const struct port_v37_scheduler *s,uint32_t address,
                         size_t bytes){
     if(!address||!s->ops.resolve)return 0;
@@ -96,7 +99,7 @@ static uint32_t wait_queue_check(const struct port_v37_scheduler *s,
     if(!queue)return PORT_V37_SCHED_UNRESOLVED;
     const uint32_t first=get32(queue),last=get32(queue+4u);
     const uint16_t expected=get16(queue+8u),state=get16(queue+10u);
-    if(!state)return PORT_V37_SCHED_CORRUPT;
+    if(!source_wait_state(state))return PORT_V37_SCHED_CORRUPT;
     uint32_t cursor=first,previous=address,seen=0u;
     while(cursor!=address){
         if(seen>=expected||seen>=8192u)return PORT_V37_SCHED_CORRUPT;

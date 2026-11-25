@@ -221,6 +221,13 @@ int main(void){
         return fail("interrupt dispatch rejects malformed outgoing frame");
     f.frames[0].registers.cs=0x08u;
     f.frames[0].registers.eip=0x23456789u;
+    f.wait_queue.state=PORT_V37_SCH_COM;
+    if(port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
+           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_CORRUPT||
+       selected||restore_frame||scheduler.current_pcb!=f.pcb_va[0]||
+       f.wait_queue.count||get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR)
+        return fail("SCH$WAITK rejects a non-wait source process state");
+    f.wait_queue.state=PORT_V37_SCH_HIB;
     f.wait_queue.forward=0x00abcdefu;
     if(port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
            f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_CORRUPT||
