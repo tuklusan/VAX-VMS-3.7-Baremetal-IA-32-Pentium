@@ -23140,10 +23140,21 @@
         {
           "original_lines": [
             398,
+            436
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_paged_pool.c",
+          "pc_symbol": "port_exe_paged_alloc",
+          "pc_line": 12,
+          "function": "EXE$ALOPAGED rounds requests to 16 bytes, uses the fixed resident paged free list and restores the synchronization IPL; paged-pool setup/placement, SCH$LOCKW wait, extension and resource wake remain unimplemented"
+        },
+        {
+          "original_lines": [
+            437,
             461
           ],
           "status": "unresolved",
-          "reason": "Paged-pool allocation, block splitting, mutexes and shared memory pool unresolved"
+          "reason": "Shared EXE$ALLOCATE description/prologue only; executable search and split are covered in the following source range"
         },
         {
           "original_lines": [
@@ -23170,13 +23181,29 @@
         {
           "original_lines": [
             546,
-            617
+            557
+          ],
+          "status": "unresolved",
+          "reason": "EXE$DEAPAGED input/output description; paged return action begins in the following source range"
+        },
+        {
+          "original_lines": [
+            558,
+            575
           ],
           "status": "partial",
-          "pc_file": "src/vms_exe_np_pool.c",
-          "pc_symbol": "port_exe_np_deallocate",
-          "pc_line": 195,
-          "function": "Source-addressed nonpaged IRP/LRP/SRP lookaside return or variable-block release by DYN tag; QEMU verifies failed Files-11 ACP FCB initialization returns the SRP packet and successful read-only WCB deaccess returns its WCB packet, while paged-pool return remains unresolved"
+          "pc_file": "src/vms_exe_paged_pool.c",
+          "pc_symbol": "port_exe_paged_free",
+          "pc_line": 30,
+          "function": "EXE$DEAPAGED 16-byte alignment/size return to the paged free list; IRP header decoding, SCH$LOCKW, PGDYN resource wake and caller wiring remain unresolved"
+        },
+        {
+          "original_lines": [
+            576,
+            617
+          ],
+          "status": "unresolved",
+          "reason": "CHECKBLOCK and shared EXE$DEALLOCATE validation/ordering not implemented for the paged pool"
         },
         {
           "original_lines": [
@@ -23198,7 +23225,7 @@
           "reason": "Paged/shared pool return, queue synchronization and pool extension unresolved"
         }
       ],
-      "unresolved_integration": "The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. Host-tested allocation also selects exact-size IRP/LRP/SRP queues and falls back to the variable pool; this broader allocator is not yet wired to ACP because the first live wiring attempt regressed DQA0 DDT publication. Pool extension, resource waits, public user SYS$QIO integration, and paged pool remain unresolved."
+      "unresolved_integration": "Native SYS.EXE contains a host-tested paged-pool allocation/free boundary and a separate nonpaged pool/lookaside implementation. The paged routines are not initialized or called by SWAPPER; pool placement, mapping/extension, mutex waits/wakeup and real paged-pool users remain unresolved. Nonpaged pool extension/resource waits and public SYS$QIO integration also remain incomplete."
     },
     {
       "original_file": "SYS/SRC/SYSPARAM.MAR",

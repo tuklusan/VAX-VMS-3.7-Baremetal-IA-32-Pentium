@@ -2665,10 +2665,13 @@ for first,last,path,sym,why in [
  (215,240,'src/vms_qio_irp_pool.c','port_v37_irp_pool_alloc','IRP-sized requests dequeue a validated source INIT lookaside packet, write requested size/type, and restore synchronization IPL; nonpaged variable allocation, pool extension, resource waiting and AST-delivery return semantics remain unported'),
  (241,349,None,None,'Other ALLOC* entries, ALONPAGWAIT caller-mode wait and cleanup semantics unresolved'),
  (350,397,'src/vms_exe_np_pool.c','port_exe_np_allocate','Source IRP/LRP/SRP class selection, DYN tag preservation, any-fitting-slot lookaside dequeue and variable-pool fallback; resident SYS.EXE ACP FCB and WCB allocation now use this path, and QEMU verifies FCB creation plus a read-only MAKACC/DEACCS WCB cycle returning both allocations; general users, pool extension, resource waiting and AST-delivery semantics remain unresolved'),
- (398,461,None,None,'Paged-pool allocation, block splitting, mutexes and shared memory pool unresolved'),
+ (398,436,'src/vms_exe_paged_pool.c','port_exe_paged_alloc','EXE$ALOPAGED rounds requests to 16 bytes, uses the fixed resident paged free list and restores the synchronization IPL; paged-pool setup/placement, SCH$LOCKW wait, extension and resource wake remain unimplemented'),
+ (437,461,None,None,'Shared EXE$ALLOCATE description/prologue only; executable search and split are covered in the following source range'),
  (462,515,'src/vms_exe_np_pool.c','port_exe_np_pool_alloc','EXE$ALLOCATE source first-fit search, aligned block selection and low-address split in the live SYS.EXE nonpaged pool; failure resource accounting and pool extension remain unresolved'),
  (516,545,'src/vms_qio_irp_pool.c','port_v37_irp_pool_free','Return an allocated source DYN$C_IRP block to the tail of its original lookaside queue with duplicate/corruption guards and synchronization, exercised after resident SYS.EXE DQA0 DDT boot reads; SRP/LRP/general pool return paths unresolved'),
- (546,617,'src/vms_exe_np_pool.c','port_exe_np_deallocate','Source-addressed nonpaged IRP/LRP/SRP lookaside return or variable-block release by DYN tag; QEMU verifies failed Files-11 ACP FCB initialization returns the SRP packet and successful read-only WCB deaccess returns its WCB packet, while paged-pool return remains unresolved'),
+ (546,557,None,None,'EXE$DEAPAGED input/output description; paged return action begins in the following source range'),
+ (558,575,'src/vms_exe_paged_pool.c','port_exe_paged_free','EXE$DEAPAGED 16-byte alignment/size return to the paged free list; IRP header decoding, SCH$LOCKW, PGDYN resource wake and caller wiring remain unresolved'),
+ (576,617,None,None,'CHECKBLOCK and shared EXE$DEALLOCATE validation/ordering not implemented for the paged pool'),
  (618,641,'src/vms_exe_np_pool.c','port_exe_np_pool_free','EXE$DEALLOCATE maintains the sorted free list and coalesces adjacent blocks under restored IPL synchronization; fatal bugcheck delivery and source resource wakeup remain unresolved'),
  (642,919,None,None,'Paged/shared pool return, queue synchronization and pool extension unresolved')]:
     if path is None:memalc_sections.append({'original_lines':[first,last],'status':'unresolved','reason':why})
@@ -2679,7 +2682,7 @@ for first,last,path,sym,why in [
             'pc_file':path,'pc_symbol':sym,'pc_line':ln,'function':why})
 result['files'].append({'original_file':'SYS/SRC/MEMORYALC.MAR',
     'original_lines':919,'sections':memalc_sections,
-    'unresolved_integration':'The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. Host-tested allocation also selects exact-size IRP/LRP/SRP queues and falls back to the variable pool; this broader allocator is not yet wired to ACP because the first live wiring attempt regressed DQA0 DDT publication. Pool extension, resource waits, public user SYS$QIO integration, and paged pool remain unresolved.'})
+    'unresolved_integration':'Native SYS.EXE contains a host-tested paged-pool allocation/free boundary and a separate nonpaged pool/lookaside implementation. The paged routines are not initialized or called by SWAPPER; pool placement, mapping/extension, mutex waits/wakeup and real paged-pool users remain unresolved. Nonpaged pool extension/resource waits and public SYS$QIO integration also remain incomplete.'})
 
 # SYSPARAM.MAR supplies system defaults consumed by INIT. The native subset
 # records the original declarations, while SYSBOOT PARAMS.DAT overrides and
