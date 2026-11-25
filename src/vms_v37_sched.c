@@ -422,6 +422,29 @@ uint32_t port_v37_sched_wake_waiter(struct port_v37_scheduler *s,
     return status;
 }
 
+uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *s,
+    uint8_t event,uint32_t wait_address,uint32_t pcb_address,
+    uint8_t priority_class){
+    if(!s||!s->initialized||!wait_address||!pcb_address||
+       priority_class>=PORT_V37_SCH_INCREMENT_CLASSES)
+        return PORT_V37_SCHED_BADPARAM;
+    uint16_t states=0u;
+    switch(event){
+    case PORT_V37_RSE_FPGA: states=(uint16_t)(1u<<11);break; /* FPG */
+    case PORT_V37_RSE_WAKE: states=(uint16_t)((1u<<7)|(1u<<8));break;
+    case PORT_V37_RSE_RESUME: states=(uint16_t)((1u<<9)|(1u<<10));break;
+    case PORT_V37_RSE_PFCOM: states=(uint16_t)(1u<<4);break; /* PFW */
+    default:return PORT_V37_SCHED_UNRESOLVED;
+    }
+    const uint8_t *pcb=resolve(s,pcb_address,PORT_V37_PCB_BYTES);
+    if(!pcb)return PORT_V37_SCHED_UNRESOLVED;
+    const uint16_t state=get16(pcb+PCBSTATE);
+    if(state>=16u||!(states&(uint16_t)(1u<<state)))
+        return PORT_V37_SCHED_IGNORED;
+    return port_v37_sched_wake_waiter(s,wait_address,pcb_address,
+                                      priority_class);
+}
+
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){
     if(!s||!s->initialized)return PORT_V37_SCHED_BADPARAM;
     uint32_t summary[2]={0u,0u};uint32_t ready[32]={0u};

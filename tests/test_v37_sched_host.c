@@ -311,6 +311,19 @@ int main(void){
             port_v37_sched_check(&scheduler));
         return fail("RSE wake preserves WQH FIFO and routes nonresident PCB");
     }
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||selected!=f.pcb_va[0]||
+       port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
+           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_BLOCKED||
+       port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_PFCOM,
+           f.wait_queue_va,f.pcb_va[0],0u)!=PORT_V37_SCHED_IGNORED||
+       f.wait_queue.count!=1u||
+       port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_WAKE,
+           f.wait_queue_va,f.pcb_va[0],0u)!=PORT_V37_SCHED_OK||
+       f.wait_queue.count||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("RSE WAKE state mask, ignored event and CHSE transition");
     puts("SYSWAIT SCH$WAITK/WQH wake plus SCHED SCH$RESCHED/SCH$SCHED and RSE SCH$CHSE PASS");
     return 0;
 }
