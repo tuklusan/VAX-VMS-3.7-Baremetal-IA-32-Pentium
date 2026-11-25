@@ -1891,3 +1891,6 @@ Published GitHub main M390 implementation commit: `ad6ec34c76a54ecbe65173d6dfed8
 Rebuilt M390 SYS.EXE completed the existing QEMU M217 integration regression: 700 SYS.EXE bytes were read across two IOC-selected DQA0 DDT sectors through real ATA IRQ14. The guest still stops at the known incomplete INIT boundary; no process activation, SYS$QIO call, login, DCL, DECnet or SET HOST was observed. This run does not exercise the M390 failure-output change.
 
 Verification: `make qemu-sysboot-m217` PASS; serial manifest verification PASS (327 raw logs). Capture `logs/serial/qemu-m217-run-local-20261125T191808093864Z.log`, 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`; runner exited and no QEMU remains. No additional functional coverage is claimed.
+
+Local M391 checkpoint commit: `3d89d0b8679e595896ae69f94d0efb608c7f4923`.
+Published GitHub main M391 checkpoint commit: `4b5fa20070cce150afbec40977309fc31a2d190d`.
