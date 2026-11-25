@@ -10899,10 +10899,48 @@
         {
           "original_lines": [
             1,
+            213
+          ],
+          "status": "unresolved",
+          "reason": "RSE AST/event declarations and AST, event-flag and swap-out actions remain unresolved"
+        },
+        {
+          "original_lines": [
+            214,
+            231
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_rse_event",
+          "pc_line": 425,
+          "function": "Partial source state masks and wake dispatch for free-page, WAKE, RESUME and page-fault-complete events; caller supplies the actual wait-queue header and situational priority class"
+        },
+        {
+          "original_lines": [
+            232,
+            267
+          ],
+          "status": "unresolved",
+          "reason": "RSE SETPRI, SWPOUT, local/common event completion and wait-queue accounting remain unresolved"
+        },
+        {
+          "original_lines": [
+            268,
+            270
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_rse_event",
+          "pc_line": 425,
+          "function": "Route the implemented RSE executable-state events through wait-queue removal and source CHSE scheduling; AST delivery and event-specific completion state remain unresolved"
+        },
+        {
+          "original_lines": [
+            271,
             332
           ],
           "status": "unresolved",
-          "reason": "RSE event actions, AST delivery, swapping and synchronization routines remain unresolved except separately mapped source entries"
+          "reason": "SCH$UNWAIT state-to-WQH resolution, common event-cluster queues and remaining event/AST support remain unresolved"
         },
         {
           "original_lines": [
@@ -10943,7 +10981,7 @@
           "reason": "Remaining RSE process state, wait, swap and scheduler routines unresolved"
         }
       ],
-      "unresolved_integration": "Native SCH$WAITK WQH transitions are host tested; source RSE event/AST state masks, PID-based wake paths, full IPL semantics, swapper execution and remaining scheduler routines are unresolved."
+      "unresolved_integration": "Host-tested partial SCH$RSE masks and WQH wake transitions now cover FPGA, WAKE, RESUME and PFCOM. AST/event-flag actions, PID-based wake paths, event completion return state, full IPL semantics, swapper execution and remaining scheduler routines are unresolved."
     },
     {
       "original_file": "RTL/SRC/MTHIIDNNT.MAR",

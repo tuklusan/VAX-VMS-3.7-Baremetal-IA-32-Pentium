@@ -1880,7 +1880,11 @@ result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
 rse_lines=735 # pinned original SYS/SRC/RSE.MAR line count at REVISION
 rse_sections=[]
 for first,last,path,symbol,description,status in [
- (1,332,None,None,'RSE event actions, AST delivery, swapping and synchronization routines remain unresolved except separately mapped source entries','unresolved'),
+ (1,213,None,None,'RSE AST/event declarations and AST, event-flag and swap-out actions remain unresolved','unresolved'),
+ (214,231,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial source state masks and wake dispatch for free-page, WAKE, RESUME and page-fault-complete events; caller supplies the actual wait-queue header and situational priority class','partial'),
+ (232,267,None,None,'RSE SETPRI, SWPOUT, local/common event completion and wait-queue accounting remain unresolved','unresolved'),
+ (268,270,'src/vms_v37_sched.c','port_v37_sched_rse_event','Route the implemented RSE executable-state events through wait-queue removal and source CHSE scheduling; AST delivery and event-specific completion state remain unresolved','partial'),
+ (271,332,None,None,'SCH$UNWAIT state-to-WQH resolution, common event-cluster queues and remaining event/AST support remain unresolved','unresolved'),
  (333,342,'src/vms_v37_sched.c','port_v37_sched_chse','Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial','partial'),
  (343,394,None,None,'SCH$CHSE IPL checks and preceding/following RSE entry paths remain unresolved','unresolved'),
  (395,440,'src/vms_v37_sched.c','port_v37_sched_chse','Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points','partial'),
@@ -1895,7 +1899,7 @@ for first,last,path,symbol,description,status in [
         'status':status,'reason':description})
 result['files'].append({'original_file':'SYS/SRC/RSE.MAR',
     'original_lines':rse_lines,'sections':rse_sections,
-    'unresolved_integration':'Native SCH$WAITK WQH transitions are host tested; source RSE event/AST state masks, PID-based wake paths, full IPL semantics, swapper execution and remaining scheduler routines are unresolved.'})
+    'unresolved_integration':'Host-tested partial SCH$RSE masks and WQH wake transitions now cover FPGA, WAKE, RESUME and PFCOM. AST/event-flag actions, PID-based wake paths, event completion return state, full IPL semantics, swapper execution and remaining scheduler routines are unresolved.'})
 
 # M107: per-source native assembly-free RTL routines, each saved as its own
 # source file with one callable symbol. These are host-tested and built into
