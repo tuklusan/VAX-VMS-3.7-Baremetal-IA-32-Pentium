@@ -2013,3 +2013,15 @@ Local M402 implementation commit: `0d0a49f35ec072eaa7f95a079d51007acdc45fce`.
 Published GitHub main M402 implementation commit: `0d0a49f35ec072eaa7f95a079d51007acdc45fce`.
 
 Remaining acceptance work: parameter-file discovery/application; mapped physical/nonpaged and paged pools; SWAPPER/NULL PHD and IA-32 contexts; public SYS$QIO with DQA0 request dispatch and process-aware AST completion; Files-11 ACP integration; scheduler and process image activation; SYSTEM login, DCL, DECnet Phase IV, and genuine SET HOST 0. Source coverage remains incomplete (8,032 missing and 56,882 unresolved ranges in the indexed inventory).
+
+
+## M403 - Verify INIT dynamic records lie within NPAGEDYN, 25 November 2026
+
+The SYS.EXE lookaside initialization now returns the exact NPAGEDYN base/size through its private boot result. The IA-32 boot validates that interval lies inside the loaded SYS.EXE image, matches the configured NPAGEDYN size, and contains the actual INI_LCKIDTBL, resource hash, process bitmap, process vector, PHV/swap map, MPW, and page-file vector arrays. Checks use each source structure's actual payload length; they would halt boot on an out-of-range table. This verifies memory placement only. It does not install physical page mappings/SPTs, initialize PAGEDYN, activate process contexts, dispatch public SYS$QIO, or complete INIT.
+
+Verification: full `make -j2 all test` PASS (exit 0); after the final assertion/helper edit, `make -j2 all` and `make qemu-sysboot-m217` PASS. Three sequential M217 QEMU captures were recorded; final capture `logs/serial/qemu-m217-run-local-20261125T232909987054Z.log` is 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`. It confirms the DQA0 DDT/IRQ14/Files-11 ACP read and scheduler IRQ, then the same honest stop because NULL/SWAPPER contexts are absent. Source coverage generator, range tests and source validator PASS (2,140 ranges; 451/4,566 original files indexed; 17,230 mapped, 30,306 partial, 56,882 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded; zero validation errors). The runner exited; no QEMU remains.
+
+Local M403 implementation commit: `3b41871c35316aae84d8954a67a45741a4210207`.
+Published GitHub main M403 implementation commit: `3b41871c35316aae84d8954a67a45741a4210207`.
+
+Remaining acceptance work is unchanged: real page mapping and paged pool setup; SWAPPER/NULL PHD and IA-32 context activation; public SYS$QIO with process I/O and AST completion; Files-11 ACP integration; scheduler and process image activation; SYSTEM login, DCL, DECnet Phase IV, and genuine SET HOST 0. Source coverage remains incomplete (8,032 missing and 56,882 unresolved ranges in the indexed inventory).
