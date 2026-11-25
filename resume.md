@@ -1829,3 +1829,5 @@ Added a scheduler regression that corrupts the saved LEF waiter CS while retaini
 Verification: make v37schedcheck, full make -j2 all test (exit 0), and git diff --check PASS. Source coverage unchanged at 2,135 ranges, 451/4,566 original files indexed, zero errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded. No QEMU run: this change only extends the host scheduler regression and does not change the guest image. No process activation, login/DCL, DECnet, or SET HOST is claimed.
 
 Local M384 test commit: 977ccfa1573cc07bf8eb08bb416764d4692d22a6.
+
+Published GitHub main M384 test commit: 237c288f22ce2475f3e4945d08ab5ef14c75f9cb.
