@@ -1676,3 +1676,13 @@ Verification: `make -j2 CC=gcc-12 v37schedcheck v37ia32ctxcheck` PASS; `python3 
 
 Local M368 implementation commit: `a0d1ca178cdec3bd3715c5984da3fc1bafa2675c`; published GitHub main implementation commit: `088874c3a6a2c0b183050940df61dc15edc72a34`.
 
+## M369 - Generalize validated IA-32 restore-frame handoff, 25 November 2026
+
+Replaced the probe-specific selected-frame global with `arch_selected_restore_frame` and added `arch_prepare_restore_frame`, which validates the full CPL-specific IRET frame before publishing it for the shared assembly restore path. The ring transition regression now uses this checked API. This is architecture restore plumbing only: live `arch_trap` scheduling still does not call `port_v37_sched_select`, preserve the outgoing VMS PCB context, update TSS/CR3, or activate the source NULL/SWAPPER PCBs. No increase in functional source-coverage status is claimed.
+
+Verification: `make -j2 all test` PASS (host, static layout, and sanitizer checks; exit 0); `python3 tools/gen_source_coverage.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS (2,121 ranges; 451/4,566 originals indexed; zero validation errors; totals unchanged). One `make qemu-sysboot-m217` runner PASSed the real SYS.EXE Files-11 700-byte read through IOC-selected DQA0 DDT and IRQ14, then reached the explicit incomplete-INIT halt. Capture `logs/serial/qemu-m217-run-local-20261125T153329750656Z.log`, 5,975 bytes, SHA-256 `edfa0c71aceb8c927480e60d42174b023f9da1d8ab274d6307876aff45b84193`; runner exited and no QEMU process remains. Serial manifest validation initially found three pre-existing duplicate entries; exact duplicate records were removed while retaining every unique raw log, and verification now passes (310 logs).
+
+Local M369 implementation commit: `8a763966dbe0b167ff9a69faf29e483026d57964`.
+
+Published GitHub main implementation commit: pending.
+
