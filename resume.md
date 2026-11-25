@@ -1867,3 +1867,12 @@ Verification: focused `make v37schedcheck v37eventwaitcheck` PASS; full `make -j
 
 Local M388 implementation commit: 2f743eda14fe4c306691b9dc304e9eb2950b7a0e.
 Published GitHub main M388 implementation commit: 383c755e89bdcae383ea5a19163803b3bfb81738.
+
+## M389 - Validate CEB size before event service access, 25 November 2026
+
+The native event service now requires a resolved CEB to declare at least 32 bytes, enough to contain the source EFC and full WQH fields, before it reads those records. A zero pointer remains SS$_UNASEFC; an invalid nonzero pointer remains an internal unresolved status; truncated source records return corruption without mutating event flags or service status. Host regression verifies the short-CEB rejection. CEB shared-memory master/slave protocol and public service binding remain unresolved.
+
+Verification: `make v37schedcheck v37eventwaitcheck` PASS; full `make -j2 all test` exit 0; coverage generation and `python3 tools/validate_source_ranges.py` PASS (2,135 ranges, zero mapped-function misses or validation errors); `git diff --check` PASS. One `make qemu-sysboot-m217` PASS. Log `logs/serial/qemu-m217-run-local-20261125T190547568006Z.log`, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6; reaches established DQA0/IRQ14/ACP and IRQ0 checkpoints then incomplete INIT. Guest does not call event services. No QEMU runner remains. No process activation, SYSTEM login, DCL, DECnet or SET HOST is claimed.
+
+Local M389 implementation commit: f9ef0669cf8063c579c53a91bf396f8f140070db.
+Published GitHub main M389 implementation commit: af3fe2dae4e82d4a9e7f07cdb93cc98b7d5bde84.
