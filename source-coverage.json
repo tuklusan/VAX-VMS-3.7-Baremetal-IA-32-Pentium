@@ -1644,7 +1644,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 631,
+          "pc_line": 636,
           "function": "Set a source-layout local event bit and wake a satisfied LEF waiter; PID lookup and live SETEF dispatch remain absent"
         },
         {
@@ -1655,8 +1655,8 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 631,
-          "function": "Set a source-layout normal/master CEF bit and scan its WQH for satisfied resident waiters; slave CEB replication remains unsupported"
+          "pc_line": 636,
+          "function": "Set a source-layout normal/master CEF bit and scan its WQH for satisfied resident waiters; nonresident CEF waiters use source EVENTE/CHSE to COMO without completing saved result; slave CEB replication remains unsupported"
         },
         {
           "original_lines": [
@@ -1674,7 +1674,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "event_condition",
-          "pc_line": 567,
+          "pc_line": 572,
           "function": "Evaluate the source EFWM and WALL wait-any/wait-all predicate for a resident PCB"
         },
         {
@@ -6088,7 +6088,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_event",
-          "pc_line": 573,
+          "pc_line": 578,
           "function": "native functional counterpart to original section"
         },
         {
@@ -6111,7 +6111,7 @@
           "reason": "ending directives and nonfunctional text"
         }
       ],
-      "unresolved_integration": "Native SCH$WFLOR/WFLAND checks local/master CEB masks, saves EFWM/WEFC/WALL, queues on the source LEF/CEF WQH and saves the native IRET frame. POSTEF sets event bits and wakes matching resident waiters. Public service dispatch, slave CEB IPC, nonresident wake, AST and IPL integration remain incomplete."
+      "unresolved_integration": "Native SCH$WFLOR/WFLAND checks local/master CEB masks, saves EFWM/WEFC/WALL, queues on the source LEF/CEF WQH and saves the native IRET frame. POSTEF sets event bits, completes resident wait results, and moves nonresident CEF waiters to COMO without editing their saved context. Public service dispatch, slave CEB IPC, nonresident wake, AST and IPL integration remain incomplete."
     },
     {
       "original_file": "SYS/SRC/SYSDCLEXH.MAR",
