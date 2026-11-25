@@ -1721,3 +1721,4 @@ Strengthened the real M217 boot regression to require the live IRQ0 SCH$RESCHED/
 Verification: make qemu-sysboot-m217 PASS with the new ordered scheduler assertion; tests/test_m47_qemu_manifest.py PASS. Captured logs/serial/qemu-m217-run-local-20261125T171040327676Z.log (6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6). Runner exited; no QEMU process remains. The guest still stops at incomplete INIT; no process activation, login/DCL, DECnet or SET HOST occurred.
 
 Local M373 implementation commit: fef0e092b663f0e49360439e9809e326585fb43e.
+Published GitHub main M373 implementation commit: 8a380dae34d285304ad7126b0110cca436db3df1.
