@@ -70,7 +70,7 @@ extern void arch_resume_initial_frame(
 extern void arch_vms_ring1_probe_entry(void);
 extern void arch_vms_ring2_probe_entry(void);
 extern void arch_vms_ring_probe_exit(void);
-extern struct port_v37_ia32_restore_frame *arch_vms_probe_next_frame;
+extern struct port_v37_ia32_restore_frame *arch_selected_restore_frame;
 
 static volatile uint32_t ticks;
 enum { ARCH_TRAP_RETURN_CURRENT=0,ARCH_TRAP_RETURN_RING3=1,
@@ -79,6 +79,17 @@ static volatile uint32_t vms_ring_probe_active;
 static volatile uint32_t vms_ring_probe_seen[3];
 static uint8_t vms_ring_probe_stack[2][512] __attribute__((aligned(16)));
 static struct port_v37_ia32_restore_frame *vms_ring_probe_frames[3];
+
+/* Prepare the common interrupt-return path for a scheduler-selected VMS
+ * context. The trap dispatcher must still explicitly return
+ * ARCH_TRAP_RESTORE_SELECTED_FRAME before assembly consumes this frame. */
+int arch_prepare_restore_frame(
+    struct port_v37_ia32_restore_frame *frame){
+    if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
+        return 0;
+    arch_selected_restore_frame=frame;
+    return 1;
+}
 
 int arch_vms_ring_probe(void){
     uint32_t cr3;
@@ -102,7 +113,10 @@ int arch_vms_ring_probe(void){
         vms_ring_probe_frames[i+1u]=frame;
     }
     if(valid){
-        arch_vms_probe_next_frame=vms_ring_probe_frames[2];
+        if(!arch_prepare_restore_frame(vms_ring_probe_frames[2]))
+            valid=0;
+    }
+    if(valid){
         arch_resume_initial_frame(vms_ring_probe_frames[1]);
         if(vms_ring_probe_seen[1]!=1u||vms_ring_probe_seen[2]!=1u)
             valid=0;
