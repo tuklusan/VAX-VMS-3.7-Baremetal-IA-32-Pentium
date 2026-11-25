@@ -1652,3 +1652,11 @@ Verification: `make iocmapvblkcheck` PASS; `make -j2 CC=gcc-12 all test` PASS (e
 
 Local M365 commit: f0a4a4d5d98d256d536946058b208b85684e1c61; published GitHub main commit: d2fcb7f6d6dc7812edd60bf8922327e5d9e63756.
 
+## M366 - Route SYS.EXE ACP data sectors through IOC$MAPVBLK, 25 November 2026
+
+Connected the converted resident SYSWCB to the Files-11 ACP DQA0 read callback. For ACP data LBNs covered by the SYSWCB, the native path finds the corresponding SYS.EXE VBN, calls IOC$MAPVBLK under the DQA0 IPL lock, and dispatches the mapper-selected LBN through the published DQA0 DDT and IRQ14. INDEXF.SYS metadata sectors outside the SYS.EXE WCB continue through their ACP-provided physical LBNs. The guest asserts at least one data-sector mapping hit. The real SYS.EXE ACP sample matched its independently read FH2 chain.
+
+Verification: `make -j2 CC=gcc-12 all test` PASS (exit 0); `make sourcerangecheck` PASS (2,121 ranges; 451/4,566 originals indexed; zero errors; 17,255 mapped, 30,263 partial, 56,921 unresolved, 8,032 missing, 26,438 excluded, 917 hardware-excluded); fresh single-runner `make qemu-sysboot-m217` PASS through the SYSWCB-to-IOC$MAPVBLK ACP sectors, DQA0 DDT/IRQ14 sample, async write/restore, then the explicit incomplete-INIT stop. Capture `logs/serial/qemu-m217-run-local-20261125T150413292072Z.log`, 5,975 bytes, SHA-256 `edfa0c71aceb8c927480e60d42174b023f9da1d8ab274d6307876aff45b84193`; runner exited and no QEMU process remains. Earlier M366 runs failed and are retained as harness-fail evidence in the serial manifest: initial publication-prerequisite failure (`145648812112Z`), unresolved WCB extent for an INDEXF metadata sector (`150142589675Z`), and a pre-read WCB-hit assertion (`150219100580Z`, `150341778937Z`). Those cases were corrected before the passing run.
+
+Still incomplete: general process WCB/FCB/RVT resolution, multi-volume mapping, source BUG_CHECK paths, public SYS$QIO completion/AST delivery, remaining INIT, process scheduling/image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0.
+

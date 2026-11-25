@@ -207,6 +207,7 @@ struct port_sys_exec_result {
     uint32_t (*dq_native_ddt_check)(const struct port_dqddt_stage *,
         const struct port_dq_fdt *,const struct port_dqddt_native *);
     uint32_t dq_ddt_published,dqa_ioc_status,dqa_ioc_ddb,dqa_ioc_ucb;
+    uint32_t dqa_ioc_error_stage;
     uint32_t dq_published_f11_read_bytes,dq_published_f11_read_irps;
     uint32_t dq_acp_header_lbn,dq_acp_header_reads,dq_acp_data_reads;
     const uint8_t *dq_acp_header;
@@ -216,6 +217,7 @@ struct port_sys_exec_result {
     uint32_t dq_acp_failed_fcb_reclaimed;
     uint32_t dq_acp_readonly_wcb_closed;
     uint32_t dq_acp_fib_identified_sys_file;
+    uint32_t dq_acp_wcb_map_hits;
     uint16_t dq_acp_file,dq_acp_sequence,dq_acp_volume;
     /* DEVICEDAT DDB/UCB pointer graph; DQA0 is partially DDT/CRB bound. */
     const struct port_v37_device_result *device_db;

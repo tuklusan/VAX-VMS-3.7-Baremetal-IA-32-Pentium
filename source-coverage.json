@@ -9560,7 +9560,7 @@
           "pc_file": "src/vms_ioc_mapvblk.c",
           "pc_symbol": "port_ioc_mapvblk",
           "pc_line": 89,
-          "function": "WCB chain selection, FM2 scan, adjacent extent, EOF clamp and RVN result; executive structures and bugcheck integration remain partial"
+          "function": "WCB chain selection, FM2 scan, adjacent extent, EOF clamp and RVN result; live SYSWCB-to-ACP/DQA0 translation is exercised, general WCB/FCB/RVT and bugcheck integration remain partial"
         },
         {
           "original_lines": [
@@ -9571,7 +9571,7 @@
           "reason": "UPDATRANSP and disk sense routines remain unported"
         }
       ],
-      "unresolved_integration": "IOC$MAPVBLK requires native UCB IPL synchronization, actual resident WCB/FCB address resolvers and VMS fatal-structure bugchecks."
+      "unresolved_integration": "General process WCB/FCB/RVT resolvers, multi-volume switching, source fatal-structure bugchecks, and public SYS$QIO completion remain incomplete; the resident SYSWCB DQA0 ACP read path is integrated."
     },
     {
       "original_file": "F11A/SRC/MOUNT.B32",
@@ -22307,7 +22307,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 521,
+          "pc_line": 630,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
