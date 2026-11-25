@@ -21570,7 +21570,7 @@
           "pc_file": "src/vms_sysassign.c",
           "pc_symbol": "port_v37_sysassign_lookup_qio_channel",
           "pc_line": 122,
-          "function": "Resolve the source channel token from a PID-bound CCB table and map each assigned UCB to its native device/FDT view; host integration covers simultaneous DQA0 and NLA0 assignments and channel I/O charging. Live public SYS$QIO service-vector dispatch, device service implementations and completion remain absent"
+          "function": "Resolve PID-bound CCB channels to per-UCB device/FDT views and validate each UCB/DDB backlink against the native device database; host integration covers simultaneous DQA0/NLA0 assignment, channel I/O charging, and rejection of a mismatched DDB binding. Live public SYS$QIO service-vector dispatch, device service implementations and completion remain absent"
         },
         {
           "original_lines": [

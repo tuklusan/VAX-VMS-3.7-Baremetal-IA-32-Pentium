@@ -132,6 +132,7 @@ int port_v37_sysassign_lookup_qio_channel(void *context,uint32_t pid,
     if(port_v37_ccb_resolve(c->ccb_base,c->ccb_preceding_bytes,channel,
        c->maximum_channel_offset,0u,&view)!=PORT_V37_CCB_OK)return -1;
     const struct port_v37_sysqio_device *device=0;
+    uint32_t bound_ddb=0u;
     if(c->bindings){
         if(c->binding_count>UINT16_MAX)return -1;
         for(size_t i=0;i<c->binding_count;i++){
@@ -139,13 +140,33 @@ int port_v37_sysassign_lookup_qio_channel(void *context,uint32_t pid,
             if(c->bindings[i].ucb==view.ucb){
                 if(device)return -1; /* duplicate UCB bindings are ambiguous */
                 device=c->bindings[i].device;
+                bound_ddb=c->bindings[i].ddb;
             }
         }
-    }else if(view.ucb==c->assigned_ucb)device=c->device;
+    }else if(view.ucb==c->assigned_ucb){
+        device=c->device;
+        const uint32_t offset=view.ucb-c->device_database_base;
+        if(offset<=c->device_database_bytes&&
+           PORT_V37_UCB_FIXED_BYTES<=c->device_database_bytes-offset)
+            bound_ddb=port_v37_read32(c->device_database+offset+36u);
+    }
     if(!device||view.ucb<c->device_database_base)return -1;
     const uint32_t offset=view.ucb-c->device_database_base;
     if(offset>c->device_database_bytes||
        PORT_V37_UCB_FIXED_BYTES>c->device_database_bytes-offset)
+        return -1;
+    if(!bound_ddb||bound_ddb<c->device_database_base)return -1;
+    const uint32_t ddb_offset=bound_ddb-c->device_database_base;
+    if(ddb_offset>c->device_database_bytes||
+       PORT_V37_DDB_SIZE>c->device_database_bytes-ddb_offset||
+       port_v37_read32(c->device_database+offset+36u)!=bound_ddb)
+        return -1;
+    const uint32_t first_ucb=port_v37_read32(
+        c->device_database+ddb_offset+4u);
+    if(first_ucb<c->device_database_base)return -1;
+    const uint32_t first_offset=first_ucb-c->device_database_base;
+    if(first_offset>c->device_database_bytes||
+       PORT_V37_UCB_FIXED_BYTES>c->device_database_bytes-first_offset)
         return -1;
     const struct port_v37_sysqio_resolved_channel result={
         .device=device,

@@ -46,6 +46,7 @@ uint32_t port_v37_sysassign_local(
 /* Bind each assigned source UCB to its native device/FDT description. */
 struct port_v37_sysassign_qio_binding {
     uint32_t ucb;
+    uint32_t ddb;
     const struct port_v37_sysqio_device *device;
 };
 struct port_v37_sysassign_qio_context {

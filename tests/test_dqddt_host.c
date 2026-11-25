@@ -377,7 +377,8 @@ int main(void){
     struct port_v37_sysqio_device nla_qio_device={
         .fdt=&fdt,.fdt_bytes=sizeof fdt,.online=1u};
     struct port_v37_sysassign_qio_binding qio_bindings[2]={
-        {info.ucb[0],&qio_device},{info.ucb[4],&nla_qio_device}};
+        {info.ucb[0],info.ddb[0],&qio_device},
+        {info.ucb[4],info.ddb[3],&nla_qio_device}};
     qio_fixture=(struct sysqio_fixture){.channels={
         .ccb_base=assign_process.ccb_base,
         .ccb_preceding_bytes=assign_process.ccb_preceding_bytes,
@@ -420,6 +421,10 @@ int main(void){
         qio_prepared.channel.ucb==(void *)(db+(info.ucb[4]-
             (uint32_t)(uintptr_t)db))&&
         qio_prepared.channel.device==&nla_qio_device);
+    qio_bindings[1].ddb=info.ddb[0];
+    CHECK(port_v37_sysassign_lookup_qio_channel(&qio_fixture.channels,
+        assign_process.pid,second_channel,&qio_prepared.channel)!=0);
+    qio_bindings[1].ddb=info.ddb[3];
     uint16_t bad_channel=UINT16_MAX;
     struct port_v37_sysassign_descriptor_request bad_descriptor=
         assign_descriptor;
