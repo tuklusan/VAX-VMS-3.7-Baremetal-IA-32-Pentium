@@ -21640,8 +21640,8 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
-          "pc_line": 27,
-          "function": "Build source-layout 136-byte standard IRP with source negative byte-offset IRP$W_CHAN encoding validated against the SYSQIO channel argument, ARB/fork fields and conditional ACB quota flag plus ASTCNT charge; native channel accounting and driver dispatch remain unbound"
+          "pc_line": 35,
+          "function": "Build source-layout 136-byte IRP with negative CCB offset, ARB/fork fields and conditional ACB quota charge; IRP$B_PRI comes from the bound PCB$B_PRIB as in SUCCES, and stale/malformed PCB identity is rejected. Native channel accounting and driver dispatch remain unbound"
         },
         {
           "original_lines": [
@@ -21894,7 +21894,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
-          "pc_line": 27,
+          "pc_line": 35,
           "function": "EXE$ONEPARM copies P1 to IRP$L_MEDIA when the device FDT selects the one-parameter action; host test verifies the exact packet field"
         },
         {
@@ -21924,7 +21924,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
-          "pc_line": 27,
+          "pc_line": 35,
           "function": "Sets IRP$V_FUNC for the classified READ FDT action; following source lock/access checks remain unresolved"
         },
         {
@@ -21946,7 +21946,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
-          "pc_line": 27,
+          "pc_line": 35,
           "function": "Copies low byte of P4 to IRP$B_CARCON for classified read/write FDT actions"
         },
         {
@@ -21965,7 +21965,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
-          "pc_line": 27,
+          "pc_line": 35,
           "function": "Zero-extends low word P2 into IRP$L_BCNT for classified read/write actions; zero count leaves BCNT clear"
         },
         {

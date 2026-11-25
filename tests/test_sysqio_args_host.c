@@ -375,6 +375,25 @@ int main(void){
        irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES]!=0xa5u){
         return 28;
     }
+    uint8_t priority_pcb[PORT_V37_PCB_BYTES]={0};
+    put16(priority_pcb+PORT_V37_PCB_SIZE,PORT_V37_PCB_BYTES);
+    priority_pcb[PORT_V37_PCB_BTYPE]=PORT_V37_DYN_PCB;
+    put32(priority_pcb+PORT_V37_PCB_PID,proc.pid);
+    priority_pcb[PORT_V37_PCB_PRIB]=19u;
+    put16(priority_pcb+PORT_V37_PCB_ASTCNT,1u);
+    struct port_v37_sysqio_process pcb_bound_proc=proc;
+    pcb_bound_proc.source_pcb=priority_pcb;
+    pcb_bound_proc.source_pcb_bytes=sizeof priority_pcb;
+    struct port_v37_sysqio_irp_spec wrong_priority_spec=ispec;
+    wrong_priority_spec.base_priority=1u;
+    if(port_v37_sysqio_build_irp(&prepared,&pcb_bound_proc,
+         &wrong_priority_spec,irp,sizeof irp)!=PORT_V37_SYSQIO_IRP_BUILD_OK||
+       irp[35u]!=19u||get16(priority_pcb+PORT_V37_PCB_ASTCNT)!=0u)
+        return 83;
+    put32(priority_pcb+PORT_V37_PCB_PID,proc.pid+1u);
+    if(port_v37_sysqio_build_irp(&prepared,&pcb_bound_proc,
+         &wrong_priority_spec,irp,sizeof irp)!=PORT_V37_SYSQIO_IRP_BUILD_BAD)
+        return 84;
     uint32_t ast_status=0u;
     if(proc.ast_count!=-1||port_v37_sysqio_check_ast_quota(&prepared,&proc,
           &ast_status)!=PORT_V37_SYSQIO_AST_EXQUOTA||
