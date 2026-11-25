@@ -1589,5 +1589,5 @@ Local M358 commit: 7dfdf135a9b4d17840c69776e71f65dd84d9e598; published GitHub ma
 Added a direct F11B NEXT_HEADER regression asserting that extended FID bytes preserve the low-byte relative volume and separate high-byte file-number extension. The ACP integration fixture independently exercises the same path through actual generated-volume sector reads. This is host coverage only; the M358 QEMU run does not use extended FIDs.
 
 
-Local M359 commit: c338211994dcfb3156df5bf772b4989ffca83eca.
+Local M359 commit: c338211994dcfb3156df5bf772b4989ffca83eca; published GitHub main commit: c9bd83e5c8d53438176ee03f60d6b4b0358b18d5.
 Verification: make files1186check PASS; make files1187check PASS; make sourcerangecheck PASS (2,116 ranges, 450/4,566 originals indexed, zero errors). No QEMU runner was needed for this isolated host-test addition.
