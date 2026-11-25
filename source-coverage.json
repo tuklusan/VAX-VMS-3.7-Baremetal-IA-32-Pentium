@@ -21837,7 +21837,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_user_irp",
-          "pc_line": 136,
+          "pc_line": 140,
           "function": "Validates/copies the fixed VMS AP list through checked caller-mode page translations, then checks READ/WRITE transfer access after IRP reservation and rolls back packet/I/O/AST charges on ACCVIO; no live system-service trap dispatch or driver submission yet"
         },
         {
@@ -21930,7 +21930,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_user_irp",
-          "pc_line": 136,
+          "pc_line": 140,
           "function": "Allocate/build the standard IRP, pin the caller IOSB and transfer pages, and on ACCVIO return the packet, release acquired pins, restore I/O/AST charges and post the event; the tested pending registry can take ownership keyed by PID/IRP before dispatch, but live DDT submission remains absent"
         },
         {
@@ -22241,7 +22241,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_user_irp",
-          "pc_line": 136,
+          "pc_line": 140,
           "function": "Pins all translated IA-32 pages for a READ destination after IRP reservation and rolls back on failure; VMS SVAPTE/BOFF mapping, IOLOCK restart/fault semantics and live submission remain unresolved"
         },
         {
@@ -22263,7 +22263,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_user_irp",
-          "pc_line": 136,
+          "pc_line": 140,
           "function": "Pins all translated IA-32 pages for a WRITE source after IRP reservation and rolls back on failure; VMS SVAPTE/BOFF mapping, IOLOCK restart/fault semantics and live submission remain unresolved"
         },
         {
@@ -22344,7 +22344,7 @@
           "status": "partial",
           "pc_file": "src/vms_sysqio_irp_reserve.c",
           "pc_symbol": "port_v37_sysqio_prepare_user_irp",
-          "pc_line": 136,
+          "pc_line": 140,
           "function": "Runs the helper after IRP reservation and returns packet/quota state on inaccessible READ/WRITE pages; DQA ACP MODIFY remains a separate FDT action"
         },
         {

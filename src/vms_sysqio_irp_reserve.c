@@ -73,6 +73,9 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
     if(begun!=PORT_V37_SYSQIO_BEGIN_OK){
         if(begun==PORT_V37_SYSQIO_BEGIN_WAIT)
             return PORT_V37_SYSQIO_PREPARE_WAIT;
+        /* No IRP ownership is returned on a rejected begin. Clear stale
+         * caller outputs, while preserving the WAIT path's no-op contract. */
+        *packet=0;*packet_va=0u;
         *service_status=status;
         return PORT_V37_SYSQIO_PREPARE_BEGIN;
     }
@@ -81,6 +84,7 @@ uint32_t port_v37_sysqio_prepare_irp(const void *ap,size_t ap_bytes,
     const uint32_t result=port_v37_sysqio_reserve_irp(&request,process,spec,
         pool,sync,&reserved,&va,&status);
     if(result!=PORT_V37_SYSQIO_RESERVE_OK){
+        *packet=0;*packet_va=0u;
         const int16_t count=port_v37_sysqio_process_io_count(process,
             request.dispatch.buffered);
         if(count<INT16_MAX)
