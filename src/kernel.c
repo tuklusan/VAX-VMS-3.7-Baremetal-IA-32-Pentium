@@ -18,6 +18,7 @@
 #include "vms_hpwd.h"
 #include "vms_validate.h"
 #include "vms_logintime.h"
+#include "vms_uaf_v37.h"
 #include "vms_login_fileio.h"
 #include "vms_logincmd.h"
 #include "vms_login_interact.h"
@@ -828,6 +829,26 @@ static int guest_terminal(void *context,char *value,unsigned cap){
     for(unsigned i=0;i<sizeof name;i++)value[i]=name[i];
     return sizeof name-1u;
 }
+static int guest_login_access(void *context,
+                              const struct port_uaf_record *user){
+    const struct port_lgi_guest_context *guest=context;
+    if(!guest||!eq(guest->terminal,"TTA0:"))return VMS_LOGIN_FILE;
+    uint64_t now=0u;
+    uint32_t day=0u,hour=0u;
+    if(!port_rtc_x86_now(0,&now)||
+       port_login_day_of_week(&now,&day,0)!=PORT_LIB_NORMAL||
+       port_login_hour_of_day(&now,&hour,0)!=PORT_LIB_NORMAL)
+        return VMS_LOGIN_FILE;
+    const uint32_t access=vms37_uaf_check_login_access(user,
+        (uint8_t)day,(uint8_t)hour,0u,0u,0u,0u);
+    switch(access){
+    case VMS37_UAF_ACCESS_OK:return VMS_LOGIN_OK;
+    case VMS37_UAF_ACCESS_HOUR:return VMS_LOGIN_BADHOUR;
+    case VMS37_UAF_ACCESS_NETWORK:return VMS_LOGIN_NOREMOTE;
+    case VMS37_UAF_ACCESS_DIALUP:return VMS_LOGIN_NODIALUP;
+    default:return VMS_LOGIN_FILE;
+    }
+}
 static int guest_user_name(void *context,const char *value){
     struct port_lgi_guest_context *guest=context;
     unsigned i=0;
@@ -858,7 +879,8 @@ static int login_interact_guest_test(const char *expected_user) {
     struct vms_lgi_interact session;
     const struct vms_lgi_interact_ops ops={
         .terminal_name=guest_terminal,.set_username=guest_user_name,
-        .set_termname=guest_term_name,.translate=guest_logical_lookup
+        .set_termname=guest_term_name,.translate=guest_logical_lookup,
+        .login_access=guest_login_access
     };
     vms_lgi_uart_init(&uart,arch_ticks);
     vms_lgi_fileio_init(&fileio,vms_lgi_uart_ops(),&uart);
@@ -1594,7 +1616,8 @@ static void dcl_login(void){
     struct vms_lgi_interact session;
     const struct vms_lgi_interact_ops ops={
         .terminal_name=guest_terminal,.set_username=guest_user_name,
-        .set_termname=guest_term_name,.translate=guest_logical_lookup
+        .set_termname=guest_term_name,.translate=guest_logical_lookup,
+        .login_access=guest_login_access
     };
     vms_lgi_uart_init(&uart,arch_ticks);
     vms_lgi_fileio_init(&fileio,vms_lgi_uart_ops(),&uart);

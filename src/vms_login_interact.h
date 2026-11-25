@@ -7,7 +7,8 @@
 
 enum { VMS_LOGIN_OK=1, VMS_LOGIN_NOAUTO=0, VMS_LOGIN_AUTH=-2,
        VMS_LOGIN_FILE=-3, VMS_LOGIN_DISABLED=-4, VMS_LOGIN_CAPTIVE=-5,
-       VMS_LOGIN_BADCLI=-6 };
+       VMS_LOGIN_BADCLI=-6, VMS_LOGIN_BADHOUR=-7,
+       VMS_LOGIN_NOREMOTE=-8, VMS_LOGIN_NODIALUP=-9 };
 enum { VMS_LOGIN_FLAG_DISABLED=1u,VMS_LOGIN_FLAG_CAPTIVE=2u,
        VMS_LOGIN_FLAG_NOWELCOME=4u,VMS_LOGIN_FLAG_NOMAIL=8u };
 struct vms_lgi_interact_ops {
@@ -21,6 +22,7 @@ struct vms_lgi_interact_ops {
     int (*local_echo)(void *context);
     int (*node_name)(void *context,char *buf,unsigned cap);
     uint32_t (*uaf_flags)(void *context,const struct port_uaf_record *uaf);
+    int (*login_access)(void *context,const struct port_uaf_record *uaf);
     unsigned (*mail_count)(void *context,const struct port_uaf_record *uaf);
 };
 struct vms_lgi_interact {

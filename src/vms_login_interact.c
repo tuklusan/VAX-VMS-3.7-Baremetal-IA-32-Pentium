@@ -194,6 +194,9 @@ int vms_lgi_interactive_validation(struct vms_lgi_interact *s){
         rc=vms_lgi_get_password(s);
         if(lookup==VMS_LOGIN_FILE)return VMS_LOGIN_FILE;
         if(!s->user_present || rc!=VMS_LOGIN_OK)return VMS_LOGIN_AUTH;
+        if(!s->ops.login_access)return VMS_LOGIN_FILE;
+        rc=s->ops.login_access(s->context,&s->user);
+        if(rc!=VMS_LOGIN_OK)return rc;
         uint32_t bits=flags(s);
         if(bits&VMS_LOGIN_FLAG_DISABLED)return VMS_LOGIN_DISABLED;
         if((bits&VMS_LOGIN_FLAG_CAPTIVE) &&

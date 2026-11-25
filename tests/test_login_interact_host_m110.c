@@ -6,6 +6,8 @@
 #define CHECK(x) do { if(!(x)){fprintf(stderr,"LOGIN INTERACT %d\n",__LINE__);return 1;} }while(0)
 struct fixture {
     int mode, wrong, unknown, captive, use_notice;
+    uint8_t access_weekday,access_hour,remote_terminal,dialup_terminal,
+            explicit_day,explicit_day_flag;
     unsigned username_reads, password_reads, noecho_reads, open_count,
              close_count, output_count, auto_count, priv_enable, priv_disable;
     unsigned list_calls, last_input_flags;
@@ -99,6 +101,20 @@ static int node(void *ctx,char *out,unsigned cap){
 static unsigned mail(void *ctx,const struct port_uaf_record *user){
     (void)ctx;(void)user;return 2;
 }
+static int login_access(void *ctx,const struct port_uaf_record *user){
+    const struct fixture *f=ctx;
+    const uint32_t status=vms37_uaf_check_login_access(user,
+        f->access_weekday?f->access_weekday:1u,f->access_hour,
+        f->explicit_day,f->explicit_day_flag,f->remote_terminal,
+        f->dialup_terminal);
+    switch(status){
+    case VMS37_UAF_ACCESS_OK:return VMS_LOGIN_OK;
+    case VMS37_UAF_ACCESS_HOUR:return VMS_LOGIN_BADHOUR;
+    case VMS37_UAF_ACCESS_NETWORK:return VMS_LOGIN_NOREMOTE;
+    case VMS37_UAF_ACCESS_DIALUP:return VMS_LOGIN_NODIALUP;
+    default:return VMS_LOGIN_FILE;
+    }
+}
 static int flush_file(void *ctx,struct vms_lgi_stream *s){(void)ctx;(void)s;return VMS_LGI_OK;}
 static const struct vms_lgi_ops file_ops={
     .open=open_file,.connect=connect_file,.close=close_file,.read=get_file,
@@ -107,7 +123,7 @@ static const struct vms_lgi_ops file_ops={
 static const struct vms_lgi_interact_ops interaction_ops={
     .terminal_name=terminal,.set_username=set_name,.set_termname=set_device,
     .system_privilege=privilege,.auto_user=auto_user,.translate=notice,
-    .node_name=node,.mail_count=mail
+    .node_name=node,.mail_count=mail,.login_access=login_access
 };
 static int setup(struct fixture *f,struct vms_lgi_fileio *fileio,
                  struct vms_lgi_interact *s,struct port_uaf_service *auth){
@@ -149,6 +165,20 @@ int main(void){
     SET_LABUSER_UAF_FLAGS(&fixture,VMS37_UAF_FLAGS_CAPTIVE);
     CHECK(vms_lgi_init_interactive(&session)==VMS_LOGIN_CAPTIVE);
     CHECK(!session.logged_in&&strcmp(session.command.cli,"SYS$SYSTEM:DCL")==0);
+
+    SET_LABUSER_UAF_FLAGS(&fixture,0u);
+    fixture.sectors[5][VMS37_UAF_PDAYHOURS+1u]=2u;
+    f=(struct fixture){.access_hour=9u};setup(&f,&io,&session,&auth);
+    CHECK(vms_lgi_init_interactive(&session)==VMS_LOGIN_BADHOUR);
+    CHECK(!session.logged_in);
+    fixture.sectors[5][VMS37_UAF_PDAYHOURS+1u]=0u;
+    fixture.sectors[5][VMS37_UAF_PDAYFLAGS]=VMS37_UAF_DAY_DISNETWORK;
+    f=(struct fixture){.remote_terminal=1u};setup(&f,&io,&session,&auth);
+    CHECK(vms_lgi_init_interactive(&session)==VMS_LOGIN_NOREMOTE);
+    fixture.sectors[5][VMS37_UAF_PDAYFLAGS]=VMS37_UAF_DAY_DISDIALUP;
+    f=(struct fixture){.dialup_terminal=1u};setup(&f,&io,&session,&auth);
+    CHECK(vms_lgi_init_interactive(&session)==VMS_LOGIN_NODIALUP);
+    CHECK(!session.logged_in);
 
     f=(struct fixture){.mode=1};setup(&f,&io,&session,&auth);
     CHECK(vms_lgi_init_interactive(&session)==VMS_LOGIN_OK);
