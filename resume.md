@@ -1660,3 +1660,5 @@ Verification: `make -j2 CC=gcc-12 all test` PASS (exit 0); `make sourcerangechec
 
 Still incomplete: general process WCB/FCB/RVT resolution, multi-volume mapping, source BUG_CHECK paths, public SYS$QIO completion/AST delivery, remaining INIT, process scheduling/image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0.
 
+Local M366 implementation commit: c231024803c834cb680b8a6116cd4900b8ddefa6; published GitHub main implementation commit: 2b0e54d8615809637a94c7aecbaa4a8e14cf3406.
+
