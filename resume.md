@@ -1989,3 +1989,15 @@ M400 coverage commit: `66144222eb4b938d86b1c99fd090cc6b0059cf16`.
 Published GitHub main M400 coverage commit: `66144222eb4b938d86b1c99fd090cc6b0059cf16`.
 
 PAGEDYN placement/allocation and boot parameter-file lookup/application remain incomplete. INIT still does not activate resident contexts; public SYS$QIO, process ACP/AST completion, SYSTEM login, DCL, DECnet Phase IV and SET HOST 0 remain incomplete.
+
+
+## M401 - Add fixed resident paged-pool allocation boundary, 25 November 2026
+
+Added native fixed-pool wrappers for the source EXE$ALOPAGED/EXE$DEAPAGED 16-byte rounding, allocation and free-list return behavior, using the already tested source-derived first-fit/coalescing helper. Linked the routines into resident SYS.EXE and added host regressions for alignment, rounding, exhaustion, duplicate return, coalescing and IPL restoration. This is only an initialized fixed resident pool boundary: it does not set up or place the actual paged pool, wait on SCH$LOCKW, extend backing, wake PGDYN waiters, decode original IRPs, or connect SWAPPER/INIT callers. Coverage is partial, not complete.
+
+Verification: `make exepagedpoolcheck exenppoolcheck all` PASS; full `make -j2 all test` exited 0; `python3 tools/gen_source_coverage.py`, `python3 tests/test_coverage_ranges.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS (2,140 source ranges; 451/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,306 partial, 56,882 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). `make qemu-sysboot-m217` PASS: actual DQA0 DDT/IRQ14/Files-11 ACP checks completed, then live IRQ0 called the scheduler and the guest stopped at the known incomplete INIT boundary because NULL/SWAPPER PHD contexts are absent. Capture `logs/serial/qemu-m217-run-local-20261125T201359381164Z.log`: 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`. New routines are linked but are not called by the guest. Serial checks do not assert INIT completion. No process activation, SYSTEM login, DCL, DECnet, or SET HOST is claimed. QEMU exited and no runner remains.
+
+Local M401 implementation commit: `24eac3940f0a9f95f39a13eee4233813c5413d47`.
+Published GitHub main M401 implementation commit: `24eac3940f0a9f95f39a13eee4233813c5413d47`.
+
+Remaining acceptance work is unchanged: INIT lacks NULL/SWAPPER PHD/context activation; public SYS$QIO and process-aware AST completion, Files-11 ACP request integration, scheduler/process image activation, genuine login and DCL, DECnet Phase IV, and real SET HOST 0 remain incomplete. Source coverage remains incomplete (8,032 missing and 56,882 unresolved ranges in the indexed inventory).
