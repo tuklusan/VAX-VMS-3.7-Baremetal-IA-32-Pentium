@@ -51,10 +51,11 @@ int main(void){
        frame->registers.user_esp!=0x007ff000u)
         return fail("VMS executive mode maps to CPL1");
     frame->registers.vector=32u;
-    frame->registers.user_esp=0xdeadbeefu;
-    frame->registers.user_ss=0x12345678u;
     if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
-        return fail("same-CPL interrupt frame has no hardware-saved ESP/SS");
+        return fail("CPL1 interrupt enters the CPL0 handler with saved ESP/SS");
+    frame->registers.user_ss=0x12345678u;
+    if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_STACK)
+        return fail("CPL1 interrupt frame retains the privilege-transition stack");
     struct port_v37_ia32_context_seed invalid_ring=ring1;
     invalid_ring.code_selector=0x09u;
     if(port_v37_ia32_context_init(stack,sizeof stack,&invalid_ring,&frame)!=
@@ -70,10 +71,8 @@ int main(void){
        frame->registers.user_esp!=0x007fe000u)
         return fail("VMS supervisor mode maps to CPL2");
     frame->registers.vector=46u;
-    frame->registers.user_esp=0xdeadbeefu;
-    frame->registers.user_ss=0x12345678u;
     if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
-        return fail("CPL2 interrupt validates only the hardware IRET frame");
+        return fail("CPL2 interrupt enters the CPL0 handler with saved ESP/SS");
     struct port_v37_ia32_context_seed invalid=user;
     invalid.eflags|=0x3000u;
     if(port_v37_ia32_context_init(stack,sizeof stack,&invalid,&frame)!=

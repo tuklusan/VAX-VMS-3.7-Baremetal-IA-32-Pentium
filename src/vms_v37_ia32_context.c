@@ -43,8 +43,7 @@ uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
         .registers={
             .edi=0u,.esi=0u,.ebp=0u,.esp_at_pushal=0u,
             .ebx=0u,.edx=0u,.ecx=0u,.eax=0u,
-            .vector=PORT_V37_IA32_INITIAL_FRAME_VECTOR,.error=0u,
-            .eip=seed->entry_pc,
+            .vector=0u,.error=0u,.eip=seed->entry_pc,
             .cs=seed->code_selector,.eflags=seed->eflags,
             .user_esp=seed->access_mode?seed->initial_stack:0u,
             .user_ss=seed->access_mode?seed->data_selector:0u
@@ -71,9 +70,8 @@ uint32_t port_v37_ia32_context_validate(
     if(mode==0u){
         if(frame->registers.user_esp||frame->registers.user_ss)
             return PORT_V37_IA32_CONTEXT_STACK;
-    }else if(frame->registers.vector==PORT_V37_IA32_INITIAL_FRAME_VECTOR&&
-             (!frame->registers.user_esp||
-              frame->registers.user_ss!=data[mode])){
+    }else if(!frame->registers.user_esp||
+             frame->registers.user_ss!=data[mode]){
         return PORT_V37_IA32_CONTEXT_STACK;
     }
     return PORT_V37_IA32_CONTEXT_OK;
