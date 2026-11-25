@@ -10981,7 +10981,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
           "pc_line": 474,
-          "function": "For resident LEF/CEF waiters, update saved PHD PC/R0 to complete the VMS wait syscall before CHSE; full event-flag selection and IPL integration remain unresolved"
+          "function": "For resident LEF/CEF waiters, mirror the already post-INT IA-32 EIP in PHD PC and return SS$_NORMAL through PHD R0/native EAX before CHSE; event-flag selection and IPL integration remain unresolved"
         },
         {
           "original_lines": [
