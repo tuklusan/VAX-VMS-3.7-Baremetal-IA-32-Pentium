@@ -323,7 +323,7 @@ result['files'].append({
        'pc_symbol':'vms37_uaf_check_login_access',
        'pc_line':line_for_symbol('src/vms_uaf_v37.c',
                                  'vms37_uaf_check_login_access'),
-       'function':'Decode source UAF primary/secondary day-hour masks and deny network/dialup terminal classes; native interactive LOGIN calls the helper with live RTC and TTA0-local classification, while operator override and GETDVI remain incomplete'},
+       'function':'Decode source UAF primary/secondary day-hour masks and deny network/dialup terminal classes; native interactive LOGIN supplies a stable executive-time snapshot (RTC before EXEC) and TTA0-local classification, while operator override and general GETDVI remain incomplete'},
       {'original_lines':[1011,1455],'status':'unresolved',
        'reason':'Remaining original LOGIN startup and process activation are not ported'}],
     'unresolved_integration':'The UAF policy runs in the native console LOGIN path, but RMS SYSUAF access, operator override, general GETDVI terminal classification and VMS process activation remain incomplete'})

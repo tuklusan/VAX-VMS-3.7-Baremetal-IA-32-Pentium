@@ -1030,7 +1030,7 @@
           "pc_file": "src/vms_uaf_v37.c",
           "pc_symbol": "vms37_uaf_check_login_access",
           "pc_line": 38,
-          "function": "Decode source UAF primary/secondary day-hour masks and deny network/dialup terminal classes; native interactive LOGIN calls the helper with live RTC and TTA0-local classification, while operator override and GETDVI remain incomplete"
+          "function": "Decode source UAF primary/secondary day-hour masks and deny network/dialup terminal classes; native interactive LOGIN supplies a stable executive-time snapshot (RTC before EXEC) and TTA0-local classification, while operator override and general GETDVI remain incomplete"
         },
         {
           "original_lines": [
@@ -10380,7 +10380,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3077,
+          "pc_line": 3095,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10418,7 +10418,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3077,
+          "pc_line": 3095,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {

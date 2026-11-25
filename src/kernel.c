@@ -829,13 +829,31 @@ static int guest_terminal(void *context,char *value,unsigned cap){
     for(unsigned i=0;i<sizeof name;i++)value[i]=name[i];
     return sizeof name-1u;
 }
+static int guest_login_system_time(uint64_t *time){
+    if(!time)return 0;
+    const struct port_exe_systime *clock=arch_exe_systime();
+    if(!clock)return port_rtc_x86_now(0,time);
+    for(unsigned attempt=0u;attempt<32u;attempt++){
+        const uint32_t before=__atomic_load_n(&clock->sequence,
+                                               __ATOMIC_ACQUIRE);
+        if(before&1u)continue;
+        const uint32_t low=__atomic_load_n(&clock->low,__ATOMIC_RELAXED);
+        const uint32_t high=__atomic_load_n(&clock->high,__ATOMIC_RELAXED);
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+        if(__atomic_load_n(&clock->sequence,__ATOMIC_ACQUIRE)==before){
+            *time=((uint64_t)high<<32)|low;
+            return 1;
+        }
+    }
+    return 0;
+}
 static int guest_login_access(void *context,
                               const struct port_uaf_record *user){
     const struct port_lgi_guest_context *guest=context;
     if(!guest||!eq(guest->terminal,"TTA0:"))return VMS_LOGIN_FILE;
     uint64_t now=0u;
     uint32_t day=0u,hour=0u;
-    if(!port_rtc_x86_now(0,&now)||
+    if(!guest_login_system_time(&now)||
        port_login_day_of_week(&now,&day,0)!=PORT_LIB_NORMAL||
        port_login_hour_of_day(&now,&hour,0)!=PORT_LIB_NORMAL)
         return VMS_LOGIN_FILE;
