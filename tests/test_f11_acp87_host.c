@@ -10,6 +10,7 @@ static uint16_t rd16(const uint8_t *p){return (uint16_t)(p[0]|(uint16_t)p[1]<<8)
 struct fake {
     uint8_t header[512];
     unsigned allocation,deallocation,turns,maps,reads,invalidated,switched,posts,dismounts,mounts;
+    unsigned fail_read_number;
     uint8_t window_write_access;
     uint32_t vbn,lbn;
     FILE *disk;
@@ -41,6 +42,7 @@ static uint32_t map(void *p,uint32_t vbn,uint32_t *lbn){
 }
 static uint32_t read_lbn(void *p,uint32_t lbn,uint8_t h[512]){
     struct fake *m=p;m->reads++;
+    if(m->fail_read_number==m->reads)return PORT_F11_87_IOERROR;
     if(lbn==m->lbn)memcpy(h,m->header,512);
     else {
         assert(m->disk&&fseek(m->disk,(long)((uint64_t)lbn*512u),SEEK_SET)==0);
@@ -216,6 +218,23 @@ int main(int argc,char **argv){
         sizeof acp_bytes,acp_bytes,sizeof acp_bytes,&acp_completed)==
         PORT_F11_87_NORMAL&&acp_completed==sizeof acp_bytes);
     assert(m.reads==reads_before_acp+3u);
+    unsigned reads_after_acp=m.reads;
+    assert(port_f11b_read_vbn(&close_context,read_fcb,
+        read_fcb->file_blocks*512u,1u,acp_bytes,sizeof acp_bytes,
+        &acp_completed)==PORT_F11_87_INCOMPLETE&&acp_completed==0u&&
+        m.reads==reads_after_acp);
+    assert(port_f11b_read_vbn(&close_context,read_fcb,0u,0u,0,0u,
+        &acp_completed)==PORT_F11_87_NORMAL&&acp_completed==0u&&
+        m.reads==reads_after_acp);
+    m.fail_read_number=m.reads+1u;
+    assert(port_f11b_read_vbn(&close_context,read_fcb,300u,700u,
+        acp_bytes,sizeof acp_bytes,&acp_completed)==PORT_F11_87_IOERROR&&
+        acp_completed==0u);
+    m.fail_read_number=m.reads+3u;
+    assert(port_f11b_read_vbn(&close_context,read_fcb,300u,700u,
+        acp_bytes,sizeof acp_bytes,&acp_completed)==PORT_F11_87_IOERROR&&
+        acp_completed==212u);
+    m.fail_read_number=0u;
     uint32_t first_lbn=0u,second_lbn=0u;
     struct port_f11_86_map actual_map={m.header+2u*m.header[1],
         2u*m.header[58],0u,0u,0u};
