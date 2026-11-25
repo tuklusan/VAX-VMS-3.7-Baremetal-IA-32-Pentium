@@ -57,7 +57,10 @@ uint32_t port_vms37_init_params_apply_file(
             {"RESHASHTBL",&candidate.resource_hash_slots,1u,8192u},
             {"DEADLOCK_WAIT",&candidate.deadlock_wait_seconds,0u,UINT32_MAX},
             {"BALSETCNT",&candidate.balance_set_count,4u,1024u},
-            {"WSMAX",&candidate.max_working_set,60u,16384u}
+            {"WSMAX",&candidate.max_working_set,60u,16384u},
+            {"LOGSHASHTBL",&candidate.system_log_hash_entries,1u,16383u},
+            {"LOGGHASHTBL",&candidate.group_log_hash_entries,1u,16383u},
+            {"LOGPHASHTBL",&candidate.process_log_hash_entries,1u,16383u}
         };
         for(unsigned f=0;f<sizeof fields/sizeof fields[0];f++){
             size_t n=0;

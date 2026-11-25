@@ -2704,7 +2704,10 @@ sysparam_defaults=[
     (1519,1526,'REALTIME_SPTS default 0'),
     (1544,1551,'LOCKIDTBL default 128'),
     (1557,1564,'RESHASHTBL default 32'),
-    (1570,1577,'DEADLOCK_WAIT default 10 seconds')]
+    (1570,1577,'DEADLOCK_WAIT default 10 seconds'),
+    (1781,1793,'LOGSHASHTBL default 128 SYSTEM hash entries'),
+    (1794,1806,'LOGGHASHTBL default 32 GROUP hash entries'),
+    (1807,1819,'LOGPHASHTBL default 128 PROCESS hash entries')]
 sysparam_sections=[]
 cursor=1
 for first,last,label in sysparam_defaults:
@@ -2716,14 +2719,14 @@ for first,last,label in sysparam_defaults:
     sysparam_sections.append({'original_lines':[first,last],
         'status':'partial' if line else 'missing','pc_file':'src/vms_ini_sysparams.c',
         'pc_symbol':'port_vms37_init_param_defaults','pc_line':line,
-        'function':label+' copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved'})
+        'function':label+' copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved'})
     cursor=last+1
 if cursor<=3007:
     sysparam_sections.append({'original_lines':[cursor,3007],
         'status':'unresolved','reason':'Other system parameters and configured PARAMS.DAT overrides not ported'})
 result['files'].append({'original_file':'SYS/SRC/SYSPARAM.MAR',
     'original_lines':3007,'sections':sysparam_sections,
-    'unresolved_integration':'Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including PAGEDYN, but native boot does not yet locate/apply that file; other SYSPARAM cells and consumers remain unported.'})
+    'unresolved_integration':'Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including all three logical-name hash table sizes, but native boot does not yet locate/apply that file and SWAPINIT has not yet allocated or linked the configured tables; other SYSPARAM cells and consumers remain unported.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')

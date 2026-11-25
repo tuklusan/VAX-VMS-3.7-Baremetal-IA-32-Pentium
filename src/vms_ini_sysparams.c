@@ -20,7 +20,10 @@ uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *p){
         .resource_hash_slots=PORT_VMS37_DEFAULT_RESHASHTBL, /* RESHASHTBL */
         .deadlock_wait_seconds=PORT_VMS37_DEFAULT_DEADLOCK_WAIT,
         .balance_set_count=PORT_VMS37_DEFAULT_BALSETCNT, /* BALSETCNT */
-        .max_working_set=PORT_VMS37_DEFAULT_WSMAX /* WSMAX */
+        .max_working_set=PORT_VMS37_DEFAULT_WSMAX, /* WSMAX */
+        .system_log_hash_entries=PORT_VMS37_DEFAULT_LOGSHASHTBL,
+        .group_log_hash_entries=PORT_VMS37_DEFAULT_LOGGHASHTBL,
+        .process_log_hash_entries=PORT_VMS37_DEFAULT_LOGPHASHTBL
     };
     return PORT_VMS37_SYSPARAM_OK;
 }

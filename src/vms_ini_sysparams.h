@@ -17,6 +17,9 @@
 #define PORT_VMS37_DEFAULT_DEADLOCK_WAIT 10u
 #define PORT_VMS37_DEFAULT_BALSETCNT 36u
 #define PORT_VMS37_DEFAULT_WSMAX 1024u
+#define PORT_VMS37_DEFAULT_LOGSHASHTBL 128u
+#define PORT_VMS37_DEFAULT_LOGGHASHTBL 32u
+#define PORT_VMS37_DEFAULT_LOGPHASHTBL 128u
 
 /* Native subset of SYSPARAM.MAR defaults consumed by INIT. SYSBOOT's
  * PARAMS.DAT override path is not yet ported; callers must not label these
@@ -33,6 +36,9 @@ struct port_vms37_init_params {
     uint32_t deadlock_wait_seconds;
     uint32_t balance_set_count;
     uint32_t max_working_set;
+    uint32_t system_log_hash_entries;
+    uint32_t group_log_hash_entries;
+    uint32_t process_log_hash_entries;
 };
 
 enum { PORT_VMS37_SYSPARAM_OK=1u, PORT_VMS37_SYSPARAM_BAD=2u };
