@@ -1693,4 +1693,4 @@ Added `port_v37_sched_save_current`: it validates the interrupted IA-32 restore 
 Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0); `python3 tools/gen_source_coverage.py`, `python3 tools/validate_source_ranges.py`, `python3 tests/test_coverage_ranges.py`, and `git diff --check` PASS. Audit: 2,121 ranges, 451/4,566 original files indexed, zero errors; 17,255 mapped, 30,267 partial, 56,921 unresolved, 8,032 missing, 26,434 excluded, 917 hardware-excluded. This scheduler-only change is not wired into the guest, so no new QEMU result is attributed to M370; the latest M369 QEMU remains an incomplete-INIT boot, with no login/DCL/DECnet.
 
 Local M370 implementation commit: `25608c644a7fff91cc71590f342dcde3b2d43cd9`.
-Published GitHub main implementation commit: pending.
+Published GitHub main implementation commit: `4655d3695800301059ea7dc8fb8b41c2f928869f`.
