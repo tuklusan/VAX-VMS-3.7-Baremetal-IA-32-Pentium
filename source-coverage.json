@@ -10899,10 +10899,21 @@
         {
           "original_lines": [
             1,
-            213
+            209
           ],
           "status": "unresolved",
-          "reason": "RSE AST/event declarations and AST, event-flag and swap-out actions remain unresolved"
+          "reason": "RSE AST declarations and AST dispatch/delivery remain unresolved"
+        },
+        {
+          "original_lines": [
+            210,
+            213
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_rse_event",
+          "pc_line": 425,
+          "function": "Partial local/common event state dispatch; source event selection is supplied by the caller"
         },
         {
           "original_lines": [
@@ -10918,10 +10929,29 @@
         {
           "original_lines": [
             232,
+            257
+          ],
+          "status": "unresolved",
+          "reason": "RSE SETPRI and SWPOUT actions and illegal-event handling remain unresolved"
+        },
+        {
+          "original_lines": [
+            258,
+            263
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_rse_event",
+          "pc_line": 425,
+          "function": "For resident LEF/CEF waiters, update saved PHD PC/R0 to complete the VMS wait syscall before CHSE; full event-flag selection and IPL integration remain unresolved"
+        },
+        {
+          "original_lines": [
+            264,
             267
           ],
           "status": "unresolved",
-          "reason": "RSE SETPRI, SWPOUT, local/common event completion and wait-queue accounting remain unresolved"
+          "reason": "RSE event-action connector and remaining report semantics are not yet integrated"
         },
         {
           "original_lines": [

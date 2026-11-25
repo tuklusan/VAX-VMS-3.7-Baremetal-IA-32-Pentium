@@ -1880,9 +1880,12 @@ result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
 rse_lines=735 # pinned original SYS/SRC/RSE.MAR line count at REVISION
 rse_sections=[]
 for first,last,path,symbol,description,status in [
- (1,213,None,None,'RSE AST/event declarations and AST, event-flag and swap-out actions remain unresolved','unresolved'),
+ (1,209,None,None,'RSE AST declarations and AST dispatch/delivery remain unresolved','unresolved'),
+ (210,213,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial local/common event state dispatch; source event selection is supplied by the caller','partial'),
  (214,231,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial source state masks and wake dispatch for free-page, WAKE, RESUME and page-fault-complete events; caller supplies the actual wait-queue header and situational priority class','partial'),
- (232,267,None,None,'RSE SETPRI, SWPOUT, local/common event completion and wait-queue accounting remain unresolved','unresolved'),
+ (232,257,None,None,'RSE SETPRI and SWPOUT actions and illegal-event handling remain unresolved','unresolved'),
+ (258,263,'src/vms_v37_sched.c','port_v37_sched_rse_event','For resident LEF/CEF waiters, update saved PHD PC/R0 to complete the VMS wait syscall before CHSE; full event-flag selection and IPL integration remain unresolved','partial'),
+ (264,267,None,None,'RSE event-action connector and remaining report semantics are not yet integrated','unresolved'),
  (268,270,'src/vms_v37_sched.c','port_v37_sched_rse_event','Route the implemented RSE executable-state events through wait-queue removal and source CHSE scheduling; AST delivery and event-specific completion state remain unresolved','partial'),
  (271,332,None,None,'SCH$UNWAIT state-to-WQH resolution, common event-cluster queues and remaining event/AST support remain unresolved','unresolved'),
  (333,342,'src/vms_v37_sched.c','port_v37_sched_chse','Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial','partial'),

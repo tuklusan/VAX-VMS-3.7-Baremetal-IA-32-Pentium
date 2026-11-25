@@ -429,7 +429,11 @@ uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *s,
        priority_class>=PORT_V37_SCH_INCREMENT_CLASSES)
         return PORT_V37_SCHED_BADPARAM;
     uint16_t states=0u;
+    uint8_t complete_wait=0u;
     switch(event){
+    case PORT_V37_RSE_EVENT_LEF: states=(uint16_t)(1u<<5);complete_wait=1u;break;
+    case PORT_V37_RSE_EVENT_CEF: states=(uint16_t)(1u<<3);complete_wait=1u;break;
+    case PORT_V37_RSE_EVENT_LEFO: states=(uint16_t)(1u<<6);break;
     case PORT_V37_RSE_FPGA: states=(uint16_t)(1u<<11);break; /* FPG */
     case PORT_V37_RSE_WAKE: states=(uint16_t)((1u<<7)|(1u<<8));break;
     case PORT_V37_RSE_RESUME: states=(uint16_t)((1u<<9)|(1u<<10));break;
@@ -441,8 +445,25 @@ uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *s,
     const uint16_t state=get16(pcb+PCBSTATE);
     if(state>=16u||!(states&(uint16_t)(1u<<state)))
         return PORT_V37_SCHED_IGNORED;
-    return port_v37_sched_wake_waiter(s,wait_address,pcb_address,
-                                      priority_class);
+    uint8_t *phd=0;uint32_t old_pc=0u,old_r0=0u;
+    if(complete_wait){
+        const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
+        phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
+        if(!phd)return PORT_V37_SCHED_NO_CONTEXT;
+        old_pc=get32(phd+PORT_V37_PHD_PC);
+        old_r0=get32(phd+PORT_V37_PHD_R0);
+        if(old_pc>UINT32_MAX-4u)return PORT_V37_SCHED_CORRUPT;
+        /* SYS$WFL* returns from CHMK through the saved PHD context. */
+        put32(phd+PORT_V37_PHD_PC,old_pc+4u);
+        put32(phd+PORT_V37_PHD_R0,1u); /* SS$_NORMAL */
+    }
+    const uint32_t status=port_v37_sched_wake_waiter(s,wait_address,
+        pcb_address,priority_class);
+    if(status!=PORT_V37_SCHED_OK&&phd){
+        put32(phd+PORT_V37_PHD_PC,old_pc);
+        put32(phd+PORT_V37_PHD_R0,old_r0);
+    }
+    return status;
 }
 
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){
