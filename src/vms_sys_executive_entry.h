@@ -261,6 +261,8 @@ struct port_sys_exec_result {
     uint32_t npaged_pool_base,npaged_pool_bytes;
     /* SYSBOOT carved resident PAGEDYN interval; user/mapping consumers remain. */
     uint32_t paged_pool_base,paged_pool_bytes;
+    uint32_t (*alopaged)(uint32_t,void **,uint32_t *);
+    uint32_t (*deapaged)(void *,uint32_t);
 };
 struct port_sys_exec_start {
     uint32_t signature,version;

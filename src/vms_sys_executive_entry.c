@@ -56,6 +56,16 @@ static uint8_t executive_packet_pages[170u*1024u] __attribute__((aligned(512)));
 static uint8_t *executive_np_base;
 static struct port_exe_paged_pool executive_paged_pool;
 static uint32_t executive_paged_pool_ready;
+uint32_t port_exe_alopaged(uint32_t requested,void **address,
+                           uint32_t *allocated_bytes){
+    if(!executive_paged_pool_ready)return PORT_EXE_PAGED_BAD;
+    return port_exe_paged_alloc(&executive_paged_pool,requested,address,
+                                allocated_bytes);
+}
+uint32_t port_exe_deapaged(void *address,uint32_t requested_bytes){
+    if(!executive_paged_pool_ready)return PORT_EXE_PAGED_BAD;
+    return port_exe_paged_free(&executive_paged_pool,address,requested_bytes);
+}
 static struct port_ini_packet_list executive_irps,executive_lrps,executive_srps;
 static uint32_t executive_packet_ready;
 /* INIT's later nonpaged records occupy only the free low end of the
@@ -780,6 +790,8 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
     p->result->npaged_pool_bytes=executive_free_npages;
     p->result->paged_pool_base=m.paged_dynamic_start;
     p->result->paged_pool_bytes=paged_bytes;
+    p->result->alopaged=port_exe_alopaged;
+    p->result->deapaged=port_exe_deapaged;
     p->result->signature=PORT_SYS_EXEC_PACKET_RESULT_TAG;
     return PORT_SYS_EXEC_NORMAL;
 }

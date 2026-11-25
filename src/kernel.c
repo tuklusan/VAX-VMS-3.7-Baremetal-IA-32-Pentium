@@ -2,6 +2,7 @@
 #include "vms_iniloa_entry.h"
 #include "vms_ini_pc_bus.h"
 #include "vms_sys_executive_entry.h"
+#include "vms_exe_paged_pool.h"
 #include "vms_v37_dyn_tags.h"
 #include "vms_sysboot_map.h"
 #include "vms_sysloa386.h"
@@ -3287,6 +3288,25 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.");
+    void *paged_probe=0;
+    uint32_t paged_probe_bytes=0u;
+    if(!packet_result.alopaged||!packet_result.deapaged||
+       (uintptr_t)packet_result.alopaged<PORT_SYS_ELF_START||
+       (uintptr_t)packet_result.alopaged>=PORT_SYS_ELF_LIMIT||
+       (uintptr_t)packet_result.deapaged<PORT_SYS_ELF_START||
+       (uintptr_t)packet_result.deapaged>=PORT_SYS_ELF_LIMIT||
+       packet_result.alopaged(17u,&paged_probe,&paged_probe_bytes)!=
+           PORT_EXE_PAGED_OK||paged_probe_bytes!=32u||!paged_probe||
+       (uintptr_t)paged_probe<packet_result.paged_pool_base||
+       (uint64_t)(uintptr_t)paged_probe+paged_probe_bytes>
+           (uint64_t)packet_result.paged_pool_base+
+               packet_result.paged_pool_bytes||
+       packet_result.deapaged(paged_probe,17u)!=PORT_EXE_PAGED_OK||
+       packet_result.deapaged(paged_probe,17u)!=PORT_EXE_PAGED_DUP){
+        bootstrap_message("INIT: resident SYS.EXE PAGEDYN allocation/return failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: resident SYS.EXE PAGEDYN allocated and returned a 32-byte block.");
     /* Original SYSBOOT loads the CPU-specific SYSLOAxxx image, then INIT
      * links its self-relative entries into the resident SYS.EXE vector table
      * before loading INILOA. SYSLOA386 is the native IA-32 processor type. */
