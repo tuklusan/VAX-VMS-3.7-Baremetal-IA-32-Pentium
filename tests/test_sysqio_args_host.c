@@ -426,6 +426,21 @@ int main(void){
     if(port_v37_irp_pool_free(&pool,reserved_irp,reserved_va,
           PORT_V37_SYSQIO_IRP_STANDARD_BYTES,&pool_sync)!=PORT_V37_IRP_POOL_OK)
         return 49;
+    reserve_spec.packet_va=0x4000u;
+    struct port_v37_sysqio_prepared zero_parameter=prepared;
+    zero_parameter.args.function=PORT_DQ_NOP;
+    if(port_v37_sysqio_preflight(&zero_parameter.args,proc.access_mode,4u,
+          &device,&zero_parameter.dispatch)!=PORT_V37_SYSQIO_PRECHECK_OK||
+       zero_parameter.dispatch.action_class!=PORT_DQ_FDT_ZERO)
+        return 83;
+    uint8_t zero_parameter_irp[PORT_V37_SYSQIO_IRP_STANDARD_BYTES];
+    for(unsigned i=0u;i<sizeof zero_parameter_irp;i++)
+        zero_parameter_irp[i]=0xa5u;
+    if(port_v37_sysqio_build_irp(&zero_parameter,&proc,&reserve_spec,
+          zero_parameter_irp,sizeof zero_parameter_irp)!=
+          PORT_V37_SYSQIO_IRP_BUILD_OK||
+       get32(zero_parameter_irp+PORT_V37_IRP_MEDIA)!=0u)
+        return 84;
     struct port_v37_sysqio_prepared one_parameter=prepared;
     one_parameter.args.function=PORT_DQ_SEEK;
     one_parameter.args.parameter[0]=0x12345678u;

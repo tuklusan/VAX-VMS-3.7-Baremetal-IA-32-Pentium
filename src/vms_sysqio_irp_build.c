@@ -95,7 +95,7 @@ uint32_t port_v37_sysqio_build_irp(
     if(request->dispatch.action_class==PORT_DQ_FDT_READ||
        request->dispatch.action_class==PORT_DQ_FDT_WRITE){
         /* SYSQIOFDT EXE$READ/WRITE common path stores P2 as a
-         * zero-extended transfer byte count and P4 as carriage control.
+         * full longword transfer byte count and P4 as carriage control.
          * User-buffer accessibility, page locking and SVAPTE binding are
          * still required before this IRP can be submitted to a driver. */
         put32(candidate+IRP_BCNT,request->args.parameter[1]);
@@ -106,6 +106,8 @@ uint32_t port_v37_sysqio_build_irp(
      * through the same IRP field used by its original driver. */
     if(request->dispatch.action_class==PORT_DQ_FDT_ONE)
         put32(candidate+PORT_V37_IRP_MEDIA,request->args.parameter[0]);
+    else if(request->dispatch.action_class==PORT_DQ_FDT_ZERO)
+        put32(candidate+PORT_V37_IRP_MEDIA,0u);
     if(request->args.ast_address){
         /* VMS DECW semantics without signed C overflow. */
         const int16_t ast_count=port_v37_sysqio_process_ast_count(process);
