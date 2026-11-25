@@ -327,6 +327,28 @@ int main(void){
        get32(f.phds[0]+PORT_V37_PHD_R0)!=1u||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("RSE CEF state mask, saved syscall completion and CHSE transition");
+    f.wait_queue.state=5u; /* SCH$C_LEF */
+    f.frames[0].registers.eip=0x34567890u;
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||selected!=f.pcb_va[0]||
+       port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
+           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_BLOCKED)
+        return fail("SYS$WFLOR reaches source LEF wait state");
+    const uint32_t lef_pc=get32(f.phds[0]+PORT_V37_PHD_PC);
+    f.wait_queue.backward=0x00abcdefu;
+    if(port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_EVENT_LEF,
+           f.wait_queue_va,f.pcb_va[0],0u)!=PORT_V37_SCHED_CORRUPT||
+       get32(f.phds[0]+PORT_V37_PHD_PC)!=lef_pc||
+       get32(f.phds[0]+PORT_V37_PHD_R0)!=1u||scheduler.current_pcb||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=5u)
+        return fail("RSE LEF rolls back saved result on corrupt WQH");
+    f.wait_queue.backward=f.pcb_va[0];
+    if(port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_EVENT_LEF,
+           f.wait_queue_va,f.pcb_va[0],0u)!=PORT_V37_SCHED_OK||
+       get32(f.phds[0]+PORT_V37_PHD_PC)!=lef_pc+4u||
+       get32(f.phds[0]+PORT_V37_PHD_R0)!=1u||f.wait_queue.count||
+       port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("RSE LEF commits saved syscall result after queue validation");
     puts("SYSWAIT SCH$WAITK/WQH wake plus SCHED SCH$RESCHED/SCH$SCHED and RSE SCH$CHSE PASS");
     return 0;
 }
