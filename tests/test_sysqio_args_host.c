@@ -454,7 +454,7 @@ int main(void){
           one_parameter_irp,sizeof one_parameter_irp)!=
           PORT_V37_SYSQIO_IRP_BUILD_OK||
        !(get16(one_parameter_irp+42u)&2u)||
-       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0xffffu||
+       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0x1234ffffu||
        one_parameter_irp[64u]!=0x80u)
         return 71;
     struct transfer_access_test transfer_test={.read_ok=1,.write_ok=1};
@@ -484,7 +484,7 @@ int main(void){
           one_parameter_irp,sizeof one_parameter_irp)!=
           PORT_V37_SYSQIO_IRP_BUILD_OK||
        (get16(one_parameter_irp+42u)&2u)||
-       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0xffffu||
+       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0x1234ffffu||
        one_parameter_irp[64u]!=0x80u)
         return 72;
     transfer_test.write_ok=1;transfer_test.reads=transfer_test.writes=0u;

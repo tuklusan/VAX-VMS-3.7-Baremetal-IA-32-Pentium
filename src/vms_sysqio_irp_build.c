@@ -98,8 +98,7 @@ uint32_t port_v37_sysqio_build_irp(
          * zero-extended transfer byte count and P4 as carriage control.
          * User-buffer accessibility, page locking and SVAPTE binding are
          * still required before this IRP can be submitted to a driver. */
-        put32(candidate+IRP_BCNT,
-              (uint16_t)request->args.parameter[1]);
+        put32(candidate+IRP_BCNT,request->args.parameter[1]);
         candidate[IRP_CARCON]=(uint8_t)request->args.parameter[3];
     }
     /* SYSQIOFDT.MAR EXE$ONEPARM stores P1 in IRP$L_MEDIA before queuing.
