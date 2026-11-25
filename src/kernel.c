@@ -2483,6 +2483,23 @@ static int m202_ata_write_sector(void *ctx,uint32_t lbn,
 static int m202_ata_read_sector(void *ctx,uint32_t lbn,uint16_t dst[256]){
     (void)ctx;return port_ata_x86_read28(lbn,dst);
 }
+struct m328_async_write_result { volatile uint32_t done; volatile int status; };
+static void m328_async_write_done(void *opaque,int status){
+    struct m328_async_write_result *result=opaque;
+    if(result){result->status=status;__asm__ volatile("" ::: "memory");
+        result->done=1u;}
+}
+static int m328_async_write_sector(uint32_t lbn,const uint16_t words[256]){
+    struct m328_async_write_result result={0u,PORT_ATA_TIMEOUT};
+    if(port_ata_x86_write28_async(lbn,words,m328_async_write_done,&result)!=
+         PORT_ATA_X86_ASYNC_OK)return -1;
+    for(uint32_t i=0u;i<100000000u;i++){
+        if(result.done){__asm__ volatile("" ::: "memory");
+            return result.status;}
+        __asm__ volatile("pause");
+    }
+    return PORT_ATA_TIMEOUT;
+}
 static void m202_put16(uint8_t *p,uint16_t value){
     p[0]=(uint8_t)value;p[1]=(uint8_t)(value>>8u);
 }
@@ -2892,7 +2909,37 @@ static int m202_ata_write_probe(const struct port_dqddt_stage *stage,
         bootstrap_message("INIT: published DQA0 DDT READPBLK restore verification failed.");
         return -1;
     }
-    return !wrote&&matches&&!restored&&!reread&&restore_matches&&ddt_matches?1:-1;
+    if(wrote||!matches||restored||reread||!restore_matches||!ddt_matches)
+        return -1;
+    /* Exercise the IRQ-completed write command only on the explicitly marked
+     * disposable QEMU scratch sector, then verify and restore its full data. */
+    if(m328_async_write_sector(SCRATCH_LBN,probe)!=PORT_ATA_OK){
+        bootstrap_message("INIT: asynchronous ATA scratch write failed.");
+        (void)port_ata_x86_write28(SCRATCH_LBN,saved);
+        return -1;
+    }
+    if(port_ata_x86_read28(SCRATCH_LBN,observed)){
+        bootstrap_message("INIT: asynchronous ATA write readback failed.");
+        (void)m328_async_write_sector(SCRATCH_LBN,saved);
+        return -1;
+    }
+    for(unsigned i=0;i<256u;i++)if(observed[i]!=probe[i]){
+        bootstrap_message("INIT: asynchronous ATA write data mismatch.");
+        (void)m328_async_write_sector(SCRATCH_LBN,saved);
+        return -1;
+    }
+    if(m328_async_write_sector(SCRATCH_LBN,saved)!=PORT_ATA_OK||
+       port_ata_x86_read28(SCRATCH_LBN,observed)){
+        bootstrap_message("INIT: asynchronous ATA scratch restore failed.");
+        (void)port_ata_x86_write28(SCRATCH_LBN,saved);
+        return -1;
+    }
+    for(unsigned i=0;i<256u;i++)if(observed[i]!=saved[i]){
+        bootstrap_message("INIT: asynchronous ATA scratch restore mismatch.");
+        return -1;
+    }
+    bootstrap_message("INIT: asynchronous ATA WRITE completed by IRQ14; scratch restored.");
+    return 1;
 }
 /* FIL$RDWRTLBN calls the BIOS-independent boot driver. The IA-32 driver
  * reads actual blocks on the boot disk over primary IDE. */

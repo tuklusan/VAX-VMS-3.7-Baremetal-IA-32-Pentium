@@ -99,6 +99,7 @@ def main():
         b'INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.',
         b'INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.',
         b'INIT: DQA0 UCB busy serialized two retained DDT READPBLK IRPs through IRQ14 and deferred IOC post.',
+        b'INIT: asynchronous ATA WRITE completed by IRQ14; scratch restored.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
         b'INIT stopped: remaining original initialization dependencies incomplete.']
     failures=[
@@ -147,6 +148,11 @@ def main():
         b'INIT: primary ATA IRQ14 did not complete a sector read.',
         b'INIT: live SYS.EXE PIT clock did not advance.',
         b'INIT: marked QEMU ATA PIO write/readback/restore regression failed.',
+        b'INIT: asynchronous ATA scratch write failed.',
+        b'INIT: asynchronous ATA write readback failed.',
+        b'INIT: asynchronous ATA write data mismatch.',
+        b'INIT: asynchronous ATA scratch restore failed.',
+        b'INIT: asynchronous ATA scratch restore mismatch.',
         b'INIT: DQA0 DDT native pointer/CRB publication validation failed.',
         b'INIT: IOC$SEARCHDEV did not find published DQA0.',
         b'INIT: IOC$SEARCHDEV did not select bound DQA0 for DQ I/O.',

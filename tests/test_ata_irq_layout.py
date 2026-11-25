@@ -12,4 +12,7 @@ assert 'outb(0x21,0xfa)' in arch and 'outb(0xA1,0xbf)' in arch
 assert 'f->vector == 46' in arch and 'outb(0xa0,0x20)' in arch
 assert 'port_ata_x86_irq' in ata and 'ATA_STATUS' in ata
 assert 'irq_armed=1' in ata and 'irq_done=1' in ata
+assert 'port_ata_x86_write28_async' in ata
+assert 'if(async_write_source)' in ata
+assert 'INIT: asynchronous ATA WRITE completed by IRQ14; scratch restored.' in (root / 'src/kernel.c').read_text()
 print('Primary ATA IRQ14 vector, PIC routing, handler and completion checks PASS')

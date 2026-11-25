@@ -12,6 +12,10 @@ enum { PORT_ATA_X86_ASYNC_OK=0,PORT_ATA_X86_ASYNC_BUSY=1,
  * or enqueue completion work; it must not block or invoke user code. */
 int port_ata_x86_read28_async(uint32_t,uint16_t [256],
     port_ata_x86_completion_fn,void *);
+/* Start one native primary-master PIO WRITE SECTORS command. The source
+ * remains owned by the caller until the IRQ callback runs. */
+int port_ata_x86_write28_async(uint32_t,const uint16_t [256],
+    port_ata_x86_completion_fn,void *);
 int port_ata_x86_init(void);
 uint32_t port_ata_x86_irq_count(void);
 void port_ata_x86_irq(void);
