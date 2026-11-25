@@ -1684,7 +1684,7 @@ Verification: `make -j2 all test` PASS (host, static layout, and sanitizer check
 
 Local M369 implementation commit: `8a763966dbe0b167ff9a69faf29e483026d57964`.
 
-Published GitHub main implementation commit: pending.
+Published GitHub main implementation commit: `d893603f0a7561fead53677486b3a9ad72cdae62`.
 
 
 ## M369 - Generalize validated IA-32 restore-frame handoff, 25 November 2026
