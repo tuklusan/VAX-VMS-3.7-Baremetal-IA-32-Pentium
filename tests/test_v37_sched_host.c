@@ -159,6 +159,23 @@ int main(void){
        scheduler.current_pcb!=selected||scheduler.current_priority!=15u||
        count(&f,15u)!=1u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("SCH$SCHED highest-priority FIFO PCB selection");
+    const uint32_t saved_pcb1_phd=get32(f.pcbs[1]+PORT_V37_PCB_PHD);
+    const uint32_t saved_pcb1_frame=get32(f.pcbs[1]+PORT_V37_PCB_PHYPCB);
+    put32(f.pcbs[1]+PORT_V37_PCB_PHD,0u);
+    put32(f.pcbs[1]+PORT_V37_PCB_PHYPCB,0u);
+    scheduler.native_no_context_count=UINT32_MAX;
+    if(port_v37_sched_interrupt(&scheduler,f.frame_va[2],&selected,
+           &restore_frame)!=PORT_V37_SCHED_NO_CONTEXT||selected||restore_frame||
+       scheduler.current_pcb!=f.pcb_va[2]||
+       get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR||
+       get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=f.frame_va[2]||
+       count(&f,15u)!=1u||
+       scheduler.native_no_context_count!=UINT32_MAX||
+       port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("scheduler preserves interrupted current across contextless higher-priority PCB");
+    put32(f.pcbs[1]+PORT_V37_PCB_PHD,saved_pcb1_phd);
+    put32(f.pcbs[1]+PORT_V37_PCB_PHYPCB,saved_pcb1_frame);
+    selected=f.pcb_va[2];
     const uint32_t prior_frame=get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB);
     f.frames[2].registers.cs=0x0bu;
     if(port_v37_sched_save_current(&scheduler,f.frame_va[2])!=
@@ -172,8 +189,8 @@ int main(void){
     if(port_v37_sched_save_current(&scheduler,f.frame_va[2])!=
            PORT_V37_SCHED_CORRUPT||
        get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=prior_frame||
-       get32(f.phds[2]+PORT_V37_PHD_KSP)!=0u||
-       get32(f.phds[2]+PORT_V37_PHD_PC)!=0u||
+       get32(f.phds[2]+PORT_V37_PHD_KSP)!=f.frame_va[2]||
+       get32(f.phds[2]+PORT_V37_PHD_PC)!=0x1008u||
        scheduler.current_pcb!=selected)
         return fail("SCH$RESCHED rolls context back on queue corruption");
     put32(f.pcbs[2]+PORT_V37_PCB_SQFL,f.pcb_va[2]);
