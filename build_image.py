@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parent
 boot = (ROOT/'build'/'boot.bin').read_bytes()
 kernel = (ROOT/'build'/'kernel.bin').read_bytes()
 assert len(boot) == 512 and boot[510:] == b'\x55\xaa', 'bad BIOS boot sector'
-assert 0 < len(kernel) <= 265 * 512, f'kernel needs too many boot blocks ({len(kernel)} bytes)'
+assert 0 < len(kernel) <= 273 * 512, f'kernel needs too many boot blocks ({len(kernel)} bytes)'
 boot = bytearray(boot)
 marker = boot.find(b'VMSB')
 assert marker > 0 and boot.find(b'VMSB', marker+1) == -1 and marker+8 <= 510, 'missing boot control fields'

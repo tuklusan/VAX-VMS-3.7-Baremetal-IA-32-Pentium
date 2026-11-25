@@ -32,7 +32,10 @@ struct port_v37_scheduler {
     uint32_t ready_count[PORT_V37_SCH_PRIORITIES];
     struct port_v37_sched_ops ops;
     uint32_t initialized;
+    uint32_t native_interrupt_count,native_no_context_count;
 };
+typedef uint32_t (*port_v37_sched_interrupt_fn)(struct port_v37_scheduler *,
+    uint32_t,uint32_t *,uint32_t *);
 
 /* SYS/SRC/SDAT.MAR resident/nonresident COM queue headers and SCH$GL_COMQS. */
 uint32_t port_v37_sched_init(struct port_v37_scheduler *,

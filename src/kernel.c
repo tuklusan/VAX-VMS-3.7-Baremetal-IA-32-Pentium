@@ -75,6 +75,8 @@ extern uint32_t arch_ram_window_ready(void);
 extern uint32_t arch_ticks(void);
 extern int arch_adopt_executive_clock(const struct port_exe_systime *,
                                      void (*tick)(void));
+extern int arch_adopt_vms_scheduler(struct port_v37_scheduler *,
+    port_v37_sched_interrupt_fn);
 extern uint32_t arch_iopost_bind(uint32_t (*)(void));
 extern uint32_t arch_iopost_trigger(void);
 extern uint32_t arch_iopost_count(void);
@@ -3469,6 +3471,18 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.");
+    if(!proc_result.vms_sched_interrupt||
+       (uintptr_t)proc_result.vms_scheduler<PORT_SYS_ELF_START||
+       (uintptr_t)proc_result.vms_scheduler>
+           PORT_SYS_ELF_LIMIT-sizeof(*proc_result.vms_scheduler)||
+       (uintptr_t)proc_result.vms_sched_interrupt<PORT_SYS_ELF_START||
+       (uintptr_t)proc_result.vms_sched_interrupt>=PORT_SYS_ELF_LIMIT||
+       !arch_adopt_vms_scheduler(proc_result.vms_scheduler,
+                                 proc_result.vms_sched_interrupt)){
+        bootstrap_message("INIT: IA-32 IRQ0 scheduler binding failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: IA-32 IRQ0 bound resident VMS scheduler; PHD/context activation pending.");
 
     /* Original INIT.MAR INI_PHV and INI_SWAP reserve the process header
      * slots and the swapper P0 page-table map. This is *not* a running
@@ -4619,6 +4633,13 @@ void kmain(void) {
     }
     if(ata_write_probe>0)
         bootstrap_message("INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.");
+
+    if(!proc_result.vms_scheduler->native_interrupt_count||
+       !proc_result.vms_scheduler->native_no_context_count){
+        bootstrap_message("INIT: live IRQ0 did not defer contextless VMS PCBs through SCH$SCHED.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: live IRQ0 called SCH$RESCHED/SCH$SCHED; NULL/SWAPPER PHD contexts are still absent.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

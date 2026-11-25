@@ -401,7 +401,7 @@ def verify(image: bytes):
     assert 0<at<500 and at==sector.rfind(b'VMSB')
     count=int.from_bytes(sector[at+4:at+6], 'little')
     first=int.from_bytes(sector[at+6:at+8], 'little')
-    assert first>=1 and 1<=count<=265 and first+count<=2880
+    assert first>=1 and 1<=count<=273 and first+count<=2880
     expected=image[first*512:(first+count)*512]
     expected_lbas=[(n,1,0x10000+(n-first)*512) for n in range(first,first+count)]
     bad_lba=first+count//2

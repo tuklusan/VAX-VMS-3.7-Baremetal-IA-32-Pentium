@@ -6,7 +6,7 @@ from pathlib import Path
 import struct
 import subprocess
 ROOT=Path(__file__).resolve().parents[1]
-BOOT_LOAD_LIMIT=0x10000+265*512
+BOOT_LOAD_LIMIT=0x10000+273*512
 
 def load_segments(blob):
     assert blob[:7]==b'\x7fELF\x01\x01\x01', 'wrong ELF byte order/class'
@@ -43,7 +43,7 @@ def verify():
     assert 0<marker<500 and image[:marker+4]==boot[:marker+4]
     assert image[marker+6:512]==boot[marker+6:512]
     assert int.from_bytes(image[marker+4:marker+6],'little')==(len(flat)+511)//512
-    assert 0<len(flat)<=265*512
+    assert 0<len(flat)<=273*512
     assert image[512:512+len(flat)]==flat
     assert not any(image[512+len(flat):]),'unexpected data beyond linked image'
     segments=load_segments(elf)

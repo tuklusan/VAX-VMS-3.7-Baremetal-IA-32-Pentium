@@ -5897,7 +5897,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
           "pc_line": 199,
-          "function": "Requeue current resident PCB at the COM queue tail and set queue summary; caller context save and hardware interrupt entry remain unimplemented"
+          "function": "Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction"
         },
         {
           "original_lines": [
@@ -5916,7 +5916,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
           "pc_line": 151,
-          "function": "Highest resident COM queue selection validates the saved IA-32 IRET frame and returns its address with the selected PCB; trap dispatch and PCBB/CR3 programming remain unintegrated"
+          "function": "Highest resident COM queue selection validates the saved IA-32 IRET frame and returns its address with the selected PCB; IRQ0 invokes this transaction, but contextless NULL/SWAPPER are still not activated and TSS/CR3 switching remains incomplete"
         },
         {
           "original_lines": [
@@ -5927,7 +5927,7 @@
           "pc_file": "src/vms_v37_ia32_context.c",
           "pc_symbol": "port_v37_ia32_context_validate",
           "pc_line": 57,
-          "function": "Validate mode-matched selectors, EFLAGS and return stack; arch_prepare_restore_frame publishes a validated frame for the shared IRET restore path, but VMS scheduler dispatch remains unintegrated"
+          "function": "Validate mode-matched selectors, EFLAGS and return stack; arch_prepare_restore_frame publishes a validated frame for shared IRET restore when a runnable VMS context exists"
         },
         {
           "original_lines": [
@@ -10500,7 +10500,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3095,
+          "pc_line": 3097,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10538,7 +10538,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3095,
+          "pc_line": 3097,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {

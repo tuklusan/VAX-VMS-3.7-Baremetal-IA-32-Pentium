@@ -255,7 +255,8 @@ struct port_sys_exec_result {
     /* PDAT.MAR source-layout PCB templates; both PHDs remain absent. */
     const uint8_t *system_vms_pcb,*null_vms_pcb;
     const uint8_t *swapper_vms_pcb;
-    const struct port_v37_scheduler *vms_scheduler;
+    struct port_v37_scheduler *vms_scheduler;
+    port_v37_sched_interrupt_fn vms_sched_interrupt;
 };
 struct port_sys_exec_start {
     uint32_t signature,version;

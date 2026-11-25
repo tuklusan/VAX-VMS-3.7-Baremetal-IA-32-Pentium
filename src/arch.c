@@ -23,6 +23,7 @@
 #include "vms_sysboot_elf.h"
 #include "vms_dq_crb.h"
 #include "vms_v37_ia32_context.h"
+#include "vms_v37_sched.h"
 
 extern const uint32_t arch_isr_table[37];
 extern uint32_t port_gdt[];
@@ -79,6 +80,25 @@ static volatile uint32_t vms_ring_probe_active;
 static volatile uint32_t vms_ring_probe_seen[3];
 static uint8_t vms_ring_probe_stack[2][512] __attribute__((aligned(16)));
 static struct port_v37_ia32_restore_frame *vms_ring_probe_frames[3];
+static struct port_v37_scheduler *resident_vms_scheduler;
+static port_v37_sched_interrupt_fn resident_vms_sched_interrupt;
+
+int arch_adopt_vms_scheduler(struct port_v37_scheduler *scheduler,
+                             port_v37_sched_interrupt_fn interrupt){
+    if(!scheduler||!interrupt||resident_vms_scheduler||
+       resident_vms_sched_interrupt)return 0;
+    uint32_t flags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
+    if(resident_vms_scheduler||resident_vms_sched_interrupt){
+        if(flags&0x200u)__asm__ volatile("sti":::"memory");
+        return 0;
+    }
+    resident_vms_scheduler=scheduler;
+    resident_vms_sched_interrupt=interrupt;
+    __asm__ volatile("":::"memory");
+    if(flags&0x200u)__asm__ volatile("sti":::"memory");
+    return 1;
+}
 
 /* Prepare the common interrupt-return path for a scheduler-selected VMS
  * context. The trap dispatcher must still explicitly return
@@ -1421,6 +1441,28 @@ int arch_trap(struct port_trap_frame *f) {
          * same physical tick page is user-visible RO under CR0.WP=1. */
         *(volatile uint32_t *)0x400000u=ticks;
         outb(0x20, 0x20);  /* EOI to master PIC */
+        if(resident_vms_sched_interrupt){
+            uint32_t pcb=0u,next=0u;
+            const uint32_t status=resident_vms_sched_interrupt(
+                resident_vms_scheduler,
+                (uint32_t)(uintptr_t)((uint8_t *)f-
+                    offsetof(struct port_v37_ia32_restore_frame,registers)),
+                &pcb,&next);
+            if(status==PORT_V37_SCHED_NO_CONTEXT){
+                /* The source PCB stays queued until INIT supplies its PHD
+                 * and native context; do not fabricate an idle frame. */
+            }else if(status==PORT_V37_SCHED_OK){
+                if(!pcb||!next||!arch_prepare_restore_frame(
+                      (struct port_v37_ia32_restore_frame *)(uintptr_t)next)){
+                    arch_report_fault(f->vector,f->error,f->eip);
+                    for(;;)__asm__ volatile("cli; hlt");
+                }
+                return ARCH_TRAP_RESTORE_SELECTED_FRAME;
+            }else{
+                arch_report_fault(f->vector,f->error,f->eip);
+                for(;;)__asm__ volatile("cli; hlt");
+            }
+        }
         if (sched_active && sched_preempt && (f->cs&3u)==3u) {
             unsigned from=sched_current;
             schedule_next(f,0);
