@@ -75,6 +75,17 @@ int64_t port_f11a_map_window(void *,void *,uint32_t,uint32_t,uint32_t *,
                             const struct port_f11_86_mapops *);
 int64_t port_f11b_map_window(void *,void *,uint32_t,uint32_t,uint32_t *,void **,
                             const struct port_f11_86_mapops *);
+struct port_f11_86_mapturnops {
+    uint32_t (*read_header)(void *,uint8_t[512],uint32_t *);
+    uint32_t (*turn_window)(void *,void *,const uint8_t[512],uint32_t,uint32_t);
+    void (*record_turn)(void *);
+    void *context;
+};
+/* MAPVBN's two MAP_WINDOW attempts, PMS turn accounting, READ_HEADER and
+ * TURN_WINDOW sequence. Returns -1 if both attempts fail or UCB changes. */
+int64_t port_f11b_map_window_retry(void *,void *,uint32_t,uint32_t,uint32_t *,
+    void **,const struct port_f11_86_mapops *,
+    const struct port_f11_86_mapturnops *);
 struct port_f11_86_file_control {void *extension_fcb;};
 struct port_f11_86_headerops {
     uint32_t (*read_header)(void *,struct port_f11_86_fid,void *,uint8_t[512]);
