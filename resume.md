@@ -1372,4 +1372,4 @@ Expanded the native retained user-page frame vector from 17 entries to 512, matc
 
 Verification: `make test` PASS (host/layout suite through M49 and resident SYSQIO/DQA regressions). Fresh `make qemu-sysboot-m217` PASS for the established DQA0 DDT/CRB IRQ14 and Files-11 path, then explicit incomplete INIT. Capture `logs/serial/qemu-m217-run-local-20261125T025544381333Z.log`, 5,788 bytes, SHA-256 `fccbda36c6742e594849f10b4131c241fa8f059ee6dcb41b3af32d4bc9579232`; runner exited. Source-range validation PASS: 2,074 ranges, 447/4,566 indexed, zero errors. Guest-manifest validation PASS.
 
-SYSQIOFDT coverage remains partial for buffer fault/restart, live queue dispatch and process completion. Native INIT, process activation, SYSTEM login/DCL and DECnet nested SET HOST 0 acceptance remain incomplete.
+Implementation commit: `9a0e8d19fe0b313efa89d61cce8387ed84dd9b80`. SYSQIOFDT coverage remains partial for buffer fault/restart, live queue dispatch and process completion. Native INIT, process activation, SYSTEM login/DCL and DECnet nested SET HOST 0 acceptance remain incomplete.
