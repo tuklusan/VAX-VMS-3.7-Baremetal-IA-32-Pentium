@@ -182,7 +182,7 @@ static int64_t map_window(void *window,void *original_ucb,uint32_t vbn,
     uint32_t rc=o->map_vblock(o->context,window,vbn,requested,
                               &ucb,&lbn,&remaining);
     if(out_ucb)*out_ucb=ucb;
-    if(!(rc&1u)||lbn==UINT32_MAX||remaining>requested||(remaining&511u)){
+    if(!(rc&1u)||lbn==UINT32_MAX||remaining>=requested||(remaining&511u)){
         *unmapped=count;
         return -1;
     }

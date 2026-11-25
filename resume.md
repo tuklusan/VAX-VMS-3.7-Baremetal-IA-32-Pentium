@@ -1611,3 +1611,11 @@ Verification: `make files1187check` PASS; `make sourcerangecheck` PASS (2,116 ra
 Local M361 implementation commit: 27bf0616f70303d80d500ea14b8349a9e03b6d99.
 
 Published GitHub main implementation commit: 4d26ef1c8a246e27fe7af505f62010b74eebd473.
+
+## M362 - Reject wholly unmapped Files-11 windows, 25 November 2026
+
+MAP_VBN now treats a successful MAP_WINDOW callback with every requested block still unmapped as the original no-map result (-1). It reports the full request as unmapped. The host suite distinguishes full mapping, partial mapping, all-unmapped, callback failure, invalid LBN sentinel, non-block remainder, and byte-count overflow.
+
+Verification: `make files1187check` PASS; `make sourcerangecheck` PASS (2,116 ranges; 450/4,566 originals indexed; zero errors); fresh single-runner `make qemu-sysboot-m217` PASS through the same SYS.EXE ACP/DQA0 IRQ14 boot probe and explicit incomplete-INIT halt. QEMU capture: `logs/serial/qemu-m217-run-local-20261125T142227551232Z.log`, 5,885 bytes, SHA-256 `0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb`; runner exited. Guest does not exercise the all-unmapped callback result. Window retries/turning, live UCB remapping, process-aware ACP I/O remain incomplete.
+
+Local M362 implementation commit: 780ac4a45019159de9a76f1c31f18f32a558eec7.
