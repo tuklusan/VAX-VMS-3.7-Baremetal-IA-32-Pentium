@@ -6,11 +6,12 @@ uint32_t port_dq_ioc_start(struct port_dq_ioc_queue *q,uint32_t *tag){
     unsigned chosen=PORT_DQ_IOC_DEPTH;uint32_t order=0u;uint8_t priority=0u;
     for(unsigned i=0;i<PORT_DQ_IOC_DEPTH;i++){
         const struct port_dq_ioc_packet *p=&q->packets[i];
-        /* EXE$INSERTIRP walks past entries with strictly greater priority;
-         * equal-priority requests are inserted ahead of older requests. */
+        /* SYSQIOREQ EXE$INSERTIRP scans backward from the tail while the
+         * new unsigned priority is less than the current entry. This leaves
+         * lower numeric priorities first and preserves FIFO ties. */
         if(p->state==PORT_DQ_IOC_QUEUED&&
-           (chosen==PORT_DQ_IOC_DEPTH||p->priority>priority||
-            (p->priority==priority&&p->order>order))){
+           (chosen==PORT_DQ_IOC_DEPTH||p->priority<priority||
+            (p->priority==priority&&p->order<order))){
             chosen=i;order=p->order;priority=p->priority;
         }
     }

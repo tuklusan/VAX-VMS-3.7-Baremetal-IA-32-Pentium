@@ -2608,8 +2608,8 @@ static int m202_submit_queued_write(const struct port_dqddt_stage *stage,
        port_dq_ioc_write_prepare(&queue,2u,lbn,final_payload,
                                  sizeof final_payload)!=
          PORT_DQ_IOCW_OK||
-       port_dq_ioc_write_set_priority(&queue,1u,2u)!=PORT_DQ_IOCW_OK||
-       port_dq_ioc_write_set_priority(&queue,2u,1u)!=PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_set_priority(&queue,1u,1u)!=PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_set_priority(&queue,2u,2u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_enqueue(&queue,1u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_enqueue(&queue,2u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_service(&queue,&iosb)!=PORT_DQ_IOCW_OK||
@@ -2827,8 +2827,8 @@ static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
        report.reads!=2u||queue.completed!=2u||queue.posted!=2u||
        queue.active!=PORT_DQ_IOC_DEPTH||queue.reads!=2u)
         return -1;
-    if(context.read_calls!=2u||context.read_lbn[0]!=lbn||
-       context.read_lbn[1]!=0u)return -1;
+    if(context.read_calls!=2u||context.read_lbn[0]!=0u||
+       context.read_lbn[1]!=lbn)return -1;
     if(!expected_boot)return -1;
     for(unsigned i=0;i<256u;i++)
         if(expected_boot[i]!=(uint16_t)((uint16_t)second[i*2u]|

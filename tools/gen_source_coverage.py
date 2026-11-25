@@ -2402,7 +2402,7 @@ qio_rows=[
  (832,859,None,None,'ACP queue and ACP process wake path unresolved','unresolved'),
  (860,868,'src/vms_dq_ioc_unit.c','port_dq_ioc_unit_submit','Native unit admission serializes retained private IRPs with SYSDEF UCB$W_STS.BSY at source offset 88, raises/restores interrupt exclusion, defers packets while active, and dispatches next after IOC post; public process SYS$QIO/live pointer IRPs remain unbound','partial'),
  (869,896,None,None,'EXE$INSERTIRP source description and calling convention','excluded'),
- (897,905,'src/vms_dq_ioc_start.c','port_dq_ioc_start','Select next resident DQA request by source IRP priority (equal priority is newest first); full source linked-list insertion and live IRP dispatcher remain unbound','partial'),
+ (897,905,'src/vms_irp_queue.c','port_v37_irp_queue_insert','Implement SYSQIOREQ EXE$INSERTIRP with source 32-bit intrusive IRP/UCB forward/back links, unsigned byte-priority comparison and FIFO ordering for equal priorities; live EXE$QIODRVPKT/DQA submission remains unbound','partial'),
  (906,908,None,None,'VAX assembler end directive and blank lines','excluded')]
 qio_sec=[]
 for lo,hi,pc,sym,description,status in qio_rows:

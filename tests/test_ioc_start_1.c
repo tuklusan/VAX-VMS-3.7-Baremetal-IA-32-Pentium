@@ -13,6 +13,12 @@ int test_ioc_start_1(void){
  assert(port_dq_ioc_enqueue(&q,12u)==PORT_DQ_IOC_OK);
  assert(port_dq_ioc_enqueue(&q,13u)==PORT_DQ_IOC_OK);
  assert(port_dq_ioc_enqueue(&q,14u)==PORT_DQ_IOC_OK);
- uint32_t tag=0u;assert(port_dq_ioc_start(&q,&tag)==PORT_DQ_IOC_OK&&tag==14u);
+ uint32_t tag=0u;assert(port_dq_ioc_start(&q,&tag)==PORT_DQ_IOC_OK&&tag==12u);
+ assert(port_dq_ioc_transfer(&q)==PORT_DQ_IOC_OK);
+ assert(port_dq_ioc_complete(&q,&tag)==PORT_DQ_IOC_OK&&tag==12u);
+ assert(port_dq_ioc_start(&q,&tag)==PORT_DQ_IOC_OK&&tag==13u);
+ assert(port_dq_ioc_transfer(&q)==PORT_DQ_IOC_OK);
+ assert(port_dq_ioc_complete(&q,&tag)==PORT_DQ_IOC_OK&&tag==13u);
+ assert(port_dq_ioc_start(&q,&tag)==PORT_DQ_IOC_OK&&tag==14u);
  return 1;
 }

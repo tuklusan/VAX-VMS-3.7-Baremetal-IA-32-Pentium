@@ -34,27 +34,27 @@ int test_ioc_async_0(void){
     assert(port_dq_ioc_enqueue(&q,2u)==PORT_DQ_IOC_OK);
     uint32_t tag=0u;
     assert(port_dq_ioc_start_async(&q,async_sector_start,&tag)==PORT_DQ_IOC_OK);
-    assert(tag==2u&&fixture.starts==1u&&q.active<PORT_DQ_IOC_DEPTH);
+    assert(tag==1u&&fixture.starts==1u&&q.active<PORT_DQ_IOC_DEPTH);
     assert(port_dq_ioc_start_async(&q,async_sector_start,&tag)==
         PORT_DQ_IOC_BUSY&&fixture.starts==1u);
-    for(unsigned i=0u;i<512u;i++)assert(second[i]==0xeeu);
+    for(unsigned i=0u;i<512u;i++)assert(first[i]==0xeeu);
     for(unsigned i=0u;i<256u;i++)fixture.sector[i]=(uint16_t)(0x5000u+i);
     fixture.done(fixture.done_context,PORT_DQ_IOC_OK);
     assert(port_dq_ioc_async_complete(&q,PORT_DQ_IOC_OK)==PORT_DQ_IOC_BUSY);
     struct port_dq_ioc_iosb iosb={0};
     assert(port_dq_ioc_post(&q,&iosb)==PORT_DQ_IOC_OK);
-    assert(iosb.tag==2u&&iosb.status==PORT_DQ_IOC_OK&&iosb.bytes==512u);
-    assert(second[0]==0u&&second[1]==0x50u&&second[510]==0xffu&&
-           second[511]==0x50u);
+    assert(iosb.tag==1u&&iosb.status==PORT_DQ_IOC_OK&&iosb.bytes==512u);
+    assert(first[0]==0u&&first[1]==0x50u&&first[510]==0xffu&&
+           first[511]==0x50u);
     assert(port_dq_ioc_validate(&q)==PORT_DQ_IOC_OK);
     assert(port_dq_ioc_start_async(&q,async_sector_start,&tag)==PORT_DQ_IOC_OK);
-    assert(tag==1u&&fixture.starts==2u);
+    assert(tag==2u&&fixture.starts==2u);
     for(unsigned i=0u;i<256u;i++)fixture.sector[i]=(uint16_t)(0x6000u+i);
     fixture.done(fixture.done_context,PORT_DQ_IOC_OK);
     assert(port_dq_ioc_post(&q,&iosb)==PORT_DQ_IOC_OK);
-    assert(iosb.tag==1u&&iosb.status==PORT_DQ_IOC_OK&&iosb.bytes==512u);
-    assert(first[0]==0u&&first[1]==0x60u&&first[510]==0xffu&&
-           first[511]==0x60u);
+    assert(iosb.tag==2u&&iosb.status==PORT_DQ_IOC_OK&&iosb.bytes==512u);
+    assert(second[0]==0u&&second[1]==0x60u&&second[510]==0xffu&&
+           second[511]==0x60u);
     fixture.reject=-1;
     assert(port_dq_ioc_prepare(&q,3u,9u,first,sizeof first)==PORT_DQ_IOC_OK);
     assert(port_dq_ioc_enqueue(&q,3u)==PORT_DQ_IOC_OK);

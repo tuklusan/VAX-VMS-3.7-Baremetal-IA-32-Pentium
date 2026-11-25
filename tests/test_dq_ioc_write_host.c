@@ -26,10 +26,10 @@ int main(void){
        port_dq_ioc_write_enqueue(&q,2u)!=PORT_DQ_IOCW_OK)return 1;
     memset(first,0,sizeof first);memset(second,0,sizeof second);
     if(port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_OK||
-       iosb.tag!=1u||iosb.status!=PORT_DQ_IOCW_OK||iosb.bytes!=512u||
-       port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_OK||
        iosb.tag!=2u||iosb.status!=PORT_DQ_IOCW_OK||iosb.bytes!=512u||
-       b.writes!=2u||b.order[0]!=1u||b.order[1]!=0u||
+       port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_OK||
+       iosb.tag!=1u||iosb.status!=PORT_DQ_IOCW_OK||iosb.bytes!=512u||
+       b.writes!=2u||b.order[0]!=0u||b.order[1]!=1u||
        q.completed!=2u||q.failed!=0u)return 2;
     for(unsigned i=0;i<512u;i++)
         if(b.media[1][i]!=(uint8_t)(i^0xA5u)||
@@ -42,11 +42,11 @@ int main(void){
        port_dq_ioc_write_set_priority(&q,8u,1u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_enqueue(&q,7u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_enqueue(&q,8u)!=PORT_DQ_IOCW_OK)return 4;
-    if(port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_IO||
-       iosb.tag!=7u||iosb.status!=PORT_DQ_IOCW_IO||iosb.bytes!=0u||
-       port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_OK||
+    if(port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_OK||
        iosb.tag!=8u||iosb.status!=PORT_DQ_IOCW_OK||iosb.bytes!=512u||
-       b.calls!=2u||b.order[0]!=7u||b.order[1]!=0u||
+       port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_IO||
+       iosb.tag!=7u||iosb.status!=PORT_DQ_IOCW_IO||iosb.bytes!=0u||
+       b.calls!=2u||b.order[0]!=0u||b.order[1]!=7u||
        b.writes!=1u||q.submitted!=2u||q.completed!=1u||q.failed!=1u)
         return 5;
     for(unsigned i=0;i<512u;i++)if(b.media[0][i]!=0u)return 6;
@@ -59,8 +59,8 @@ int main(void){
        port_dq_ioc_write_enqueue(&q,9u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_enqueue(&q,10u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_OK||
-       iosb.tag!=10u||port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_OK||
-       iosb.tag!=9u)return 7;
+       iosb.tag!=9u||port_dq_ioc_write_service(&q,&iosb)!=PORT_DQ_IOCW_OK||
+       iosb.tag!=10u)return 7;
     puts("DQ IOC WRITEPBLK source priority queue, owned payload and failure completion PASS");
     return 0;
 }

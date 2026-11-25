@@ -237,7 +237,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37phdcheck v37ia32ctxcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck irpalloccheck exenppoolcheck
+test: sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37phdcheck v37ia32ctxcheck booparamcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck sysqioargscheck sysirpqueuecheck irpalloccheck exenppoolcheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 
@@ -368,6 +368,11 @@ test: sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapchec
 sysqioargscheck: | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c src/vms_sysqio_pcb.c src/vms_v37_ccb.c src/vms_sysqio_irp_build.c src/vms_sysqio_irp_reserve.c src/vms_sysqio_normalize.c src/vms_sysqio_ast.c src/vms_sysqio_device_access.c src/vms_sysqio_ef.c src/vms_sysqio_iosb.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_userptr.c src/vms_exe_access.c $(wildcard src/vms_dq_fdt_*.c) tests/test_sysqio_args_host.c -o build/sysqioargscheck
 	./build/sysqioargscheck
+
+.PHONY: sysirpqueuecheck
+sysirpqueuecheck: | build
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_irp_queue.c tests/test_irp_queue_host.c -o build/sysirpqueuecheck
+	./build/sysirpqueuecheck
 
 .PHONY: sysqioresidentcheck
 sysqioresidentcheck: build/sys.exe | build
@@ -860,6 +865,7 @@ M121_QIO_OBJS=$(patsubst src/%.c,build/%.o,$(M121_QIO_SRCS))
 # source-layout PCB quota and local-event fields in resident SYS.EXE.
 M218_SYSQIO_SRCS=$(wildcard src/vms_sysqio_*.c) src/vms_v37_ccb.c
 M218_SYSQIO_OBJS=$(patsubst src/%.c,build/%.o,$(M218_SYSQIO_SRCS))
+M121_QIO_OBJS+=build/vms_irp_queue.o
 # The resident SYS.EXE link recipe consumes M121_QIO_OBJS.
 M121_QIO_OBJS+=$(M218_SYSQIO_OBJS)
 M122_NL_DDT_SRCS=$(wildcard src/vms_nl_ddt_*.c)
@@ -1036,6 +1042,8 @@ f11channelcheck: $(M192_CHAN_OBJS) | build
 build/vms_v37_pcb.o: src/vms_v37_pcb.c src/vms_v37_pcb.h src/vms_v37_dyn_tags.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/sys.exe: build/vms_sys_executive_entry.o build/vms_exe_np_pool.o build/vms_v37_pcb.o build/vms_ini_syswcb.o build/vms_ini_pflvec.o build/vms_ini_mpw.o build/vms_ini_phv_swap.o build/vms_ini_procvec.o build/vms_ini_lockdb.o build/vms_sysboot_pktmem.o build/vms_ini_packet_queues.o build/vms_ini_log_templates.o build/vms_ini_syslog.o build/vms_ini_bootdev_scan.o build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/vms_ini_dpt_nl.o build/vms_ini_dpt_op.o $(M118_DB_OBJS) $(M119_CON_OBJS) $(M120_IOC_OBJS) $(M121_QIO_OBJS) $(M218_SYSQIO_OBJS) $(M272_SYSASSIGN_OBJS) $(M279_EXE_ACCESS_OBJS) $(M122_NL_DDT_OBJS) $(M123_IOPOST_OBJS) $(M125_DQ_OBJS) $(M126_DQ_READ_OBJS) $(M127_FIN_OBJS) $(M128_LOG_OBJS) $(M129_DEVLOG_OBJS) $(M130_DQDDT_OBJS) $(M131_RELOC_OBJS) $(M134_DDTRELOC_OBJS) $(M137_INDEX_OBJS) $(M138_MFD_OBJS) $(M139_DIR_OBJS) $(M140_IMAGE_OBJS) $(M144_AUX_OBJS) $(M146_RANGE_OBJS) $(M149_BOOTPATH_OBJS) $(M149_BOOTDIR_OBJS) $(M152_CHAIN_OBJS) $(M160_CURSOR_OBJS) $(M168_IOC_OBJS) $(M184_F11_IOC_OBJS) $(M192_CHAN_OBJS) $(M197_DQ_CRB_OBJS) build/vms_f11_acp86.o build/vms_f11_acp87.o build/vms_boot_files11.o build/vms_bootio.o build/executive-partial.o sys_native.ld
+
+build/sys.exe: build/vms_irp_queue.o
 	$(LD) -m elf_i386 -T sys_native.ld -o $@ build/vms_sys_executive_entry.o build/vms_exe_np_pool.o build/vms_v37_pcb.o build/vms_ini_syswcb.o build/vms_ini_pflvec.o build/vms_ini_mpw.o build/vms_ini_phv_swap.o build/vms_ini_procvec.o build/vms_ini_lockdb.o build/vms_sysboot_pktmem.o build/vms_ini_packet_queues.o build/vms_ini_log_templates.o build/vms_ini_syslog.o build/vms_ini_bootdev_scan.o build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/vms_ini_dpt_nl.o build/vms_ini_dpt_op.o $(M118_DB_OBJS) $(M119_CON_OBJS) $(M120_IOC_OBJS) $(M121_QIO_OBJS) $(M272_SYSASSIGN_OBJS) $(M279_EXE_ACCESS_OBJS) $(M122_NL_DDT_OBJS) $(M123_IOPOST_OBJS) $(M125_DQ_OBJS) $(M126_DQ_READ_OBJS) $(M127_FIN_OBJS) $(M128_LOG_OBJS) $(M129_DEVLOG_OBJS) $(M130_DQDDT_OBJS) $(M131_RELOC_OBJS) $(M134_DDTRELOC_OBJS) $(M137_INDEX_OBJS) $(M138_MFD_OBJS) $(M139_DIR_OBJS) $(M140_IMAGE_OBJS) $(M144_AUX_OBJS) $(M146_RANGE_OBJS) $(M149_BOOTPATH_OBJS) $(M149_BOOTDIR_OBJS) $(M152_CHAIN_OBJS) $(M160_CURSOR_OBJS) $(M168_IOC_OBJS) $(M184_F11_IOC_OBJS) $(M192_CHAN_OBJS) $(M197_DQ_CRB_OBJS) build/vms_f11_acp86.o build/vms_f11_acp87.o build/vms_boot_files11.o build/vms_bootio.o build/executive-partial.o
 build/vms_sysboot_elf.o: src/vms_sysboot_elf.c src/vms_sysboot_elf.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -1386,7 +1394,7 @@ iocphyscheck: $(M120_IOC_OBJS) | build
 
 # M121: source SYSQIOREQ.MAR EXE$FINISHIOC to IOC post queue, used
 # by NLDRIVER.MAR; this is not a user $QIO/AST delivery interface.
-$(M121_QIO_OBJS): build/%.o: src/%.c src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_ini_packet_queues.h src/vms_sysqio_args.h src/vms_exe_access.h src/vms_userptr.h src/vms_v37_pcb.h src/vms_v37_ccb.h src/vms_dq_fdt.h | build
+$(M121_QIO_OBJS): build/%.o: src/%.c src/vms_qio_post.h src/vms_qio_irp_pool.h src/vms_ini_packet_queues.h src/vms_sysqio_args.h src/vms_exe_access.h src/vms_userptr.h src/vms_v37_pcb.h src/vms_v37_ccb.h src/vms_dq_fdt.h src/vms_irp_queue.h src/vms_v37_dyn_tags.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: qiopostcheck
 qiopostcheck: $(M121_QIO_OBJS) | build
