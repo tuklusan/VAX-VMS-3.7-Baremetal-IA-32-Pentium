@@ -5885,7 +5885,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_save_current",
-          "pc_line": 220,
+          "pc_line": 260,
           "function": "Validate and save the outgoing IA-32 IRET frame into PCB$L_PHYPCB and PHD KSP/PC, then requeue through SCH$RESCHED; live trap/ IPL entry remains unintegrated"
         },
         {
@@ -5896,7 +5896,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
-          "pc_line": 199,
+          "pc_line": 237,
           "function": "Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction"
         },
         {
@@ -5915,7 +5915,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
-          "pc_line": 151,
+          "pc_line": 189,
           "function": "Highest resident COM queue selection validates the saved IA-32 IRET frame and returns its address with the selected PCB; IRQ0 invokes this transaction, but contextless NULL/SWAPPER are still not activated and TSS/CR3 switching remains incomplete"
         },
         {
@@ -6083,7 +6083,7 @@
         {
           "original_lines": [
             255,
-            352
+            310
           ],
           "status": "mapped",
           "pc_file": "src/vms_exe_wait.c",
@@ -6093,14 +6093,25 @@
         },
         {
           "original_lines": [
-            353,
+            311,
+            327
+          ],
+          "status": "mapped",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_wait_current",
+          "pc_line": 313,
+          "function": "native functional counterpart to original section"
+        },
+        {
+          "original_lines": [
+            328,
             353
           ],
           "status": "excluded",
           "reason": "ending directives and nonfunctional text"
         }
       ],
-      "unresolved_integration": "Actual context switch and wait queue wakeup need the resident scheduler."
+      "unresolved_integration": "Native SCH$WAITK saves the interrupted context, records source WQH count/state, queues the PCB and selects a ready context; DIO/BIO swapper wake, wait quota/time accounting, pending AST delivery, source PSL return and complete event-flag wait integration remain incomplete."
     },
     {
       "original_file": "SYS/SRC/SYSDCLEXH.MAR",
@@ -10891,7 +10902,7 @@
             332
           ],
           "status": "unresolved",
-          "reason": "RSE wait-state, AST, swapping and synchronization routines remain unresolved except separately mapped source entries"
+          "reason": "RSE event actions, AST delivery, swapping and synchronization routines remain unresolved except separately mapped source entries"
         },
         {
           "original_lines": [
@@ -10901,7 +10912,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_chse",
-          "pc_line": 103,
+          "pc_line": 141,
           "function": "Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial"
         },
         {
@@ -10920,7 +10931,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_chse",
-          "pc_line": 103,
+          "pc_line": 141,
           "function": "Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points"
         },
         {
@@ -10932,7 +10943,7 @@
           "reason": "Remaining RSE process state, wait, swap and scheduler routines unresolved"
         }
       ],
-      "unresolved_integration": "SCH$CHSE model is now integrated during INIT for resident NULL/SWAPPER queue insertion; actual process context activation, full IPL semantics, swapper execution and the remaining scheduler routines are unresolved."
+      "unresolved_integration": "Native SCH$WAITK WQH transitions are host tested; source RSE event/AST state masks, PID-based wake paths, full IPL semantics, swapper execution and remaining scheduler routines are unresolved."
     },
     {
       "original_file": "RTL/SRC/MTHIIDNNT.MAR",

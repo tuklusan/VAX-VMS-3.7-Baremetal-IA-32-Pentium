@@ -3,6 +3,9 @@
 #include "vms_v37_ia32_context.h"
 #include "vms_v37_phd.h"
 
+_Static_assert(sizeof(struct port_v37_wait_queue)==12u,
+               "SYSDEFQZ.MDL WQH source layout");
+
 enum {
     SQFL=PORT_V37_PCB_SQFL,SQBL=PORT_V37_PCB_SQBL,
     PCBPRI=PORT_V37_PCB_PRI,PCBSTATE=PORT_V37_PCB_STATE,
@@ -83,6 +86,41 @@ static uint32_t list_contains(const struct port_v37_scheduler *s,unsigned q,
     }
     if(cursor!=h||s->heads[q].backward!=previous)
         return PORT_V37_SCHED_CORRUPT;
+    return PORT_V37_SCHED_OK;
+}
+
+static uint32_t wait_queue_check(const struct port_v37_scheduler *s,
+    uint32_t address,uint8_t **queue_out){
+    if(address&3u)return PORT_V37_SCHED_BADPARAM;
+    uint8_t *queue=resolve(s,address,sizeof(struct port_v37_wait_queue));
+    if(!queue)return PORT_V37_SCHED_UNRESOLVED;
+    const uint32_t first=get32(queue),last=get32(queue+4u);
+    const uint16_t expected=get16(queue+8u),state=get16(queue+10u);
+    if(!state)return PORT_V37_SCHED_CORRUPT;
+    uint32_t cursor=first,previous=address,seen=0u;
+    while(cursor!=address){
+        if(seen>=expected||seen>=8192u)return PORT_V37_SCHED_CORRUPT;
+        uint8_t *pcb=resolve(s,cursor,PORT_V37_PCB_BYTES);
+        if(!pcb||get16(pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+           pcb[Q_TYPE]!=PORT_V37_DYN_PCB||get32(pcb+SQBL)!=previous||
+           get16(pcb+PCBSTATE)!=state)return PORT_V37_SCHED_CORRUPT;
+        previous=cursor;cursor=get32(pcb+SQFL);seen++;
+    }
+    if(seen!=expected||previous!=last||get32(queue+4u)!=previous||
+       (expected==0u&&(first!=address||last!=address)))
+        return PORT_V37_SCHED_CORRUPT;
+    if(queue_out)*queue_out=queue;
+    return PORT_V37_SCHED_OK;
+}
+
+static uint32_t wait_queue_insert_tail(const struct port_v37_scheduler *s,
+    uint32_t address,uint8_t *queue,uint32_t pcb_address,uint8_t *pcb){
+    const uint32_t tail=get32(queue+4u);
+    uint8_t *tail_record=resolve(s,tail,sizeof(struct port_v37_sched_head));
+    if(!tail_record)return PORT_V37_SCHED_UNRESOLVED;
+    put32(pcb+SQFL,address);put32(pcb+SQBL,tail);
+    put32(tail_record+SQFL,pcb_address);put32(queue+4u,pcb_address);
+    if(get32(queue)==address)put32(queue,pcb_address);
     return PORT_V37_SCHED_OK;
 }
 
@@ -214,6 +252,8 @@ uint32_t port_v37_sched_resched_current(struct port_v37_scheduler *s,
     put16(pcb+PCBSTATE,PORT_V37_SCH_COM);
     set_summary(s,q,1);
     s->ready_count[q]++;
+    s->current_pcb=0u;
+    s->current_priority=PORT_V37_SCH_PRIORITIES;
     return PORT_V37_SCHED_OK;
 }
 
@@ -268,6 +308,113 @@ uint32_t port_v37_sched_interrupt(struct port_v37_scheduler *s,
        s->native_no_context_count!=UINT32_MAX)
         s->native_no_context_count++;
     return selected;
+}
+
+uint32_t port_v37_sched_wait_current(struct port_v37_scheduler *s,
+    uint32_t wait_address,uint32_t interrupted_frame,
+    uint32_t *selected_pcb,uint32_t *selected_frame){
+    if(!s||!s->initialized||!wait_address||!interrupted_frame||
+       !selected_pcb||!selected_frame||!s->current_pcb)
+        return PORT_V37_SCHED_BADPARAM;
+    *selected_pcb=0u;*selected_frame=0u;
+    uint8_t *queue=0;
+    uint32_t status=wait_queue_check(s,wait_address,&queue);
+    if(status!=PORT_V37_SCHED_OK)return status;
+    if(get16(queue+8u)==UINT16_MAX)return PORT_V37_SCHED_CORRUPT;
+    uint8_t *pcb=resolve(s,s->current_pcb,PORT_V37_PCB_BYTES);
+    const uint32_t pcb_address=s->current_pcb;
+    if(!pcb||get16(pcb+PCBSTATE)!=PORT_V37_SCH_CUR||
+       get32(pcb+SQFL)!=pcb_address||get32(pcb+SQBL)!=pcb_address)
+        return PORT_V37_SCHED_CORRUPT;
+    struct port_v37_ia32_restore_frame *frame=
+        (struct port_v37_ia32_restore_frame *)resolve(s,interrupted_frame,
+            sizeof(struct port_v37_ia32_restore_frame));
+    const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
+    uint8_t *phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
+    if(!frame||!phd)return PORT_V37_SCHED_NO_CONTEXT;
+    if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
+        return PORT_V37_SCHED_CORRUPT;
+
+    /* Preflight the wait-queue tail before changing the running process. */
+    if(!resolve(s,get32(queue+4u),sizeof(struct port_v37_sched_head)))
+        return PORT_V37_SCHED_UNRESOLVED;
+    const uint32_t old_phy=get32(pcb+PORT_V37_PCB_PHYPCB);
+    const uint32_t old_ksp=get32(phd+PORT_V37_PHD_KSP);
+    const uint32_t old_pc=get32(phd+PORT_V37_PHD_PC);
+    put32(pcb+PORT_V37_PCB_PHYPCB,interrupted_frame);
+    put32(phd+PORT_V37_PHD_KSP,interrupted_frame);
+    put32(phd+PORT_V37_PHD_PC,frame->registers.eip);
+    status=wait_queue_insert_tail(s,wait_address,queue,pcb_address,pcb);
+    if(status!=PORT_V37_SCHED_OK){
+        put32(pcb+PORT_V37_PCB_PHYPCB,old_phy);
+        put32(phd+PORT_V37_PHD_KSP,old_ksp);
+        put32(phd+PORT_V37_PHD_PC,old_pc);
+        return status;
+    }
+    put16(queue+8u,(uint16_t)(get16(queue+8u)+1u));
+    put16(pcb+PCBSTATE,get16(queue+10u));
+    s->current_pcb=0u;s->current_priority=32u;
+    return port_v37_sched_select(s,selected_pcb,selected_frame);
+}
+
+uint32_t port_v37_sched_wake_waiter(struct port_v37_scheduler *s,
+    uint32_t wait_address,uint32_t pcb_address,uint8_t priority_class){
+    if(!s||!s->initialized||!wait_address||!pcb_address||
+       priority_class>=PORT_V37_SCH_INCREMENT_CLASSES)
+        return PORT_V37_SCHED_BADPARAM;
+    uint8_t *queue=0;
+    uint32_t status=wait_queue_check(s,wait_address,&queue);
+    if(status!=PORT_V37_SCHED_OK)return status;
+    uint8_t *pcb=resolve(s,pcb_address,PORT_V37_PCB_BYTES);
+    if(!pcb)return PORT_V37_SCHED_UNRESOLVED;
+    if(!get16(queue+8u)||get16(pcb+PCBSTATE)!=get16(queue+10u))
+        return PORT_V37_SCHED_CORRUPT;
+    uint32_t cursor=get32(queue),previous=wait_address;
+    int found=0;
+    for(unsigned n=0;n<get16(queue+8u);n++){
+        uint8_t *item=resolve(s,cursor,PORT_V37_PCB_BYTES);
+        if(!item||get32(item+SQBL)!=previous)
+            return PORT_V37_SCHED_CORRUPT;
+        if(cursor==pcb_address){found=1;break;}
+        previous=cursor;cursor=get32(item+SQFL);
+    }
+    if(!found)return PORT_V37_SCHED_CORRUPT;
+
+    /* CHSE is guaranteed to have a valid target tail before unlinking WQH. */
+    const uint8_t old_priority=pcb[PCBPRI],base_priority=pcb[PCBPRIB];
+    int candidate=(int)base_priority-(int)priority_increment[priority_class];
+    if(candidate>(int)old_priority)candidate=old_priority;
+    if(candidate<16)candidate=base_priority;
+    if(candidate<0||candidate>=32)return PORT_V37_SCHED_CORRUPT;
+    const unsigned new_queue=(unsigned)candidate+
+        ((get32(pcb+PCBSTS)&PORT_V37_SCH_RESIDENT)?0u:32u);
+    int ignored=0;
+    status=list_contains(s,new_queue,UINT32_MAX,&ignored);
+    if(status!=PORT_V37_SCHED_OK)return status;
+    if(!resolve(s,s->heads[new_queue].backward,
+                sizeof(struct port_v37_sched_head)))
+        return PORT_V37_SCHED_UNRESOLVED;
+
+    const uint32_t old_next=get32(pcb+SQFL),old_previous=get32(pcb+SQBL);
+    const uint16_t old_state=get16(pcb+PCBSTATE);
+    status=list_remove(s,pcb_address,pcb);
+    if(status!=PORT_V37_SCHED_OK)return status;
+    put16(queue+8u,(uint16_t)(get16(queue+8u)-1u));
+    put16(pcb+PCBSTATE,0u);
+    status=port_v37_sched_chse(s,pcb_address,priority_class);
+    if(status==PORT_V37_SCHED_OK)return status;
+
+    /* A late CHSE failure restores the exact wait-list position and state. */
+    uint8_t *next=resolve(s,old_next,sizeof(struct port_v37_sched_head));
+    uint8_t *prev=resolve(s,old_previous,sizeof(struct port_v37_sched_head));
+    if(next&&prev){
+        put32(pcb+SQFL,old_next);put32(pcb+SQBL,old_previous);
+        put32(prev+SQFL,pcb_address);put32(next+SQBL,pcb_address);
+        put16(queue+8u,(uint16_t)(get16(queue+8u)+1u));
+        put16(pcb+PCBSTATE,old_state);
+        pcb[PCBPRI]=old_priority;
+    }
+    return status;
 }
 
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){
