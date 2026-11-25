@@ -37,14 +37,33 @@ uint32_t port_dq_ioc_write_enqueue(struct port_dq_ioc_write_queue *q,
     }
     return PORT_DQ_IOCW_BAD;
 }
+uint32_t port_dq_ioc_write_set_priority(struct port_dq_ioc_write_queue *q,
+    uint32_t tag,uint8_t priority){
+    if(!q||!tag)return PORT_DQ_IOCW_BAD;
+    for(unsigned i=0;i<PORT_DQ_IOCW_DEPTH;i++){
+        struct port_dq_ioc_write_packet *p=&q->packets[i];
+        if(p->state&&p->tag==tag){
+            if(p->state!=PORT_DQ_IOCW_PREPARED)return PORT_DQ_IOCW_BAD;
+            p->priority=priority;
+            return PORT_DQ_IOCW_OK;
+        }
+    }
+    return PORT_DQ_IOCW_BAD;
+}
 uint32_t port_dq_ioc_write_service(struct port_dq_ioc_write_queue *q,
     struct port_dq_ioc_write_iosb *iosb){
     if(!q||!q->backend||!iosb||q->completed+q->failed>q->submitted)
         return PORT_DQ_IOCW_BAD;
-    unsigned slot=PORT_DQ_IOCW_DEPTH;uint32_t order=UINT32_MAX;
+    unsigned slot=PORT_DQ_IOCW_DEPTH;uint32_t order=0u;uint8_t priority=0u;
     for(unsigned i=0;i<PORT_DQ_IOCW_DEPTH;i++){
         const struct port_dq_ioc_write_packet *p=&q->packets[i];
-        if(p->state==PORT_DQ_IOCW_QUEUED&&p->order<order){slot=i;order=p->order;}
+        /* Match EXE$INSERTIRP: priority descends; equal priorities put the
+         * newly inserted IRP ahead of older entries. */
+        if(p->state==PORT_DQ_IOCW_QUEUED&&
+           (slot==PORT_DQ_IOCW_DEPTH||p->priority>priority||
+            (p->priority==priority&&p->order>order))){
+            slot=i;order=p->order;priority=p->priority;
+        }
         else if(p->state!=0u&&p->state!=PORT_DQ_IOCW_PREPARED&&
                 p->state!=PORT_DQ_IOCW_QUEUED)
             return PORT_DQ_IOCW_BAD;

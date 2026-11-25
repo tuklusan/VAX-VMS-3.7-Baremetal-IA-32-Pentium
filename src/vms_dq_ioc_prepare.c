@@ -17,3 +17,16 @@ uint32_t port_dq_ioc_prepare(struct port_dq_ioc_queue *q,uint32_t tag,
     p->order=++q->order;p->state=PORT_DQ_IOC_PREPARED;
     return PORT_DQ_IOC_OK;
 }
+uint32_t port_dq_ioc_set_priority(struct port_dq_ioc_queue *q,uint32_t tag,
+                                  uint8_t priority){
+    if(!q||!tag)return PORT_DQ_IOC_BAD;
+    for(unsigned i=0;i<PORT_DQ_IOC_DEPTH;i++){
+        struct port_dq_ioc_packet *p=&q->packets[i];
+        if(p->state!=PORT_DQ_IOC_EMPTY&&p->tag==tag){
+            if(p->state!=PORT_DQ_IOC_PREPARED)return PORT_DQ_IOC_BUSY;
+            p->priority=priority;
+            return PORT_DQ_IOC_OK;
+        }
+    }
+    return PORT_DQ_IOC_NOTFOUND;
+}

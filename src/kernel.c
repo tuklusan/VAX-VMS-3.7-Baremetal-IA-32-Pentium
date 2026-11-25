@@ -2580,6 +2580,8 @@ static int m202_submit_queued_write(const struct port_dqddt_stage *stage,
        port_dq_ioc_write_prepare(&queue,2u,lbn,final_payload,
                                  sizeof final_payload)!=
          PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_set_priority(&queue,1u,2u)!=PORT_DQ_IOCW_OK||
+       port_dq_ioc_write_set_priority(&queue,2u,1u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_enqueue(&queue,1u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_enqueue(&queue,2u)!=PORT_DQ_IOCW_OK||
        port_dq_ioc_write_service(&queue,&iosb)!=PORT_DQ_IOCW_OK||
@@ -2628,9 +2630,11 @@ static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
     if(!destination||port_dq_ioc_init(&queue,m202_dq_queued_read,&context)!=
          PORT_DQ_IOC_OK||
        port_dq_ioc_prepare(&queue,2u,lbn,destination,512u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_set_priority(&queue,2u,2u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_set_retry(&queue,2u,2u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_enqueue(&queue,2u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_prepare(&queue,3u,0u,second,sizeof second)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_set_priority(&queue,3u,1u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_set_retry(&queue,3u,2u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_enqueue(&queue,3u)!=PORT_DQ_IOC_OK||
        port_dq_ioc_run(&queue,&report)!=PORT_DQ_IOC_OK||
@@ -3476,8 +3480,6 @@ void kmain(void) {
        port_f11_home_read((const uint8_t *)dq_bootread_result.dq_bootread_sector,
                          512u,1u,&actual_dq_home)!=PORT_F11_HOME_OK ||
        actual_dq_home.home_lbn!=1u || actual_dq_home.cluster==0u){
-        puts("INIT: SYS.EXE DQ phase result=");
-        hex32(dq_bootread_result.signature);putc('\n');
         bootstrap_message("INIT: resident DQ physical boot READPBLK failed.");
         bootstrap_halt();
     }
@@ -4207,7 +4209,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     if(ata_write_probe>0)
-        bootstrap_message("INIT: SYS.EXE DQA0 write FIFO completed two ordered DDT WRITEPBLK IRPs; read FIFO posted two READPBLK IRPs via IRQ14, readback and restore verified.");
+        bootstrap_message("INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.");
 
     /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
      * prerequisites have not been ported. Stop before login or DCL. */

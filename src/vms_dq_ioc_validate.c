@@ -9,7 +9,8 @@ uint32_t port_dq_ioc_validate(const struct port_dq_ioc_queue *q){
         if(p->state>PORT_DQ_IOC_FAILED)return PORT_DQ_IOC_CORRUPT;
         if(p->state==PORT_DQ_IOC_EMPTY)continue;
         if(!p->tag||!p->destination||p->lbn>=0x10000000u||
-           !p->order)return PORT_DQ_IOC_CORRUPT;
+           !p->order||p->reserved[0]||p->reserved[1]||p->reserved[2])
+            return PORT_DQ_IOC_CORRUPT;
         active+=p->state==PORT_DQ_IOC_ACTIVE;
         for(unsigned j=i+1;j<PORT_DQ_IOC_DEPTH;j++){
             const struct port_dq_ioc_packet *other=&q->packets[j];

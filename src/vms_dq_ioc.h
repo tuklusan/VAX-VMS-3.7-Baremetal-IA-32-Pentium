@@ -23,6 +23,8 @@ struct port_dq_ioc_packet {
     uint8_t retries_remaining;
     uint8_t retry_limit;
     uint8_t attempts;
+    uint8_t priority;
+    uint8_t reserved[3];
     uint8_t sector[512];
 };
 struct port_dq_ioc_queue {
@@ -37,6 +39,7 @@ uint32_t port_dq_ioc_init(struct port_dq_ioc_queue *,
 uint32_t port_dq_ioc_validate(const struct port_dq_ioc_queue *);
 uint32_t port_dq_ioc_prepare(struct port_dq_ioc_queue *,
                            uint32_t,uint32_t,uint8_t *,size_t);
+uint32_t port_dq_ioc_set_priority(struct port_dq_ioc_queue *,uint32_t,uint8_t);
 uint32_t port_dq_ioc_enqueue(struct port_dq_ioc_queue *,uint32_t);
 uint32_t port_dq_ioc_start(struct port_dq_ioc_queue *,uint32_t *);
 uint32_t port_dq_ioc_transfer(struct port_dq_ioc_queue *);

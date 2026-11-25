@@ -2397,7 +2397,13 @@ qio_rows=[
  (743,749,'src/vms_qio_finishio.c','port_v37_qio_finishio','UCB OPCNT, IRP media status, append IOC post FIFO and defer IPL4','partial'),
  (750,770,None,None,'Source documentation between finish and device-queue action','unresolved'),
  (771,773,'src/vms_sysqio_pending.c','port_v37_sysqio_submit','Transfer prepared process page-pin ownership to the pending registry before invoking the driver callback; rejected callbacks release the transferred pins. The callback still lacks a live DQA0 priority queue/IOC$INITIATE binding','partial'),
- (774,908,None,None,'Original ALTSTART, ACP queue, unit priority queue, wakeup and insertion routines unresolved','unresolved')]
+ (774,802,None,None,'ALTSTART action dispatch and routine documentation unresolved','unresolved'),
+ (803,831,None,None,'Alternate driver start path and IPL handling unresolved','unresolved'),
+ (832,859,None,None,'ACP queue and ACP process wake path unresolved','unresolved'),
+ (860,868,'src/vms_dq_ioc_enqueue.c','port_dq_ioc_enqueue','Bounded resident DQA request enqueue is source-partial; native UCB busy-bit arbitration and IOC$INITIATE are not bound to process SYS$QIO','partial'),
+ (869,896,None,None,'EXE$INSERTIRP source description and calling convention','excluded'),
+ (897,905,'src/vms_dq_ioc_start.c','port_dq_ioc_start','Select next resident DQA request by source IRP priority (equal priority is newest first); full source linked-list insertion and live IRP dispatcher remain unbound','partial'),
+ (906,908,None,None,'VAX assembler end directive and blank lines','excluded')]
 qio_sec=[]
 for lo,hi,pc,sym,description,status in qio_rows:
     if pc:

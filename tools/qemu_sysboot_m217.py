@@ -98,7 +98,7 @@ def main():
         b'INIT: ACP FCB source=3',
         b'INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.',
         b'INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.',
-        b'INIT: SYS.EXE DQA0 write FIFO completed two ordered DDT WRITEPBLK IRPs; read FIFO posted two READPBLK IRPs via IRQ14, readback and restore verified.',
+        b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
         b'INIT stopped: remaining original initialization dependencies incomplete.']
     failures=[
         b'*** x86 fault:',

@@ -12,7 +12,7 @@ typedef uint32_t (*port_dq_ioc_write_backend)(void *,uint32_t,
 struct port_dq_ioc_write_packet {
     uint32_t tag,lbn,order;
     uint8_t state;
-    uint8_t reserved[3];
+    uint8_t priority,reserved[2];
     uint8_t payload[512];
 };
 struct port_dq_ioc_write_queue {
@@ -26,6 +26,8 @@ uint32_t port_dq_ioc_write_init(struct port_dq_ioc_write_queue *,
     port_dq_ioc_write_backend,void *);
 uint32_t port_dq_ioc_write_prepare(struct port_dq_ioc_write_queue *,
     uint32_t,uint32_t,const uint8_t *,size_t);
+uint32_t port_dq_ioc_write_set_priority(struct port_dq_ioc_write_queue *,
+    uint32_t,uint8_t);
 uint32_t port_dq_ioc_write_enqueue(struct port_dq_ioc_write_queue *,uint32_t);
 uint32_t port_dq_ioc_write_service(struct port_dq_ioc_write_queue *,
     struct port_dq_ioc_write_iosb *);
