@@ -38,8 +38,15 @@ int main(void){
     assert(read32(ucb+64u)==0x2000u);
     assert(read32(f.irp[0])==0x2100u&&read32(f.irp[1])==0x2200u&&
         read32(f.irp[2])==head);
+    f.irp[1][35]=0u;
+    assert(port_v37_irp_queue_validate(&q,&count)==
+        PORT_V37_IRP_QUEUE_CORRUPT);
+    init_irp(f.irp[3],4u);
+    assert(port_v37_irp_queue_insert(&q,0x2300u)==
+        PORT_V37_IRP_QUEUE_CORRUPT);
+    f.irp[1][35]=7u;
     assert(port_v37_irp_queue_insert(&q,0x2000u)==PORT_V37_IRP_QUEUE_BAD);
-    assert(port_v37_irp_queue_insert(&q,0x2300u)==PORT_V37_IRP_QUEUE_BAD);
+    assert(port_v37_irp_queue_insert(&q,0x2300u)==PORT_V37_IRP_QUEUE_FULL);
     assert(port_v37_irp_queue_remove(&q,0x2100u)==PORT_V37_IRP_QUEUE_OK);
     assert(read32(ucb+64u)==0x2000u&&read32(f.irp[0])==0x2200u&&
         read32(f.irp[2]+4u)==0x2000u);
@@ -54,7 +61,6 @@ int main(void){
     assert(port_v37_irp_queue_insert(&q,0x2000u)==PORT_V37_IRP_QUEUE_OK);
     assert(port_v37_irp_queue_insert(&q,0x2100u)==PORT_V37_IRP_QUEUE_OK);
     assert(port_v37_irp_queue_insert(&q,0x2200u)==PORT_V37_IRP_QUEUE_OK);
-    init_irp(f.irp[3],4u);
     assert(port_v37_irp_queue_insert(&q,0x2300u)==PORT_V37_IRP_QUEUE_FULL);
     f.irp[0][0]^=1u;
     assert(port_v37_irp_queue_validate(&q,0)==PORT_V37_IRP_QUEUE_CORRUPT);

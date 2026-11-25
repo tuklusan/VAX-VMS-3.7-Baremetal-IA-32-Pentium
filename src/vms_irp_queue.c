@@ -65,6 +65,11 @@ uint32_t port_v37_irp_queue_validate(const struct port_v37_irp_queue *q,
         if(node((struct port_v37_irp_queue *)q,prev,&prior,&prior_bytes)!=0||
            !prior||rd32(prior+PORT_V37_IRP_IOQFL)!=at)
             return PORT_V37_IRP_QUEUE_CORRUPT;
+        /* EXE$INSERTIRP maintains ascending unsigned IRP$B_PRI in the
+         * forward chain. Reject a structurally linked but unsorted queue;
+         * otherwise a later insertion could silently preserve corruption. */
+        if(count&&prior[PORT_V37_IRP_PRI]>irp[PORT_V37_IRP_PRI])
+            return PORT_V37_IRP_QUEUE_CORRUPT;
         prev=at;at=rd32(irp+PORT_V37_IRP_IOQFL);count++;
     }
     if(rd32(head+4u)!=prev){return PORT_V37_IRP_QUEUE_CORRUPT;}
