@@ -10,7 +10,7 @@ enum {
     PORT_F11_87_WRONGACP=796u, PORT_F11_87_BADCHKSUM=2056u,
     PORT_F11_87_BADFILEHDR=2064u, PORT_F11_87_FILENUMCHK=2224u,
     PORT_F11_87_FILESTRUCT=2240u, PORT_F11_87_NOSUCHFILE=2320u,
-    PORT_F11_87_INCOMPLETE=0xfffffffcu
+    PORT_F11_87_IOERROR=8u, PORT_F11_87_INCOMPLETE=0xfffffffcu
 };
 enum { PORT_F11_87_FCBTYPE=PORT_V37_DYN_FCB,
        PORT_F11_87_WCBTYPE=PORT_V37_DYN_WCB,
@@ -139,6 +139,9 @@ uint32_t port_f11b_make_access(struct port_f11_87_context *,struct port_f11_87_f
  * services are integrated. */
 uint32_t port_f11b_deaccess(struct port_f11_87_context *,
                             const struct port_f11_87_deaccess_request *);
+/* Read byte ranges through an active read WCB and its FH2 retrieval map. */
+uint32_t port_f11b_read_vbn(struct port_f11_87_context *,
+    struct port_f11_87_fcb *,uint32_t,uint32_t,uint8_t *,size_t,uint32_t *);
 uint32_t port_f11a_io_done(struct port_f11_87_context *,struct port_f11_87_packet *,
                             uint32_t,uint32_t,struct port_f11_86_abd *,const uint8_t *,size_t);
 uint32_t port_f11b_io_done(struct port_f11_87_context *,struct port_f11_87_packet *,

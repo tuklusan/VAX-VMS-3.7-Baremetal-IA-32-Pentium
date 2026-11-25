@@ -12,6 +12,7 @@ struct fake {
     unsigned allocation,deallocation,turns,maps,reads,invalidated,switched,posts,dismounts,mounts;
     uint8_t window_write_access;
     uint32_t vbn,lbn;
+    FILE *disk;
 };
 static void *allocate(void *p,uint32_t bytes,uint32_t kind){
     struct fake *m=p;
@@ -39,8 +40,12 @@ static uint32_t map(void *p,uint32_t vbn,uint32_t *lbn){
     *lbn=m->lbn;return 1;
 }
 static uint32_t read_lbn(void *p,uint32_t lbn,uint8_t h[512]){
-    struct fake *m=p;m->reads++;assert(lbn==m->lbn);
-    memcpy(h,m->header,512);
+    struct fake *m=p;m->reads++;
+    if(lbn==m->lbn)memcpy(h,m->header,512);
+    else {
+        assert(m->disk&&fseek(m->disk,(long)((uint64_t)lbn*512u),SEEK_SET)==0);
+        assert(fread(h,1u,512u,m->disk)==512u);
+    }
     return 1;
 }
 static uint32_t switch_volume(void *p,uint16_t rvn){
@@ -128,9 +133,9 @@ int main(int argc,char **argv){
     assert(p.user_page==77u&&p.byte_count==14u&&!(p.flags&0x10u));
 
     /* Actual INDEXF.SYS header in the generated Files-11 disk. */
-    FILE *fp=fopen(argv[1],"rb");assert(fp);
+    FILE *fp=fopen(argv[1],"rb");assert(fp);m.disk=fp;
     assert(fseek(fp,22L*512L,SEEK_SET)==0);
-    assert(fread(m.header,1,512,fp)==512u);fclose(fp);
+    assert(fread(m.header,1,512,fp)==512u);
     assert(port_f11b_checksum(m.header)==1u);
     struct port_f11_86_fid fid2={rd16(m.header+8),rd16(m.header+10),
                                   rd16(m.header+12),m.header[13]};
@@ -204,6 +209,32 @@ int main(int argc,char **argv){
     assert(port_f11b_make_access(&close_context,read_fcb,read_window,
                                  &readback)==1u);
     close_context.window=read_window;
+    uint8_t acp_bytes[700],expected[700];
+    uint32_t acp_completed=0u;
+    unsigned reads_before_acp=m.reads;
+    assert(port_f11b_read_vbn(&close_context,read_fcb,300u,
+        sizeof acp_bytes,acp_bytes,sizeof acp_bytes,&acp_completed)==
+        PORT_F11_87_NORMAL&&acp_completed==sizeof acp_bytes);
+    assert(m.reads==reads_before_acp+3u);
+    uint32_t first_lbn=0u,second_lbn=0u;
+    struct port_f11_86_map actual_map={m.header+2u*m.header[1],
+        2u*m.header[58],0u,0u,0u};
+    uint32_t next_vbn=1u;
+    while(actual_map.offset<actual_map.length){
+        assert(port_f11b_get_map_pointer(&actual_map));
+        if(!actual_map.blocks)continue;
+        if(1u>=next_vbn&&1u-next_vbn<actual_map.blocks)
+            first_lbn=actual_map.lbn+(1u-next_vbn);
+        if(2u>=next_vbn&&2u-next_vbn<actual_map.blocks)
+            second_lbn=actual_map.lbn+(2u-next_vbn);
+        next_vbn+=actual_map.blocks;
+    }
+    assert(first_lbn&&second_lbn);
+    assert(fseek(fp,(long)((uint64_t)first_lbn*512u+300u),SEEK_SET)==0&&
+           fread(expected,1u,212u,fp)==212u);
+    assert(fseek(fp,(long)((uint64_t)second_lbn*512u),SEEK_SET)==0&&
+           fread(expected+212u,1u,sizeof expected-212u,fp)==sizeof expected-212u);
+    assert(!memcmp(acp_bytes,expected,sizeof expected));
     unsigned free_before_close=m.deallocation;
     unsigned transactions_before_close=vol.transactions;
     assert(port_f11b_deaccess(&close_context,&no_attributes)==PORT_F11_87_NORMAL);
@@ -238,6 +269,7 @@ int main(int argc,char **argv){
     free(new_fcb);
     free(window);
     free(created);
+    fclose(fp);
     puts("F11A/F11B M87: mount, header, FCB, window, FIB, map, I/O completion PASS");
     return 0;
 }

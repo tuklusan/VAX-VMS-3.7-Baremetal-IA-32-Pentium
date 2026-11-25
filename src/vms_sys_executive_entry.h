@@ -208,7 +208,7 @@ struct port_sys_exec_result {
         const struct port_dq_fdt *,const struct port_dqddt_native *);
     uint32_t dq_ddt_published,dqa_ioc_status,dqa_ioc_ddb,dqa_ioc_ucb;
     uint32_t dq_published_f11_read_bytes,dq_published_f11_read_irps;
-    uint32_t dq_acp_header_lbn,dq_acp_header_reads;
+    uint32_t dq_acp_header_lbn,dq_acp_header_reads,dq_acp_data_reads;
     const uint8_t *dq_acp_header;
     const void *dq_acp_fcb;
     uint32_t dq_acp_file_blocks;

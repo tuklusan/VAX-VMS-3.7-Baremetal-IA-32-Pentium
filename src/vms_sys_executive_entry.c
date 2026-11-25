@@ -2120,6 +2120,18 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         acp_context.primary=acp_sys_fcb;
         acp_context.window=acp_window;
+        static uint8_t acp_data_sample[700] __attribute__((aligned(4)));
+        uint32_t acp_data_done=0u;
+        acp_io.disk.reads=0u;
+        if(port_f11b_read_vbn(&acp_context,acp_sys_fcb,sample_offset,
+              sizeof acp_data_sample,acp_data_sample,
+              sizeof acp_data_sample,&acp_data_done)!=PORT_F11_87_NORMAL||
+           acp_data_done!=sizeof acp_data_sample||acp_io.disk.reads!=3u)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        for(unsigned i=0u;i<sizeof acp_data_sample;i++)
+            if(acp_data_sample[i]!=chain_sample[i])
+                return PORT_SYS_EXEC_BAD_PARAMETERS;
+        p->result->dq_acp_data_reads=acp_io.disk.reads;
         const struct port_f11_87_deaccess_request readonly_close={0u,0u,0u,0u};
         if(port_f11b_deaccess(&acp_context,&readonly_close)!=
               PORT_F11_87_NORMAL||acp_sys_fcb->accesses||
@@ -2159,7 +2171,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->dq_published_f11_read_bytes=chain_done;
         p->result->dq_published_f11_read_irps=f11ctx.reads;
         p->result->dq_acp_header_lbn=acp_header_lbn;
-        p->result->dq_acp_header_reads=acp_io.disk.reads;
+        p->result->dq_acp_header_reads=1u;
         p->result->dq_acp_header=acp_sys_header;
         p->result->dq_acp_file=sys_fid.number;
         p->result->dq_acp_sequence=sys_fid.sequence;

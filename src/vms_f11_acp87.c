@@ -519,6 +519,74 @@ uint32_t port_f11b_deaccess(struct port_f11_87_context *c,
     return PORT_F11_87_NORMAL;
 }
 
+static uint32_t fcb_lbn_for_vbn(const uint8_t header[512],uint32_t vbn,
+                                uint32_t *lbn){
+    if(!header||!vbn||!lbn)return PORT_F11_87_BADPARAM;
+    const unsigned offset=(unsigned)header[1]*2u;
+    const unsigned bytes=(unsigned)header[58]*2u;
+    if(offset<76u||offset>510u||bytes>510u-offset)
+        return PORT_F11_87_BADFILEHDR;
+    struct port_f11_86_map map={header+offset,bytes,0u,0u,0u};
+    uint32_t first_vbn=1u;
+    while(map.offset<map.length){
+        if(!port_f11b_get_map_pointer(&map))return PORT_F11_87_BADFILEHDR;
+        if(!map.blocks)continue;
+        if(map.blocks>UINT32_MAX-first_vbn||map.lbn>UINT32_MAX-map.blocks)
+            return PORT_F11_87_BADFILEHDR;
+        if(vbn>=first_vbn&&vbn-first_vbn<map.blocks){
+            *lbn=map.lbn+(vbn-first_vbn);
+            return PORT_F11_87_NORMAL;
+        }
+        first_vbn+=map.blocks;
+    }
+    return PORT_F11_87_BADFILEHDR;
+}
+
+uint32_t port_f11b_read_vbn(struct port_f11_87_context *c,
+    struct port_f11_87_fcb *f,uint32_t offset,uint32_t count,uint8_t *output,
+    size_t capacity,uint32_t *completed){
+    if(!c||!c->volume||!f||!c->window||c->primary!=f||
+       c->window->fcb!=f||!c->window->read||c->window->no_read||
+       !f->accesses||f->type!=PORT_F11_87_FCBTYPE||!c->ops.read_lbn||
+       (!output&&count)||!completed||count>capacity||
+       (uint64_t)offset+count>UINT32_MAX)
+        return PORT_F11_87_BADPARAM;
+    *completed=0u;
+    if(!count)return PORT_F11_87_NORMAL;
+    if(!f->file_blocks||(uint64_t)offset+count>
+       (uint64_t)f->file_blocks*512u)return PORT_F11_87_INCOMPLETE;
+    uint8_t header[512];
+    uint32_t status=c->ops.read_lbn(c->ops.context,f->header_lbn,header);
+    if(status!=PORT_F11_87_NORMAL)return PORT_F11_87_IOERROR;
+    uint32_t header_status=0u;
+    const uint32_t checked=port_f11b_check_header2(header,f->fid,0,
+                                                    &header_status);
+    if(checked!=1u||header_status!=PORT_F11_87_NORMAL)
+        return PORT_F11_87_BADFILEHDR;
+    uint32_t allocated=0u;
+    if(!port_f11b_file_size(header,&allocated)||allocated<f->file_blocks)
+        return PORT_F11_87_BADFILEHDR;
+    uint32_t done=0u;
+    while(done<count){
+        const uint32_t position=offset+done;
+        const uint32_t vbn=position/512u+1u;
+        const uint32_t within=position%512u;
+        uint32_t lbn=0u;
+        status=fcb_lbn_for_vbn(header,vbn,&lbn);
+        if(status!=PORT_F11_87_NORMAL){*completed=done;return status;}
+        uint8_t sector[512];
+        if(c->ops.read_lbn(c->ops.context,lbn,sector)!=PORT_F11_87_NORMAL){
+            *completed=done;return PORT_F11_87_IOERROR;
+        }
+        uint32_t bytes=count-done;
+        if(bytes>512u-within)bytes=512u-within;
+        for(uint32_t i=0u;i<bytes;i++)output[done+i]=sector[within+i];
+        done+=bytes;
+    }
+    *completed=done;
+    return PORT_F11_87_NORMAL;
+}
+
 /* IODONE: put a real IRP on the I/O post queue, then test dismount. */
 static uint32_t io_done(struct port_f11_87_context *c,struct port_f11_87_packet *p,
                          uint32_t st,uint32_t count,struct port_f11_86_abd *abd,
