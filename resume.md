@@ -1807,3 +1807,11 @@ Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0);
 
 Local M382 implementation commit: `90345a06e102064df97836d5c6b039fb93635807`.
 Published GitHub main M382 implementation commit: `d793f03ec0aee9de542c1f08bd3bdf214d04b44e`.
+
+## M383 - Correct native LEF/CEF wait return frame, 25 November 2026
+
+Corrected M378 saved wait completion for the actual IA-32 interrupt ABI. The x86 INT frame already carries EIP after the two-byte INT instruction; advancing PHD PC by four was incorrect and did not update the frame used by native IRET. The completion path now validates the saved IA-32 restore frame, mirrors its post-INT EIP to PHD PC, returns SS through PHD R0 and saved EAX, and rolls all three values back if WQH wake fails. Host regression verifies CEF/LEF return state and EAX rollback on corrupt WQH. Event-flag selection, IPL integration, live process wait, and scheduler binding remain incomplete.
+
+Verification: make v37schedcheck, make -j2 all test (exit 0), coverage generation, 	ests/test_coverage_ranges.py, 	ools/validate_source_ranges.py, and git diff --check PASS. Coverage: 2,135 ranges, 451/4,566 original files indexed, zero errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded. One make qemu-sysboot-m217 PASS on rebuilt image; actual guest reached the explicit incomplete-INIT stop after DQA0/IRQ14/ACP and live IRQ0 callback. Capture logs/serial/qemu-m217-run-local-20261125T181133169793Z.log, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6; runner exited and no QEMU process remains. No process activation, login, DCL, DECnet or SET HOST occurred.
+
+Local M383 implementation commit: 691010cd7f0f35fe8fe5efc921aa6c315ed3cfd0.
