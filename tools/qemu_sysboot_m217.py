@@ -101,6 +101,7 @@ def main():
         b'INIT: DQA0 UCB busy serialized two retained DDT READPBLK IRPs through IRQ14 and deferred IOC post.',
         b'INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
+        b'INIT: live IRQ0 called SCH$RESCHED/SCH$SCHED; NULL/SWAPPER PHD contexts are still absent.',
         b'INIT stopped: remaining original initialization dependencies incomplete.']
     failures=[
         b'*** x86 fault:',
