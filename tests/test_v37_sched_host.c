@@ -344,7 +344,19 @@ int main(void){
            f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_BLOCKED)
         return fail("SYS$WFLOR reaches source LEF wait state");
     const uint32_t lef_pc=get32(f.phds[0]+PORT_V37_PHD_PC);
+    const uint32_t lef_r0=get32(f.phds[0]+PORT_V37_PHD_R0);
     const uint32_t lef_eax=f.frames[0].registers.eax;
+    const uint16_t lef_cs=f.frames[0].registers.cs;
+    f.frames[0].registers.cs=0x3bu; /* User code selector with kernel data selectors. */
+    if(port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_EVENT_LEF,
+           f.wait_queue_va,f.pcb_va[0],0u)!=PORT_V37_SCHED_CORRUPT||
+       get32(f.phds[0]+PORT_V37_PHD_PC)!=lef_pc||
+       get32(f.phds[0]+PORT_V37_PHD_R0)!=lef_r0||
+       f.frames[0].registers.eax!=lef_eax||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_LEF||
+       f.wait_queue.count!=1u)
+        return fail("RSE LEF rejects malformed native IRET context before mutation");
+    f.frames[0].registers.cs=lef_cs;
     f.wait_queue.backward=0x00abcdefu;
     if(port_v37_sched_rse_event(&scheduler,PORT_V37_RSE_EVENT_LEF,
            f.wait_queue_va,f.pcb_va[0],0u)!=PORT_V37_SCHED_CORRUPT||
