@@ -1599,3 +1599,5 @@ Hardened the native MAP_VBN callback boundary against byte-count overflow and ma
 Verification: `make files1187check` PASS; `make sourcerangecheck` PASS (2,116 ranges; 450/4,566 original files indexed; zero validation errors; 17,255 mapped, 30,163 partial, 56,921 unresolved, 7,752 missing, 26,412 excluded, 917 hardware-excluded); `make -j2 CC=gcc-12 all test` completed with host, static-layout, and sanitizer checks PASS; fresh single-runner `make qemu-sysboot-m217` PASS through the existing SYS.EXE ACP/DQA0 IRQ14 checks, then explicit incomplete-INIT halt. Capture `logs/serial/qemu-m217-run-local-20261125T141351744857Z.log`, 5,885 bytes, SHA-256 `0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb`; QEMU runner exited and no QEMU process remains. The guest does not exercise malformed callback inputs. Still incomplete: MAP_WINDOW retry/window-turn semantics, live UCB remapping, and ACP process I/O integration.
 
 Local M360 implementation commit: f0114f3dfe5c1df7d561906ea2a4bbdb26d9faab.
+
+Published GitHub main implementation commit: 38742081cb12bdd1098b154615658773b6f52b8d.
