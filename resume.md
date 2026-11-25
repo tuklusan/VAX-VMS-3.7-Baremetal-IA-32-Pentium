@@ -1965,3 +1965,15 @@ Verification: `make v37ia32ctxcheck all` PASS; full `make -j2 test v37schedcheck
 
 M398 implementation commit: `c4180b15fc48fb02c7daab720f99d503080298c4`.
 Published GitHub main M398 implementation commit: `c4180b15fc48fb02c7daab720f99d503080298c4`.
+
+
+## M399 - Preserve the VMS PAGEDYN system parameter, 25 November 2026
+
+Added the original 80,000-byte PAGEDYN default from SYSPARAM.MAR to the native INIT parameter set and taught SYSBOOT PARAMS.DAT merging to recognize PAGEDYN with the original 8,192-byte minimum. The host test checks the default, case-insensitive file override, and value preservation. This only makes parameter parsing faithful; paged pool placement, mapping, allocation and SWAPPER consumption remain unimplemented.
+
+Verification: focused `make inisysparamscheck` PASS; full `make -j2 all test` completed successfully after fixing the test fixture terminator allocation exposed by its larger record; coverage generation/validation PASS (2,135 ranges; zero errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. No QEMU run: parameter decoding only changed and paged-pool settings are not consumed in the guest.
+
+M399 implementation commit: `166ada0127757470697b5c227490d70af2130a3b`.
+Published GitHub main M399 implementation commit: pending.
+
+No process activation, public SYS$QIO, SYSTEM login, DCL, DECnet, or SET HOST is claimed. Acceptance work remains incomplete.
