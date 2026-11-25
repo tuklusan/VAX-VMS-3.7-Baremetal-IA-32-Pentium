@@ -2025,3 +2025,15 @@ Local M403 implementation commit: `3b41871c35316aae84d8954a67a45741a4210207`.
 Published GitHub main M403 implementation commit: `3b41871c35316aae84d8954a67a45741a4210207`.
 
 Remaining acceptance work is unchanged: real page mapping and paged pool setup; SWAPPER/NULL PHD and IA-32 context activation; public SYS$QIO with process I/O and AST completion; Files-11 ACP integration; scheduler and process image activation; SYSTEM login, DCL, DECnet Phase IV, and genuine SET HOST 0. Source coverage remains incomplete (8,032 missing and 56,882 unresolved ranges in the indexed inventory).
+
+
+## M404 - Initialize the resident PAGEDYN pool in SYS.EXE, 25 November 2026
+
+Expanded the SYS.EXE resident backing range and passed SYSPARAM's default PAGEDYN size into the source SYSBOOT layout. During the original PAGDYN-before-IRP initialization order, SYS.EXE now initializes the 16-byte free-list allocator over the contiguous resident PAGEDYN interval immediately below NPAGEDYN. The boot result checks the exact rounded PAGEDYN size and adjacency to NPAGEDYN; a new host regression covers the complete default packet/NPAGEDYN/PAGEDYN geometry and is part of `make test`. This implements only the resident, non-POOLPGING storage path. PFN/SPT mapping/accounting, POOLPGING, allocation call sites, waits, extension and wakeups remain incomplete.
+
+Verification: `make pktlayoutcheck` PASS; full `make -j2 all test` exited 0; `python3 tools/gen_source_coverage.py`, `python3 tests/test_coverage_ranges.py`, and `python3 tools/validate_source_ranges.py` PASS (2,142 ranges; 451/4,566 original files indexed; zero errors; 17,230 mapped, 30,322 partial, 56,866 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). `make qemu-sysboot-m217` PASS with the expanded actual SYS.EXE BSS and both resident pool intervals; real DQA0 DDT/IRQ14/Files-11 ACP checks and IRQ0 scheduler ran before the known stop for absent NULL/SWAPPER contexts. Capture `logs/serial/qemu-m217-run-local-20261125T233202982595Z.log`: 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`. `readelf -l build/sys.exe` shows the writable SYS segment at `0x00347000`, MemSiz `0x38200`, ending at `0x0037f200`, within the reserved `0x00380000` boundary (3,584 bytes of remaining aperture). QEMU exited; none remains. No login, DCL, DECnet or SET HOST is claimed.
+
+Local M404 implementation commit: `202848e5fc976c34a0a876bd25b5cc19d38708a6`.
+Published GitHub main M404 implementation commit: `202848e5fc976c34a0a876bd25b5cc19d38708a6`.
+
+Remaining acceptance work: paged pool PFN/SPT semantics and callers; SWAPPER/NULL PHD and IA-32 context activation; public SYS$QIO and process-aware AST completion; Files-11 ACP request integration; process image activation; SYSTEM login, DCL, DECnet Phase IV, and genuine SET HOST 0. Source coverage remains incomplete (8,032 missing and 56,866 unresolved ranges in the indexed inventory).
