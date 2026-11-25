@@ -2037,3 +2037,14 @@ Local M404 implementation commit: `202848e5fc976c34a0a876bd25b5cc19d38708a6`.
 Published GitHub main M404 implementation commit: `202848e5fc976c34a0a876bd25b5cc19d38708a6`.
 
 Remaining acceptance work: paged pool PFN/SPT semantics and callers; SWAPPER/NULL PHD and IA-32 context activation; public SYS$QIO and process-aware AST completion; Files-11 ACP request integration; process image activation; SYSTEM login, DCL, DECnet Phase IV, and genuine SET HOST 0. Source coverage remains incomplete (8,032 missing and 56,866 unresolved ranges in the indexed inventory).
+
+## M405 - Exercise resident PAGEDYN allocation entries, 25 November 2026
+
+SYS.EXE now exports the native EXE$ALOPAGED/DEAPAGED-equivalent function pointers through its resident INIT result. The IA-32 guest calls these exact entries for a 17-byte allocation, verifies the 32-byte rounded block lies within PAGEDYN, returns it, and verifies duplicate return is rejected. Added the source coverage mapping, actual serial capture, and explicit kernel header dependency. This is still a bootstrap exercise; no process/runtime consumer or wait/extension behavior is integrated.
+
+Verification: `make -j2 all test` PASS (exit 0); `python3 tests/test_coverage_ranges.py` PASS; `python3 tools/validate_source_ranges.py` PASS (2,142 ranges; 451/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,322 partial, 56,866 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. `make qemu-sysboot-m217` PASS with the actual resident allocation/free/duplicate-free check and existing DQA0 DDT/IRQ14/Files-11 checks. It then stopped at the known INIT boundary because NULL/SWAPPER PHD contexts are absent. Capture `logs/serial/qemu-m217-run-local-20261125T233857124292Z.log`: 6,221 bytes, SHA-256 `7507346168119513dccfd3c0424616d067f739e5e03a4f3c72354a8246e08cd5`. QEMU exited; no runner remains. No login, DCL, DECnet, or SET HOST completion is claimed.
+
+Local M405 implementation commit: `8daf3198dda7b80fd22e7b22974d9d6a687da433`.
+Published GitHub main M405 implementation commit: `8daf3198dda7b80fd22e7b22974d9d6a687da433`.
+
+Remaining acceptance work: paging PFN/SPT semantics, POOLPGING and runtime pool callers; SWAPPER/NULL PHD and IA-32 context activation; public SYS$QIO with DQA0 dispatch and process-aware AST completion; Files-11 ACP request integration; scheduler and process image activation; SYSTEM login, DCL, DECnet Phase IV, genuine SET HOST 0, second login/DCL and logout. Source coverage remains incomplete (8,032 missing and 56,866 unresolved ranges in indexed inventory).
