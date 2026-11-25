@@ -1872,4 +1872,16 @@ Published GitHub main M388 implementation commit: 383c755e89bdcae383ea5a19163803
 
 The native event service now requires a resolved CEB to declare at least 32 bytes, enough to contain the source EFC and full WQH fields, before it reads those records. A zero pointer remains SS$_UNASEFC; an invalid nonzero pointer remains an internal unresolved status; truncated source records return corruption without mutating event flags or service status. Host regression verifies the short-CEB rejection. CEB shared-memory master/slave protocol and public service binding remain unresolved.
 
-Verification: `make v37schedcheck v37eventwaitcheck` PASS; full `make -j2 all test` exit 0; coverage generation and `python3 tools/validate_source_ranges.py` PASS (2,135 ranges, zero mapped-function misses or validation errors); `git diff --check` PASS. One `make qemu-sysboot-m217` PASS. Log `log
+Verification: `make v37schedcheck v37eventwaitcheck` PASS; full `make -j2 all test` exit 0; coverage generation and `python3 tools/validate_source_ranges.py` PASS (2,135 ranges, zero mapped-function misses or validation errors); `git diff --check` PASS. One `make qemu-sysboot-m217` PASS. Log `logs/serial/qemu-m217-run-local-20261125T190547568006Z.log`, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6; reaches established DQA0/IRQ14/ACP and IRQ0 checkpoints then incomplete INIT. Guest does not call event services. No QEMU runner remains. No process activation, SYSTEM login, DCL, DECnet or SET HOST is claimed.
+
+Local M389 implementation commit: f9ef0669cf8063c579c53a91bf396f8f140070db.
+Published GitHub main M389 implementation commit: af3fe2dae4e82d4a9e7f07cdb93cc98b7d5bde84.
+
+## M390 - Clear rejected SYS$QIO packet outputs, 25 November 2026
+
+`port_v37_sysqio_prepare_irp` now clears packet/VA outputs on non-WAIT begin failures and IRP reservation failures. A stale caller value could otherwise appear to own an IRP after a failed request. The source channel-window WAIT result keeps its verified no-op output contract. Host regression checks that IVCHAN clears poisoned outputs and reports `SS$_IVCHAN`. This is a SYS$QIO preparation helper, not a live system-service dispatch or DQA0 driver submission.
+
+Verification: focused `make sysqioargscheck` PASS; full `make -j2 all test` PASS (exit 0); generated coverage and `python3 tools/validate_source_ranges.py` PASS (2,135 ranges; 451/4,566 original files indexed; zero validation errors); `git diff --check` PASS. No QEMU run: this helper regression is host-only and no new guest syscall path was introduced. No SYS$QIO, process activation, SYSTEM login, DCL, DECnet or SET HOST guest execution is claimed.
+
+Local M390 implementation commit: `b0e8cd3f029839451c5fcf4fca77bd01a79b8b94`.
+Published GitHub main M390 implementation commit: `ad6ec34c76a54ecbe65173d6dfed8afeef249acb`.
