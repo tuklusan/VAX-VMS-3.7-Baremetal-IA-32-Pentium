@@ -1703,3 +1703,12 @@ Verification: `make v37schedcheck` PASS; `make -j2 all test` PASS (exit 0); `pyt
 
 Local M371 implementation commit: `439b213fca92bbab70227d85bcd608898d27b3cf`.
 Published GitHub main implementation commit: `d6370c91543f0923f26492fd214d2f086a466da2`.
+## M372 - Invoke resident SCH$RESCHED/SCH$SCHED from IRQ0, 25 November 2026
+
+Bound the resident SYS.EXE scheduler and interrupt transaction into the live PIT/IRQ0 path after validating both pointers are inside the mapped SYS image. IRQ0 passes the interrupted IA-32 IRET frame to port_v37_sched_interrupt; this saves/requeues a current VMS PCB context, selects the highest-priority resident COM PCB, and publishes a selected restore frame only after architecture validation. With NULL/SWAPPER PHDs absent, the source scheduler returns NO_CONTEXT without inventing an idle frame. Saturating counters provide guest evidence that IRQ0 reached this path. QEMU reports scheduler interrupts and contextless deferrals before the existing incomplete-INIT stop. No VMS process has yet been activated; TSS/CR3 switching, PHD initialization, selected-frame IRET and executive wait/wake integration remain incomplete.
+
+The larger native kernel (139,432 bytes) exceeded the previous 265-sector stage-two limit (135,680 bytes). Expanded the bound to 273 sectors in the loader, image builder, layout tests and boot verifiers. The loader still uses single-sector CHS requests; 273 sectors end at physical 0x32200, below the 0x90000 boot-stack limit and within 1.44 MB floppy geometry.
+
+Verification: make -j2 all test completed through host, sanitizer, layout and manifest regressions, including the M40 273-sector geometry/DMA test; make sourcerangecheck PASS (2,121 ranges, 451/4,566 original files indexed, zero validation errors; 17,255 mapped, 30,267 partial, 56,921 unresolved, 8,032 missing, 26,434 excluded, 917 hardware-excluded). A single make qemu-sysboot-m217 PASS verified the real 700-byte Files-11 ACP/DQA0 DDT/IRQ14 probe and observed live IRQ0 invoking the resident scheduler and deferring contextless NULL/SWAPPER; guest then stopped at incomplete INIT. Capture logs/serial/qemu-m217-run-local-20261125T160028460191Z.log, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6; runner exited. No login/DCL/DECnet/SET HOST sequence occurred. Public source diff contains native port/build/test code and serial evidence only; no original DEC source or disk image was staged.
+
+Local M372 implementation commit: abcee37e4f1e57a12002941d15bb9a24657aaef1.
