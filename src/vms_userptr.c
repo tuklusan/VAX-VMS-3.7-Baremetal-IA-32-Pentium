@@ -20,7 +20,7 @@ int port_user_range_valid(const struct port_user_map *m,
 
 int port_user_io_range_valid(const struct port_user_map *m,uint32_t base,
                              uint32_t len,int writing){
-    if(!m||!m->pde||!m->resolve||!len||len>UINT16_MAX||base<4096u||
+    if(!m||!m->pde||!m->resolve||!len||base<4096u||
        base>UINT32_MAX-(len-1u))return PORT_USER_BAD;
     const uint32_t last=base+len-1u;
     uint32_t address=base;

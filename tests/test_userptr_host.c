@@ -67,7 +67,7 @@ int main(void) {
     t0[16]=0x11000u|5u;
     assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,1)==PORT_USER_BAD);
     assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX,0)==PORT_USER_OK);
-    assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX+1u,0)==PORT_USER_BAD);
+    assert(port_user_io_range_valid(&m,0x1001,UINT16_MAX+1u,0)==PORT_USER_OK);
     t0[2]=0x7000u|7u; /* translated I/O pages need not be physically adjacent */
     struct port_user_page_locks locks={0};
     assert(port_user_pin_io_range(&m,0x1002,UINT16_MAX,0,physical,0,

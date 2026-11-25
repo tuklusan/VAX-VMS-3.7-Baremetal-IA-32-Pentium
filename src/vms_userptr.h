@@ -16,12 +16,12 @@ struct port_user_map {
 };
 int port_user_range_valid(const struct port_user_map *map,
                           uint32_t address,uint32_t size,int writing);
-/* QIO transfer probes may span the full 16-bit VMS byte count. This walks
+/* QIO transfer probes preserve the full VMS longword byte count. This walks
  * every IA-32 page without imposing the smaller synchronous-copy bound. */
 int port_user_io_range_valid(const struct port_user_map *map,
                              uint32_t address,uint32_t size,int writing);
-/* Pin every physical page intersecting a VMS 16-bit QIO transfer. The
- * caller owns the returned set until completion and must release it once. */
+/* Pin pages intersecting a VMS QIO transfer. The retained set supports
+ * 17 pages; larger requests fail closed. Release it once after completion. */
 #define PORT_USER_PIN_MAX_PAGES 17u
 typedef int (*port_user_page_pin)(void *context,uint32_t physical_page);
 typedef void (*port_user_page_unpin)(void *context,uint32_t physical_page);

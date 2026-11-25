@@ -21966,7 +21966,7 @@
           "pc_file": "src/vms_sysqio_irp_build.c",
           "pc_symbol": "port_v37_sysqio_build_irp",
           "pc_line": 35,
-          "function": "Copies full longword P2 into IRP$L_BCNT for classified read/write actions; zero count leaves BCNT clear, host regression checks upper-word preservation"
+          "function": "Zero-extends low word P2 into IRP$L_BCNT for classified read/write actions; zero count leaves BCNT clear"
         },
         {
           "original_lines": [
@@ -22036,7 +22036,7 @@
           "pc_file": "src/vms_userptr.c",
           "pc_symbol": "port_user_io_range_valid",
           "pc_line": 21,
-          "function": "Validates address overflow and every IA-32 user PDE/PTE across up to 65,535 bytes; native page size replaces VAX page stepping"
+          "function": "Validates address overflow and every IA-32 user PDE/PTE across the full 32-bit byte count without VAX wrap; native page size replaces VAX page stepping"
         },
         {
           "original_lines": [
@@ -22085,7 +22085,7 @@
           "pc_file": "src/vms_userptr.c",
           "pc_symbol": "port_user_io_range_valid",
           "pc_line": 21,
-          "function": "Checks each page of the complete 16-bit transfer range, including source large-buffer chunk cases"
+          "function": "Checks each page of the complete longword transfer range, including source large-buffer chunk cases; subsequent retained pin storage is still capped at 17 pages"
         },
         {
           "original_lines": [
@@ -22096,7 +22096,7 @@
           "reason": "Modify/window and remaining SYSQIOFDT FDT routines unresolved"
         }
       ],
-      "unresolved_integration": "Native IRP construction preserves ONE action P1 media, READ status bit, CARCON from P4, and BCNT from zero-extended P2 for classified read/write actions. The caller-memory preparation path checks READ writable-buffer and WRITE readable-buffer access across all native pages after reservation and rolls back the packet plus process charges on ACCVIO. DQA ACP MODIFY actions are not interpreted as SYSQIOFDT MODIFY memory actions. Page locking, IRP BOFF/SVAPTE setup, live FDT dispatcher/QIODRVPKT queue, fault/restart and asynchronous abort completion, and remaining SYSQIOFDT functions remain incomplete."
+      "unresolved_integration": "Native IRP construction preserves ONE action P1 media, READ status bit, CARCON from P4, and BCNT from full longword P2 for classified read/write actions. The caller-memory preparation path checks READ writable-buffer and WRITE readable-buffer access across all native pages after reservation and rolls back the packet plus process charges on ACCVIO. DQA ACP MODIFY actions are not interpreted as SYSQIOFDT MODIFY memory actions. Page locking, IRP BOFF/SVAPTE setup, live FDT dispatcher/QIODRVPKT queue, fault/restart and asynchronous abort completion, and remaining SYSQIOFDT functions remain incomplete."
     },
     {
       "original_file": "SYS/SRC/IOCIOPOST.MAR",
