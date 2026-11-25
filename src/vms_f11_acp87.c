@@ -525,6 +525,27 @@ static uint32_t acp_read_extension_header(void *context,
     uint32_t lbn=0u;(void)extension_fcb;
     return port_f11b_read_header(c,&fid,0,header,&lbn);
 }
+static uint32_t fcb_total_file_blocks(struct port_f11_87_context *c,
+    const uint8_t primary[512],uint32_t *total){
+    if(!c||!c->volume||!primary||!total)return PORT_F11_87_BADPARAM;
+    struct port_f11_86_headerops ops={acp_read_extension_header,c};
+    uint8_t header[512],next[512];
+    for(unsigned j=0u;j<512u;j++)header[j]=primary[j];
+    uint32_t blocks_total=0u;
+    for(unsigned i=0u;i<256u;i++){
+        uint32_t blocks=0u;
+        if(!port_f11b_file_size(header,&blocks)||
+           blocks>UINT32_MAX-blocks_total)return PORT_F11_87_BADFILEHDR;
+        blocks_total+=blocks;
+        int found=0;
+        const uint32_t status=port_f11b_next_header(header,0,0,0,
+            c->volume->extended_fid,&ops,next,&found);
+        if(status!=PORT_F11_87_NORMAL)return status;
+        if(!found){*total=blocks_total;return PORT_F11_87_NORMAL;}
+        for(unsigned j=0u;j<512u;j++)header[j]=next[j];
+    }
+    return PORT_F11_87_BADFILEHDR;
+}
 static uint32_t fcb_lbn_for_vbn(struct port_f11_87_context *c,
     const uint8_t primary[512],uint32_t vbn,uint32_t *lbn){
     if(!c||!primary||!vbn||!lbn)return PORT_F11_87_BADPARAM;
@@ -591,6 +612,11 @@ uint32_t port_f11b_read_vbn(struct port_f11_87_context *c,
     uint32_t allocated=0u;
     if(!port_f11b_file_size(header,&allocated)||allocated<f->file_blocks)
         return PORT_F11_87_BADFILEHDR;
+    uint32_t file_blocks=0u;
+    status=fcb_total_file_blocks(c,header,&file_blocks);
+    if(status!=PORT_F11_87_NORMAL)return status;
+    if(!file_blocks||(uint64_t)offset+count>(uint64_t)file_blocks*512u)
+        return PORT_F11_87_INCOMPLETE;
     uint32_t done=0u;
     while(done<count){
         const uint32_t position=offset+done;

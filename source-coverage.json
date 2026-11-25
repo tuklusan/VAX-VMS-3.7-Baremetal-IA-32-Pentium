@@ -9476,7 +9476,7 @@
           "status": "partial",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_read_vbn",
-          "pc_line": 570,
+          "pc_line": 591,
           "function": "File VBN validation and extension-FID selection; native ACP uses bounded FH2 header traversal"
         },
         {
@@ -9509,7 +9509,7 @@
           "status": "partial",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_read_vbn",
-          "pc_line": 570,
+          "pc_line": 591,
           "function": "Native FH2 retrieval-map LBN resolution and data reads across extension boundaries"
         },
         {
@@ -10324,7 +10324,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_io_done",
-          "pc_line": 649,
+          "pc_line": 675,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10358,7 +10358,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_io_done",
-          "pc_line": 653,
+          "pc_line": 679,
           "function": "Native Files-11 ACP routine"
         },
         {

@@ -281,7 +281,7 @@ int main(int argc,char **argv){
     assert(port_f11b_read_vbn(&close_context,read_fcb,
         read_fcb->file_blocks*512u,sizeof extension_bytes,extension_bytes,
         sizeof extension_bytes,&acp_completed)==PORT_F11_87_NORMAL&&
-        acp_completed==sizeof extension_bytes&&m.reads==reads_before_extension+3u);
+        acp_completed==sizeof extension_bytes&&m.reads==reads_before_extension+4u);
     assert(fseek(fp,(long)((uint64_t)first_lbn*512u),SEEK_SET)==0&&
         fread(extension_expected,1u,sizeof extension_expected,fp)==
              sizeof extension_expected);
@@ -292,12 +292,15 @@ int main(int argc,char **argv){
         2u*512u+480u,sizeof boundary_bytes,boundary_bytes,
         sizeof boundary_bytes,&acp_completed)==PORT_F11_87_NORMAL&&
         acp_completed==sizeof boundary_bytes&&
-        m.reads==reads_before_boundary+4u);
+        m.reads==reads_before_boundary+5u);
     assert(fseek(fp,(long)((uint64_t)third_lbn*512u+480u),SEEK_SET)==0&&
         fread(boundary_expected,1u,32u,fp)==32u);
     assert(fseek(fp,(long)((uint64_t)first_lbn*512u),SEEK_SET)==0&&
         fread(boundary_expected+32u,1u,32u,fp)==32u);
     assert(!memcmp(boundary_bytes,boundary_expected,sizeof boundary_bytes));
+    assert(port_f11b_read_vbn(&close_context,read_fcb,
+        read_fcb->file_blocks*2u*512u,1u,acp_bytes,sizeof acp_bytes,
+        &acp_completed)==PORT_F11_87_INCOMPLETE&&acp_completed==0u);
     /* A self-referential extension fails the source segment check. */
     memcpy(m.extension_header+14u,m.extension_header+8u,6u);
     port_f11b_checksum(m.extension_header);

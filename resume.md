@@ -1565,3 +1565,13 @@ Added a source-to-native record for F11B/SRC/MAPVBN.B32. It marks native FH2 VBN
 
 Local M356 commit: e6488c14ecb618782a6bf19f98d23b756d0589a7; published GitHub main commit: a21df4cc8d231d5e55f3f06a4840246b81aa725b.
 Verification: make sourcerangecheck PASS (2,116 ranges; 450/4,566 original files indexed; zero errors; 17,255 mapped, 30,163 partial, 56,921 unresolved, 7,752 missing, 26,412 excluded, 917 hardware-excluded). No runtime source changed; prior M355 host and M354 QEMU results remain recorded above.
+
+## M357 - Enforce aggregate Files-11 file size across FH2 headers, 25 November 2026
+
+The ACP read path now sums allocation across the bounded FH2 extension chain before validating the requested byte range. It rejects reads beyond the aggregate file size while allowing reads that span the primary and extension-header boundary. Host tests verify successful boundary reads, exact disk bytes, aggregate EOF, and malformed self-referential extension rejection. The kernel boot probe exercises the unchanged single-header SYS.EXE path; it does not exercise extension headers.
+
+Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0); make sourcerangecheck PASS (2,116 ranges, 450/4,566 originals indexed, zero errors); fresh single-runner make qemu-sysboot-m217 PASS through the 700-byte ACP/DQA0/IRQ14 compare, then explicit incomplete-INIT halt. Capture logs/serial/qemu-m217-run-local-20261125T140134141905Z.log, 5,885 bytes, SHA-256 0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb; QEMU exited.
+
+
+Local M357 commit: ef8d69b38110e553e293ffe990a5cfd9149104fd.
+Still incomplete: live public SYS$QIO process dispatch, ACP window and AST semantics, remaining INIT, scheduler/image activation, authentic RMS SYSUAF/login, DCL, DECnet Phase IV, and genuine SET HOST 0.
