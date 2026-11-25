@@ -2059,3 +2059,14 @@ Local M406 implementation commit: `5c81ea6e7e7e369b9697e98d6f29ffbfedc4ba4c`.
 Published GitHub main M406 implementation commit: `5c81ea6e7e7e369b9697e98d6f29ffbfedc4ba4c`.
 
 Remaining work includes SYSBOOT's optional USE PARAMS.DAT path; SWAPINIT allocation and activation of logical-name tables and process creation; NULL/SWAPPER PHD/native contexts; public SYS$QIO to DQA0, Files-11 ACP dispatch, process AST completion, scheduler and image activation; SYSTEM login, DCL, DECnet Phase IV and genuine SET HOST 0 with second-session LOGOUT verification. Source inventory remains incomplete (8,032 missing and 56,827 unresolved ranges among indexed files).
+
+## M407 - Port SWAPINIT logical hash allocation, 26 November 2026
+
+Added the resident SYS.EXE SWAPPER.MAR initial hash-table stage. It rounds SYSTEM, GROUP and PROCESS entry counts to powers of two, retains each exponent, and allocates/zeros the source-sized SYSTEM and GROUP RSHT records from the resident PAGEDYN pool. PROCESS table geometry is retained for per-process table creation. The entry is returned through SYS.EXE's INIT result; INIT verifies it is resident but does not call it because source ordering defers it until SWAPPER activation. SYS$DISK/SYS$SYSDISK insertion, TT0 creation, SWAPPER activation, and paging remain incomplete.
+
+Verification: `make -j2 all test` PASS (exit 0); `make swapinithashcheck all` PASS (including source size boundaries, record layout, duplicate-init rejection, allocation failure rollback and coalescing); coverage generation, range regression and source validator PASS (2,152 ranges; 452/4,566 original files indexed; zero errors; 17,230 mapped, 30,392 partial, 58,479 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). `make qemu-sysboot-m217` PASS: the real guest confirms the resident SWAPPER hash entry is available, then stops at the known INIT boundary because NULL/SWAPPER PHD contexts are absent. Latest capture `logs/serial/qemu-m217-run-local-20261125T235713032875Z.log`: 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`. Two preceding M217 captures are also recorded in the manifest. QEMU exited; no runner remains. Serial logs preserve raw CRLF bytes; the source/document diff check passes when those captures are excluded.
+
+Local M407 implementation commit: `c26ed2d655c058424d71a5ca604d411fd2df54b8`.
+Published GitHub main M407 implementation commit: `c26ed2d655c058424d71a5ca604d411fd2df54b8`.
+
+Remaining work: call SWAPINIT only after native SWAPPER context activation; insert initial logical names and create TT0; complete PHD/native context creation and scheduling; public SYS$QIO with actual DQA0 dispatch, Files-11 ACP request handling and process AST completion; image activation, SYSTEM login/DCL, DECnet Phase IV, genuine SET HOST 0, second login/DCL and logout. Source coverage is incomplete (8,032 missing and 58,479 unresolved ranges in the indexed files).
