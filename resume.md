@@ -1831,3 +1831,12 @@ Verification: make v37schedcheck, full make -j2 all test (exit 0), and git diff 
 Local M384 test commit: 977ccfa1573cc07bf8eb08bb416764d4692d22a6.
 
 Published GitHub main M384 test commit: 237c288f22ce2475f3e4945d08ab5ef14c75f9cb.
+
+## M385 - Source-layout SYSWAIT event-flag waits, 25 November 2026
+
+Implemented native scheduler primitives for SYSWAIT WFLOR/WFLAND and POSTEF over the original PCB local EFCS/EFCU, common CEB EFC/WQH, EFWM, WEFC, and WALL fields. Supports immediate completion and resident local/master-common waiters, queue insertion, POSTEF bit setting, and wake completion into the saved IA-32 IRET frame. Slave CEB replication, public service dispatch/PID lookup, nonresident wake, AST/IPL integration, and live guest binding remain incomplete.
+
+Verification: `make -j2 all test` exit 0; focused `make v37schedcheck v37eventwaitcheck` PASS; source coverage generator PASS (2,135 ranges, 0 missing mapped functions); `git diff --check` PASS. One `make qemu-sysboot-m217` PASS. Actual guest log `logs/serial/qemu-m217-run-local-20261125T184320914562Z.log`, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6; reaches DQA0 IRQ14, Files-11 ACP, SYSWCB, and IRQ0 scheduler activity, then the explicit incomplete-INIT stop. No QEMU process remains. This run does not exercise the new event wait code. No process activation, SYSTEM login, DCL, DECnet, or SET HOST is claimed.
+
+Local M385 implementation commit: 8ecb92fe49b8e3b026b7eb0f5d6d0dcaf5885905.
+Published GitHub main M385 implementation commit: f298b2d482c6f075a3f0d1d910e892267d2b8762.
