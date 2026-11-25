@@ -1,4 +1,4 @@
-# Native VAX/VMS 3.7 IA-32 recovery, updated through M368
+# Native VAX/VMS 3.7 IA-32 recovery, updated through M390
 
 INCOMPLETE. M185-M192 implements owner-scoped private Files-11 channel handles with 32 host cases; QEMU assigns a native private handle, checks 600 real ATA bytes via two IRPs and releases it. M205-M207 publish a partial native DQA0 DDT and CRB pointer graph, route physical READPBLK and WRITEPBLK through the published DDT STARTIO via IOC$SEARCHDEV, verify real ATA IRQ14 readback/restore, reject inconsistent published DDB/UCB/CRB backlinks, reread the restored sector through the published DDT, and route guarded reads and writes through bounded FIFOs, with ordered post-publication multi-request read completion and writes. M216/M217 read and verify 64 then 700 SYS.EXE bytes from the Files-11 FH2 chain through IOC$SEARCHDEV-selected published DQA0 DDT STARTIO and real IRQ14, crossing a sector boundary. M218-M225 add host-tested SYS$QIO argument/preflight/IOSB/quota/device-access stages; M234-M236 add a bounded IRP lookaside allocator, resident DQA0 IRP allocation, and an isolated SYS$QIO IRP-reservation stage. They are not wired to a live user service or process-aware DQA dispatcher. INI_PSTATE now points at source-layout SYSTEM/NULL PCB records, but their PHD/native contexts and process activation remain incomplete. Public process $ASSIGN/$QIO, full driver completion, ACP, login, DCL and DECnet remain unimplemented. Genuine SYSTEM login,
 DCL, DECnet Phase IV and SET HOST 0 are not implemented.
@@ -1876,3 +1876,12 @@ Verification: `make v37schedcheck v37eventwaitcheck` PASS; full `make -j2 all te
 
 Local M389 implementation commit: f9ef0669cf8063c579c53a91bf396f8f140070db.
 Published GitHub main M389 implementation commit: af3fe2dae4e82d4a9e7f07cdb93cc98b7d5bde84.
+
+## M390 - Clear rejected SYS$QIO packet outputs, 25 November 2026
+
+`port_v37_sysqio_prepare_irp` now clears packet/VA outputs on non-WAIT begin failures and IRP reservation failures. A stale caller value could otherwise appear to own an IRP after a failed request. The source channel-window WAIT result keeps its verified no-op output contract. Host regression checks that IVCHAN clears poisoned outputs and reports `SS$_IVCHAN`. This is a SYS$QIO preparation helper, not a live system-service dispatch or DQA0 driver submission.
+
+Verification: focused `make sysqioargscheck` PASS; full `make -j2 all test` PASS (exit 0); generated coverage and `python3 tools/validate_source_ranges.py` PASS (2,135 ranges; 451/4,566 original files indexed; zero validation errors); `git diff --check` PASS. No QEMU run: this helper regression is host-only and no new guest syscall path was introduced. No SYS$QIO, process activation, SYSTEM login, DCL, DECnet or SET HOST guest execution is claimed.
+
+Local M390 implementation commit: `b0e8cd3f029839451c5fcf4fca77bd01a79b8b94`.
+Published GitHub main M390 implementation commit: `ad6ec34c76a54ecbe65173d6dfed8afeef249acb`.
