@@ -1418,3 +1418,11 @@ SYSPARAM.MAR sets `MPW_WRTCLUSTER` to 96 pages. INIT had been constructing the M
 Verification: `make -j2 all test` PASS (native images and host/layout suite); `make inimpwcheck` PASS; `tests/test_m47_qemu_manifest.py` PASS; source-range validation PASS (2,105 ranges; 448/4,566 indexed; 17,255 mapped, 29,886 partial, 55,565 unresolved, 7,799 missing, 26,341 excluded, 917 hardware-excluded; zero errors). Fresh single-runner `make qemu-sysboot-m217` PASS and serial output confirms SYS.EXE initialized the modified-page-writer map with the new default before stopping at the explicit incomplete INIT boundary. Capture `logs/serial/qemu-m217-run-local-20261125T033916437186Z.log`, 5,788 bytes, SHA-256 `fccbda36c6742e594849f10b4131c241fa8f059ee6dcb41b3af32d4bc9579232`; manifest check PASS. No login, DCL, DECnet or SET HOST behavior occurred; QEMU exited.
 
 Coverage adds SYSPARAM.MAR 1004-1011 as partial: default captured, configured value and MPW runtime remain incomplete. Implementation commit: `d2af565bc5ea5b40250057ae00cf7817bb298437`.
+
+## M339 — Feed MPW SYSPARAM into resident INIT, 25 November 2026
+
+Connected the native INIT MPW map request to `modified_page_fault_cluster` from the SYSPARAM defaults structure instead of repeating the numeric default in kernel startup. The configured SYSBOOT override remains unavailable, but the source-derived value now flows from the native parameter record to the executed resident SYS.EXE INIT phase.
+
+Verification: `make -j2 all test` PASS (native images and full host/layout suite); `make inimpwcheck` PASS; fresh single-runner `make qemu-sysboot-m217` PASS and reached the explicit incomplete-INIT stop after initializing the MPW map. `tests/test_m47_qemu_manifest.py` and `python3 tools/validate_source_ranges.py` PASS (2,105 ranges, 448/4,566 original files indexed, zero errors; counts unchanged from M338). Capture `logs/serial/qemu-m217-run-local-20261125T034230162394Z.log`, 5,788 bytes, SHA-256 `fccbda36c6742e594849f10b4131c241fa8f059ee6dcb41b3af32d4bc9579232`. No login/DCL/DECnet/SET HOST behavior occurred; QEMU exited.
+
+Implementation commit: `f188336f72431a2c04011586c3cb6152ca5c78df`.
