@@ -33,6 +33,7 @@ int test_ioc_cancel_1(void);
 int test_ioc_cancel_2(void);
 int test_ioc_cancel_3(void);
 int test_ioc_async_0(void);
+int test_ioc_unit_0(void);
 int main(void){
  assert(test_ioc_init_0());
  assert(test_ioc_init_1());
@@ -67,5 +68,6 @@ int main(void){
  assert(test_ioc_cancel_2());
  assert(test_ioc_cancel_3());
  assert(test_ioc_async_0());
- puts("DQ source-private IOC queued ATA IRP: 33 distinct regressions PASS");return 0;
+ assert(test_ioc_unit_0());
+ puts("DQ source-private IOC queued ATA IRP: 34 distinct regressions PASS");return 0;
 }

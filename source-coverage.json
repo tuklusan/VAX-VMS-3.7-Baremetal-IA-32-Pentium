@@ -10327,7 +10327,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2914,
+          "pc_line": 2947,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10365,7 +10365,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2914,
+          "pc_line": 2947,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -21839,10 +21839,10 @@
             868
           ],
           "status": "partial",
-          "pc_file": "src/vms_dq_ioc_enqueue.c",
-          "pc_symbol": "port_dq_ioc_enqueue",
-          "pc_line": 3,
-          "function": "Bounded resident DQA request enqueue is source-partial; native UCB busy-bit arbitration and IOC$INITIATE are not bound to process SYS$QIO"
+          "pc_file": "src/vms_dq_ioc_unit.c",
+          "pc_symbol": "port_dq_ioc_unit_submit",
+          "pc_line": 51,
+          "function": "Native unit admission serializes retained private IRPs with SYSDEF UCB$W_STS.BSY at source offset 88, raises/restores interrupt exclusion, defers packets while active, and dispatches next after IOC post; public process SYS$QIO/live pointer IRPs remain unbound"
         },
         {
           "original_lines": [
@@ -22508,7 +22508,7 @@
           "status": "partial",
           "pc_file": "src/vms_dq_ioc_async.c",
           "pc_symbol": "port_dq_ioc_start_async",
-          "pc_line": 10,
+          "pc_line": 34,
           "function": "Priority-selected packet now enters published DQA0 DDT async READPBLK admission after IOC$SEARCHDEV and native DDT/UCB preflight; UCB busy arbitration, public SYS$QIO ownership and user process channel remain unimplemented"
         },
         {

@@ -11,6 +11,7 @@
 enum { PORT_DQ_IOC_OK=1u,PORT_DQ_IOC_BAD=2u,
        PORT_DQ_IOC_FULL=4u,PORT_DQ_IOC_BUSY=6u,
        PORT_DQ_IOC_NOTFOUND=8u,PORT_DQ_IOC_IO=10u,
+       PORT_DQ_IOC_DEFERRED=14u,
        PORT_DQ_IOC_CORRUPT=12u };
 enum { PORT_DQ_IOC_EMPTY=0u,PORT_DQ_IOC_PREPARED=1u,
        PORT_DQ_IOC_QUEUED=2u,PORT_DQ_IOC_ACTIVE=3u,
@@ -37,6 +38,28 @@ struct port_dq_ioc_queue {
     uint32_t order,submitted,completed,failed,reads,active;
     uint32_t retried,posted;
 };
+/* SYSDEF UCB$W_STS source layout: BUSY is bit 8. The unit dispatcher holds
+ * it from EXE$INSIOQ admission through deferred completion/post. */
+enum { PORT_DQ_IOC_UCB_STS_OFFSET=88u,PORT_DQ_IOC_UCB_BUSY=0x0100u };
+typedef uint32_t (*port_dq_ioc_raise_fn)(void *);
+typedef void (*port_dq_ioc_restore_fn)(void *,uint32_t);
+struct port_dq_ioc_unit {
+    struct port_dq_ioc_queue *queue;
+    uint8_t *ucb;
+    port_dq_ioc_async_start_fn start;
+    void *start_context;
+    port_dq_ioc_raise_fn raise_sync;
+    port_dq_ioc_restore_fn restore_sync;
+    void *sync_context;
+    uint32_t starts,posted,last_start_status;
+};
+struct port_dq_ioc_iosb;
+uint32_t port_dq_ioc_unit_init(struct port_dq_ioc_unit *,
+    struct port_dq_ioc_queue *,uint8_t *,port_dq_ioc_async_start_fn,void *,
+    port_dq_ioc_raise_fn,port_dq_ioc_restore_fn,void *);
+uint32_t port_dq_ioc_unit_submit(struct port_dq_ioc_unit *,uint32_t);
+uint32_t port_dq_ioc_unit_post(struct port_dq_ioc_unit *,
+    struct port_dq_ioc_iosb *);
 uint32_t port_dq_ioc_init(struct port_dq_ioc_queue *,
                            port_dq_ioc_sector_fn,void *);
 uint32_t port_dq_ioc_validate(const struct port_dq_ioc_queue *);
@@ -49,6 +72,8 @@ uint32_t port_dq_ioc_start(struct port_dq_ioc_queue *,uint32_t *);
  * The callback only changes the active packet state; post remains deferred. */
 uint32_t port_dq_ioc_start_async(struct port_dq_ioc_queue *,
     port_dq_ioc_async_start_fn,uint32_t *);
+uint32_t port_dq_ioc_start_async_context(struct port_dq_ioc_queue *,
+    port_dq_ioc_async_start_fn,void *,uint32_t *);
 uint32_t port_dq_ioc_async_complete(struct port_dq_ioc_queue *,uint32_t);
 uint32_t port_dq_ioc_transfer(struct port_dq_ioc_queue *);
 uint32_t port_dq_ioc_complete(struct port_dq_ioc_queue *,uint32_t *);

@@ -2400,7 +2400,7 @@ qio_rows=[
  (774,802,None,None,'ALTSTART action dispatch and routine documentation unresolved','unresolved'),
  (803,831,None,None,'Alternate driver start path and IPL handling unresolved','unresolved'),
  (832,859,None,None,'ACP queue and ACP process wake path unresolved','unresolved'),
- (860,868,'src/vms_dq_ioc_enqueue.c','port_dq_ioc_enqueue','Bounded resident DQA request enqueue is source-partial; native UCB busy-bit arbitration and IOC$INITIATE are not bound to process SYS$QIO','partial'),
+ (860,868,'src/vms_dq_ioc_unit.c','port_dq_ioc_unit_submit','Native unit admission serializes retained private IRPs with SYSDEF UCB$W_STS.BSY at source offset 88, raises/restores interrupt exclusion, defers packets while active, and dispatches next after IOC post; public process SYS$QIO/live pointer IRPs remain unbound','partial'),
  (869,896,None,None,'EXE$INSERTIRP source description and calling convention','excluded'),
  (897,905,'src/vms_dq_ioc_start.c','port_dq_ioc_start','Select next resident DQA request by source IRP priority (equal priority is newest first); full source linked-list insertion and live IRP dispatcher remain unbound','partial'),
  (906,908,None,None,'VAX assembler end directive and blank lines','excluded')]

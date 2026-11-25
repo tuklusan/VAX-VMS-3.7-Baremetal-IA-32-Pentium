@@ -2670,8 +2670,7 @@ static void m217_dqddt_async_complete(void *opaque,int status){
 }
 static int m217_dqddt_async_start(void *opaque,uint32_t lbn,
     uint16_t sector[256],port_dq_ioc_async_done_fn done,void *done_context){
-    (void)opaque;
-    struct ata_dq_async_bridge *bridge=&ata_dq_async_bridge;
+    struct ata_dq_async_bridge *bridge=opaque;
     if(!bridge->stage||!bridge->native||!bridge->fdt||!bridge->device_db||
        !bridge->device_info||!bridge->ioc_search||!bridge->start_async||
        !done)return -1;
@@ -2708,6 +2707,15 @@ static int m217_dqddt_async_start(void *opaque,uint32_t lbn,
         m217_ata_engine_start,m217_dqddt_async_complete,bridge);
     return started==PORT_DQ_BOOTREAD_OK?0:-1;
 }
+static uint32_t m217_dq_raise_sync(void *unused){
+    (void)unused;uint32_t flags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
+    return flags;
+}
+static void m217_dq_restore_sync(void *unused,uint32_t flags){
+    (void)unused;
+    if(flags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
+}
 static int m217_async_dq_probe(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const uint8_t *device_db,
     const struct port_v37_device_result *device_info,
@@ -2722,46 +2730,71 @@ static int m217_async_dq_probe(const struct port_dqddt_stage *stage,
     uint32_t (*commit)(const struct port_dq_bootread_request *,
         const uint16_t [256],struct port_dq_bootread_result *)){
     struct port_dq_ioc_queue queue;
+    struct port_dq_ioc_unit unit;
+    struct port_dq_ioc_iosb first_iosb={0},second_iosb={0};
+    uint16_t second_sector[256]={0};
+    uint8_t *ucb=(uint8_t *)(uintptr_t)device_info->ucb[0];
     const uint32_t crb_irq_before=arch_disk_irq_crb_count();
     ata_async_completions=0u;ata_async_status=PORT_ATA_TIMEOUT;
     const uint32_t async_irq_before=port_ata_x86_irq_count();
+    const uint32_t ucb_ops_before=m202_get32(ucb+PORT_V37_UCB_OPCNT);
     ata_dq_async_bridge=(struct ata_dq_async_bridge){
         .stage=stage,.native=native,.fdt=fdt,.device_db=device_db,
         .device_info=device_info,.ioc_search=ioc_search,
         .start_async=start_async,.commit=commit};
-    struct port_dq_ioc_iosb iosb={0};
     if(port_dq_ioc_init(&queue,m202_dq_queued_read,0)!=PORT_DQ_IOC_OK||
        port_dq_ioc_prepare(&queue,1u,1u,
           (uint8_t *)(void *)ata_async_sector,sizeof ata_async_sector)!=
           PORT_DQ_IOC_OK||
        port_dq_ioc_set_priority(&queue,1u,3u)!=PORT_DQ_IOC_OK||
-       port_dq_ioc_enqueue(&queue,1u)!=PORT_DQ_IOC_OK)return -1;
-    uint32_t eflags,tag=0u;
+       port_dq_ioc_prepare(&queue,2u,1u,
+          (uint8_t *)(void *)second_sector,sizeof second_sector)!=
+          PORT_DQ_IOC_OK||
+       port_dq_ioc_set_priority(&queue,2u,2u)!=PORT_DQ_IOC_OK||
+       port_dq_ioc_unit_init(&unit,&queue,ucb,m217_dqddt_async_start,
+          &ata_dq_async_bridge,m217_dq_raise_sync,m217_dq_restore_sync,0)!=
+          PORT_DQ_IOC_OK)return 1;
+    uint32_t eflags;
     __asm__ volatile("pushfl; popl %0; cli":"=r"(eflags)::"memory");
-    const uint32_t started=port_dq_ioc_start_async(&queue,
-        m217_dqddt_async_start,&tag);
+    const uint32_t started=port_dq_ioc_unit_submit(&unit,1u);
+    const uint32_t deferred=port_dq_ioc_unit_submit(&unit,2u);
     const uint32_t completed_before_irq=ata_async_completions;
-    const uint32_t busy=port_dq_ioc_start_async(&queue,
-        m217_dqddt_async_start,&tag);
     if(eflags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
-    if(started!=PORT_DQ_IOC_OK||tag!=1u||busy!=PORT_DQ_IOC_BUSY||
-       completed_before_irq)return -1;
+    if(started!=PORT_DQ_IOC_OK||deferred!=PORT_DQ_IOC_DEFERRED||
+       completed_before_irq||
+       !(m202_get32(ucb+PORT_DQ_IOC_UCB_STS_OFFSET)&
+         PORT_DQ_IOC_UCB_BUSY))return 2;
     for(uint32_t spin=0u;spin<100000000u&&!ata_async_completions;spin++)
         __asm__ volatile("pause");
     if(ata_async_completions!=1u||ata_async_status!=PORT_ATA_OK||
        port_ata_x86_irq_count()!=async_irq_before+1u||
        queue.active>=PORT_DQ_IOC_DEPTH||
        queue.packets[queue.active].state!=PORT_DQ_IOC_FINISHED||
-       port_dq_ioc_post(&queue,&iosb)!=PORT_DQ_IOC_OK||
-       iosb.tag!=1u||iosb.status!=PORT_DQ_IOC_OK||iosb.bytes!=512u||
-       ata_dq_async_bridge.result.lbn!=1u||
+       port_dq_ioc_unit_post(&unit,&first_iosb)!=PORT_DQ_IOC_OK||
+       first_iosb.tag!=1u||first_iosb.status!=PORT_DQ_IOC_OK||
+       first_iosb.bytes!=512u||ata_async_sector[0]!=1u||
+       queue.active>=PORT_DQ_IOC_DEPTH||
+       queue.packets[queue.active].tag!=2u)return 3;
+    for(uint32_t spin=0u;spin<100000000u&&ata_async_completions<2u;spin++)
+        __asm__ volatile("pause");
+    if(ata_async_completions!=2u)return 4;
+    if(ata_async_status!=PORT_ATA_OK)return 5;
+    if(port_dq_ioc_unit_post(&unit,&second_iosb)!=PORT_DQ_IOC_OK)return 6;
+    if(second_iosb.tag!=2u||second_iosb.status!=PORT_DQ_IOC_OK||
+       second_iosb.bytes!=512u||second_sector[0]!=1u)return 7;
+    if((m202_get32(ucb+PORT_DQ_IOC_UCB_STS_OFFSET)&
+         PORT_DQ_IOC_UCB_BUSY)||
+       m202_get32(ucb+PORT_V37_UCB_OPCNT)!=ucb_ops_before+2u)return 8;
+    if(ata_dq_async_bridge.result.lbn!=1u||
        ata_dq_async_bridge.result.irp_status!=PORT_SYS85_NORMAL||
        ata_dq_async_bridge.result.irp_second!=512u||
        m202_get32(ata_dq_async_bridge.irp+PORT_V37_IRP_MEDIA)!=
-           PORT_SYS85_NORMAL||
-       ata_async_sector[0]!=1u||queue.completed!=1u||queue.posted!=1u||
-       queue.reads!=1u||port_dq_ioc_validate(&queue)!=PORT_DQ_IOC_OK||
-       arch_disk_irq_crb_count()!=crb_irq_before+1u)return -1;
+           PORT_SYS85_NORMAL)return 9;
+    if(port_ata_x86_irq_count()!=async_irq_before+2u||
+       queue.completed!=2u||queue.posted!=2u||queue.reads!=2u||
+       unit.starts!=2u||unit.posted!=2u||
+       port_dq_ioc_validate(&queue)!=PORT_DQ_IOC_OK||
+       arch_disk_irq_crb_count()!=crb_irq_before+2u)return 4;
     ata_dq_async_bridge=(struct ata_dq_async_bridge){0};
     return 0;
 }
@@ -4360,15 +4393,18 @@ void kmain(void) {
 
     /* This asynchronous physical IRP is admitted only after the live DQA0
      * DDB/UCB DDT publication and IOC$SEARCHDEV checks have succeeded. */
-    if(m217_async_dq_probe(dq_ddt_result.dq_ddt_stage,
+    const int async_dq_status=m217_async_dq_probe(dq_ddt_result.dq_ddt_stage,
          dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,
          dq_publish_result.device_db,dq_publish_result.dq_native_ddt,
          dq_publish_result.ioc_search,dq_ddt_result.dq_ddt_startio_async,
-         dq_ddt_result.dq_bootread_commit)){
-        bootstrap_message("INIT: published DQA0 async DDT/IOC/IRQ completion failed.");
+         dq_ddt_result.dq_bootread_commit);
+    if(async_dq_status){
+        char message[]="INIT: published DQA0 async DDT/IOC/IRQ completion failed phase 0.";
+        message[sizeof message-3u]=(char)('0'+async_dq_status);
+        bootstrap_message(message);
         bootstrap_halt();
     }
-    bootstrap_message("INIT: published DQA0 DDT accepted async READPBLK; IRQ14 completed retained IRP and deferred IOC post.");
+    bootstrap_message("INIT: DQA0 UCB busy serialized two retained DDT READPBLK IRPs through IRQ14 and deferred IOC post.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,

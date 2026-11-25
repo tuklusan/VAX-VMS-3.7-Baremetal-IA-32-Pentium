@@ -7,8 +7,8 @@ static void async_complete_callback(void *context,uint32_t status){
 /* DQ IOC dispatch adapter for a one-sector asynchronous hardware engine.
  * The IRP stays active until the caller drains its completion at IOC post
  * level; the hardware callback performs no user-memory or IOSB work. */
-uint32_t port_dq_ioc_start_async(struct port_dq_ioc_queue *q,
-    port_dq_ioc_async_start_fn start,uint32_t *tag){
+uint32_t port_dq_ioc_start_async_context(struct port_dq_ioc_queue *q,
+    port_dq_ioc_async_start_fn start,void *start_context,uint32_t *tag){
     if(!q||!start||!tag||!q->read_sector)return PORT_DQ_IOC_BAD;
     uint32_t selected=0u;
     const uint32_t started=port_dq_ioc_start(q,&selected);
@@ -20,7 +20,7 @@ uint32_t port_dq_ioc_start_async(struct port_dq_ioc_queue *q,
     }
     packet->attempts++;
     *tag=selected;
-    const int accepted=start(q->context,packet->lbn,
+    const int accepted=start(start_context,packet->lbn,
         (uint16_t *)(void *)packet->sector,async_complete_callback,q);
     if(accepted==0)return PORT_DQ_IOC_OK;
     /* A rejecting backend guarantees it did not retain or call the callback. */
@@ -29,6 +29,11 @@ uint32_t port_dq_ioc_start_async(struct port_dq_ioc_queue *q,
     packet->state=PORT_DQ_IOC_FAILED;
     q->reads++;
     return PORT_DQ_IOC_IO;
+}
+
+uint32_t port_dq_ioc_start_async(struct port_dq_ioc_queue *q,
+    port_dq_ioc_async_start_fn start,uint32_t *tag){
+    return port_dq_ioc_start_async_context(q,start,q?q->context:0,tag);
 }
 
 /* IRQ-safe completion publication: the active request owns the only scratch
