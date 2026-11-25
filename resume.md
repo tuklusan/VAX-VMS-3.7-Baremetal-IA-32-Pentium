@@ -1591,3 +1591,11 @@ Added a direct F11B NEXT_HEADER regression asserting that extended FID bytes pre
 
 Local M359 commit: c338211994dcfb3156df5bf772b4989ffca83eca; published GitHub main commit: c9bd83e5c8d53438176ee03f60d6b4b0358b18d5.
 Verification: make files1186check PASS; make files1187check PASS; make sourcerangecheck PASS (2,116 ranges, 450/4,566 originals indexed, zero errors). No QEMU runner was needed for this isolated host-test addition.
+
+## M360 - Validate Files-11 window mapping bounds, 25 November 2026
+
+Hardened the native MAP_VBN callback boundary against byte-count overflow and malformed MAP_WINDOW remainder values. The request block count is checked before multiplying to bytes; successful callbacks must report a remaining byte count within the request and aligned to 512-byte Files-11 blocks. Invalid/failing callback results return -1 and report all requested blocks unmapped. Host tests cover an unaligned remainder and UINT32_MAX count without invoking the mapper.
+
+Verification: `make files1187check` PASS; `make sourcerangecheck` PASS (2,116 ranges; 450/4,566 original files indexed; zero validation errors; 17,255 mapped, 30,163 partial, 56,921 unresolved, 7,752 missing, 26,412 excluded, 917 hardware-excluded); `make -j2 CC=gcc-12 all test` completed with host, static-layout, and sanitizer checks PASS; fresh single-runner `make qemu-sysboot-m217` PASS through the existing SYS.EXE ACP/DQA0 IRQ14 checks, then explicit incomplete-INIT halt. Capture `logs/serial/qemu-m217-run-local-20261125T141351744857Z.log`, 5,885 bytes, SHA-256 `0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb`; QEMU runner exited and no QEMU process remains. The guest does not exercise malformed callback inputs. Still incomplete: MAP_WINDOW retry/window-turn semantics, live UCB remapping, and ACP process I/O integration.
+
+Local M360 implementation commit: f0114f3dfe5c1df7d561906ea2a4bbdb26d9faab.

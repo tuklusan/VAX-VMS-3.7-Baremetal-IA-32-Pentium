@@ -171,17 +171,22 @@ uint32_t port_f11b_requeue(struct port_f11_86_request *r,void *u,uint32_t l,
 static int64_t map_window(void *window,void *original_ucb,uint32_t vbn,
                           uint32_t count,uint32_t *unmapped,void **out_ucb,
                           const struct port_f11_86_mapops *o){
-    if(!o||!o->map_vblock||!unmapped||!vbn||!count)return -1;
-    void *ucb=original_ucb;
-    uint32_t lbn=0,remaining=0;
-    uint32_t rc=o->map_vblock(o->context,window,vbn,count*512u,
-                              &ucb,&lbn,&remaining);
-    if(out_ucb)*out_ucb=ucb;
-    if(!(rc&1u)){
+    if(!unmapped)return -1;
+    if(!o||!o->map_vblock||!vbn||!count||count>UINT32_MAX/512u){
         *unmapped=count;
         return -1;
     }
-    *unmapped=remaining>>9;
+    void *ucb=original_ucb;
+    uint32_t lbn=0,remaining=0;
+    const uint32_t requested=count*512u;
+    uint32_t rc=o->map_vblock(o->context,window,vbn,requested,
+                              &ucb,&lbn,&remaining);
+    if(out_ucb)*out_ucb=ucb;
+    if(!(rc&1u)||remaining>requested||(remaining&511u)){
+        *unmapped=count;
+        return -1;
+    }
+    *unmapped=remaining/512u;
     return (int64_t)lbn;
 }
 int64_t port_f11a_map_window(void *w,void *u,uint32_t vbn,uint32_t n,
