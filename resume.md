@@ -1555,5 +1555,5 @@ Still incomplete: public SYS$QIO process dispatch, ACP IRP/AST semantics, remain
 
 Extended the synthetic FH2 fixture to read 64 bytes straddling the primary header's final VBN and the extension header's first VBN. The test requires separate reads through both retrieval maps and compares the returned bytes with the generated disk sectors. This covers host ACP extension-boundary resolution; QEMU SYS.EXE currently has no extension header.
 
-Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0). No QEMU runner was needed for this host-test-only change. The M354 guest boot result remains recorded above. Local M355 commit: bd14d475a74ad37da74a670d0b3deaa302c6e819.
+Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0). No QEMU runner was needed for this host-test-only change. The M354 guest boot result remains recorded above. Local M355 commit: bd14d475a74ad37da74a670d0b3deaa302c6e819; published GitHub main commit: a5ad28978aa1bede9707d9129dc1aa1e73b63e02.
 
