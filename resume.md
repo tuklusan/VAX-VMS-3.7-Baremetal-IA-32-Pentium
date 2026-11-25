@@ -1629,3 +1629,5 @@ Added a native F11B MAPVBN coordinator for the original two MAP_WINDOW attempts.
 Verification: `make files1187check` PASS; `make sourcerangecheck` PASS (2,117 source ranges; 450/4,566 original files indexed; zero errors); `make -j2 CC=gcc-12 all test` PASS (exit 0); fresh single-runner `make qemu-sysboot-m217` PASS through existing SYS.EXE ACP/DQA0 IRQ14 checks, then explicit incomplete-INIT halt. The guest does not exercise MAP_WINDOW retry; it uses the separate resident ACP read path. Capture: `logs/serial/qemu-m217-run-local-20261125T142737975166Z.log`, 5,885 bytes, SHA-256 `0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb`; runner exited. Public SYS$QIO, live ACP process I/O, INIT continuation, login/DCL, and DECnet remain incomplete.
 
 Local M363 implementation commit: 298066d42c30eb9b1c78340a490543a65be767fe.
+
+Published GitHub main implementation commit: ac8cdd655cc8fe77da51f158fca5667f7105b684.
