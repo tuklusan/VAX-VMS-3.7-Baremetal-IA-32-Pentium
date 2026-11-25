@@ -1798,3 +1798,11 @@ Verification: `make v37schedcheck` and full `make -j2 all test` PASS (exit 0); c
 
 Local M381 implementation commit: `bda81ffff38858be142603ac366aa1700b7a3257`.
 Published GitHub main M381 implementation commit: `bd18ab3bc7c0bea200456bc5b40116e2cc54b34b`.
+
+## M382 - Implement partial SCH$CHSEP and RSE SETPRI, 25 November 2026
+
+Implemented native precomputed-priority queue movement for runnable resident COM and nonresident COMO PCBs. The transition validates source PCB/queue membership, removes it from its prior priority queue, updates COMQS and resident ready counts, sets the requested 0..31 priority, appends to the appropriate queue, and invokes reschedule or swapper callbacks. RSE SETPRI dispatch now accepts only COM/COMO states and routes its explicit priority to this helper; invalid priorities are rejected. Host tests cover resident and nonresident moves, invalid input, queue accounting, and swapper wake. Source CHSEP IPL bugcheck semantics remain partial; no live process invokes this event path.
+
+Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0); coverage generation, `tests/test_coverage_ranges.py`, and `tools/validate_source_ranges.py` PASS (2,135 ranges; 451/4,566 originals indexed; zero errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded); `git diff --check` PASS. Single `make qemu-sysboot-m217` PASS on the rebuilt image: DQA0 DDT/IRQ14/ACP path, real IRQ0 scheduler callback, then explicit incomplete-INIT stop. Raw log `logs/serial/qemu-m217-run-local-20261125T180541644356Z.log`, 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`; serial manifest verifies 320 logs. QEMU runner exited; no QEMU process remains. No process activation, login, DCL, DECnet or SET HOST occurred.
+
+Local M382 implementation commit: `90345a06e102064df97836d5c6b039fb93635807`.
