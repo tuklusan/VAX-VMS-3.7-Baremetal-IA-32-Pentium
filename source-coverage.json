@@ -5924,7 +5924,7 @@
           "pc_file": "src/vms_v37_ia32_context.c",
           "pc_symbol": "port_v37_ia32_context_validate",
           "pc_line": 57,
-          "function": "Validate mode-matched segment selectors, EFLAGS and return stack before scheduler selection; context save and live scheduler-to-trap switch remain unintegrated"
+          "function": "Validate mode-matched selectors, EFLAGS and return stack; arch_prepare_restore_frame publishes a validated frame for the shared IRET restore path, but VMS scheduler dispatch remains unintegrated"
         },
         {
           "original_lines": [
@@ -5943,7 +5943,7 @@
           "reason": "assembler end"
         }
       ],
-      "unresolved_integration": "SCH$SCHED returns a checked PCB plus IA-32 restore-frame address, but the live trap path does not yet save the current source PCB context, update TSS/CR3, or IRET into the selected frame; executive wait/wake queues remain unbound."
+      "unresolved_integration": "SCH$SCHED returns a checked PCB plus IA-32 restore-frame address and the architecture can prepare a validated frame for common IRET restore; the live VMS trap path still does not save the current source PCB context, select from the VMS queues, update TSS/CR3, or IRET into that selected frame; executive wait/wake queues remain unbound."
     },
     {
       "original_file": "SYS/SRC/NULLPROC.MAR",

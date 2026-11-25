@@ -19,8 +19,8 @@ port_gdt_end:
 .global arch_vms_probe_saved_esp
 arch_vms_probe_saved_esp:
     .long 0
-.global arch_vms_probe_next_frame
-arch_vms_probe_next_frame:
+.global arch_selected_restore_frame
+arch_selected_restore_frame:
     .long 0
 gdt_ptr:
     .word port_gdt_end - port_gdt - 1
@@ -146,7 +146,7 @@ arch_restore_initial_frame:
     iret
 .global arch_restore_selected_frame
 arch_restore_selected_frame:
-    movl arch_vms_probe_next_frame,%esp
+    movl arch_selected_restore_frame,%esp
     jmp arch_restore_initial_frame
 
 /* Enter a seeded source-layout IA-32 frame. The matching probe exit restores
