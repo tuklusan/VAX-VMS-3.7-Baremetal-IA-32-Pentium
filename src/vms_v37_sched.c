@@ -557,6 +557,7 @@ static uint32_t event_records(struct port_v37_scheduler *s,uint8_t *pcb,
     }
     const uint32_t ceb_address=get32(pcb+PORT_V37_PCB_EFC2P+
                                      (cluster-2u)*4u);
+    if(!ceb_address)return PORT_V37_SCHED_UNASSIGNED;
     uint8_t *ceb=resolve(s,ceb_address,PORT_V37_CEB_BYTES);
     if(!ceb)return PORT_V37_SCHED_UNRESOLVED;
     const uint8_t type=ceb[PORT_V37_CEB_TYPE];
@@ -593,16 +594,16 @@ uint32_t port_v37_sched_wait_event(struct port_v37_scheduler *s,
     uint8_t *ceb=0;
     uint32_t status=event_records(s,pcb,pcb_address,local_lef_wqh,
         cluster,&flags_address,&wqh_address,&state,&ceb);
-    if(status!=PORT_V37_SCHED_OK){
-        *service_status=status==PORT_V37_SCHED_UNRESOLVED?
-            PORT_V37_SS_UNASEFC:PORT_V37_SS_ILLEFC;
-        return status==PORT_V37_SCHED_UNRESOLVED?PORT_V37_SCHED_OK:status;
-    }
-    /* Slave CEB replication requires the original interprocessor request
-     * and lock path; reject it until that path is present. */
-    if(ceb&&ceb[PORT_V37_CEB_TYPE]==PORT_V37_CEB_SLAVE){
+    if(status==PORT_V37_SCHED_UNASSIGNED){
         *service_status=PORT_V37_SS_UNASEFC;return PORT_V37_SCHED_OK;
     }
+    if(status!=PORT_V37_SCHED_OK)return status;
+    /* Slave CEB replication requires the original interprocessor request
+     * and lock path; reject it until that path is present. */
+    /* Slave CEB handling requires the source master-copy synchronization
+     * and interprocessor request path; do not report an assigned CEB absent. */
+    if(ceb&&ceb[PORT_V37_CEB_TYPE]==PORT_V37_CEB_SLAVE)
+        return PORT_V37_SCHED_UNRESOLVED;
     uint8_t *flags=resolve(s,flags_address,sizeof(uint32_t)),*queue=0;
     status=wait_queue_check(s,wqh_address,&queue);
     if(!flags||status!=PORT_V37_SCHED_OK)
@@ -648,14 +649,14 @@ uint32_t port_v37_sched_post_event(struct port_v37_scheduler *s,
     uint8_t *ceb=0;
     uint32_t status=event_records(s,target,target_pcb,local_lef_wqh,
         cluster,&flags_address,&wqh_address,&wait_state,&ceb);
-    if(status!=PORT_V37_SCHED_OK){
-        *service_status=status==PORT_V37_SCHED_UNRESOLVED?
-            PORT_V37_SS_UNASEFC:PORT_V37_SS_ILLEFC;
-        return status==PORT_V37_SCHED_UNRESOLVED?PORT_V37_SCHED_OK:status;
-    }
-    if(ceb&&ceb[PORT_V37_CEB_TYPE]==PORT_V37_CEB_SLAVE){
+    if(status==PORT_V37_SCHED_UNASSIGNED){
         *service_status=PORT_V37_SS_UNASEFC;return PORT_V37_SCHED_OK;
     }
+    if(status!=PORT_V37_SCHED_OK)return status;
+    /* Slave CEB handling requires the source master-copy synchronization
+     * and interprocessor request path; do not report an assigned CEB absent. */
+    if(ceb&&ceb[PORT_V37_CEB_TYPE]==PORT_V37_CEB_SLAVE)
+        return PORT_V37_SCHED_UNRESOLVED;
     uint8_t *flags=resolve(s,flags_address,sizeof(uint32_t)),*queue=0;
     status=wait_queue_check(s,wqh_address,&queue);
     if(!flags||status!=PORT_V37_SCHED_OK)

@@ -137,6 +137,15 @@ int main(void){
     if(port_v37_sched_chse(&f.scheduler,PCB_VA,0u)!=PORT_V37_SCHED_OK||
        get16(f.pcb+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
        !start_current(&f,&pcb,&frame))return fail("final ready queue selection");
+    f.ceb[PORT_V37_CEB_TYPE]=PORT_V37_CEB_SLAVE;
+    ss=0xdeadbeefu;
+    if(port_v37_sched_wait_event(&f.scheduler,0u,FRAME_VA,64u,1u,0,
+           &pcb,&frame,&ss)!=PORT_V37_SCHED_UNRESOLVED||ss!=0xdeadbeefu||
+       port_v37_sched_post_event(&f.scheduler,PCB_VA,0u,64u,0u,&ss)!=
+           PORT_V37_SCHED_UNRESOLVED||ss!=0xdeadbeefu||
+       get32(f.ceb+PORT_V37_CEB_EFC)!=3u)
+        return fail("assigned slave CEB is unresolved, never misreported UNASEFC");
+    f.ceb[PORT_V37_CEB_TYPE]=PORT_V37_CEB_NORMAL;
     if(port_v37_sched_wait_event(&f.scheduler,0u,FRAME_VA,128u,1u,0,
            &pcb,&frame,&ss)!=PORT_V37_SCHED_OK||ss!=PORT_V37_SS_ILLEFC||
        port_v37_sched_wait_event(&f.scheduler,0u,FRAME_VA,96u,1u,0,
