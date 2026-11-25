@@ -1788,3 +1788,4 @@ The WQH validator previously accepted any nonzero state, allowing the native wai
 Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0); coverage generation, range regression, and `python3 tools/validate_source_ranges.py` PASS (2,129 ranges; 451/4,566 originals indexed; zero errors; inventory counts unchanged); `git diff --check` PASS. No QEMU run: the API remains unbound to the guest. No login/DCL/DECnet/SET HOST occurred.
 
 Local M380 implementation commit: `6cf753854f4b7313e8426990610be09968689caf`.
+Published GitHub main M380 implementation commit: `f093fd9f5b85daeb7cb34cacf02f31f76f53d7de`.
