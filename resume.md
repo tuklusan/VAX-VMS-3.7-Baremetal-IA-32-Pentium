@@ -1713,3 +1713,11 @@ Verification: make -j2 all test completed through host, sanitizer, layout and ma
 
 Local M372 implementation commit: abcee37e4f1e57a12002941d15bb9a24657aaef1.
 Published GitHub main M372 implementation commit: eaed7fcbf6d7ae1ceafcbcaba39a340ef30b8f3b.
+
+## M373 - Assert live scheduler handoff in the QEMU regression, 25 November 2026
+
+Strengthened the real M217 boot regression to require the live IRQ0 SCH$RESCHED/SCH$SCHED result before accepting the incomplete-INIT boundary. This prevents the serial check from passing if the resident scheduler callback is not invoked. It does not activate NULL/SWAPPER or claim process scheduling.
+
+Verification: make qemu-sysboot-m217 PASS with the new ordered scheduler assertion; tests/test_m47_qemu_manifest.py PASS. Captured logs/serial/qemu-m217-run-local-20261125T171040327676Z.log (6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6). Runner exited; no QEMU process remains. The guest still stops at incomplete INIT; no process activation, login/DCL, DECnet or SET HOST occurred.
+
+Local M373 implementation commit: fef0e092b663f0e49360439e9809e326585fb43e.
