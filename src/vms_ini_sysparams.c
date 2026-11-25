@@ -6,20 +6,20 @@
 uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *p){
     if(!p)return PORT_VMS37_SYSPARAM_BAD;
     *p=(struct port_vms37_init_params){
-        .max_processes=72u,             /* MAXPROCESSCNT */
+        .max_processes=PORT_VMS37_DEFAULT_MAXPROCESSCNT, /* MAXPROCESSCNT */
         .realtime_spts=0u,              /* REALTIME_SPTS */
-        .irp_count=60u,                 /* IRPCOUNT */
-        .lrp_count=4u,                  /* LRPCOUNT */
-        .lrp_size=576u,                 /* LRPSIZE */
-        .srp_count=120u,                /* SRPCOUNT */
-        .srp_size=96u,                  /* SRPSIZE */
-        .nonpaged_dynamic_bytes=64000u, /* NPAGEDYN */
-        .modified_page_fault_cluster=96u, /* MPW_WRTCLUSTER */
-        .lock_id_slots=128u,            /* LOCKIDTBL */
-        .resource_hash_slots=32u,       /* RESHASHTBL */
-        .deadlock_wait_seconds=10u,     /* DEADLOCK_WAIT */
-        .balance_set_count=36u,         /* BALSETCNT */
-        .max_working_set=1024u          /* WSMAX */
+        .irp_count=PORT_VMS37_DEFAULT_IRPCOUNT, /* IRPCOUNT */
+        .lrp_count=PORT_VMS37_DEFAULT_LRPCOUNT, /* LRPCOUNT */
+        .lrp_size=PORT_VMS37_DEFAULT_LRPSIZE,   /* LRPSIZE */
+        .srp_count=PORT_VMS37_DEFAULT_SRPCOUNT, /* SRPCOUNT */
+        .srp_size=PORT_VMS37_DEFAULT_SRPSIZE,   /* SRPSIZE */
+        .nonpaged_dynamic_bytes=PORT_VMS37_DEFAULT_NPAGEDYN, /* NPAGEDYN */
+        .modified_page_fault_cluster=PORT_VMS37_DEFAULT_MPW_WRTCLUSTER,
+        .lock_id_slots=PORT_VMS37_DEFAULT_LOCKIDTBL, /* LOCKIDTBL */
+        .resource_hash_slots=PORT_VMS37_DEFAULT_RESHASHTBL, /* RESHASHTBL */
+        .deadlock_wait_seconds=PORT_VMS37_DEFAULT_DEADLOCK_WAIT,
+        .balance_set_count=PORT_VMS37_DEFAULT_BALSETCNT, /* BALSETCNT */
+        .max_working_set=PORT_VMS37_DEFAULT_WSMAX /* WSMAX */
     };
     return PORT_VMS37_SYSPARAM_OK;
 }

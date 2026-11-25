@@ -3188,9 +3188,15 @@ void kmain(void) {
      * sizes and the resident nonpaged limit use original SYSPARAM defaults;
      * PARAMS.DAT overrides and virtual NPAGEVIR mapping remain unresolved. */
     static const struct port_boo_packet_settings packet_profile={
-        .irp_length=PORT_V37_IRP_SIZE,.irp_count=60u,.irp_virtual_count=60u,
-        .lrp_requested_size=576u,.lrp_count=4u,.lrp_virtual_count=4u,
-        .srp_requested_size=96u,.srp_count=120u,.srp_virtual_count=120u};
+        .irp_length=PORT_V37_IRP_SIZE,
+        .irp_count=PORT_VMS37_DEFAULT_IRPCOUNT,
+        .irp_virtual_count=PORT_VMS37_DEFAULT_IRPCOUNT,
+        .lrp_requested_size=PORT_VMS37_DEFAULT_LRPSIZE,
+        .lrp_count=PORT_VMS37_DEFAULT_LRPCOUNT,
+        .lrp_virtual_count=PORT_VMS37_DEFAULT_LRPCOUNT,
+        .srp_requested_size=PORT_VMS37_DEFAULT_SRPSIZE,
+        .srp_count=PORT_VMS37_DEFAULT_SRPCOUNT,
+        .srp_virtual_count=PORT_VMS37_DEFAULT_SRPCOUNT};
     static struct port_sys_exec_result packet_result;
     const struct port_sys_exec_start packet_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
@@ -3202,14 +3208,16 @@ void kmain(void) {
        packet_result.signature!=PORT_SYS_EXEC_PACKET_RESULT_TAG ||
        !packet_result.irp_queue || !packet_result.lrp_queue ||
        !packet_result.srp_queue ||
-       packet_result.irp_count!=60u || packet_result.lrp_count!=4u ||
-       packet_result.srp_count!=120u ||
+       packet_result.irp_count!=PORT_VMS37_DEFAULT_IRPCOUNT ||
+       packet_result.lrp_count!=PORT_VMS37_DEFAULT_LRPCOUNT ||
+       packet_result.srp_count!=PORT_VMS37_DEFAULT_SRPCOUNT ||
        packet_result.irp_queue->next==0u ||
        packet_result.lrp_queue->next==0u ||
        packet_result.srp_queue->next==0u ||
        packet_result.irp_queue->packet_bytes!=PORT_V37_IRP_POOL_STRIDE ||
-       packet_result.lrp_queue->packet_bytes!=640u ||
-       packet_result.srp_queue->packet_bytes!=96u ||
+       packet_result.lrp_queue->packet_bytes!=
+           PORT_VMS37_DEFAULT_LRPSIZE+64u ||
+       packet_result.srp_queue->packet_bytes!=PORT_VMS37_DEFAULT_SRPSIZE ||
        packet_result.lrp_queue->minimum_bytes!=512u){
         bootstrap_message("INIT: SYS.EXE packet queue initialization failed.");
         bootstrap_halt();
@@ -3466,12 +3474,18 @@ void kmain(void) {
     if(loaded_sys(&mpw_request)!=PORT_SYS_EXEC_NORMAL ||
        mpw_result.signature!=PORT_SYS_EXEC_MPW_RESULT_TAG ||
        !mpw_result.modified_page_writer_map ||
-       mpw_result.modified_page_writer_map->effective_fault_cluster!=96u ||
-       mpw_result.modified_page_writer_map->swap_increment!=96u ||
-       mpw_result.modified_page_writer_map->allocated_slots!=103u ||
-       mpw_result.modified_page_writer_map->allocated_bytes!=630u ||
-       *(const uint32_t *)(const void *)(mpw_result.modified_page_writer_map->pte_base+102u*4u)!=0u ||
-       *(const uint16_t *)(const void *)(mpw_result.modified_page_writer_map->phv_index_base+102u*2u)!=0u){
+       mpw_result.modified_page_writer_map->effective_fault_cluster!=
+           PORT_VMS37_DEFAULT_MPW_WRTCLUSTER ||
+       mpw_result.modified_page_writer_map->swap_increment!=
+           PORT_VMS37_DEFAULT_MPW_WRTCLUSTER ||
+       mpw_result.modified_page_writer_map->allocated_slots!=
+           PORT_VMS37_DEFAULT_MPW_WRTCLUSTER+7u ||
+       mpw_result.modified_page_writer_map->allocated_bytes!=
+           12u+6u*(PORT_VMS37_DEFAULT_MPW_WRTCLUSTER+7u) ||
+       *(const uint32_t *)(const void *)(mpw_result.modified_page_writer_map->pte_base+
+           (PORT_VMS37_DEFAULT_MPW_WRTCLUSTER+6u)*4u)!=0u ||
+       *(const uint16_t *)(const void *)(mpw_result.modified_page_writer_map->phv_index_base+
+           (PORT_VMS37_DEFAULT_MPW_WRTCLUSTER+6u)*2u)!=0u){
         bootstrap_message("INIT: resident SYS.EXE modified-page writer record validation failed.");
         bootstrap_halt();
     }
