@@ -1609,3 +1609,5 @@ The native MAP_VBN wrapper now rejects an otherwise-successful callback that ret
 Verification: `make files1187check` PASS; `make sourcerangecheck` PASS (2,116 ranges; 450/4,566 original files indexed; zero errors); `make -j2 CC=gcc-12 all test` PASS (exit 0); fresh single-runner `make qemu-sysboot-m217` PASS through SYS.EXE Files-11 ACP, DQA0 DDT, IRQ14 read checks, then explicit incomplete-INIT halt. Capture `logs/serial/qemu-m217-run-local-20261125T141942138855Z.log`, 5,885 bytes, SHA-256 `0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb`; QEMU exited and no QEMU process remains. The guest does not produce the sentinel case. MAP_WINDOW retry/window-turn semantics, live UCB remapping, ACP process I/O remain incomplete.
 
 Local M361 implementation commit: 27bf0616f70303d80d500ea14b8349a9e03b6d99.
+
+Published GitHub main implementation commit: 4d26ef1c8a246e27fe7af505f62010b74eebd473.
