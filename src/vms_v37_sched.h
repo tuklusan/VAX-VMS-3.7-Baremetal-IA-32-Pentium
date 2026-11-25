@@ -48,5 +48,9 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *,uint32_t *pcb_address
 /* SCH$RESCHED queue insertion after an architecture caller saves context. */
 uint32_t port_v37_sched_resched_current(struct port_v37_scheduler *,
     uint32_t current_pcb_address);
+/* Save and validate the interrupted native IRET frame in PCB$L_PHYPCB and
+ * PHD KSP/PC, then perform SCH$RESCHED's resident queue insertion. */
+uint32_t port_v37_sched_save_current(struct port_v37_scheduler *,
+    uint32_t current_restore_frame_address);
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *);
 #endif

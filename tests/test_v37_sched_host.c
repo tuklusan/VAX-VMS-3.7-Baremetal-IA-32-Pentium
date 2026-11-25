@@ -1,5 +1,6 @@
 #include "vms_v37_sched.h"
 #include "vms_v37_ia32_context.h"
+#include "vms_v37_phd.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -7,8 +8,10 @@ struct fixture {
     struct port_v37_scheduler *scheduler;
     uint8_t pcbs[4][PORT_V37_PCB_BYTES];
     struct port_v37_ia32_restore_frame frames[4];
+    uint8_t phds[4][PORT_V37_PHD_BYTES];
     uint32_t pcb_va[4];
     uint32_t frame_va[4];
+    uint32_t phd_va[4];
     unsigned reschedules,swapper_wakes;
 };
 static uint32_t addr(void *context,const void *p){
@@ -32,6 +35,9 @@ static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
         if(va==f->frame_va[i]&&
            bytes<=sizeof(struct port_v37_ia32_restore_frame))
             return (uint8_t *)&f->frames[i];
+    for(unsigned i=0;i<4u;i++)
+        if(va==f->phd_va[i]&&bytes<=sizeof f->phds[i])
+            return f->phds[i];
     return 0;
 }
 static void wake(void *context,uint32_t pcb){
@@ -55,7 +61,8 @@ static unsigned count(struct fixture *f,unsigned q){
 static uint32_t init_pcb(struct fixture *f,unsigned slot,uint32_t pid,
                          uint8_t priority,int resident){
     const struct port_v37_pcb_seed seed={.address=f->pcb_va[slot],
-        .pid=pid,.priority=priority,.name="PROC",.name_bytes=4u};
+        .pid=pid,.phd_address=f->phd_va[slot],.priority=priority,
+        .name="PROC",.name_bytes=4u};
     if(port_v37_pcb_init_genpcb(f->pcbs[slot],sizeof f->pcbs[slot],&seed)!=
        PORT_V37_PCB_OK)return 0u;
     if(!resident)memset(f->pcbs[slot]+PORT_V37_PCB_STS,0,4u);
@@ -66,12 +73,17 @@ static uint32_t get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
        ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
+static void put32(uint8_t *p,uint32_t v){
+    p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);
+    p[2]=(uint8_t)(v>>16);p[3]=(uint8_t)(v>>24);
+}
 
 int main(void){
     struct port_v37_scheduler scheduler;struct fixture f={
         .scheduler=&scheduler,.pcb_va={0x00200000u,0x00201000u,
                                        0x00202000u,0x00203000u},
-        .frame_va={0x00400000u,0x00401000u,0x00402000u,0x00403000u}};
+        .frame_va={0x00400000u,0x00401000u,0x00402000u,0x00403000u},
+        .phd_va={0x00500000u,0x00501000u,0x00502000u,0x00503000u}};
     const struct port_v37_sched_ops ops={&f,addr,resolve,wake,reschedule};
     if(port_v37_sched_init(&scheduler,&ops)!=PORT_V37_SCHED_OK||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
@@ -118,7 +130,7 @@ int main(void){
         return fail("scheduler leaves contextless PCB queued");
     for(unsigned i=0;i<3u;i++){
         if(port_v37_pcb_bind_context(f.pcbs[i],sizeof f.pcbs[i],
-           0x00300000u+i*0x1000u,f.frame_va[i])!=PORT_V37_PCB_OK)
+           f.phd_va[i],f.frame_va[i])!=PORT_V37_PCB_OK)
             return fail("source PCB PHD/native context binding");
         f.frames[i]=(struct port_v37_ia32_restore_frame){
             .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
@@ -138,10 +150,33 @@ int main(void){
        scheduler.current_pcb!=selected||scheduler.current_priority!=15u||
        count(&f,15u)!=1u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("SCH$SCHED highest-priority FIFO PCB selection");
-    if(port_v37_sched_resched_current(&scheduler,selected)!=PORT_V37_SCHED_OK||
+    const uint32_t prior_frame=get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB);
+    f.frames[2].registers.cs=0x0bu;
+    if(port_v37_sched_save_current(&scheduler,f.frame_va[2])!=
+           PORT_V37_SCHED_CORRUPT||scheduler.current_pcb!=selected||
+       get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=prior_frame||
+       get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR)
+        return fail("SCH$RESCHED rejects malformed outgoing context atomically");
+    f.frames[2].registers.cs=0x08u;
+    f.frames[2].registers.eip=0x66666666u;
+    put32(f.pcbs[2]+PORT_V37_PCB_SQFL,0x00abcdefu);
+    if(port_v37_sched_save_current(&scheduler,f.frame_va[2])!=
+           PORT_V37_SCHED_CORRUPT||
+       get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=prior_frame||
+       get32(f.phds[2]+PORT_V37_PHD_KSP)!=0u||
+       get32(f.phds[2]+PORT_V37_PHD_PC)!=0u||
+       scheduler.current_pcb!=selected)
+        return fail("SCH$RESCHED rolls context back on queue corruption");
+    put32(f.pcbs[2]+PORT_V37_PCB_SQFL,f.pcb_va[2]);
+    f.frames[2].registers.eip=0x77777777u;
+    if(port_v37_sched_save_current(&scheduler,f.frame_va[2])!=
+           PORT_V37_SCHED_OK||
+       get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=f.frame_va[2]||
+       get32(f.phds[2]+PORT_V37_PHD_KSP)!=f.frame_va[2]||
+       get32(f.phds[2]+PORT_V37_PHD_PC)!=0x77777777u||
        get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
        count(&f,15u)!=2u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
-        return fail("SCH$RESCHED saves current PCB to COM tail");
+        return fail("SCH$RESCHED saves native frame, PHD and PCB queue state");
     if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
            PORT_V37_SCHED_OK||
        selected!=f.pcb_va[1]||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)

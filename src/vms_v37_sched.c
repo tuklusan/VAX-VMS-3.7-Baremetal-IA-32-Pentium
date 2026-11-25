@@ -1,6 +1,7 @@
 #include "vms_v37_sched.h"
 #include "vms_v37_dyn_tags.h"
 #include "vms_v37_ia32_context.h"
+#include "vms_v37_phd.h"
 
 enum {
     SQFL=PORT_V37_PCB_SQFL,SQBL=PORT_V37_PCB_SQBL,
@@ -214,6 +215,35 @@ uint32_t port_v37_sched_resched_current(struct port_v37_scheduler *s,
     set_summary(s,q,1);
     s->ready_count[q]++;
     return PORT_V37_SCHED_OK;
+}
+
+uint32_t port_v37_sched_save_current(struct port_v37_scheduler *s,
+                                      uint32_t frame_address){
+    if(!s||!s->initialized||!s->current_pcb||!frame_address)
+        return PORT_V37_SCHED_BADPARAM;
+    uint8_t *const pcb=resolve(s,s->current_pcb,PORT_V37_PCB_BYTES);
+    struct port_v37_ia32_restore_frame *const frame=
+        (struct port_v37_ia32_restore_frame *)resolve(s,frame_address,
+            sizeof(struct port_v37_ia32_restore_frame));
+    if(!pcb||!frame||get16(pcb+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR||
+       port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
+        return PORT_V37_SCHED_CORRUPT;
+    const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
+    uint8_t *const phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
+    if(!phd)return PORT_V37_SCHED_NO_CONTEXT;
+    const uint32_t old_frame=get32(pcb+PORT_V37_PCB_PHYPCB);
+    const uint32_t old_ksp=get32(phd+PORT_V37_PHD_KSP);
+    const uint32_t old_pc=get32(phd+PORT_V37_PHD_PC);
+    put32(pcb+PORT_V37_PCB_PHYPCB,frame_address);
+    put32(phd+PORT_V37_PHD_KSP,frame_address);
+    put32(phd+PORT_V37_PHD_PC,frame->registers.eip);
+    const uint32_t status=port_v37_sched_resched_current(s,s->current_pcb);
+    if(status!=PORT_V37_SCHED_OK){
+        put32(pcb+PORT_V37_PCB_PHYPCB,old_frame);
+        put32(phd+PORT_V37_PHD_KSP,old_ksp);
+        put32(phd+PORT_V37_PHD_PC,old_pc);
+    }
+    return status;
 }
 
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){

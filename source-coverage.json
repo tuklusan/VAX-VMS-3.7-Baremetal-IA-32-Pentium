@@ -5882,8 +5882,11 @@
             58,
             61
           ],
-          "status": "excluded",
-          "reason": "native SCH$RESCHED interrupt entry, IPL transition and SVPCTX save remain unimplemented"
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_save_current",
+          "pc_line": 220,
+          "function": "Validate and save the outgoing IA-32 IRET frame into PCB$L_PHYPCB and PHD KSP/PC, then requeue through SCH$RESCHED; live trap/ IPL entry remains unintegrated"
         },
         {
           "original_lines": [
@@ -5893,7 +5896,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
-          "pc_line": 198,
+          "pc_line": 199,
           "function": "Requeue current resident PCB at the COM queue tail and set queue summary; caller context save and hardware interrupt entry remain unimplemented"
         },
         {
@@ -5912,7 +5915,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
-          "pc_line": 150,
+          "pc_line": 151,
           "function": "Highest resident COM queue selection validates the saved IA-32 IRET frame and returns its address with the selected PCB; trap dispatch and PCBB/CR3 programming remain unintegrated"
         },
         {
@@ -5943,7 +5946,7 @@
           "reason": "assembler end"
         }
       ],
-      "unresolved_integration": "SCH$SCHED returns a checked PCB plus IA-32 restore-frame address and the architecture can prepare a validated frame for common IRET restore; the live VMS trap path still does not save the current source PCB context, select from the VMS queues, update TSS/CR3, or IRET into that selected frame; executive wait/wake queues remain unbound."
+      "unresolved_integration": "The scheduler validates/saves native PCB/PHD contexts and selects resident COM entries; live VMS trap dispatch still does not invoke these operations, update TSS/CR3, or IRET into the selected frame; executive wait/wake queues remain unbound."
     },
     {
       "original_file": "SYS/SRC/NULLPROC.MAR",
@@ -10898,7 +10901,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_chse",
-          "pc_line": 102,
+          "pc_line": 103,
           "function": "Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial"
         },
         {
@@ -10917,7 +10920,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_chse",
-          "pc_line": 102,
+          "pc_line": 103,
           "function": "Implement resident COM/nonresident COMO queue movement, inverted-priority calculation, COMQS summary bits and reschedule/swapper callback points"
         },
         {
