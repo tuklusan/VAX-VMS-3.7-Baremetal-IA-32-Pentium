@@ -1945,3 +1945,13 @@ Verification: focused `make v37ia32ctxcheck v37schedcheck` PASS; full `make -j2 
 
 M396 correction implementation commit: `0f0962a221040a5b921ed6793300ca6ba3bc0f34`.
 Published GitHub main M396 correction commit: `0f0962a221040a5b921ed6793300ca6ba3bc0f34`.
+
+
+## M397 - Switch selected VMS access-mode interrupt stacks, 25 November 2026
+
+The native resident scheduler handoff now validates a selected IA-32 frame and sets TSS ESP0 to the end of that process's kernel-stack IRET image for VMS access modes 1-3. The installed IDT gates target selector 0x08, so those privilege transitions re-enter CPL0 on the selected process stack. The CPL1/CPL2 hardware probe now selects a ring-2 frame, verifies the next interrupt frame landed at that frame's exact stack top, then restores the monitor TSS stack before ordinary boot. Per-process CR3 switching and actual NULL/SWAPPER PHD/context activation remain absent; the boot has not scheduled a resident VMS PCB.
+
+Verification: full `make -j2 all test v37schedcheck` PASS (exit 0); coverage regeneration and validation PASS (2,135 ranges, zero errors); `git diff --check` PASS. One QEMU M217 attempt exposed that the diagnostic privilege probe left TSS ESP0 on its temporary stack; capture `logs/serial/qemu-m217-run-local-20261125T195449703160Z.log`, 1,006 bytes, SHA-256 `c13dbf231bdc3be4ccdef43e67152103098370fc26cc8a28082ad163dab94534`, records that failure. After restoring the monitor stack on probe exit, the sequential QEMU M217 run PASSed the real CPL1/CPL2 transition, DQA0 IRQ14 Files-11 read, and stopped at the existing incomplete INIT boundary. Capture `logs/serial/qemu-m217-run-local-20261125T195503943880Z.log`, 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`. The scheduler-selected VMS PCB path itself remains unexercised because its contexts are absent. No QEMU runner remains.
+
+M397 implementation commit: `54e4da94bc0e576bb9f8508e0dcf83eba365d092`.
+Published GitHub main M397 implementation commit: `54e4da94bc0e576bb9f8508e0dcf83eba365d092`.
