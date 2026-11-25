@@ -3,11 +3,11 @@
 #include <assert.h>
 #include "vms_userptr.h"
 static uint32_t directory[1024],t0[1024],t1[1024];
-static uint8_t pages[32][4096];
-static unsigned pin_counts[32],pin_calls,fail_pin_call;
+static uint8_t pages[513][4096];
+static unsigned pin_counts[513],pin_calls,fail_pin_call;
 static uint8_t *physical(void *unused,uint32_t phys) {
     (void)unused;
-    if((phys&4095u)||phys<0x1000u||phys>=0x21000u)return 0;
+    if((phys&4095u)||phys<0x1000u||phys>=0x201000u)return 0;
     return pages[phys>>12];
 }
 static int pin(void *unused,uint32_t phys) {
@@ -88,12 +88,30 @@ int main(void) {
            PORT_USER_BAD&&untouched[0]==1u&&untouched[3]==4u);
     port_user_unpin_io_range(&locks);
     assert(locks.count==0u&&pin_counts[2]==0u&&pin_counts[18]==0u);
+    /* The maximum retained SYSQIO page vector covers all 512 managed
+     * physical frames. One page beyond capacity must release every pin. */
+    for(unsigned i=0u;i<PORT_USER_PIN_MAX_PAGES;i++)
+        t0[2u+i]=((i+1u)<<12)|7u;
+    struct port_user_page_locks wide={0};
+    const uint32_t wide_va=0x2001u;
+    const uint32_t wide_bytes=PORT_USER_PIN_MAX_PAGES*4096u-1u;
+    assert(port_user_pin_io_range(&m,wide_va,wide_bytes,0,physical,0,
+                                  pin,unpin,0,&wide)==PORT_USER_OK);
+    assert(wide.count==PORT_USER_PIN_MAX_PAGES&&
+           wide.transfer_bytes==wide_bytes);
+    port_user_unpin_io_range(&wide);
+    assert(wide.count==0u);
+    pin_calls=0u;
+    assert(port_user_pin_io_range(&m,wide_va,wide_bytes+1u,0,physical,0,
+                                  pin,unpin,0,&wide)==PORT_USER_BAD);
+    assert(wide.count==0u);
+    for(unsigned i=0u;i<513u;i++)assert(pin_counts[i]==0u);
     locks.physical[0]=0xabcdef00u;
     pin_calls=0;fail_pin_call=4;
     assert(port_user_pin_io_range(&m,0x1002,UINT16_MAX,0,physical,0,
                                   pin,unpin,0,&locks)==PORT_USER_BAD);
     assert(locks.count==0u&&locks.physical[0]==0xabcdef00u);
-    for(unsigned i=0;i<32;i++)assert(pin_counts[i]==0u);
+    for(unsigned i=0;i<513;i++)assert(pin_counts[i]==0u);
     fail_pin_call=0;
     puts("M295 user pointer pinned I/O copy, crossings and rollback PASS");
     return 0;
