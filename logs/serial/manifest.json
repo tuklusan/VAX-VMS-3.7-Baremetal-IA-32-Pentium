@@ -2404,6 +2404,33 @@
       "path": "logs/serial/qemu-m217-run-local-20261125T030909592903Z.log",
       "bytes": 5788,
       "sha256": "fccbda36c6742e594849f10b4131c241fa8f059ee6dcb41b3af32d4bc9579232"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T031948380186Z",
+      "run_url": "",
+      "test_result": "harness-fail",
+      "path": "logs/serial/qemu-m217-run-local-20261125T031948380186Z.log",
+      "bytes": 717,
+      "sha256": "50e8ee2df2815e382155845558db374e6f2e6cc42b608c284b781e9b307fbedc"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T032141808646Z",
+      "run_url": "",
+      "test_result": "harness-fail",
+      "path": "logs/serial/qemu-m217-run-local-20261125T032141808646Z.log",
+      "bytes": 717,
+      "sha256": "50e8ee2df2815e382155845558db374e6f2e6cc42b608c284b781e9b307fbedc"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261125T032228272926Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m217-run-local-20261125T032228272926Z.log",
+      "bytes": 5788,
+      "sha256": "fccbda36c6742e594849f10b4131c241fa8f059ee6dcb41b3af32d4bc9579232"
     }
   ]
 }

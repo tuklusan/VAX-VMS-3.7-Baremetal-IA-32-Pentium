@@ -41,6 +41,7 @@ extern int port_rem_protocol_guest_selftest(void);
 #include "vms_bootio.h"
 #include "vms_boot_files11.h"
 #include "vms_vmbargs.h"
+#include "vms_ini_sysparams.h"
 #include "vms_vmb_rpb.h"
 #include "vms_condition.h"
 #include "vms_ne2k.h"
@@ -3328,15 +3329,22 @@ void kmain(void) {
     boot_rpb.boot_registers[1]=adapter_state.boot.boot_adapter_number;
     bootstrap_message("INIT: INILOA IOMAP executed on real IA-32 boot adapter.");
 
-    /* INIT.MAR lock manager and realtime SPT sections follow INI$IOMAP.
-     * The SPT request is zero pending the genuine SYSGEN/MMG image; in
-     * this case the original INI_SPT path correctly skips reservation.
-     * Numeric DYNDEF tags are likewise not invented. These are resident
-     * tables only, not an operational $ENQ subsystem. */
-    static const struct port_ini_lock_settings lock_settings={
-        .first_free_spt=0u,.last_free_spt=0u,.realtime_spt=0u,
-        .lock_id_slots=32u,.resource_hash_requested=37u,
-        .max_processes=32u,.deadlock_waittime=1u};
+    /* INIT.MAR consumes SYSPARAM values here. Use the original VMS 3.7
+     * defaults until SYSBOOT's PARAMS.DAT override path is ported. */
+    struct port_vms37_init_params init_params;
+    if(port_vms37_init_param_defaults(&init_params)!=PORT_VMS37_SYSPARAM_OK){
+        bootstrap_message("INIT: original SYSPARAM defaults unavailable.");
+        bootstrap_halt();
+    }
+    /* These records preserve INIT layout but do not start $ENQ. DYNDEF
+     * types and SPT free-list addresses still require their source inputs. */
+    struct port_ini_lock_settings lock_settings={
+        .first_free_spt=0u,.last_free_spt=0u,
+        .realtime_spt=init_params.realtime_spts,
+        .lock_id_slots=init_params.lock_id_slots,
+        .resource_hash_requested=init_params.resource_hash_slots,
+        .max_processes=init_params.max_processes,
+        .deadlock_waittime=init_params.deadlock_wait_seconds};
     static struct port_sys_exec_result lock_result;
     const struct port_sys_exec_start lock_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
@@ -3345,14 +3353,14 @@ void kmain(void) {
     if(loaded_sys(&lock_request)!=PORT_SYS_EXEC_NORMAL ||
        lock_result.signature!=PORT_SYS_EXEC_LOCK_RESULT_TAG ||
        !lock_result.lock_database ||
-       lock_result.lock_max_id!=31u ||
-       lock_result.lock_hash_slots!=64u ||
-       lock_result.lock_process_bitmap_bytes!=5u ||
+       lock_result.lock_max_id!=127u ||
+       lock_result.lock_hash_slots!=32u ||
+       lock_result.lock_process_bitmap_bytes!=10u ||
        !lock_result.lock_database->lock_id_table ||
        !lock_result.lock_database->resource_hash_table ||
        !lock_result.lock_database->process_bitmap ||
        *(const uint32_t *)(const void *)(lock_result.lock_database->lock_id_table+4u)!=2u ||
-       *(const uint32_t *)(const void *)(lock_result.lock_database->lock_id_table+124u)!=0u){
+       *(const uint32_t *)(const void *)(lock_result.lock_database->lock_id_table+508u)!=0u){
         bootstrap_message("INIT: resident SYS.EXE lock database setup failed.");
         bootstrap_halt();
     }
@@ -3361,8 +3369,8 @@ void kmain(void) {
     /* INIT.MAR INI_PSTATE establishes SCH$GL_PCBVEC and SCH$GL_SEQVEC.
      * The source-derived NULL/SYSTEM resident PCB descriptors are not yet
      * runnable; no process activation, login or DCL is claimed here. */
-    static const struct port_ini_proc_settings proc_settings={
-        .max_processes=32u,.dyn_pcbvec_type=0u};
+    const struct port_ini_proc_settings proc_settings={
+        .max_processes=init_params.max_processes,.dyn_pcbvec_type=0u};
     static struct port_sys_exec_result proc_result;
     const struct port_sys_exec_start proc_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
@@ -3371,18 +3379,18 @@ void kmain(void) {
     if(loaded_sys(&proc_request)!=PORT_SYS_EXEC_NORMAL ||
        proc_result.signature!=PORT_SYS_EXEC_PV_RESULT_TAG ||
        !proc_result.process_vector ||
-       proc_result.process_vector->allocated_slots!=33u ||
-       proc_result.process_vector->system_pix!=32u ||
-       proc_result.process_vector->max_pix!=31u ||
+       proc_result.process_vector->allocated_slots!=73u ||
+       proc_result.process_vector->system_pix!=72u ||
+       proc_result.process_vector->max_pix!=71u ||
        !proc_result.system_sched_process || !proc_result.null_sched_process ||
-       proc_result.system_sched_process->pid!=32u ||
+       proc_result.system_sched_process->pid!=72u ||
        proc_result.system_sched_process->state!=PORT_EXE_STATE_OTHER ||
        !proc_result.system_vms_pcb||
        ((uintptr_t)proc_result.system_vms_pcb&7u)!=0u||
        proc_result.system_vms_pcb[PORT_V37_PCB_SIZE]!=PORT_V37_PCB_BYTES||
        proc_result.system_vms_pcb[PORT_V37_PCB_SIZE+1u]!=0u||
        proc_result.system_vms_pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
-       m202_get32(proc_result.system_vms_pcb+PORT_V37_PCB_PID)!=0x00010020u||
+       m202_get32(proc_result.system_vms_pcb+PORT_V37_PCB_PID)!=0x00010048u||
        m202_get32(proc_result.system_vms_pcb+PORT_V37_PCB_PHD)!=0u||
        !proc_result.null_vms_pcb||
        ((uintptr_t)proc_result.null_vms_pcb&7u)!=0u||
@@ -3391,7 +3399,7 @@ void kmain(void) {
        proc_result.null_vms_pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
        m202_get32(proc_result.null_vms_pcb+PORT_V37_PCB_PID)!=0x00010000u||
        m202_get32(proc_result.null_vms_pcb+PORT_V37_PCB_PHD)!=0u||
-       *(const uint32_t *)(const void *)(proc_result.process_vector->pcb_vector+128u)!=
+       *(const uint32_t *)(const void *)(proc_result.process_vector->pcb_vector+288u)!=
                 (uint32_t)(uintptr_t)proc_result.system_vms_pcb ||
        *(const uint32_t *)(const void *)(proc_result.process_vector->pcb_vector)!=
                 (uint32_t)(uintptr_t)proc_result.null_vms_pcb){
@@ -3417,25 +3425,28 @@ void kmain(void) {
      * slots and the swapper P0 page-table map. This is *not* a running
      * swapper or paging process; the original map and refcount state are
      * inspected directly from the loaded SYS.EXE supervisor pages. */
-    static const struct port_ini_phvswap_settings phv_settings={
-        .balance_set_count=11u,.system_pix=32u,.max_working_set=64u,
+    const struct port_ini_phvswap_settings phv_settings={
+        .balance_set_count=init_params.balance_set_count,
+        .system_pix=init_params.max_processes,
+        .max_working_set=init_params.max_working_set,
         .phvec_dyn_type=0u,.swapmap_dyn_type=0u};
     static struct port_sys_exec_result phv_result;
     const struct port_sys_exec_start phv_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&phv_result,
         .phase=PORT_SYS_EXEC_INIT_PHVSWAP,.phv_settings=&phv_settings};
-    if(loaded_sys(&phv_request)!=PORT_SYS_EXEC_NORMAL ||
+    const uint32_t phv_status=loaded_sys(&phv_request);
+    if(phv_status!=PORT_SYS_EXEC_NORMAL ||
        phv_result.signature!=PORT_SYS_EXEC_PHV_RESULT_TAG ||
        !phv_result.process_header_vector ||
-       phv_result.process_header_vector->phv_slots!=12u ||
-       phv_result.process_header_vector->phv_record_bytes!=60u ||
-       phv_result.process_header_vector->swapmap_record_bytes!=272u ||
-       phv_result.process_header_vector->swapper_p0lr!=64u ||
-       *(const uint16_t *)(const void *)(phv_result.process_header_vector->phv_pix_base+22u)!=32u ||
-       *(const uint16_t *)(const void *)(phv_result.process_header_vector->phv_refcount_base+22u)!=1024u ||
-       *(const uint16_t *)(const void *)(phv_result.process_header_vector->phv_refcount_base+20u)!=UINT16_MAX ||
-       *(const uint32_t *)(const void *)(phv_result.process_header_vector->swapper_p0br+252u)!=0u){
+       phv_result.process_header_vector->phv_slots!=37u ||
+       phv_result.process_header_vector->phv_record_bytes!=160u ||
+       phv_result.process_header_vector->swapmap_record_bytes!=4112u ||
+       phv_result.process_header_vector->swapper_p0lr!=1024u ||
+       *(const uint16_t *)(const void *)(phv_result.process_header_vector->phv_pix_base+72u)!=72u ||
+       *(const uint16_t *)(const void *)(phv_result.process_header_vector->phv_refcount_base+72u)!=1024u ||
+       *(const uint16_t *)(const void *)(phv_result.process_header_vector->phv_refcount_base+70u)!=UINT16_MAX ||
+       *(const uint32_t *)(const void *)(phv_result.process_header_vector->swapper_p0br+4092u)!=0u){
         bootstrap_message("INIT: resident SYS.EXE PHV and swap PTE record validation failed.");
         bootstrap_halt();
     }

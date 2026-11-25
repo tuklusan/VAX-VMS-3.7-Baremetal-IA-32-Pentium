@@ -49,7 +49,7 @@ static struct port_sysloa_table executive_sysloa;
 /* This memory is genuinely loaded and zeroed by the SYSBOOT ELF loader,
  * mapped supervisor-only in the guest. Replacing its provisional size
  * limits with SYSGEN-selected BOO$ offsets remains later integration. */
-static uint8_t executive_packet_pages[8192] __attribute__((aligned(512)));
+static uint8_t executive_packet_pages[16384] __attribute__((aligned(512)));
 static struct port_ini_packet_list executive_irps,executive_lrps,executive_srps;
 static uint32_t executive_packet_ready;
 /* INIT's later nonpaged records occupy only the free low end of the

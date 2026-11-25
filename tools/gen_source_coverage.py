@@ -2600,6 +2600,37 @@ for first,last,path,sym,why in [
 result['files'].append({'original_file':'SYS/SRC/MEMORYALC.MAR',
     'original_lines':919,'sections':memalc_sections,
     'unresolved_integration':'The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. Host-tested allocation also selects exact-size IRP/LRP/SRP queues and falls back to the variable pool; this broader allocator is not yet wired to ACP because the first live wiring attempt regressed DQA0 DDT publication. Pool extension, resource waits, public user SYS$QIO integration, and paged pool remain unresolved.'})
+
+# SYSPARAM.MAR supplies system defaults consumed by INIT. The native subset
+# records the original declarations, while SYSBOOT PARAMS.DAT overrides and
+# all other parameter cells are intentionally still unresolved.
+sysparam_defaults=[
+    (638,646,'MAXPROCESSCNT default 72'),
+    (753,760,'BALSETCNT default 36'),
+    (789,796,'WSMAX default 1024'),
+    (1519,1526,'REALTIME_SPTS default 0'),
+    (1544,1551,'LOCKIDTBL default 128'),
+    (1557,1564,'RESHASHTBL default 32'),
+    (1570,1577,'DEADLOCK_WAIT default 10 seconds')]
+sysparam_sections=[]
+cursor=1
+for first,last,label in sysparam_defaults:
+    if cursor<first:
+        sysparam_sections.append({'original_lines':[cursor,first-1],
+            'status':'unresolved','reason':'Other system parameters or parameter override handling not ported'})
+    line=line_for_symbol('src/vms_ini_sysparams.c','port_vms37_init_param_defaults')
+    if line is None:missing+=1
+    sysparam_sections.append({'original_lines':[first,last],
+        'status':'partial' if line else 'missing','pc_file':'src/vms_ini_sysparams.c',
+        'pc_symbol':'port_vms37_init_param_defaults','pc_line':line,
+        'function':label+' copied as a native default; configured PARAMS.DAT override is unresolved'})
+    cursor=last+1
+if cursor<=3007:
+    sysparam_sections.append({'original_lines':[cursor,3007],
+        'status':'unresolved','reason':'Other system parameters and configured PARAMS.DAT overrides not ported'})
+result['files'].append({'original_file':'SYS/SRC/SYSPARAM.MAR',
+    'original_lines':3007,'sections':sysparam_sections,
+    'unresolved_integration':'Only original INIT defaults for process, lock, PHV and swap-map sizing are represented. SYSBOOT PARAMS.DAT overrides and the remaining SYSPARAM cells are unported.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')

@@ -52,6 +52,17 @@ int main(void){
     CHECK(v.phv_slots==1u && port_ini_phvswap_pix(&v,0u)==32u);
     CHECK(port_ini_phvswap_refcount(&v,0u)==1024);
     CHECK(port_ini_phvswap_pte(&v,0u)==0u);
+    const struct port_ini_phvswap_settings vms37_defaults={
+        .balance_set_count=36u,.system_pix=72u,.max_working_set=1024u,
+        .phvec_dyn_type=0u,.swapmap_dyn_type=0u};
+    CHECK(port_ini_phvswap_init(storage,sizeof storage,&vms37_defaults,&v)==
+          PORT_INI_PHVSWAP_OK);
+    CHECK(v.phv_slots==37u&&v.phv_record_bytes==160u&&
+          v.swapmap_record_bytes==4112u&&v.swapper_p0lr==1024u);
+    CHECK(port_ini_phvswap_pix(&v,36u)==72u&&
+          port_ini_phvswap_refcount(&v,36u)==1024&&
+          port_ini_phvswap_refcount(&v,35u)==-1&&
+          port_ini_phvswap_pte(&v,1023u)==0u);
     puts("INIT.MAR native process header vector, system reference and swap PTE map PASS");
     return 0;
 }

@@ -10327,7 +10327,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3053,
+          "pc_line": 3054,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10365,7 +10365,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3053,
+          "pc_line": 3054,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -22890,6 +22890,154 @@
         }
       ],
       "unresolved_integration": "The native SYS.EXE source IRP lookaside queue allocates/releases preallocated IRP slots under a caller-provided IPL synchronization contract and is used by resident DQA0 DDT boot reads. Host-tested allocation also selects exact-size IRP/LRP/SRP queues and falls back to the variable pool; this broader allocator is not yet wired to ACP because the first live wiring attempt regressed DQA0 DDT publication. Pool extension, resource waits, public user SYS$QIO integration, and paged pool remain unresolved."
+    },
+    {
+      "original_file": "SYS/SRC/SYSPARAM.MAR",
+      "original_lines": 3007,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            637
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            638,
+            646
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "MAXPROCESSCNT default 72 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            647,
+            752
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            753,
+            760
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "BALSETCNT default 36 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            761,
+            788
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            789,
+            796
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "WSMAX default 1024 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            797,
+            1518
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            1519,
+            1526
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "REALTIME_SPTS default 0 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            1527,
+            1543
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            1544,
+            1551
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "LOCKIDTBL default 128 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            1552,
+            1556
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            1557,
+            1564
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "RESHASHTBL default 32 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            1565,
+            1569
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            1570,
+            1577
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "DEADLOCK_WAIT default 10 seconds copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            1578,
+            3007
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters and configured PARAMS.DAT overrides not ported"
+        }
+      ],
+      "unresolved_integration": "Only original INIT defaults for process, lock, PHV and swap-map sizing are represented. SYSBOOT PARAMS.DAT overrides and the remaining SYSPARAM cells are unported."
     }
   ]
 }
