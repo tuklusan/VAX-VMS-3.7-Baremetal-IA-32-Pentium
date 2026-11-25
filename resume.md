@@ -1955,3 +1955,13 @@ Verification: full `make -j2 all test v37schedcheck` PASS (exit 0); coverage reg
 
 M397 implementation commit: `54e4da94bc0e576bb9f8508e0dcf83eba365d092`.
 Published GitHub main M397 implementation commit: `54e4da94bc0e576bb9f8508e0dcf83eba365d092`.
+
+
+## M398 - Bound the selected IA-32 kernel-stack top, 25 November 2026
+
+Added checked 32-bit extent arithmetic before the native scheduler writes TSS ESP0. On the IA-32 target, uintptr_t wraps at 32 bits, so comparing an already-wrapped sum against UINT32_MAX did not reject an address-space overflow. The context helper now validates the frame address plus full 76-byte restore image before publishing the stack top. Host tests cover the largest representable valid top, overflow, and addresses outside IA-32. This protects the M397 TSS handoff; no process contexts are activated yet.
+
+Verification: `make v37ia32ctxcheck all` PASS; full `make -j2 test v37schedcheck` PASS (exit 0); coverage generation and validation PASS (2,135 ranges, zero errors); `git diff --check` PASS. One `make qemu-sysboot-m217` PASS, including the actual CPL1/CPL2 hardware stack probe and DQA0 IRQ14 Files-11 read, then the existing incomplete INIT stop. The overflow edge remains host-tested; the real ring-transition path executed. Capture `logs/serial/qemu-m217-run-local-20261125T195951193235Z.log`: 6,148 bytes, SHA-256 `94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6`. No QEMU runner remains.
+
+M398 implementation commit: `c4180b15fc48fb02c7daab720f99d503080298c4`.
+Published GitHub main M398 implementation commit: `c4180b15fc48fb02c7daab720f99d503080298c4`.
