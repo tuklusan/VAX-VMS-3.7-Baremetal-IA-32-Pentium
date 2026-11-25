@@ -127,14 +127,14 @@ int port_v37_sysassign_lookup_qio_channel(void *context,uint32_t pid,
        (!c->device&&(!c->bindings||!c->binding_count))||
        c->device_database_base!=
            (uint32_t)(uintptr_t)c->device_database||
-       (c->binding_count&&!c->bindings))return -1;
+       (c->binding_count&&!c->bindings)||
+       c->binding_count>PORT_V37_DEVICE_UCB_COUNT)return -1;
     struct port_v37_ccb_view view={0};
     if(port_v37_ccb_resolve(c->ccb_base,c->ccb_preceding_bytes,channel,
        c->maximum_channel_offset,0u,&view)!=PORT_V37_CCB_OK)return -1;
     const struct port_v37_sysqio_device *device=0;
     uint32_t bound_ddb=0u;
     if(c->bindings){
-        if(c->binding_count>UINT16_MAX)return -1;
         for(size_t i=0;i<c->binding_count;i++){
             if(!c->bindings[i].ucb||!c->bindings[i].device)return -1;
             if(c->bindings[i].ucb==view.ucb){
@@ -183,7 +183,9 @@ uint32_t port_v37_sysassign_qio_charge(void *context,uint32_t pid,
     if(!c||!ops||!ops->lock_io_database||!ops->unlock_io_database||
        !outstanding||!pid||pid!=c->owner_pid||access_mode>3u||!c->ccb_base||
        (!c->assigned_ucb&&!c->binding_count)||
-       (c->binding_count&&!c->bindings))return PORT_V37_CCB_BAD;
+       (c->binding_count&&!c->bindings)||
+       c->binding_count>PORT_V37_DEVICE_UCB_COUNT)
+        return PORT_V37_CCB_BAD;
     const uint32_t locked=ops->lock_io_database(ops->context);
     if(!(locked&1u))return locked;
     struct port_v37_ccb_view view={0};
@@ -193,7 +195,6 @@ uint32_t port_v37_sysassign_qio_charge(void *context,uint32_t pid,
     if(status==PORT_V37_CCB_OK){
         int allowed=0;
         if(c->bindings){
-            if(c->binding_count>UINT16_MAX)status=PORT_V37_CCB_BAD;
             for(size_t i=0;status==PORT_V37_CCB_OK&&i<c->binding_count;i++){
                 if(!c->bindings[i].ucb||!c->bindings[i].device){
                     status=PORT_V37_CCB_BAD;break;

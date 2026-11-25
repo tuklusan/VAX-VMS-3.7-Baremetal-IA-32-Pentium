@@ -425,6 +425,10 @@ int main(void){
     CHECK(port_v37_sysassign_lookup_qio_channel(&qio_fixture.channels,
         assign_process.pid,second_channel,&qio_prepared.channel)!=0);
     qio_bindings[1].ddb=info.ddb[3];
+    qio_fixture.channels.binding_count=PORT_V37_DEVICE_UCB_COUNT+1u;
+    CHECK(port_v37_sysassign_lookup_qio_channel(&qio_fixture.channels,
+        assign_process.pid,assigned,&qio_prepared.channel)!=0);
+    qio_fixture.channels.binding_count=2u;
     uint16_t bad_channel=UINT16_MAX;
     struct port_v37_sysassign_descriptor_request bad_descriptor=
         assign_descriptor;
