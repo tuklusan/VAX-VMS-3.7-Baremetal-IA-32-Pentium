@@ -354,7 +354,12 @@ uint32_t port_v37_sched_wait_current(struct port_v37_scheduler *s,
     put16(queue+8u,(uint16_t)(get16(queue+8u)+1u));
     put16(pcb+PCBSTATE,get16(queue+10u));
     s->current_pcb=0u;s->current_priority=32u;
-    return port_v37_sched_select(s,selected_pcb,selected_frame);
+    status=port_v37_sched_select(s,selected_pcb,selected_frame);
+    /* SCH$WAITK cannot return to the process it just blocked. Surface a
+     * committed blocked state when no native runnable context is available. */
+    return status==PORT_V37_SCHED_EMPTY||
+           status==PORT_V37_SCHED_NO_CONTEXT?
+        PORT_V37_SCHED_BLOCKED:status;
 }
 
 uint32_t port_v37_sched_wake_waiter(struct port_v37_scheduler *s,

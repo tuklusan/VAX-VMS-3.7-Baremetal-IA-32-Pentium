@@ -229,7 +229,7 @@ int main(void){
         return fail("SCH$WAITK rejects malformed source WQH before mutation");
     f.wait_queue.forward=f.wait_queue.backward=f.wait_queue_va;
     if(port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
-           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_EMPTY||
+           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_BLOCKED||
        selected||restore_frame||scheduler.current_pcb||
        f.wait_queue.count!=1u||f.wait_queue.forward!=f.pcb_va[0]||
        f.wait_queue.backward!=f.pcb_va[0]||
