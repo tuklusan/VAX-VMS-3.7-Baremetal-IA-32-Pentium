@@ -1858,3 +1858,12 @@ Verification: `make v37eventwaitcheck` PASS after the final change; `make v37sch
 
 Local M387 implementation commit: d4e37539129670b6ebbeb6d32017c7de2f9d3413.
 Published GitHub main M387 implementation commit: 77138de66942acaf15e67f396b2148b115d4e750.
+
+## M388 - Serialize WFLOR/WFLAND and POSTEF transactions, 25 November 2026
+
+Added scheduler synchronization callbacks for the native event-flag APIs. WFLOR/WFLAND and POSTEF now require an enter/leave pair and hold the source IPL_SYNCH equivalent across event-flag checks, PCB wait-mask updates, WQH changes, CEF scans and wake transitions. SYS.EXE supplies a UP IA-32 callback that masks local interrupts and restores the caller's prior IF state. Host tests verify balanced enter/leave calls; scheduler-only users retain their existing caller-held synchronization contract. This is a UP interrupt-mask translation, not VAX IPL emulation or SMP locking, and the public event service dispatcher remains unbound.
+
+Verification: focused `make v37schedcheck v37eventwaitcheck` PASS; full `make -j2 all test` exit 0; coverage generation and source-range validation PASS (2,135 ranges, 451/4,566 original files indexed, zero validation errors); `git diff --check` PASS. One `make qemu-sysboot-m217` PASS. Guest log `logs/serial/qemu-m217-run-local-20261125T190030458606Z.log`, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6; it verifies existing DQA0/IRQ14/ACP and IRQ0 checkpoints, then reaches incomplete INIT. The guest does not exercise WFLOR/WFLAND/POSTEF. No QEMU process remains. No login/DCL/DECnet/SET HOST is claimed.
+
+Local M388 implementation commit: 2f743eda14fe4c306691b9dc304e9eb2950b7a0e.
+Published GitHub main M388 implementation commit: 383c755e89bdcae383ea5a19163803b3bfb81738.
