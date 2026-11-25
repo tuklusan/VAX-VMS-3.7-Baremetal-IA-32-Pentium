@@ -761,6 +761,8 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
     p->result->irp_count=executive_irps.packet_count;
     p->result->lrp_count=executive_lrps.packet_count;
     p->result->srp_count=executive_srps.packet_count;
+    p->result->npaged_pool_base=(uint32_t)(uintptr_t)executive_np_base;
+    p->result->npaged_pool_bytes=executive_free_npages;
     p->result->signature=PORT_SYS_EXEC_PACKET_RESULT_TAG;
     return PORT_SYS_EXEC_NORMAL;
 }

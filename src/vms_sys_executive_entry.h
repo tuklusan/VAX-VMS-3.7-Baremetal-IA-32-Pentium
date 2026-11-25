@@ -257,6 +257,8 @@ struct port_sys_exec_result {
     const uint8_t *swapper_vms_pcb;
     struct port_v37_scheduler *vms_scheduler;
     port_v37_sched_interrupt_fn vms_sched_interrupt;
+    /* SYSBOOT carved interval backing the source NPAGEDYN pool. */
+    uint32_t npaged_pool_base,npaged_pool_bytes;
 };
 struct port_sys_exec_start {
     uint32_t signature,version;

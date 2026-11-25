@@ -327,6 +327,15 @@ static void hex32(uint32_t n) {
         if (shift == 0) break;
     }
 }
+static int bootstrap_np_contains(const struct port_sys_exec_result *layout,
+                                 const void *address,uint32_t bytes){
+    if(!layout||!address||!bytes||(uintptr_t)address>UINT32_MAX||
+       !layout->npaged_pool_base||!layout->npaged_pool_bytes)return 0;
+    const uint64_t first=layout->npaged_pool_base;
+    const uint64_t limit=first+layout->npaged_pool_bytes;
+    const uint64_t object=(uintptr_t)address;
+    return object>=first&&object+bytes<=limit;
+}
 static const char scan_unshifted[0x40] = {
     [0x02]='1',[0x03]='2',[0x04]='3',[0x05]='4',[0x06]='5',
     [0x07]='6',[0x08]='7',[0x09]='8',[0x0A]='9',[0x0B]='0',
@@ -3263,7 +3272,11 @@ void kmain(void) {
        packet_result.lrp_queue->packet_bytes!=
            PORT_VMS37_DEFAULT_LRPSIZE+64u ||
        packet_result.srp_queue->packet_bytes!=PORT_VMS37_DEFAULT_SRPSIZE ||
-       packet_result.lrp_queue->minimum_bytes!=512u){
+       packet_result.lrp_queue->minimum_bytes!=512u ||
+       packet_result.npaged_pool_bytes!=init_params.nonpaged_dynamic_bytes ||
+       packet_result.npaged_pool_base<PORT_SYS_ELF_START ||
+       (uint64_t)packet_result.npaged_pool_base+
+           packet_result.npaged_pool_bytes>PORT_SYS_ELF_LIMIT){
         bootstrap_message("INIT: SYS.EXE packet queue initialization failed.");
         bootstrap_halt();
     }
@@ -3412,6 +3425,12 @@ void kmain(void) {
        !lock_result.lock_database->lock_id_table ||
        !lock_result.lock_database->resource_hash_table ||
        !lock_result.lock_database->process_bitmap ||
+       !bootstrap_np_contains(&packet_result,
+           lock_result.lock_database->lock_id_table,512u) ||
+       !bootstrap_np_contains(&packet_result,
+           lock_result.lock_database->resource_hash_table,128u) ||
+       !bootstrap_np_contains(&packet_result,
+           lock_result.lock_database->process_bitmap,10u) ||
        *(const uint32_t *)(const void *)(lock_result.lock_database->lock_id_table+4u)!=2u ||
        *(const uint32_t *)(const void *)(lock_result.lock_database->lock_id_table+508u)!=0u){
         bootstrap_message("INIT: resident SYS.EXE lock database setup failed.");
@@ -3432,6 +3451,10 @@ void kmain(void) {
     if(loaded_sys(&proc_request)!=PORT_SYS_EXEC_NORMAL ||
        proc_result.signature!=PORT_SYS_EXEC_PV_RESULT_TAG ||
        !proc_result.process_vector ||
+       proc_result.process_vector->allocated_bytes<12u ||
+       !bootstrap_np_contains(&packet_result,
+           proc_result.process_vector->pcb_vector,
+           proc_result.process_vector->allocated_bytes-12u) ||
        proc_result.process_vector->allocated_slots!=73u ||
        proc_result.process_vector->system_pix!=72u ||
        proc_result.process_vector->max_pix!=71u ||
@@ -3504,6 +3527,10 @@ void kmain(void) {
     if(phv_status!=PORT_SYS_EXEC_NORMAL ||
        phv_result.signature!=PORT_SYS_EXEC_PHV_RESULT_TAG ||
        !phv_result.process_header_vector ||
+       phv_result.process_header_vector->pool_bytes<12u ||
+       !bootstrap_np_contains(&packet_result,
+           phv_result.process_header_vector->phv_pix_base,
+           phv_result.process_header_vector->pool_bytes-12u) ||
        phv_result.process_header_vector->phv_slots!=37u ||
        phv_result.process_header_vector->phv_record_bytes!=160u ||
        phv_result.process_header_vector->swapmap_record_bytes!=4112u ||
@@ -3531,6 +3558,10 @@ void kmain(void) {
     if(loaded_sys(&mpw_request)!=PORT_SYS_EXEC_NORMAL ||
        mpw_result.signature!=PORT_SYS_EXEC_MPW_RESULT_TAG ||
        !mpw_result.modified_page_writer_map ||
+       mpw_result.modified_page_writer_map->allocated_bytes<12u ||
+       !bootstrap_np_contains(&packet_result,
+           mpw_result.modified_page_writer_map->pte_base,
+           mpw_result.modified_page_writer_map->allocated_bytes-12u) ||
        mpw_result.modified_page_writer_map->effective_fault_cluster!=
            PORT_VMS37_DEFAULT_MPW_WRTCLUSTER ||
        mpw_result.modified_page_writer_map->swap_increment!=
@@ -3563,6 +3594,10 @@ void kmain(void) {
     if(loaded_sys(&pfl_request)!=PORT_SYS_EXEC_NORMAL ||
        pfl_result.signature!=PORT_SYS_EXEC_PFL_RESULT_TAG ||
        !pfl_result.pagefile_vector ||
+       pfl_result.pagefile_vector->allocated_bytes<12u ||
+       !bootstrap_np_contains(&packet_result,
+           pfl_result.pagefile_vector->pointers,
+           pfl_result.pagefile_vector->allocated_bytes-12u) ||
        pfl_result.pagefile_vector->entries!=1u ||
        pfl_result.pagefile_vector->allocated_bytes!=16u ||
        pfl_result.pagefile_vector->null_pagefile_vbn!=0u ||
