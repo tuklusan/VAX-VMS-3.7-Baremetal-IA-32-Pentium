@@ -374,6 +374,10 @@ int main(void){
         &assigned_view)==PORT_V37_CCB_OK&&assigned_view.ucb==info.ucb[0]);
     struct port_v37_sysqio_device qio_device={
         .fdt=&fdt,.fdt_bytes=sizeof fdt,.online=1u};
+    struct port_v37_sysqio_device nla_qio_device={
+        .fdt=&fdt,.fdt_bytes=sizeof fdt,.online=1u};
+    struct port_v37_sysassign_qio_binding qio_bindings[2]={
+        {info.ucb[0],&qio_device},{info.ucb[4],&nla_qio_device}};
     qio_fixture=(struct sysqio_fixture){.channels={
         .ccb_base=assign_process.ccb_base,
         .ccb_preceding_bytes=assign_process.ccb_preceding_bytes,
@@ -381,7 +385,8 @@ int main(void){
         .owner_pid=assign_process.pid,
         .device_database=db,.device_database_bytes=sizeof db_words,
         .device_database_base=(uint32_t)(uintptr_t)db,
-        .assigned_ucb=info.ucb[0],.device=&qio_device}};
+        .assigned_ucb=info.ucb[0],.device=&qio_device,
+        .bindings=qio_bindings,.binding_count=2u}};
     uint32_t sysqio_ap[13]={12u,1u,assigned,PORT_DQ_READPBLK,0u};
     sysqio_ap[7]=0x1000u;sysqio_ap[8]=512u;
     struct port_v37_sysqio_process qio_process={
@@ -403,6 +408,18 @@ int main(void){
         qio_process.direct_io_count==0&&qio_fixture.errors==0u);
     CHECK(port_v37_sysassign_lookup_qio_channel(&qio_fixture.channels,
         0x12340002u,assigned,&qio_prepared.channel)!=0);
+    uint16_t second_channel=0u;
+    struct port_v37_sysassign_local_request second_assign=assign_request;
+    second_assign.device_name="NLA0";second_assign.device_name_bytes=4u;
+    second_assign.high_water_channel=&assign_process.ccb_high_water;
+    CHECK(port_v37_sysassign_local(&second_assign,&second_channel)==
+        PORT_V37_CCB_OK&&second_channel!=assigned);
+    qio_fixture.channels.maximum_channel_offset=assign_process.ccb_high_water;
+    CHECK(port_v37_sysassign_lookup_qio_channel(&qio_fixture.channels,
+        assign_process.pid,second_channel,&qio_prepared.channel)==0&&
+        qio_prepared.channel.ucb==(void *)(db+(info.ucb[4]-
+            (uint32_t)(uintptr_t)db))&&
+        qio_prepared.channel.device==&nla_qio_device);
     uint16_t bad_channel=UINT16_MAX;
     struct port_v37_sysassign_descriptor_request bad_descriptor=
         assign_descriptor;
@@ -505,6 +522,10 @@ int main(void){
         &channel_ioc)==PORT_V37_CCB_OK&&
         channel_ioc==1u&&port_v37_read16(ccb_base-16u+
         PORT_V37_CCB_IOC)==1u);
+    CHECK(port_v37_sysassign_qio_charge(&qio_fixture.channels,
+        qio_process.pid,second_channel,qio_process.access_mode,&assign_ops,
+        &channel_ioc)==PORT_V37_CCB_OK&&channel_ioc==1u&&
+        port_v37_read16(ccb_base-32u+PORT_V37_CCB_IOC)==1u);
     CHECK(port_v37_iopost_ccb_complete(ccb_base,48u,
         port_v37_read16(qio_irp+40u),0,&channel_ioc,&deaccess_irp)==
         PORT_V37_IOPOST_OK&&channel_ioc==0u&&deaccess_irp==0u&&

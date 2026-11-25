@@ -123,20 +123,32 @@ int port_v37_sysassign_lookup_qio_channel(void *context,uint32_t pid,
     uint32_t channel,struct port_v37_sysqio_resolved_channel *out){
     struct port_v37_sysassign_qio_context *c=context;
     if(!c||!out||!pid||pid!=c->owner_pid||!c->owner_pid||
-       !c->ccb_base||!c->device_database||!c->device||
-       !c->assigned_ucb||c->device_database_base!=
+       !c->ccb_base||!c->device_database||
+       (!c->device&&(!c->bindings||!c->binding_count))||
+       c->device_database_base!=
            (uint32_t)(uintptr_t)c->device_database||
-       c->assigned_ucb<c->device_database_base)return -1;
+       (c->binding_count&&!c->bindings))return -1;
     struct port_v37_ccb_view view={0};
     if(port_v37_ccb_resolve(c->ccb_base,c->ccb_preceding_bytes,channel,
-          c->maximum_channel_offset,0u,&view)!=PORT_V37_CCB_OK||
-       view.ucb!=c->assigned_ucb)return -1;
+       c->maximum_channel_offset,0u,&view)!=PORT_V37_CCB_OK)return -1;
+    const struct port_v37_sysqio_device *device=0;
+    if(c->bindings){
+        if(c->binding_count>UINT16_MAX)return -1;
+        for(size_t i=0;i<c->binding_count;i++){
+            if(!c->bindings[i].ucb||!c->bindings[i].device)return -1;
+            if(c->bindings[i].ucb==view.ucb){
+                if(device)return -1; /* duplicate UCB bindings are ambiguous */
+                device=c->bindings[i].device;
+            }
+        }
+    }else if(view.ucb==c->assigned_ucb)device=c->device;
+    if(!device||view.ucb<c->device_database_base)return -1;
     const uint32_t offset=view.ucb-c->device_database_base;
     if(offset>c->device_database_bytes||
        PORT_V37_UCB_FIXED_BYTES>c->device_database_bytes-offset)
         return -1;
     const struct port_v37_sysqio_resolved_channel result={
-        .device=c->device,
+        .device=device,
         .ucb=(void *)(uintptr_t)(c->device_database+offset),
         .window=view.window,.ccb_access_limit=view.access_limit};
     *out=result;
@@ -149,15 +161,30 @@ uint32_t port_v37_sysassign_qio_charge(void *context,uint32_t pid,
     struct port_v37_sysassign_qio_context *c=context;
     if(!c||!ops||!ops->lock_io_database||!ops->unlock_io_database||
        !outstanding||!pid||pid!=c->owner_pid||access_mode>3u||!c->ccb_base||
-       !c->assigned_ucb)return PORT_V37_CCB_BAD;
+       (!c->assigned_ucb&&!c->binding_count)||
+       (c->binding_count&&!c->bindings))return PORT_V37_CCB_BAD;
     const uint32_t locked=ops->lock_io_database(ops->context);
     if(!(locked&1u))return locked;
     struct port_v37_ccb_view view={0};
     uint32_t status=port_v37_ccb_resolve(c->ccb_base,
         c->ccb_preceding_bytes,channel,c->maximum_channel_offset,access_mode,
         &view);
-    if(status==PORT_V37_CCB_OK&&view.ucb!=c->assigned_ucb)
-        status=PORT_V37_CCB_IVCHAN;
+    if(status==PORT_V37_CCB_OK){
+        int allowed=0;
+        if(c->bindings){
+            if(c->binding_count>UINT16_MAX)status=PORT_V37_CCB_BAD;
+            for(size_t i=0;status==PORT_V37_CCB_OK&&i<c->binding_count;i++){
+                if(!c->bindings[i].ucb||!c->bindings[i].device){
+                    status=PORT_V37_CCB_BAD;break;
+                }
+                if(c->bindings[i].ucb==view.ucb){
+                    if(allowed){status=PORT_V37_CCB_BAD;break;}
+                    allowed=1;
+                }
+            }
+        }else allowed=view.ucb==c->assigned_ucb;
+        if(status==PORT_V37_CCB_OK&&!allowed)status=PORT_V37_CCB_IVCHAN;
+    }
     if(status==PORT_V37_CCB_OK){
         uint8_t *const count=view.ccb+PORT_V37_CCB_IOC;
         const uint16_t next=(uint16_t)((uint16_t)count[0]|

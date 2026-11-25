@@ -43,8 +43,11 @@ uint32_t port_v37_sysassign_descriptor_service(
 uint32_t port_v37_sysassign_local(
     const struct port_v37_sysassign_local_request *,uint16_t *channel);
 
-/* Bind a process's assigned source CCB table to SYSQIOREQ channel lookup.
- * The device description is supplied for the selected UCB by the caller. */
+/* Bind each assigned source UCB to its native device/FDT description. */
+struct port_v37_sysassign_qio_binding {
+    uint32_t ucb;
+    const struct port_v37_sysqio_device *device;
+};
 struct port_v37_sysassign_qio_context {
     uint8_t *ccb_base;
     size_t ccb_preceding_bytes;
@@ -54,6 +57,8 @@ struct port_v37_sysassign_qio_context {
     size_t device_database_bytes;
     uint32_t device_database_base,assigned_ucb;
     const struct port_v37_sysqio_device *device;
+    const struct port_v37_sysassign_qio_binding *bindings;
+    size_t binding_count;
 };
 int port_v37_sysassign_lookup_qio_channel(void *,uint32_t,uint32_t,
     struct port_v37_sysqio_resolved_channel *);
