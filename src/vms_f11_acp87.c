@@ -519,25 +519,50 @@ uint32_t port_f11b_deaccess(struct port_f11_87_context *c,
     return PORT_F11_87_NORMAL;
 }
 
-static uint32_t fcb_lbn_for_vbn(const uint8_t header[512],uint32_t vbn,
-                                uint32_t *lbn){
-    if(!header||!vbn||!lbn)return PORT_F11_87_BADPARAM;
-    const unsigned offset=(unsigned)header[1]*2u;
-    const unsigned bytes=(unsigned)header[58]*2u;
-    if(offset<76u||offset>510u||bytes>510u-offset)
-        return PORT_F11_87_BADFILEHDR;
-    struct port_f11_86_map map={header+offset,bytes,0u,0u,0u};
-    uint32_t first_vbn=1u;
-    while(map.offset<map.length){
-        if(!port_f11b_get_map_pointer(&map))return PORT_F11_87_BADFILEHDR;
-        if(!map.blocks)continue;
-        if(map.blocks>UINT32_MAX-first_vbn||map.lbn>UINT32_MAX-map.blocks)
-            return PORT_F11_87_BADFILEHDR;
-        if(vbn>=first_vbn&&vbn-first_vbn<map.blocks){
-            *lbn=map.lbn+(vbn-first_vbn);
-            return PORT_F11_87_NORMAL;
+static uint32_t acp_read_extension_header(void *context,
+    struct port_f11_86_fid fid,void *extension_fcb,uint8_t header[512]){
+    struct port_f11_87_context *c=context;
+    uint32_t lbn=0u;(void)extension_fcb;
+    return port_f11b_read_header(c,&fid,0,header,&lbn);
+}
+static uint32_t fcb_lbn_for_vbn(struct port_f11_87_context *c,
+    const uint8_t primary[512],uint32_t vbn,uint32_t *lbn){
+    if(!c||!primary||!vbn||!lbn)return PORT_F11_87_BADPARAM;
+    struct port_f11_86_headerops ops={acp_read_extension_header,c};
+    uint8_t header[512],next[512];
+    for(unsigned i=0u;i<256u;i++){
+        if(i==0u){
+            for(unsigned j=0u;j<sizeof header;j++)header[j]=primary[j];
         }
-        first_vbn+=map.blocks;
+        uint32_t blocks=0u;
+        if(!port_f11b_file_size(header,&blocks))return PORT_F11_87_BADFILEHDR;
+        if(vbn<=blocks){
+            const unsigned map_offset=(unsigned)header[1]*2u;
+            const unsigned map_bytes=(unsigned)header[58]*2u;
+            if(map_offset<76u||map_offset>510u||map_bytes>510u-map_offset)
+                return PORT_F11_87_BADFILEHDR;
+            struct port_f11_86_map map={header+map_offset,map_bytes,0u,0u,0u};
+            uint32_t first_vbn=1u;
+            while(map.offset<map.length){
+                if(!port_f11b_get_map_pointer(&map))return PORT_F11_87_BADFILEHDR;
+                if(!map.blocks)continue;
+                if(map.blocks>UINT32_MAX-first_vbn||map.lbn>UINT32_MAX-map.blocks)
+                    return PORT_F11_87_BADFILEHDR;
+                if(vbn>=first_vbn&&vbn-first_vbn<map.blocks){
+                    *lbn=map.lbn+(vbn-first_vbn);
+                    return PORT_F11_87_NORMAL;
+                }
+                first_vbn+=map.blocks;
+            }
+            return PORT_F11_87_BADFILEHDR;
+        }
+        vbn-=blocks;
+        int found=0;
+        const uint32_t status=port_f11b_next_header(header,0,0,0,
+            c->volume->extended_fid,&ops,next,&found);
+        if(status!=PORT_F11_87_NORMAL)return status;
+        if(!found)return PORT_F11_87_INCOMPLETE;
+        for(unsigned j=0u;j<sizeof header;j++)header[j]=next[j];
     }
     return PORT_F11_87_BADFILEHDR;
 }
@@ -553,13 +578,13 @@ uint32_t port_f11b_read_vbn(struct port_f11_87_context *c,
         return PORT_F11_87_BADPARAM;
     *completed=0u;
     if(!count)return PORT_F11_87_NORMAL;
-    if(!f->file_blocks||(uint64_t)offset+count>
-       (uint64_t)f->file_blocks*512u)return PORT_F11_87_INCOMPLETE;
+    if(!f->file_blocks)return PORT_F11_87_INCOMPLETE;
     uint8_t header[512];
     uint32_t status=c->ops.read_lbn(c->ops.context,f->header_lbn,header);
     if(status!=PORT_F11_87_NORMAL)return PORT_F11_87_IOERROR;
     uint32_t header_status=0u;
-    const uint32_t checked=port_f11b_check_header2(header,f->fid,0,
+    const uint32_t checked=port_f11b_check_header2(header,f->fid,
+                                                    c->volume->extended_fid,
                                                     &header_status);
     if(checked!=1u||header_status!=PORT_F11_87_NORMAL)
         return PORT_F11_87_BADFILEHDR;
@@ -572,7 +597,7 @@ uint32_t port_f11b_read_vbn(struct port_f11_87_context *c,
         const uint32_t vbn=position/512u+1u;
         const uint32_t within=position%512u;
         uint32_t lbn=0u;
-        status=fcb_lbn_for_vbn(header,vbn,&lbn);
+        status=fcb_lbn_for_vbn(c,header,vbn,&lbn);
         if(status!=PORT_F11_87_NORMAL){*completed=done;return status;}
         uint8_t sector[512];
         if(c->ops.read_lbn(c->ops.context,lbn,sector)!=PORT_F11_87_NORMAL){

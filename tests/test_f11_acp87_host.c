@@ -9,10 +9,12 @@ static void wr16(uint8_t *p,unsigned x){p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);}
 static uint16_t rd16(const uint8_t *p){return (uint16_t)(p[0]|(uint16_t)p[1]<<8);}
 struct fake {
     uint8_t header[512];
+    uint8_t extension_header[512];
     unsigned allocation,deallocation,turns,maps,reads,invalidated,switched,posts,dismounts,mounts;
     unsigned fail_read_number;
     uint8_t window_write_access;
     uint32_t vbn,lbn;
+    uint32_t extension_vbn,extension_lbn;
     FILE *disk;
 };
 static void *allocate(void *p,uint32_t bytes,uint32_t kind){
@@ -38,12 +40,14 @@ static uint32_t turn(void *p,struct port_f11_87_window *w,const uint8_t h[512],
 }
 static uint32_t map(void *p,uint32_t vbn,uint32_t *lbn){
     struct fake *m=p;m->maps++;m->vbn=vbn;
-    *lbn=m->lbn;return 1;
+    *lbn=m->extension_vbn==vbn?m->extension_lbn:m->lbn;return 1;
 }
 static uint32_t read_lbn(void *p,uint32_t lbn,uint8_t h[512]){
     struct fake *m=p;m->reads++;
     if(m->fail_read_number==m->reads)return PORT_F11_87_IOERROR;
     if(lbn==m->lbn)memcpy(h,m->header,512);
+    else if(m->extension_lbn&&lbn==m->extension_lbn)
+        memcpy(h,m->extension_header,512);
     else {
         assert(m->disk&&fseek(m->disk,(long)((uint64_t)lbn*512u),SEEK_SET)==0);
         assert(fread(h,1u,512u,m->disk)==512u);
@@ -222,7 +226,8 @@ int main(int argc,char **argv){
     assert(port_f11b_read_vbn(&close_context,read_fcb,
         read_fcb->file_blocks*512u,1u,acp_bytes,sizeof acp_bytes,
         &acp_completed)==PORT_F11_87_INCOMPLETE&&acp_completed==0u&&
-        m.reads==reads_after_acp);
+        m.reads==reads_after_acp+1u);
+    reads_after_acp=m.reads;
     assert(port_f11b_read_vbn(&close_context,read_fcb,0u,0u,0,0u,
         &acp_completed)==PORT_F11_87_NORMAL&&acp_completed==0u&&
         m.reads==reads_after_acp);
@@ -254,6 +259,37 @@ int main(int argc,char **argv){
     assert(fseek(fp,(long)((uint64_t)second_lbn*512u),SEEK_SET)==0&&
            fread(expected+212u,1u,sizeof expected-212u,fp)==sizeof expected-212u);
     assert(!memcmp(acp_bytes,expected,sizeof expected));
+    /* FIL$RDCHKFILHDR follows FH2$W_EXT_FID and advances the segment. */
+    m.extension_lbn=7000u;
+    m.extension_vbn=6u+vol.index_bitmap_blocks+4u*vol.cluster;
+    memcpy(m.extension_header,m.header,512);
+    wr16(m.extension_header+4u,1u);
+    wr16(m.extension_header+8u,6u);
+    wr16(m.extension_header+10u,1u);
+    wr16(m.extension_header+12u,0u);
+    memset(m.extension_header+14u,0,6u);
+    port_f11b_checksum(m.extension_header);
+    wr16(m.header+14u,6u);
+    wr16(m.header+16u,1u);
+    wr16(m.header+18u,0u);
+    m.header[19u]=0u;
+    port_f11b_checksum(m.header);
+    uint8_t extension_bytes[64],extension_expected[64];
+    unsigned reads_before_extension=m.reads;
+    assert(port_f11b_read_vbn(&close_context,read_fcb,
+        read_fcb->file_blocks*512u,sizeof extension_bytes,extension_bytes,
+        sizeof extension_bytes,&acp_completed)==PORT_F11_87_NORMAL&&
+        acp_completed==sizeof extension_bytes&&m.reads==reads_before_extension+3u);
+    assert(fseek(fp,(long)((uint64_t)first_lbn*512u),SEEK_SET)==0&&
+        fread(extension_expected,1u,sizeof extension_expected,fp)==
+             sizeof extension_expected);
+    assert(!memcmp(extension_bytes,extension_expected,sizeof extension_bytes));
+    /* A self-referential extension fails the source segment check. */
+    memcpy(m.extension_header+14u,m.extension_header+8u,6u);
+    port_f11b_checksum(m.extension_header);
+    assert(port_f11b_read_vbn(&close_context,read_fcb,
+        read_fcb->file_blocks*2u*512u,1u,acp_bytes,
+        sizeof acp_bytes,&acp_completed)==PORT_F11_87_BADFILEHDR);
     unsigned free_before_close=m.deallocation;
     unsigned transactions_before_close=vol.transactions;
     assert(port_f11b_deaccess(&close_context,&no_attributes)==PORT_F11_87_NORMAL);

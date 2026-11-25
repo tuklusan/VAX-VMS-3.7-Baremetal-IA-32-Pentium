@@ -10257,7 +10257,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11a_io_done",
-          "pc_line": 624,
+          "pc_line": 649,
           "function": "Native Files-11 ACP routine"
         },
         {
@@ -10291,7 +10291,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp87.c",
           "pc_symbol": "port_f11b_io_done",
-          "pc_line": 628,
+          "pc_line": 653,
           "function": "Native Files-11 ACP routine"
         },
         {

@@ -1540,3 +1540,13 @@ Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS; make s
 The initial GitHub API publication commit 0a967896b5a860e4b130259aa789bbb00a9e8e86 was found to contain truncated large text blobs after comparing the fetched tree with the verified local tree. The corrective M353 publication restores verified kernel.c, source-coverage.json, and resume.md content along with the ACP regressions. The corrective source/test publication has local commit af2fb1b11868cb8060cd2a9ee019c787ab91f54d and published GitHub main commit 78e34fec3fa6df96a8c332e56fbae2086eb48e2c. No invalid image or QEMU output is asserted.
 
 Still incomplete: public SYS$QIO process dispatch, process ACP and AST completion, extension-header reads, remaining INIT, scheduler/image activation, authentic RMS SYSUAF/login, DCL, DECnet Phase IV, and genuine SET HOST 0.
+
+## M354 - Follow Files-11 FH2 extension headers during VBN reads, 25 November 2026
+
+The ACP VBN resolver now follows the source FH2 extension-FID chain with sequential segment checks, maps each extension FID through the active Files-11 index, and resolves VBNs in the corresponding retrieval map. Traversal is bounded to 256 headers. Host coverage builds a synthetic extension header on the generated volume, reads and compares data bytes from its mapped extent, and rejects a self-referential extension whose segment number is invalid. Process-level ACP, public SYS$QIO, AST completion, and large-file scale limits beyond the bounded chain remain incomplete.
+
+Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0); make sourcerangecheck PASS (2,110 ranges, 449/4,566 original files indexed, zero errors); fresh single-runner make qemu-sysboot-m217 PASS through the existing 700-byte single-header ACP read via DQA0 DDT/IRQ14, followed by the explicit incomplete-INIT stop. QEMU does not exercise the synthetic extension header. Capture logs/serial/qemu-m217-run-local-20261125T135028615660Z.log, 5,885 bytes, SHA-256 0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb; runner exited.
+
+
+M354 local implementation commit: 5b4fd33f5365e77bab30d0018ae38e100bb0a8ae.
+Still incomplete: public SYS$QIO process dispatch, ACP IRP/AST semantics, remaining INIT, scheduler/image activation, authentic RMS SYSUAF/login, DCL, DECnet Phase IV, and genuine SET HOST 0.
