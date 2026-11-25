@@ -158,4 +158,128 @@ struct port_sys_exec_result {
     /* Original LOGNAMSUB.MAR limited bootstrap SYSTEM names only. */
     const struct port_log_system_table *boot_system_log_table;
     uint32_t (*boot_system_translate)(const struct port_log_system_table *,
-        const char *,size_t,uint
+        const char *,size_t,uint32_t,uint8_t *,size_t,struct port_log_result *);
+    /* Source IOC$SEARCHDEV resolves boot SYSTEM logical aliases to prelinked
+     * physical DDB/UCB only; original DQ disk DDT/ACP stay unbound. */
+    const struct port_devlog_trace *ioc_logical_samples;
+    uint32_t (*ioc_logical_search)(const struct port_log_system_table *,
+        const uint8_t *,size_t,uint32_t,const struct port_v37_device_result *,
+        const char *,size_t,unsigned,struct port_devlog_trace *);
+    /* Source DQDRIVER DPTAB/DDTAB and exact 136-byte FUNCTAB staged in
+     * resident SYS.EXE. Private physical READ/WRITE actions only; DQA0 DDT=0. */
+    const struct port_dqddt_stage *dq_ddt_stage;
+    uint32_t (*dq_ddt_function)(const struct port_dqddt_stage *,
+        const struct port_dq_fdt *,uint16_t);
+    uint32_t (*dq_ddt_dispatch_bootwrite)(const struct port_dqddt_stage *,
+        const struct port_dq_fdt *,const struct port_dq_bootread_request *,
+        struct port_dq_bootread_result *,uint32_t);
+    uint32_t (*dq_ddt_startio)(const struct port_dqddt_stage *,
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,struct port_dq_bootread_result *);
+    uint32_t (*dq_ddt_startio_async)(const struct port_dqddt_stage *,
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,uint32_t,uint16_t [256],
+        port_dqddt_async_start_fn,void (*)(void *,int),void *);
+    uint32_t (*dq_ddt_startio_async_write)(const struct port_dqddt_stage *,
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,uint32_t,
+        port_dqddt_async_write_start_fn,void (*)(void *,int),void *,void *);
+    uint32_t (*dq_bootread_commit)(const struct port_dq_bootread_request *,
+        const uint16_t [256],struct port_dq_bootread_result *);
+    uint32_t (*dq_bootwrite_commit)(const struct port_dq_bootread_request *,
+        struct port_dq_bootread_result *);
+    const struct port_dq_crb *dq_crb;
+    /* Private stage-validated READPBLK bridge result, not DDB/CRB binding. */
+    const struct port_dq_bootread_result *dq_ddt_bootread;
+    const uint16_t *dq_ddt_bootread_sector;
+    /* Original RELOCDRV IOC$INITDRV applies exact source DPT_STORE to
+     * isolated DQA0 DDB/UCB copies; no driver/ACP/CRB publication. */
+    const struct port_relocdrv_dq *dq_dpt_initialized;
+    uint32_t (*dq_dpt_check)(const struct port_relocdrv_dq *);
+    /* IOC$RELOC_DDT executes inside resident SYS.EXE on a private copy.
+     * No action slot is callable and no DDB DDT pointer is attached. */
+    const uint8_t *dq_relocated_private;
+    uint32_t dq_relocated_private_base;
+    uint32_t (*dq_private_relocation_check)(const uint8_t *,size_t,uint32_t);
+    /* Native-pointer DDT materialized from source and published in DQA0
+     * DDB/UCB. Supported actions are still private physical block I/O only. */
+    const struct port_dqddt_native *dq_native_ddt;
+    uint32_t (*dq_native_ddt_check)(const struct port_dqddt_stage *,
+        const struct port_dq_fdt *,const struct port_dqddt_native *);
+    uint32_t dq_ddt_published,dqa_ioc_status,dqa_ioc_ddb,dqa_ioc_ucb;
+    uint32_t dqa_ioc_error_stage;
+    uint32_t dq_published_f11_read_bytes,dq_published_f11_read_irps;
+    uint32_t dq_acp_header_lbn,dq_acp_header_reads,dq_acp_data_reads;
+    const uint8_t *dq_acp_header;
+    const void *dq_acp_fcb;
+    uint32_t dq_acp_file_blocks;
+    uint32_t dq_acp_alloc_source,dq_acp_np_allocations;
+    uint32_t dq_acp_failed_fcb_reclaimed;
+    uint32_t dq_acp_readonly_wcb_closed;
+    uint32_t dq_acp_fib_identified_sys_file;
+    uint32_t dq_acp_wcb_map_hits;
+    uint16_t dq_acp_file,dq_acp_sequence,dq_acp_volume;
+    /* DEVICEDAT DDB/UCB pointer graph; DQA0 is partially DDT/CRB bound. */
+    const struct port_v37_device_result *device_db;
+    const uint8_t *device_db_bytes;
+    const uint8_t *null_ddt_bytes; /* native source DDTAB/FUNCTAB, 80 bytes */
+    uint32_t null_ddt_base; /* real resident SYS.EXE table address */
+    uint32_t (*device_db_check)(const uint8_t *,size_t,uint32_t,
+         const struct port_v37_device_result *);
+    /* Diagnostic source transitions only, not an active OP driver. */
+    const uint8_t *console_action_scratch;
+    uint32_t console_action_result;
+    /* IOSUBPAGD source physical lookup on prelinked records, diagnostic.
+     * Even a matched UCB has no live DDT; lookup status is UNBOUND. */
+    const struct port_v37_ioc_result *ioc_samples;
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+       const struct port_v37_device_result *,const char *,size_t,
+       struct port_v37_ioc_result *);
+    /* Source NLDRIVER -> SYSQIOREQ EXE$FINISHIOC completed IRP -> IOC post
+     * queue; IRQ dispatch, CCB, IOSB and AST delivery remain unavailable. */
+    const struct port_v37_iopost_queue *iopost;
+    const uint8_t *post_irp_bytes;
+    uint32_t iopost_softint_count,iopost_softint_level,iopost_ucb_ops;
+    uint32_t (*nl_post)(struct port_v37_qio_request *);
+    /* Original IOCIOPOST.MAR kernel end-action path via a real IA-32
+     * DPL0 software INT 0x90; no process IOSB, event flags or ASTs. */
+    const struct port_v37_iopost_endlog *iopost_endlog;
+    uint32_t (*iopost_isr)(void);
+    uint32_t iopost_remaining;
+    uint32_t logical_table[2];
+    uint8_t lock_max_resource_depth;
+    /* Source-layout INI_PSTATE table. Its SYSTEM/NULL PCB records still lack
+     * PHD/native context and are not yet eligible for process activation. */
+    const struct port_ini_procvec *process_vector;
+    const struct port_exe_sched_process *system_sched_process,*null_sched_process;
+    /* PDAT.MAR source-layout PCB templates; both PHDs remain absent. */
+    const uint8_t *system_vms_pcb,*null_vms_pcb;
+    const uint8_t *swapper_vms_pcb;
+    struct port_v37_scheduler *vms_scheduler;
+    port_v37_sched_interrupt_fn vms_sched_interrupt;
+};
+struct port_sys_exec_start {
+    uint32_t signature,version;
+    uint64_t system_time;
+    uint8_t pcb_type;
+    uint8_t initialized_images;
+    uint16_t reserved;
+    struct port_sys_exec_result *result;
+    uint32_t phase;
+    const void *sysloa_descriptor;
+    uint32_t sysloa_bytes;
+    const struct port_sysloa386_cpu_ops *cpu_ops;
+    const struct port_sysloa386_boot_ops *boot_ops;
+    const struct port_boo_packet_settings *packet_settings;
+    const struct port_ini_lock_settings *lock_settings;
+    const struct port_ini_proc_settings *proc_settings;
+    const struct port_ini_phvswap_settings *phv_settings;
+    const struct port_ini_mpw_settings *mpw_settings;
+    const struct port_sys_exec_intstack_settings *intstack_settings;
+    const struct port_ini_pflvec_settings *pfl_settings;
+    const struct port_sys_exec_wcb_settings *syswcb_settings;
+    const struct port_ini_io_state *bootdev_state;
+    const struct port_sys_exec_dq_boot_settings *dq_boot_io;
+};
+uint32_t port_sys_executive_entry(const struct port_sys_exec_start *parameters);
+#endif
