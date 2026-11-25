@@ -1550,3 +1550,10 @@ Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0
 
 M354 local implementation commit: 5b4fd33f5365e77bab30d0018ae38e100bb0a8ae; published GitHub main commit: e3996bc3915fc527ff8f304be4988460fb6f3777.
 Still incomplete: public SYS$QIO process dispatch, ACP IRP/AST semantics, remaining INIT, scheduler/image activation, authentic RMS SYSUAF/login, DCL, DECnet Phase IV, and genuine SET HOST 0.
+
+## M355 - Test Files-11 ACP reads across extension boundaries, 25 November 2026
+
+Extended the synthetic FH2 fixture to read 64 bytes straddling the primary header's final VBN and the extension header's first VBN. The test requires separate reads through both retrieval maps and compares the returned bytes with the generated disk sectors. This covers host ACP extension-boundary resolution; QEMU SYS.EXE currently has no extension header.
+
+Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0). No QEMU runner was needed for this host-test-only change. The M354 guest boot result remains recorded above. Local M355 commit: bd14d475a74ad37da74a670d0b3deaa302c6e819.
+

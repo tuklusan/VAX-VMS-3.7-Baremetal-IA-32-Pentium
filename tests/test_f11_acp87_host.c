@@ -240,7 +240,7 @@ int main(int argc,char **argv){
         acp_bytes,sizeof acp_bytes,&acp_completed)==PORT_F11_87_IOERROR&&
         acp_completed==212u);
     m.fail_read_number=0u;
-    uint32_t first_lbn=0u,second_lbn=0u;
+    uint32_t first_lbn=0u,second_lbn=0u,third_lbn=0u;
     struct port_f11_86_map actual_map={m.header+2u*m.header[1],
         2u*m.header[58],0u,0u,0u};
     uint32_t next_vbn=1u;
@@ -251,9 +251,11 @@ int main(int argc,char **argv){
             first_lbn=actual_map.lbn+(1u-next_vbn);
         if(2u>=next_vbn&&2u-next_vbn<actual_map.blocks)
             second_lbn=actual_map.lbn+(2u-next_vbn);
+        if(3u>=next_vbn&&3u-next_vbn<actual_map.blocks)
+            third_lbn=actual_map.lbn+(3u-next_vbn);
         next_vbn+=actual_map.blocks;
     }
-    assert(first_lbn&&second_lbn);
+    assert(first_lbn&&second_lbn&&third_lbn);
     assert(fseek(fp,(long)((uint64_t)first_lbn*512u+300u),SEEK_SET)==0&&
            fread(expected,1u,212u,fp)==212u);
     assert(fseek(fp,(long)((uint64_t)second_lbn*512u),SEEK_SET)==0&&
@@ -284,6 +286,18 @@ int main(int argc,char **argv){
         fread(extension_expected,1u,sizeof extension_expected,fp)==
              sizeof extension_expected);
     assert(!memcmp(extension_bytes,extension_expected,sizeof extension_bytes));
+    uint8_t boundary_bytes[64],boundary_expected[64];
+    unsigned reads_before_boundary=m.reads;
+    assert(port_f11b_read_vbn(&close_context,read_fcb,
+        2u*512u+480u,sizeof boundary_bytes,boundary_bytes,
+        sizeof boundary_bytes,&acp_completed)==PORT_F11_87_NORMAL&&
+        acp_completed==sizeof boundary_bytes&&
+        m.reads==reads_before_boundary+4u);
+    assert(fseek(fp,(long)((uint64_t)third_lbn*512u+480u),SEEK_SET)==0&&
+        fread(boundary_expected,1u,32u,fp)==32u);
+    assert(fseek(fp,(long)((uint64_t)first_lbn*512u),SEEK_SET)==0&&
+        fread(boundary_expected+32u,1u,32u,fp)==32u);
+    assert(!memcmp(boundary_bytes,boundary_expected,sizeof boundary_bytes));
     /* A self-referential extension fails the source segment check. */
     memcpy(m.extension_header+14u,m.extension_header+8u,6u);
     port_f11b_checksum(m.extension_header);
