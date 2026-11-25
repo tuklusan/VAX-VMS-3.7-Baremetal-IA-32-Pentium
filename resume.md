@@ -1581,5 +1581,5 @@ Still incomplete: live public SYS$QIO process dispatch, ACP window and AST seman
 Corrected F11B NEXT_HEADER parsing for extended FIDs: the extension number byte at FH2 offset 19 is no longer folded into the relative volume number at offset 18. The host ACP fixture now follows an extension whose file number uses the high extension byte, reads its mapped bytes, crosses the primary/extension boundary, checks aggregate EOF, and rejects a malformed segment cycle. This change affects extension-header resolution; regular FID behavior is unchanged.
 
 Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0); make sourcerangecheck PASS (2,116 ranges, 450/4,566 originals indexed, zero errors); fresh single-runner make qemu-sysboot-m217 PASS through the existing SYS.EXE ACP read and DQA0 DDT/IRQ14 path, then explicit incomplete-INIT halt. QEMU does not use extended FIDs. Capture logs/serial/qemu-m217-run-local-20261125T140637045960Z.log, 5,885 bytes, SHA-256 0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb; runner exited.
-Local M358 commit: 7dfdf135a9b4d17840c69776e71f65dd84d9e598.
+Local M358 commit: 7dfdf135a9b4d17840c69776e71f65dd84d9e598; published GitHub main commit: 488df03aa9d5a6cdc6b6a147dbea89a0c8e8cc7a.
 
