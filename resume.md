@@ -1905,3 +1905,12 @@ Local M392 implementation commit: `21422c6340f46c1fab1e428ed5c6ef59e1def8d0`.
 Published GitHub main M392 implementation commit: `a4acbb942e319c7016bda7e923e3ef34d056c7b2`.
 
 Remaining acceptance work is unchanged: INIT has no NULL/SWAPPER PHD/context activation; public SYS$QIO and process-aware AST completion, Files-11 ACP request integration, scheduler/process image activation, genuine login and DCL, DECnet Phase IV, and real SET HOST 0 remain incomplete. Source coverage is not complete (8,032 missing and 56,877 unresolved ranges remain in the indexed inventory).
+
+## M393 - Return SYS$QIO bad-parameter status for invalid wrapper inputs, 25 November 2026
+
+The SYS$QIO IRP-preparation wrapper now sets the caller's service-status output to `SS$_BADPARAM` when a mandatory input is missing, if that status pointer is available. It still clears both packet outputs and returns the preparation-stage error. Host regression starts with a poisoned status and null IRP specification, then verifies deterministic `SS$_BADPARAM`, cleared packet outputs, unchanged process I/O/AST quotas, and unchanged prepared-request storage. This is wrapper validation only; no guest SYS$QIO dispatch or DQA0 process request is wired.
+
+Verification: focused `make sysqioargscheck` PASS; full `make -j2 all test` PASS (exit 0); `python3 tools/gen_source_coverage.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS (2,135 ranges; 451/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,311 partial, 56,877 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). No QEMU run: the changed path is host-tested and remains outside guest dispatch. No process activation, login, DCL, DECnet, or SET HOST is claimed.
+
+Local M393 implementation commit: `7e497c5a0780820433fec583793e312c62fcc669`.
+Published GitHub main M393 implementation commit: `0f603b7ab5f61526b00fc4c1f3da41ac13e7f004`.
