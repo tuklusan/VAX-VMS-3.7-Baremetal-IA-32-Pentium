@@ -43,7 +43,8 @@ uint32_t port_v37_sched_chse(struct port_v37_scheduler *,uint32_t pcb_address,
     uint8_t priority_increment_class);
 /* SCH$SCHED queue selection through CURPCB/priority bookkeeping. Refuses
  * to consume a runnable PCB until real PHD and IA-32 PHYPCB context exist. */
-uint32_t port_v37_sched_select(struct port_v37_scheduler *,uint32_t *pcb_address);
+uint32_t port_v37_sched_select(struct port_v37_scheduler *,uint32_t *pcb_address,
+    uint32_t *ia32_restore_frame);
 /* SCH$RESCHED queue insertion after an architecture caller saves context. */
 uint32_t port_v37_sched_resched_current(struct port_v37_scheduler *,
     uint32_t current_pcb_address);

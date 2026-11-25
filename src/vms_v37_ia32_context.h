@@ -33,5 +33,8 @@ struct port_v37_ia32_context_seed {
 uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
     const struct port_v37_ia32_context_seed *,
     struct port_v37_ia32_restore_frame **restore_frame);
+/* Validate a saved frame before SCH$SCHED hands it to the IA-32 IRET path. */
+uint32_t port_v37_ia32_context_validate(
+    const struct port_v37_ia32_restore_frame *restore_frame);
 
 #endif

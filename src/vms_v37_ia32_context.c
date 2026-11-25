@@ -53,3 +53,26 @@ uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
     *restore_frame=frame;
     return PORT_V37_IA32_CONTEXT_OK;
 }
+
+uint32_t port_v37_ia32_context_validate(
+    const struct port_v37_ia32_restore_frame *frame){
+    if(!frame||((uintptr_t)frame&3u)||!frame->registers.eip)
+        return PORT_V37_IA32_CONTEXT_BAD;
+    static const uint16_t code[4]={0x08u,0x19u,0x2au,0x3bu};
+    static const uint16_t data[4]={0x10u,0x21u,0x32u,0x43u};
+    const uint8_t mode=(uint8_t)(frame->registers.cs&3u);
+    if(frame->registers.cs!=code[mode]||frame->ds!=data[mode]||
+       frame->es!=data[mode]||frame->fs!=data[mode]||frame->gs!=data[mode])
+        return PORT_V37_IA32_CONTEXT_PRIVILEGE;
+    if((frame->registers.eflags&UINT32_C(0x00027000))||
+       !(frame->registers.eflags&2u))
+        return PORT_V37_IA32_CONTEXT_FLAGS;
+    if(mode==0u){
+        if(frame->registers.user_esp||frame->registers.user_ss)
+            return PORT_V37_IA32_CONTEXT_STACK;
+    }else if(!frame->registers.user_esp||
+             frame->registers.user_ss!=data[mode]){
+        return PORT_V37_IA32_CONTEXT_STACK;
+    }
+    return PORT_V37_IA32_CONTEXT_OK;
+}

@@ -1,11 +1,14 @@
 #include "vms_v37_sched.h"
+#include "vms_v37_ia32_context.h"
 #include <stdio.h>
 #include <string.h>
 
 struct fixture {
     struct port_v37_scheduler *scheduler;
     uint8_t pcbs[4][PORT_V37_PCB_BYTES];
+    struct port_v37_ia32_restore_frame frames[4];
     uint32_t pcb_va[4];
+    uint32_t frame_va[4];
     unsigned reschedules,swapper_wakes;
 };
 static uint32_t addr(void *context,const void *p){
@@ -25,6 +28,10 @@ static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
         return (uint8_t *)&f->scheduler->heads[0]+(va-hb);
     for(unsigned i=0;i<4u;i++)
         if(va==f->pcb_va[i]&&bytes<=PORT_V37_PCB_BYTES)return f->pcbs[i];
+    for(unsigned i=0;i<4u;i++)
+        if(va==f->frame_va[i]&&
+           bytes<=sizeof(struct port_v37_ia32_restore_frame))
+            return (uint8_t *)&f->frames[i];
     return 0;
 }
 static void wake(void *context,uint32_t pcb){
@@ -63,7 +70,8 @@ static uint32_t get32(const uint8_t *p){
 int main(void){
     struct port_v37_scheduler scheduler;struct fixture f={
         .scheduler=&scheduler,.pcb_va={0x00200000u,0x00201000u,
-                                       0x00202000u,0x00203000u}};
+                                       0x00202000u,0x00203000u},
+        .frame_va={0x00400000u,0x00401000u,0x00402000u,0x00403000u}};
     const struct port_v37_sched_ops ops={&f,addr,resolve,wake,reschedule};
     if(port_v37_sched_init(&scheduler,&ops)!=PORT_V37_SCHED_OK||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
@@ -104,17 +112,28 @@ int main(void){
        f.reschedules!=prior_reschedules+1u||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("resident higher-priority reschedule request");
-    uint32_t selected=0u;
-    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_NO_CONTEXT||
-       selected||count(&f,15u)!=2u)
+    uint32_t selected=0u,restore_frame=0u;
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_NO_CONTEXT||selected||restore_frame||count(&f,15u)!=2u)
         return fail("scheduler leaves contextless PCB queued");
     for(unsigned i=0;i<3u;i++){
         if(port_v37_pcb_bind_context(f.pcbs[i],sizeof f.pcbs[i],
-           0x00300000u+i*0x1000u,0x00400000u+i*0x1000u)!=PORT_V37_PCB_OK)
+           0x00300000u+i*0x1000u,f.frame_va[i])!=PORT_V37_PCB_OK)
             return fail("source PCB PHD/native context binding");
+        f.frames[i]=(struct port_v37_ia32_restore_frame){
+            .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
+            .registers={.eip=0x1000u+i*4u,.cs=0x08u,.eflags=2u}};
     }
-    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+    f.frames[2].registers.cs=0x08u|3u;
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_CORRUPT||selected||restore_frame||
+       scheduler.current_pcb||count(&f,15u)!=2u)
+        return fail("SCH$SCHED rejects malformed IA-32 context without dequeue");
+    f.frames[2].registers.cs=0x08u;
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||
        selected!=f.pcb_va[2]||
+       restore_frame!=f.frame_va[2]||
        get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR||
        scheduler.current_pcb!=selected||scheduler.current_priority!=15u||
        count(&f,15u)!=1u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
@@ -123,23 +142,27 @@ int main(void){
        get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
        count(&f,15u)!=2u||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("SCH$RESCHED saves current PCB to COM tail");
-    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||
        selected!=f.pcb_va[1]||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("SCH$SCHED equal-priority FIFO selection");
     if(port_v37_sched_resched_current(&scheduler,selected)!=PORT_V37_SCHED_OK||
-       port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+       port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||
        selected!=f.pcb_va[2]||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("SCH$RESCHED round-robin requeue order");
-    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||
        selected!=f.pcb_va[1]||port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("SCH$SCHED equal-priority FIFO selection after requeue");
-    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_OK||
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||
        selected!=f.pcb_va[0]||f.pcbs[0][PORT_V37_PCB_PRI]!=29u||
        scheduler.current_priority!=29u||port_v37_sched_check(&scheduler)!=
            PORT_V37_SCHED_OK)
         return fail("SCH$SCHED source floating priority and selection");
-    if(port_v37_sched_select(&scheduler,&selected)!=PORT_V37_SCHED_EMPTY||
-       selected)
+    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_EMPTY||selected||restore_frame)
         return fail("SCH$SCHED empty resident set");
     puts("SYS/SRC/SCHED.MAR SCH$RESCHED/SCH$SCHED and RSE.MAR SCH$CHSE PASS");
     return 0;
