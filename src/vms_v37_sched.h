@@ -15,7 +15,8 @@ enum {
 };
 enum {PORT_V37_SCHED_OK=1u,PORT_V37_SCHED_BADPARAM=2u,
       PORT_V37_SCHED_CORRUPT=4u,PORT_V37_SCHED_UNRESOLVED=8u,
-      PORT_V37_SCHED_EMPTY=16u,PORT_V37_SCHED_NO_CONTEXT=32u};
+      PORT_V37_SCHED_EMPTY=16u,PORT_V37_SCHED_NO_CONTEXT=32u,
+      PORT_V37_SCHED_BLOCKED=64u};
 
 struct port_v37_sched_head {uint32_t forward,backward;};
 /* SYSDEFQZ.MDL WQH: forward/back links, 16-bit count and wait state. */
@@ -65,8 +66,10 @@ uint32_t port_v37_sched_save_current(struct port_v37_scheduler *,
 uint32_t port_v37_sched_interrupt(struct port_v37_scheduler *,
     uint32_t interrupted_restore_frame_address,uint32_t *selected_pcb,
     uint32_t *selected_restore_frame);
-/* SYSWAIT.MAR SCH$WAITK queue/state/context transition. Quota/time charging,
- * pending-AST delivery and the higher-level event-flag wait remain separate. */
+/* SYSWAIT.MAR SCH$WAITK queue/state/context transition. BLOCKED means the
+ * process was committed to its WQH but no runnable context could be selected;
+ * it is never a retry-safe failure. Quota/time charging, pending-AST delivery
+ * and the higher-level event-flag wait remain separate. */
 uint32_t port_v37_sched_wait_current(struct port_v37_scheduler *,
     uint32_t wait_queue_address,uint32_t interrupted_restore_frame_address,
     uint32_t *selected_pcb,uint32_t *selected_restore_frame);
