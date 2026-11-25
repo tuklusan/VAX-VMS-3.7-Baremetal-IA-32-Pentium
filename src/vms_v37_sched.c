@@ -540,6 +540,155 @@ uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *s,
     return status;
 }
 
+static uint32_t event_records(struct port_v37_scheduler *s,uint8_t *pcb,
+    uint32_t pcb_address,uint32_t local_wqh,unsigned cluster,
+    uint32_t *flags_address,uint32_t *wqh_address,uint16_t *wait_state,
+    uint8_t **ceb_out){
+    if(cluster<2u){
+        *flags_address=pcb_address+PORT_V37_PCB_EFCS+cluster*4u;
+        *wqh_address=local_wqh;*wait_state=PORT_V37_SCH_LEF;
+        if(ceb_out)*ceb_out=0;
+        return local_wqh?PORT_V37_SCHED_OK:PORT_V37_SCHED_BADPARAM;
+    }
+    const uint32_t ceb_address=get32(pcb+PORT_V37_PCB_EFC2P+
+                                     (cluster-2u)*4u);
+    uint8_t *ceb=resolve(s,ceb_address,PORT_V37_CEB_BYTES);
+    if(!ceb)return PORT_V37_SCHED_UNRESOLVED;
+    const uint8_t type=ceb[PORT_V37_CEB_TYPE];
+    if(type!=PORT_V37_CEB_NORMAL&&type!=PORT_V37_CEB_SLAVE&&
+       type!=PORT_V37_CEB_SHARED)return PORT_V37_SCHED_CORRUPT;
+    if(ceb_out)*ceb_out=ceb;
+    *flags_address=ceb_address+PORT_V37_CEB_EFC;
+    *wqh_address=ceb_address+PORT_V37_CEB_WQH;
+    *wait_state=PORT_V37_SCH_CEF;
+    return PORT_V37_SCHED_OK;
+}
+
+static int event_condition(const uint8_t *pcb,uint32_t flags,int wait_all){
+    const uint32_t selected=~get32(pcb+PORT_V37_PCB_EFWM);
+    const uint32_t present=flags&selected;
+    return wait_all?present==selected:present!=0u;
+}
+
+uint32_t port_v37_sched_wait_event(struct port_v37_scheduler *s,
+    uint32_t local_lef_wqh,uint32_t interrupted_frame,uint32_t efn,
+    uint32_t mask,int wait_all,uint32_t *selected_pcb,
+    uint32_t *selected_frame,uint32_t *service_status){
+    if(!s||!s->initialized||!s->current_pcb||!interrupted_frame||
+       !selected_pcb||!selected_frame||!service_status)
+        return PORT_V37_SCHED_BADPARAM;
+    *selected_pcb=0u;*selected_frame=0u;
+    if(efn>127u){*service_status=PORT_V37_SS_ILLEFC;
+        return PORT_V37_SCHED_OK;}
+    const unsigned cluster=efn>>5u;
+    const uint32_t pcb_address=s->current_pcb;
+    uint8_t *pcb=resolve(s,pcb_address,PORT_V37_PCB_BYTES);
+    if(!pcb)return PORT_V37_SCHED_UNRESOLVED;
+    uint32_t flags_address=0u,wqh_address=0u;uint16_t state=0u;
+    uint8_t *ceb=0;
+    uint32_t status=event_records(s,pcb,pcb_address,local_lef_wqh,
+        cluster,&flags_address,&wqh_address,&state,&ceb);
+    if(status!=PORT_V37_SCHED_OK){
+        *service_status=status==PORT_V37_SCHED_UNRESOLVED?
+            PORT_V37_SS_UNASEFC:PORT_V37_SS_ILLEFC;
+        return status==PORT_V37_SCHED_UNRESOLVED?PORT_V37_SCHED_OK:status;
+    }
+    /* Slave CEB replication requires the original interprocessor request
+     * and lock path; reject it until that path is present. */
+    if(ceb&&ceb[PORT_V37_CEB_TYPE]==PORT_V37_CEB_SLAVE){
+        *service_status=PORT_V37_SS_UNASEFC;return PORT_V37_SCHED_OK;
+    }
+    uint8_t *flags=resolve(s,flags_address,sizeof(uint32_t)),*queue=0;
+    status=wait_queue_check(s,wqh_address,&queue);
+    if(!flags||status!=PORT_V37_SCHED_OK)
+        return status==PORT_V37_SCHED_OK?PORT_V37_SCHED_UNRESOLVED:status;
+    if(get16(queue+10u)!=state)return PORT_V37_SCHED_CORRUPT;
+    const uint32_t current=__atomic_load_n((uint32_t *)(void *)flags,
+                                           __ATOMIC_SEQ_CST);
+    const int satisfied=wait_all?((current&mask)==mask):((current&mask)!=0u);
+    *service_status=1u;
+    if(satisfied)return PORT_V37_SCHED_OK;
+    const uint32_t old_mask=get32(pcb+PORT_V37_PCB_EFWM);
+    const uint8_t old_cluster=pcb[PORT_V37_PCB_WEFC];
+    const uint32_t old_sts=get32(pcb+PORT_V37_PCB_STS);
+    const uint32_t wait_mask=wait_all?(mask&~current):mask;
+    put32(pcb+PORT_V37_PCB_EFWM,~wait_mask);
+    pcb[PORT_V37_PCB_WEFC]=(uint8_t)cluster;
+    put32(pcb+PORT_V37_PCB_STS,wait_all?
+        old_sts|PORT_V37_PCB_STS_WALL:old_sts&~PORT_V37_PCB_STS_WALL);
+    const uint16_t old_count=get16(queue+8u);
+    status=port_v37_sched_wait_current(s,wqh_address,interrupted_frame,
+        selected_pcb,selected_frame);
+    if(get16(queue+8u)==old_count&&
+       get16(pcb+PORT_V37_PCB_STATE)==PORT_V37_SCH_CUR){
+        put32(pcb+PORT_V37_PCB_EFWM,old_mask);
+        pcb[PORT_V37_PCB_WEFC]=old_cluster;
+        put32(pcb+PORT_V37_PCB_STS,old_sts);
+    }
+    return status;
+}
+
+uint32_t port_v37_sched_post_event(struct port_v37_scheduler *s,
+    uint32_t target_pcb,uint32_t local_lef_wqh,uint32_t efn,
+    uint8_t priority_class,uint32_t *service_status){
+    if(!s||!s->initialized||!target_pcb||!service_status||
+       priority_class>=PORT_V37_SCH_INCREMENT_CLASSES)
+        return PORT_V37_SCHED_BADPARAM;
+    if(efn>127u){*service_status=PORT_V37_SS_ILLEFC;
+        return PORT_V37_SCHED_OK;}
+    uint8_t *target=resolve(s,target_pcb,PORT_V37_PCB_BYTES);
+    if(!target)return PORT_V37_SCHED_UNRESOLVED;
+    const unsigned cluster=efn>>5u;
+    uint32_t flags_address=0u,wqh_address=0u;uint16_t wait_state=0u;
+    uint8_t *ceb=0;
+    uint32_t status=event_records(s,target,target_pcb,local_lef_wqh,
+        cluster,&flags_address,&wqh_address,&wait_state,&ceb);
+    if(status!=PORT_V37_SCHED_OK){
+        *service_status=status==PORT_V37_SCHED_UNRESOLVED?
+            PORT_V37_SS_UNASEFC:PORT_V37_SS_ILLEFC;
+        return status==PORT_V37_SCHED_UNRESOLVED?PORT_V37_SCHED_OK:status;
+    }
+    if(ceb&&ceb[PORT_V37_CEB_TYPE]==PORT_V37_CEB_SLAVE){
+        *service_status=PORT_V37_SS_UNASEFC;return PORT_V37_SCHED_OK;
+    }
+    uint8_t *flags=resolve(s,flags_address,sizeof(uint32_t)),*queue=0;
+    status=wait_queue_check(s,wqh_address,&queue);
+    if(!flags||status!=PORT_V37_SCHED_OK)
+        return status==PORT_V37_SCHED_OK?PORT_V37_SCHED_UNRESOLVED:status;
+    if(get16(queue+10u)!=wait_state)return PORT_V37_SCHED_CORRUPT;
+    const uint32_t bit=UINT32_C(1)<<(efn&31u);
+    const uint32_t previous_flags=__atomic_fetch_or(
+        (uint32_t *)(void *)flags,bit,__ATOMIC_SEQ_CST);
+    *service_status=(previous_flags&bit)?PORT_V37_SS_WASSET:1u;
+    if(cluster<2u){
+        if(target[PORT_V37_PCB_WEFC]==cluster&&
+           get16(target+PORT_V37_PCB_STATE)==PORT_V37_SCH_LEF&&
+           event_condition(target,previous_flags|bit,
+             (get32(target+PORT_V37_PCB_STS)&PORT_V37_PCB_STS_WALL)!=0u))
+            return port_v37_sched_rse_event(s,PORT_V37_RSE_EVENT_LEF,
+                wqh_address,target_pcb,priority_class);
+        return PORT_V37_SCHED_OK;
+    }
+    uint32_t cursor=get32(queue);
+    const unsigned count=get16(queue+8u);
+    for(unsigned n=0;n<count;n++){
+        uint8_t *pcb=resolve(s,cursor,PORT_V37_PCB_BYTES);
+        if(!pcb)return PORT_V37_SCHED_CORRUPT;
+        const uint32_t next=get32(pcb+PORT_V37_PCB_SQFL);
+        if((get32(pcb+PORT_V37_PCB_STS)&PORT_V37_PCB_STS_RESIDENT)&&
+           pcb[PORT_V37_PCB_WEFC]==cluster&&
+           get16(pcb+PORT_V37_PCB_STATE)==PORT_V37_SCH_CEF&&
+           event_condition(pcb,previous_flags|bit,
+             (get32(pcb+PORT_V37_PCB_STS)&PORT_V37_PCB_STS_WALL)!=0u)){
+            status=port_v37_sched_rse_event(s,PORT_V37_RSE_EVENT_CEF,
+                wqh_address,cursor,priority_class);
+            if(status!=PORT_V37_SCHED_OK)return status;
+        }
+        cursor=next;
+    }
+    return wait_queue_check(s,wqh_address,&queue);
+}
+
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){
     if(!s||!s->initialized)return PORT_V37_SCHED_BADPARAM;
     uint32_t summary[2]={0u,0u};uint32_t ready[32]={0u};
