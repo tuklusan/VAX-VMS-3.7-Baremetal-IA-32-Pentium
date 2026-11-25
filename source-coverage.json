@@ -22137,7 +22137,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 520,
+          "pc_line": 521,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -22936,6 +22936,25 @@
         {
           "original_lines": [
             761,
+            765
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            766,
+            772
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "IRPCOUNT default 60 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            773,
             788
           ],
           "status": "unresolved",
@@ -22955,6 +22974,101 @@
         {
           "original_lines": [
             797,
+            800
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            801,
+            808
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "NPAGEDYN default 64000 bytes copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            809,
+            869
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            870,
+            876
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "LRPCOUNT default 4 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            877,
+            892
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            893,
+            899
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "LRPSIZE default 576 bytes copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            900,
+            914
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            915,
+            921
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "SRPCOUNT default 120 copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            922,
+            937
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            938,
+            944
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "SRPSIZE default 96 bytes copied as a native default; configured PARAMS.DAT override is unresolved"
+        },
+        {
+          "original_lines": [
+            945,
             1518
           ],
           "status": "unresolved",

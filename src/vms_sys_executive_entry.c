@@ -4,6 +4,7 @@
 #include "vms_exe_gettim.h"
 #include "vms_sysloavec.h"
 #include "vms_ini_log_templates.h"
+#include "vms_ini_sysparams.h"
 #include "vms_ini_dpt_templates.h"
 #include "vms_ini_syslog.h"
 #include "vms_ini_devicedb.h"
@@ -49,7 +50,7 @@ static struct port_sysloa_table executive_sysloa;
 /* This memory is genuinely loaded and zeroed by the SYSBOOT ELF loader,
  * mapped supervisor-only in the guest. Replacing its provisional size
  * limits with SYSGEN-selected BOO$ offsets remains later integration. */
-static uint8_t executive_packet_pages[16384] __attribute__((aligned(512)));
+static uint8_t executive_packet_pages[96u*1024u] __attribute__((aligned(512)));
 static struct port_ini_packet_list executive_irps,executive_lrps,executive_srps;
 static uint32_t executive_packet_ready;
 /* INIT's later nonpaged records occupy only the free low end of the
@@ -620,7 +621,14 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
        port_ini_packet_init(&areas[1],&executive_lrps)!=PORT_INI_PACKETS_OK ||
        port_ini_packet_init(&areas[2],&executive_srps)!=PORT_INI_PACKETS_OK)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
-    executive_free_npages=m.nonpaged_start-(uint32_t)start;
+    struct port_vms37_init_params init_params;
+    const uint32_t resident_free=m.nonpaged_start-(uint32_t)start;
+    if(port_vms37_init_param_defaults(&init_params)!=PORT_VMS37_SYSPARAM_OK||
+       resident_free<init_params.nonpaged_dynamic_bytes)
+        return PORT_SYS_EXEC_BAD_PARAMETERS;
+    /* INIT allocations consume the configured NPAGEDYN region; leave the
+     * extra native backing slack outside the original pool limit. */
+    executive_free_npages=init_params.nonpaged_dynamic_bytes;
     executive_packet_ready=1u;
     p->result->irp_queue=&executive_irps;
     p->result->lrp_queue=&executive_lrps;

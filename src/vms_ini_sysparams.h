@@ -8,6 +8,8 @@
 struct port_vms37_init_params {
     uint32_t max_processes;
     uint32_t realtime_spts;
+    uint32_t irp_count, lrp_count, lrp_size, srp_count, srp_size;
+    uint32_t nonpaged_dynamic_bytes;
     uint32_t lock_id_slots;
     uint32_t resource_hash_slots;
     uint32_t deadlock_wait_seconds;

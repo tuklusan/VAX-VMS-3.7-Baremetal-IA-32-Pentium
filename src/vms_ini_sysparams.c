@@ -8,6 +8,12 @@ uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *p){
     *p=(struct port_vms37_init_params){
         .max_processes=72u,             /* MAXPROCESSCNT */
         .realtime_spts=0u,              /* REALTIME_SPTS */
+        .irp_count=60u,                 /* IRPCOUNT */
+        .lrp_count=4u,                  /* LRPCOUNT */
+        .lrp_size=576u,                 /* LRPSIZE */
+        .srp_count=120u,                /* SRPCOUNT */
+        .srp_size=96u,                  /* SRPSIZE */
+        .nonpaged_dynamic_bytes=64000u, /* NPAGEDYN */
         .lock_id_slots=128u,            /* LOCKIDTBL */
         .resource_hash_slots=32u,       /* RESHASHTBL */
         .deadlock_wait_seconds=10u,     /* DEADLOCK_WAIT */

@@ -3178,14 +3178,19 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("SYSBOOT: Files-11 SYS.EXE native image loaded.");
+    struct port_vms37_init_params init_params;
+    if(port_vms37_init_param_defaults(&init_params)!=PORT_VMS37_SYSPARAM_OK){
+        bootstrap_message("INIT: original SYSPARAM defaults unavailable.");
+        bootstrap_halt();
+    }
     /* BOOTS/SRC/SYSBOOT.MAR: carved lookaside packet pages are provided to
-     * SYS.EXE before the CPU-specific load vector table is linked. These
-     * counts and sizes are a temporary native startup profile, not yet read
-     * from a complete SYSGEN image. No QIO process is started here. */
+     * SYS.EXE before the CPU-specific load vector table is linked. Counts,
+     * sizes and the resident nonpaged limit use original SYSPARAM defaults;
+     * PARAMS.DAT overrides and virtual NPAGEVIR mapping remain unresolved. */
     static const struct port_boo_packet_settings packet_profile={
-        .irp_length=PORT_V37_IRP_SIZE,.irp_count=8u,.irp_virtual_count=8u,
-        .lrp_requested_size=512u,.lrp_count=2u,.lrp_virtual_count=2u,
-        .srp_requested_size=128u,.srp_count=8u,.srp_virtual_count=8u};
+        .irp_length=PORT_V37_IRP_SIZE,.irp_count=60u,.irp_virtual_count=60u,
+        .lrp_requested_size=576u,.lrp_count=4u,.lrp_virtual_count=4u,
+        .srp_requested_size=96u,.srp_count=120u,.srp_virtual_count=120u};
     static struct port_sys_exec_result packet_result;
     const struct port_sys_exec_start packet_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
@@ -3197,15 +3202,15 @@ void kmain(void) {
        packet_result.signature!=PORT_SYS_EXEC_PACKET_RESULT_TAG ||
        !packet_result.irp_queue || !packet_result.lrp_queue ||
        !packet_result.srp_queue ||
-       packet_result.irp_count!=8u || packet_result.lrp_count!=2u ||
-       packet_result.srp_count!=8u ||
+       packet_result.irp_count!=60u || packet_result.lrp_count!=4u ||
+       packet_result.srp_count!=120u ||
        packet_result.irp_queue->next==0u ||
        packet_result.lrp_queue->next==0u ||
        packet_result.srp_queue->next==0u ||
        packet_result.irp_queue->packet_bytes!=PORT_V37_IRP_POOL_STRIDE ||
-       packet_result.lrp_queue->packet_bytes!=576u ||
-       packet_result.srp_queue->packet_bytes!=128u ||
-       packet_result.lrp_queue->minimum_bytes!=480u){
+       packet_result.lrp_queue->packet_bytes!=640u ||
+       packet_result.srp_queue->packet_bytes!=96u ||
+       packet_result.lrp_queue->minimum_bytes!=512u){
         bootstrap_message("INIT: SYS.EXE packet queue initialization failed.");
         bootstrap_halt();
     }
@@ -3331,11 +3336,6 @@ void kmain(void) {
 
     /* INIT.MAR consumes SYSPARAM values here. Use the original VMS 3.7
      * defaults until SYSBOOT's PARAMS.DAT override path is ported. */
-    struct port_vms37_init_params init_params;
-    if(port_vms37_init_param_defaults(&init_params)!=PORT_VMS37_SYSPARAM_OK){
-        bootstrap_message("INIT: original SYSPARAM defaults unavailable.");
-        bootstrap_halt();
-    }
     /* These records preserve INIT layout but do not start $ENQ. DYNDEF
      * types and SPT free-list addresses still require their source inputs. */
     struct port_ini_lock_settings lock_settings={
