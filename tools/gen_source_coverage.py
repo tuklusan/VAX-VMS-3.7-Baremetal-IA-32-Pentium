@@ -1670,10 +1670,10 @@ for orig,total,first,last,sym in f11_86_files:
         (last+1,total,None,None,'Original module terminator or blank source')
     ],integration)
 
-# F11B MAP_VBN now has a bounded ACP data-read path that follows FH2
-# extension-FID chains. It maps native retrieval pointers and sectors, while
-# the source window turn/retry, complete remap, and current-UCB assertions
-# remain unimplemented.
+# F11B MAP_VBN now has bounded ACP data reads across FH2 extension chains and
+# an explicit two-attempt MAP_WINDOW/READ_HEADER/TURN_WINDOW callback path.
+# Complete file remapping, live WCB callbacks and source BADRVNWCB bugcheck
+# semantics are still not integrated into the running ACP.
 mapvbn_sections=[]
 for first,last,path,symbol,purpose,status in [
     (1,66,None,None,'Original notices, declarations and routine description','excluded'),
@@ -1682,9 +1682,10 @@ for first,last,path,symbol,purpose,status in [
     (90,111,'src/vms_f11_acp87.c','acp_read_extension_header',
      'Extension volume header read through Files-11 index mapping; complete process volume/window switching is absent','partial'),
     (112,167,'src/vms_f11_acp86.c','port_f11b_map_window',
-     'Map callback and unmapped-block result; source window turn/retry and remapping are not wired','partial'),
-    (168,197,'src/vms_f11_acp87.c','port_f11b_read_vbn',
-     'Native FH2 retrieval-map LBN resolution and data reads across extension boundaries','partial'),
+     'Single MAP_WINDOW callback with bounded byte/block counts and no-map sentinel; live WCB wiring remains absent','partial'),
+    (168,182,None,None,'Complete-file remapping and current-window source setup are not integrated','missing'),
+    (183,197,'src/vms_f11_acp86.c','port_f11b_map_window_retry',
+     'Two MAP_WINDOW attempts with PMS turn accounting, READ_HEADER and TURN_WINDOW callbacks; live WCB attachment and BADRVNWCB bugcheck semantics remain partial','partial'),
     (198,202,None,None,'Original routine and module terminators','excluded')]:
     if path is None:
         mapvbn_sections.append({'original_lines':[first,last],'status':status,
@@ -1696,7 +1697,7 @@ for first,last,path,symbol,purpose,status in [
             'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':purpose})
 result['files'].append({'original_file':'F11B/SRC/MAPVBN.B32',
     'original_lines':202,'sections':mapvbn_sections,
-    'unresolved_integration':'Live WCB windows, source MAP_WINDOW callbacks, remap/turn retry, process UCB context and asynchronous ACP completion remain incomplete.'})
+    'unresolved_integration':'Complete-file remapping, live WCB/FCB callbacks, source BADRVNWCB bugcheck, process UCB context and asynchronous ACP completion remain incomplete.'})
 
 # M87: original ODS-1 and ODS-2 ACP file-header, FCB, and I/O paths.
 # The structures and callbacks are in the IA-32 Files-11 ACP source.

@@ -8864,7 +8864,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11a_get_time",
-          "pc_line": 291,
+          "pc_line": 320,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -8898,7 +8898,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11b_get_time",
-          "pc_line": 293,
+          "pc_line": 322,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -9408,7 +9408,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11a_next_header",
-          "pc_line": 238,
+          "pc_line": 267,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -9442,7 +9442,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11b_next_header",
-          "pc_line": 244,
+          "pc_line": 273,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -9499,18 +9499,26 @@
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11b_map_window",
           "pc_line": 196,
-          "function": "Map callback and unmapped-block result; source window turn/retry and remapping are not wired"
+          "function": "Single MAP_WINDOW callback with bounded byte/block counts and no-map sentinel; live WCB wiring remains absent"
         },
         {
           "original_lines": [
             168,
+            182
+          ],
+          "status": "missing",
+          "reason": "Complete-file remapping and current-window source setup are not integrated"
+        },
+        {
+          "original_lines": [
+            183,
             197
           ],
           "status": "partial",
-          "pc_file": "src/vms_f11_acp87.c",
-          "pc_symbol": "port_f11b_read_vbn",
-          "pc_line": 591,
-          "function": "Native FH2 retrieval-map LBN resolution and data reads across extension boundaries"
+          "pc_file": "src/vms_f11_acp86.c",
+          "pc_symbol": "port_f11b_map_window_retry",
+          "pc_line": 201,
+          "function": "Two MAP_WINDOW attempts with PMS turn accounting, READ_HEADER and TURN_WINDOW callbacks; live WCB attachment and BADRVNWCB bugcheck semantics remain partial"
         },
         {
           "original_lines": [
@@ -9521,7 +9529,7 @@
           "reason": "Original routine and module terminators"
         }
       ],
-      "unresolved_integration": "Live WCB windows, source MAP_WINDOW callbacks, remap/turn retry, process UCB context and asynchronous ACP completion remain incomplete."
+      "unresolved_integration": "Complete-file remapping, live WCB/FCB callbacks, source BADRVNWCB bugcheck, process UCB context and asynchronous ACP completion remain incomplete."
     },
     {
       "original_file": "F11A/SRC/MOUNT.B32",

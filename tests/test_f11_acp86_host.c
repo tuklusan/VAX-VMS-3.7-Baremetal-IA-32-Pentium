@@ -34,6 +34,33 @@ static uint32_t map_vblk(void *ctx,void *w,uint32_t vbn,uint32_t bytes,
     *u=m->ucb;*lbn=m->lbn;*remaining=m->mapped;
     return m->success?1u:12u;
 }
+struct retry_mock {unsigned maps,turns,header_reads,window_turns;uint8_t events[8];
+    uint8_t success[2],header_ok,turn_ok;void *mapped_ucb;};
+static void retry_event(struct retry_mock *m,uint8_t event){
+    unsigned i=m->maps+m->turns+m->header_reads+m->window_turns-1u;
+    assert(i<8u);m->events[i]=event;
+}
+static uint32_t retry_map(void *ctx,void *window,uint32_t vbn,uint32_t bytes,
+                          void **ucb,uint32_t *lbn,uint32_t *remaining){
+    struct retry_mock *m=ctx;assert(window==(void *)0x55u&&vbn==7u&&bytes==1024u);
+    unsigned i=m->maps++;retry_event(m,'M');*ucb=m->mapped_ucb;
+    if(m->success[i]){*lbn=700u;*remaining=0u;return 1u;}
+    *lbn=UINT32_MAX;*remaining=bytes;return 1u;
+}
+static uint32_t retry_read_header(void *ctx,uint8_t header[512],uint32_t *stvbn){
+    struct retry_mock *m=ctx;m->header_reads++;retry_event(m,'R');
+    memset(header,0,512u);header[0]=0x5au;*stvbn=44u;
+    return m->header_ok?1u:0u;
+}
+static uint32_t retry_turn_window(void *ctx,void *window,
+    const uint8_t header[512],uint32_t vbn,uint32_t stvbn){
+    struct retry_mock *m=ctx;assert(window==(void *)0x55u&&header[0]==0x5au);
+    assert(vbn==7u&&stvbn==44u);m->window_turns++;retry_event(m,'T');
+    return m->turn_ok?1u:0u;
+}
+static void retry_record_turn(void *ctx){
+    struct retry_mock *m=ctx;m->turns++;retry_event(m,'C');
+}
 struct hdrmock {unsigned calls;struct port_f11_86_fid last;unsigned segment;int ods1;};
 static uint32_t read_header(void *ctx,struct port_f11_86_fid fid,void *fcb,uint8_t h[512]){
     struct hdrmock *m=ctx;
@@ -144,6 +171,40 @@ int main(int argc,char **argv){
     unsigned map_calls=mm.calls;
     assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,UINT32_MAX,&left,&newucb,&mo)==-1);
     assert(mm.calls==map_calls&&left==UINT32_MAX);
+    struct retry_mock rm={0};rm.success[1]=1u;rm.header_ok=rm.turn_ok=1u;
+    rm.mapped_ucb=(void *)0x66u;
+    const struct port_f11_86_mapops retry_mapops={retry_map,&rm};
+    const struct port_f11_86_mapturnops retry_turnops={
+        retry_read_header,retry_turn_window,retry_record_turn,&rm};
+    uint32_t retry_left=99u;void *retry_ucb=0;
+    assert(port_f11b_map_window_retry((void *)0x55u,(void *)0x66u,7u,2u,
+        &retry_left,&retry_ucb,&retry_mapops,&retry_turnops)==700);
+    assert(retry_left==0u&&retry_ucb==(void *)0x66u&&rm.maps==2u&&
+        rm.turns==1u&&rm.header_reads==1u&&rm.window_turns==1u&&
+        memcmp(rm.events,"MCRTM",5u)==0);
+    rm=(struct retry_mock){0};rm.header_ok=rm.turn_ok=1u;
+    rm.mapped_ucb=(void *)0x66u;
+    assert(port_f11b_map_window_retry((void *)0x55u,(void *)0x66u,7u,2u,
+        &retry_left,&retry_ucb,&retry_mapops,&retry_turnops)==-1);
+    assert(retry_left==2u&&rm.maps==2u&&rm.turns==1u&&
+        rm.header_reads==1u&&rm.window_turns==1u);
+    rm=(struct retry_mock){0};rm.success[0]=1u;rm.header_ok=rm.turn_ok=1u;
+    rm.mapped_ucb=(void *)0x66u;
+    assert(port_f11b_map_window_retry((void *)0x55u,(void *)0x66u,7u,2u,
+        &retry_left,&retry_ucb,&retry_mapops,&retry_turnops)==700);
+    assert(rm.maps==1u&&!rm.turns&&!rm.header_reads&&!rm.window_turns&&
+        rm.events[0]=='M');
+    rm=(struct retry_mock){0};rm.success[1]=1u;rm.turn_ok=1u;
+    rm.mapped_ucb=(void *)0x66u;
+    assert(port_f11b_map_window_retry((void *)0x55u,(void *)0x66u,7u,2u,
+        &retry_left,&retry_ucb,&retry_mapops,&retry_turnops)==-1);
+    assert(retry_left==2u&&rm.maps==1u&&rm.turns==1u&&rm.header_reads==1u&&
+        !rm.window_turns);
+    rm=(struct retry_mock){0};rm.success[1]=1u;rm.header_ok=rm.turn_ok=1u;
+    rm.mapped_ucb=(void *)0x77u;
+    assert(port_f11b_map_window_retry((void *)0x55u,(void *)0x66u,7u,2u,
+        &retry_left,&retry_ucb,&retry_mapops,&retry_turnops)==-1);
+    assert(retry_left==2u&&retry_ucb==(void *)0x77u&&rm.maps==2u);
     struct hdrmock hm={0};hm.segment=3u;
     struct port_f11_86_file_control fc={(void *)0x123u};
     const struct port_f11_86_headerops ho={read_header,&hm};

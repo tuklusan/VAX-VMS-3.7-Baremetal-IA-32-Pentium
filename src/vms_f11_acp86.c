@@ -198,6 +198,35 @@ int64_t port_f11b_map_window(void *w,void *u,uint32_t vbn,uint32_t n,
                             const struct port_f11_86_mapops *o){
     return map_window(w,u,vbn,n,left,result,o);
 }
+int64_t port_f11b_map_window_retry(void *window,void *current_ucb,
+    uint32_t vbn,uint32_t count,uint32_t *unmapped,void **result_ucb,
+    const struct port_f11_86_mapops *mapops,
+    const struct port_f11_86_mapturnops *turnops){
+    if(!unmapped)return -1;
+    *unmapped=count;
+    if(!window||!current_ucb||!vbn||!count||count>UINT32_MAX/512u||
+       !mapops||!mapops->map_vblock||!turnops||!turnops->read_header||
+       !turnops->turn_window||!turnops->record_turn)return -1;
+    void *ucb=current_ucb;
+    int64_t lbn=port_f11b_map_window(window,ucb,vbn,count,unmapped,&ucb,
+                                      mapops);
+    if(lbn!=-1){
+        if(result_ucb)*result_ucb=ucb;
+        if(ucb!=current_ucb){*unmapped=count;return -1;}
+        return lbn;
+    }
+    turnops->record_turn(turnops->context);
+    uint8_t header[512];
+    uint32_t stvbn=0u;
+    if(!(turnops->read_header(turnops->context,header,&stvbn)&1u))
+        return -1;
+    if(!(turnops->turn_window(turnops->context,window,header,vbn,stvbn)&1u))
+        return -1;
+    lbn=port_f11b_map_window(window,ucb,vbn,count,unmapped,&ucb,mapops);
+    if(result_ucb)*result_ucb=ucb;
+    if(lbn==-1||ucb!=current_ucb){*unmapped=count;return -1;}
+    return lbn;
+}
 
 static uint32_t next_header(const uint8_t *old,void *fcb,
                              const struct port_f11_86_fid *specified,
