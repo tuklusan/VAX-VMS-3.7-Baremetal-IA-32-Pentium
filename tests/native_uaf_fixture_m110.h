@@ -40,5 +40,7 @@ static int prepare_uaf_fixture(struct uaf_fixture *disk){
     }
     return 1;
 }
+#define SET_LABUSER_UAF_FLAGS(disk,flags) \
+    ((disk)->sectors[5][VMS37_UAF_FLAGS]=(uint8_t)(flags))
 
 #endif

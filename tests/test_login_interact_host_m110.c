@@ -5,7 +5,7 @@
 
 #define CHECK(x) do { if(!(x)){fprintf(stderr,"LOGIN INTERACT %d\n",__LINE__);return 1;} }while(0)
 struct fixture {
-    int mode, disabled, wrong, unknown, captive, use_notice;
+    int mode, wrong, unknown, captive, use_notice;
     unsigned username_reads, password_reads, noecho_reads, open_count,
              close_count, output_count, auto_count, priv_enable, priv_disable;
     unsigned list_calls, last_input_flags;
@@ -96,9 +96,6 @@ static int node(void *ctx,char *out,unsigned cap){
     (void)ctx;if(cap<6)return -1;
     strcpy(out,"NODE1");return 5;
 }
-static uint32_t user_flags(void *ctx,const struct port_uaf_record *user){
-    struct fixture *f=ctx;(void)user;return (uint32_t)f->disabled;
-}
 static unsigned mail(void *ctx,const struct port_uaf_record *user){
     (void)ctx;(void)user;return 2;
 }
@@ -110,7 +107,7 @@ static const struct vms_lgi_ops file_ops={
 static const struct vms_lgi_interact_ops interaction_ops={
     .terminal_name=terminal,.set_username=set_name,.set_termname=set_device,
     .system_privilege=privilege,.auto_user=auto_user,.translate=notice,
-    .node_name=node,.uaf_flags=user_flags,.mail_count=mail
+    .node_name=node,.mail_count=mail
 };
 static int setup(struct fixture *f,struct vms_lgi_fileio *fileio,
                  struct vms_lgi_interact *s,struct port_uaf_service *auth){
@@ -143,10 +140,13 @@ int main(void){
     f=(struct fixture){.unknown=1};setup(&f,&io,&session,&auth);
     CHECK(vms_lgi_init_interactive(&session)==VMS_LOGIN_AUTH);
     CHECK(!session.logged_in && f.password_reads==1);
-    f=(struct fixture){.disabled=VMS_LOGIN_FLAG_DISABLED};setup(&f,&io,&session,&auth);
+    SET_LABUSER_UAF_FLAGS(&fixture,VMS37_UAF_FLAGS_DISACNT);
+    f=(struct fixture){0};setup(&f,&io,&session,&auth);
     CHECK(vms_lgi_init_interactive(&session)==VMS_LOGIN_DISABLED);
     CHECK(!session.logged_in);
-    f=(struct fixture){.disabled=VMS_LOGIN_FLAG_CAPTIVE,.captive=1};setup(&f,&io,&session,&auth);
+    SET_LABUSER_UAF_FLAGS(&fixture,0u);
+    f=(struct fixture){.captive=1};setup(&f,&io,&session,&auth);
+    SET_LABUSER_UAF_FLAGS(&fixture,VMS37_UAF_FLAGS_CAPTIVE);
     CHECK(vms_lgi_init_interactive(&session)==VMS_LOGIN_CAPTIVE);
     CHECK(!session.logged_in&&strcmp(session.command.cli,"SYS$SYSTEM:DCL")==0);
 
