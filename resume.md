@@ -1849,3 +1849,12 @@ Verification: focused `make v37schedcheck v37eventwaitcheck` PASS; full `make -j
 
 Local M386 implementation commit: 25bac35d928cbd7fa1b1f2f6fba925951d1955f8.
 Published GitHub main M386 implementation commit: 08283fb15dac8650bea246795f5c15bc136dbbeb.
+
+## M387 - Keep unsupported slave CEB operations unresolved, 25 November 2026
+
+Separated an actually unassigned common event cluster from a nonzero but unresolved CEB address and from an assigned shared-memory slave CEB. Only a zero CEB pointer returns SS$_UNASEFC. Slave CEB wait/post now returns the internal unresolved status without setting a misleading VMS service status. Host regression verifies both APIs leave the caller's service-status output unchanged for a slave CEB and still report SS$_UNASEFC for an unassigned cluster.
+
+Verification: `make v37eventwaitcheck` PASS after the final change; `make v37schedcheck v37eventwaitcheck` PASS; full `make -j2 all test` exit 0; coverage generation and source-range validation PASS (2,135 ranges, zero mapped-function misses, zero validation errors); `git diff --check` PASS. One `make qemu-sysboot-m217` PASS on rebuilt SYS.EXE. Actual log `logs/serial/qemu-m217-run-local-20261125T185532302311Z.log`, 6,148 bytes, SHA-256 94c3adc412fe755dcd753e37ab22fc08f7c71a3e87ce0ff9a6bd5190a5baf7e6; expected DQA0/IRQ14/ACP and IRQ0 checkpoints then incomplete INIT. The guest does not invoke event services. No QEMU process remains. No process activation, login/DCL, DECnet or SET HOST is claimed.
+
+Local M387 implementation commit: d4e37539129670b6ebbeb6d32017c7de2f9d3413.
+Published GitHub main M387 implementation commit: 77138de66942acaf15e67f396b2148b115d4e750.
