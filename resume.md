@@ -1548,5 +1548,5 @@ The ACP VBN resolver now follows the source FH2 extension-FID chain with sequent
 Verification: make files1187check PASS; make -j2 CC=gcc-12 all test PASS (exit 0); make sourcerangecheck PASS (2,110 ranges, 449/4,566 original files indexed, zero errors); fresh single-runner make qemu-sysboot-m217 PASS through the existing 700-byte single-header ACP read via DQA0 DDT/IRQ14, followed by the explicit incomplete-INIT stop. QEMU does not exercise the synthetic extension header. Capture logs/serial/qemu-m217-run-local-20261125T135028615660Z.log, 5,885 bytes, SHA-256 0aa11d7d3fbd820217048d14a2b4e9358936ec15c6ab4531ce3843023dd00cfb; runner exited.
 
 
-M354 local implementation commit: 5b4fd33f5365e77bab30d0018ae38e100bb0a8ae.
+M354 local implementation commit: 5b4fd33f5365e77bab30d0018ae38e100bb0a8ae; published GitHub main commit: e3996bc3915fc527ff8f304be4988460fb6f3777.
 Still incomplete: public SYS$QIO process dispatch, ACP IRP/AST semantics, remaining INIT, scheduler/image activation, authentic RMS SYSUAF/login, DCL, DECnet Phase IV, and genuine SET HOST 0.
