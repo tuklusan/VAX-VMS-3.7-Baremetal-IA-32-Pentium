@@ -1451,7 +1451,7 @@ for original,length,ranges,note in [
        (97,98,'vms_v37_ia32_context','port_v37_ia32_context_validate','Validate mode-matched selectors, EFLAGS and return stack; arch_prepare_restore_frame publishes a validated frame for the shared IRET restore path, but VMS scheduler dispatch remains unintegrated'),
        (99,106,None,None,'source idle wait and fatal empty-queue path lack native scheduler context restoration'),
        (107,108,None,None,'assembler end')],
-       'The scheduler validates/saves native PCB/PHD contexts and selects resident COM entries; live VMS trap dispatch still does not invoke these operations, update TSS/CR3, or IRET into the selected frame; executive wait/wake queues remain unbound.'),
+       'The scheduler validates/saves native PCB/PHD contexts and provides an interrupt-level SCH$RESCHED/SCH$SCHED transaction; the live IA-32 IRQ path still does not invoke it, update TSS/CR3, or IRET into the selected frame; executive wait/wake queues remain unbound.'),
     ('NULLPROC.MAR',103,[(1,97,None,None,'copyright and idle process description'),
        (98,101,'vms_exe_nullproc','port_exe_nullproc','native unconditional idle branch matching source BRB loop'),
        (102,103,None,None,'assembler end')],

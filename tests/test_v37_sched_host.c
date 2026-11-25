@@ -196,9 +196,21 @@ int main(void){
        scheduler.current_priority!=29u||port_v37_sched_check(&scheduler)!=
            PORT_V37_SCHED_OK)
         return fail("SCH$SCHED source floating priority and selection");
-    if(port_v37_sched_select(&scheduler,&selected,&restore_frame)!=
-           PORT_V37_SCHED_EMPTY||selected||restore_frame)
-        return fail("SCH$SCHED empty resident set");
+    f.frames[0].registers.eip=0x12345678u;
+    if(port_v37_sched_interrupt(&scheduler,f.frame_va[0],&selected,
+           &restore_frame)!=PORT_V37_SCHED_OK||selected!=f.pcb_va[0]||
+       restore_frame!=f.frame_va[0]||
+       get32(f.phds[0]+PORT_V37_PHD_PC)!=0x12345678u||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR||
+       port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
+        return fail("SCH$RESCHED/SCH$SCHED interrupt-level transaction");
+    f.frames[0].registers.cs=0x0bu;
+    if(port_v37_sched_interrupt(&scheduler,f.frame_va[0],&selected,
+           &restore_frame)!=PORT_V37_SCHED_CORRUPT||selected||restore_frame||
+       scheduler.current_pcb!=f.pcb_va[0]||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR)
+        return fail("interrupt dispatch rejects malformed outgoing frame");
+    f.frames[0].registers.cs=0x08u;
     puts("SYS/SRC/SCHED.MAR SCH$RESCHED/SCH$SCHED and RSE.MAR SCH$CHSE PASS");
     return 0;
 }

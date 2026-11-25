@@ -246,6 +246,19 @@ uint32_t port_v37_sched_save_current(struct port_v37_scheduler *s,
     return status;
 }
 
+uint32_t port_v37_sched_interrupt(struct port_v37_scheduler *s,
+    uint32_t interrupted_frame,uint32_t *selected_pcb,
+    uint32_t *selected_frame){
+    if(!s||!selected_pcb||!selected_frame)
+        return PORT_V37_SCHED_BADPARAM;
+    *selected_pcb=0u;*selected_frame=0u;
+    if(s->current_pcb){
+        const uint32_t saved=port_v37_sched_save_current(s,interrupted_frame);
+        if(saved!=PORT_V37_SCHED_OK)return saved;
+    }
+    return port_v37_sched_select(s,selected_pcb,selected_frame);
+}
+
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){
     if(!s||!s->initialized)return PORT_V37_SCHED_BADPARAM;
     uint32_t summary[2]={0u,0u};uint32_t ready[32]={0u};

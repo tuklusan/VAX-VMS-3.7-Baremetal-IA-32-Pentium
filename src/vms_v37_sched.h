@@ -52,5 +52,10 @@ uint32_t port_v37_sched_resched_current(struct port_v37_scheduler *,
  * PHD KSP/PC, then perform SCH$RESCHED's resident queue insertion. */
 uint32_t port_v37_sched_save_current(struct port_v37_scheduler *,
     uint32_t current_restore_frame_address);
+/* Interrupt-level SCH$RESCHED then SCH$SCHED transaction. Caller holds the
+ * scheduler IPL; a contextless current/ready process is left unconsumed. */
+uint32_t port_v37_sched_interrupt(struct port_v37_scheduler *,
+    uint32_t interrupted_restore_frame_address,uint32_t *selected_pcb,
+    uint32_t *selected_restore_frame);
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *);
 #endif
