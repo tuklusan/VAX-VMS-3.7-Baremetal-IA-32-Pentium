@@ -1426,3 +1426,11 @@ Connected the native INIT MPW map request to `modified_page_fault_cluster` from 
 Verification: `make -j2 all test` PASS (native images and full host/layout suite); `make inimpwcheck` PASS; fresh single-runner `make qemu-sysboot-m217` PASS and reached the explicit incomplete-INIT stop after initializing the MPW map. `tests/test_m47_qemu_manifest.py` and `python3 tools/validate_source_ranges.py` PASS (2,105 ranges, 448/4,566 original files indexed, zero errors; counts unchanged from M338). Capture `logs/serial/qemu-m217-run-local-20261125T034230162394Z.log`, 5,788 bytes, SHA-256 `fccbda36c6742e594849f10b4131c241fa8f059ee6dcb41b3af32d4bc9579232`. No login/DCL/DECnet/SET HOST behavior occurred; QEMU exited.
 
 Implementation commit: `f188336f72431a2c04011586c3cb6152ca5c78df`.
+
+## M340 — Share native INIT SYSPARAM defaults, 25 November 2026
+
+Moved the supported source default values into one native constants table and used those constants from both `port_vms37_init_param_defaults` and SYSBOOT's compiled BOO packet profile/validation. This prevents the IRP/LRP/SRP and MPW values from drifting between the INIT parameter table and boot-time sizing; the MPW request also consumes the parameter structure. The existing boot profile stays static so the 265-block stage-two limit is preserved. PARAMS.DAT overrides and other SYSPARAM consumers are still incomplete.
+
+Verification: `make -j2 all test` PASS (native image build and host/layout suite); source-range validation PASS (2,105 ranges; 448/4,566 indexed; zero errors); `tests/test_m47_qemu_manifest.py` PASS; fresh single-runner `make qemu-sysboot-m217` PASS through existing SYS initialization and DQA0/IRQ14/Files-11 checks, then the explicit incomplete-INIT stop. Capture `logs/serial/qemu-m217-run-local-20261125T034439575437Z.log`, 5,788 bytes, SHA-256 `fccbda36c6742e594849f10b4131c241fa8f059ee6dcb41b3af32d4bc9579232`. No login, DCL, DECnet or SET HOST behavior occurred; QEMU exited.
+
+Implementation commit: `01c8629d3ce44497f60c1e0ed9a9c360f1fdbb76`.
