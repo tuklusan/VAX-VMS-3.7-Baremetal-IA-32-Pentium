@@ -1,5 +1,6 @@
 #ifndef VMS_INI_SYSPARAMS_H
 #define VMS_INI_SYSPARAMS_H
+#include <stddef.h>
 #include <stdint.h>
 
 #define PORT_VMS37_DEFAULT_MAXPROCESSCNT 72u
@@ -33,5 +34,13 @@ struct port_vms37_init_params {
 };
 
 enum { PORT_VMS37_SYSPARAM_OK=1u, PORT_VMS37_SYSPARAM_BAD=2u };
+enum { PORT_VMS37_SYSPARAM_FILE_OK=1u,
+       PORT_VMS37_SYSPARAM_FILE_BAD=2u,
+       PORT_VMS37_SYSPARAM_FILE_TRUNCATED=4u };
 uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *);
+/* Decode the fixed-header/20-byte-entry file format consumed by SYSBOOT's
+ * BOO$USEFILE. Only the native INIT parameter subset above is applied. */
+uint32_t port_vms37_init_params_apply_file(
+    struct port_vms37_init_params *,const uint8_t *,size_t,
+    uint8_t startup_file[32],uint32_t *applied_count);
 #endif

@@ -837,7 +837,8 @@ result['files'].append({'original_file':'SYS/SRC/INITVEC.MAR',
                        'unresolved_integration':'INILOA.EXE is loaded from Files-11 into guest supervisor RAM, but INIT has not linked/entered INI$IOMAP; no guest I/O database or RPB handoff yet.'})
 
 # BOOTS/SRC/BOOTIO.MAR: bootstrap device I/O, file cache and image attributes.
-# Parameter-file loading is in SYSBOOT.MAR, not in this module.
+# SYSBOOT.MAR BOO$USEFILE parameter record parsing is handled by the native
+# SYSPARAM decoder; disk file lookup and the full descriptor table remain open.
 bootio_sections=[
     (1,68,None,None,'source ownership, history and descriptions'),
     (69,87,'src/vms_bootio.c','boo_cache_alloc','cache sizing macro (90 percent threshold, four-page alignment)'),
@@ -931,7 +932,9 @@ sysboot_read_ranges=[
     (2264,2280,'src/vms_sysboot_map.c','port_sysboot_mapvbn','BOO$MAPVBN resolves one-origin virtual blocks','mapped'),
     (2281,2339,None,None,'other SYSBOOT block reading and data setup','missing'),
     (2340,2399,'src/vms_sysboot_read.c','port_sysboot_read_virtual','READ_VIRTUAL reads the mapped file region','mapped'),
-    (2400,2897,None,None,'QIO_RWLB queue logic, conversational parameter files and other SYSBOOT services','missing')
+    (2400,2420,None,None,'SYSBOOT parameter-file prologue and file open path','missing'),
+    (2421,2467,'src/vms_sysboot_paramfile.c','port_vms37_init_params_apply_file','BOO$USEFILE 32-byte startup header and fixed 20-byte parameter records; applies the native INIT subset with bounds','partial'),
+    (2468,2897,None,None,'full SYSPARAM descriptor lookup, file I/O and other SYSBOOT services','missing')
 ]
 sections=[]
 for first,last,path,symbol,reason,status in sysboot_read_ranges:
@@ -947,7 +950,7 @@ for first,last,path,symbol,reason,status in sysboot_read_ranges:
 result['files'].append({'original_file':'BOOTS/SRC/SYSBOOT.MAR',
                        'original_lines':2897,'sections':sections,
                        'platform_changes':['Native IA-32 SYS.EXE is a separately linked ELF32 file installed in the original Files-11 directory; the VAX image record format is CPU-specific', 'SYSBOOT ELF32 LOAD_CODE streams real PT_LOAD bytes from the F11 VBN map into reserved supervisor RAM'],
-                       'unresolved_integration':'SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. WCB overlay and packet pool PFN/SPT mapping remain incomplete; SYSPARAM and process startup are unresolved.'})
+                       'unresolved_integration':'SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. BOO$USEFILE native decoding handles only the INIT parameter subset and is not connected to disk file lookup or the complete SYSPARAM descriptor table. WCB overlay and packet pool PFN/SPT mapping remain incomplete; process startup is unresolved.'})
 
 fileread_sections=[
     (1,740,None,None,'other FILEREAD declarations, cache setup, full filename parser and open logic','missing'),

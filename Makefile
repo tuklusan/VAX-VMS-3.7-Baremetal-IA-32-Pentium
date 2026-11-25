@@ -1584,5 +1584,5 @@ qemu-sysboot-m217: vms37lab.ima portdisk.img
 # Native INIT consumes the original SYSPARAM.MAR defaults pending SYSBOOT PARAMS.DAT overrides.
 .PHONY: inisysparamscheck
 inisysparamscheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ini_sysparams.c tests/test_ini_sysparams_host.c -o build/inisysparamscheck
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ini_sysparams.c src/vms_sysboot_paramfile.c tests/test_ini_sysparams_host.c -o build/inisysparamscheck
 	./build/inisysparamscheck

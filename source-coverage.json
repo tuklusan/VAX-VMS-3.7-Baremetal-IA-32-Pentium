@@ -3501,17 +3501,36 @@
         {
           "original_lines": [
             2400,
+            2420
+          ],
+          "status": "missing",
+          "reason": "SYSBOOT parameter-file prologue and file open path"
+        },
+        {
+          "original_lines": [
+            2421,
+            2467
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sysboot_paramfile.c",
+          "pc_symbol": "port_vms37_init_params_apply_file",
+          "pc_line": 19,
+          "function": "BOO$USEFILE 32-byte startup header and fixed 20-byte parameter records; applies the native INIT subset with bounds"
+        },
+        {
+          "original_lines": [
+            2468,
             2897
           ],
           "status": "missing",
-          "reason": "QIO_RWLB queue logic, conversational parameter files and other SYSBOOT services"
+          "reason": "full SYSPARAM descriptor lookup, file I/O and other SYSBOOT services"
         }
       ],
       "platform_changes": [
         "Native IA-32 SYS.EXE is a separately linked ELF32 file installed in the original Files-11 directory; the VAX image record format is CPU-specific",
         "SYSBOOT ELF32 LOAD_CODE streams real PT_LOAD bytes from the F11 VBN map into reserved supervisor RAM"
       ],
-      "unresolved_integration": "SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. WCB overlay and packet pool PFN/SPT mapping remain incomplete; SYSPARAM and process startup are unresolved."
+      "unresolved_integration": "SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. BOO$USEFILE native decoding handles only the INIT parameter subset and is not connected to disk file lookup or the complete SYSPARAM descriptor table. WCB overlay and packet pool PFN/SPT mapping remain incomplete; process startup is unresolved."
     },
     {
       "original_file": "SYS/SRC/FILEREAD.MAR",
