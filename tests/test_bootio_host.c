@@ -4,6 +4,7 @@
 #include "vms_bootio.h"
 #include "vms_boot_files11.h"
 #include "vms_sysboot_read.h"
+#include "vms_sysboot_paramfile.h"
 static int trouble;
 #define CHECK(t) do {if(!(t)){fprintf(stderr,"FAIL: %s:%d: %s\n",__FILE__,__LINE__,#t);trouble++;}} while(0)
 static uint32_t last_mode,last_func,last_lbn,last_size;
@@ -29,7 +30,7 @@ static void set32(uint8_t *p,uint32_t v){
 static void set16(uint8_t *p,uint16_t v){p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);}
 struct test_volume_blocks { uint8_t home[512]; uint8_t index[512]; uint8_t file[512]; uint8_t dirhdr[512]; uint8_t dirdata[512];
                             uint8_t subhdr[512]; uint8_t subdata[512];
-                            uint8_t sys_image[512]; uint8_t sys_params[512]; uint8_t ext_header[512]; uint8_t ext_data[512]; };
+                            uint8_t sys_image[512]; uint8_t sys_params[512]; uint8_t ext_header[512]; uint8_t ext_data[512]; uint8_t params_header[512]; };
 static uint32_t disk_read(void *ctx,uint32_t mode,uint32_t func,
                           uint32_t lbn,uint32_t count,void *buf) {
     struct test_volume_blocks *d=ctx;
@@ -42,6 +43,7 @@ static uint32_t disk_read(void *ctx,uint32_t mode,uint32_t func,
     else if(lbn==118u)memcpy(buf,d->subhdr,512);
     else if(lbn==301u)memcpy(buf,d->subdata,512);
     else if(lbn==116u)memcpy(buf,d->ext_header,512);
+    else if(lbn==119u)memcpy(buf,d->params_header,512);
     else if(lbn==400u)memcpy(buf,d->ext_data,512);
     else if(lbn==200u)memcpy(buf,d->sys_image,512);
     else if(lbn==201u)memcpy(buf,d->sys_params,512);
@@ -163,7 +165,19 @@ int main(void) {
     set16(srec,20);srec[5]=7;
     memcpy(srec+6,"SYS.EXE",7);
     set16(srec+14,1);set16(srec+16,2);set16(srec+18,1);
-    set16(srec+22,0xffffu);
+    set16(srec+22,26u);srec[27]=10u;memcpy(srec+28,"PARAMS.DAT",10u);
+    set16(srec+38,1u);set16(srec+40,6u);set16(srec+42,1u);
+    set16(srec+50,0xffffu);
+    uint8_t *ph=vol.params_header;
+    ph[0]=40u;ph[1]=100u;ph[58]=2u;
+    set16(ph+6,513u);set16(ph+8,6u);set16(ph+10,1u);
+    set16(ph+200,0x4000u);set16(ph+202,201u);checksum(ph,510u);
+    memset(vol.sys_params,0,sizeof vol.sys_params);
+    memcpy(vol.sys_params,"SYS$SYSTEM:STARTUP.COM",22u);
+    vol.sys_params[32]=13u;memcpy(vol.sys_params+33,"MAXPROCESSCNT",13u);
+    set32(vol.sys_params+48u,80u);
+    /* BOO$USEFILE stops on the zero record longword after this entry. */
+    vol.sys_params[56]=0x7bu;
     struct port_f11_fid found={0};
     const struct port_f11_fid mfd={4,4,0};
     CHECK(port_f11_find_file(&vd,1,&mounted,mfd,"SYSEXE.DIR",1,&found)==PORT_F11_HOME_OK);
@@ -176,6 +190,31 @@ int main(void) {
          "SYS.EXE",&opened,loaded,&first,&count)==PORT_F11_HOME_OK);
     CHECK(port_f11_open_named_file(&vd,1,&mounted,
          "SYS.EXE;BAD",&opened,loaded,&first,&count)==PORT_F11_HOME_BADARG);
+    struct port_vms37_init_params boot_params={0};
+    uint8_t startup_file[32],param_buffer[512];uint32_t applied=0u;
+    size_t param_bytes=0u;
+    CHECK(port_vms37_init_param_defaults(&boot_params)==PORT_VMS37_SYSPARAM_OK);
+    uint32_t use_status=port_sysboot_usefile(&vd,1u,&mounted,"[SYSEXE]PARAMS.DAT",
+          &boot_params,startup_file,&applied,param_buffer,sizeof param_buffer,
+          &param_bytes);
+    CHECK(use_status==PORT_SYSBOOT_USEFILE_OK);
+    CHECK(applied==1u&&boot_params.max_processes==80u&&
+          param_bytes==512u&&memcmp(startup_file,vol.sys_params,32u)==0);
+    struct port_vms37_init_params params_before=boot_params;
+    CHECK(port_sysboot_usefile(&vd,1u,&mounted,"[SYSEXE]PARAMS.DAT",
+          &boot_params,startup_file,&applied,param_buffer,511u,&param_bytes)==
+          PORT_SYSBOOT_USEFILE_SMALL);
+    CHECK(memcmp(&boot_params,&params_before,sizeof boot_params)==0);
+    uint8_t valid_param_block[512];memcpy(valid_param_block,vol.sys_params,512u);
+    memset(vol.sys_params+52u,0xffu,4u);
+    CHECK(port_sysboot_usefile(&vd,1u,&mounted,"[SYSEXE]PARAMS.DAT",
+          &boot_params,startup_file,&applied,param_buffer,sizeof param_buffer,
+          &param_bytes)==PORT_SYSBOOT_USEFILE_PARAMETERS);
+    CHECK(memcmp(&boot_params,&params_before,sizeof boot_params)==0);
+    memcpy(vol.sys_params,valid_param_block,512u);
+    CHECK(port_sysboot_usefile(&vd,1u,&mounted,"[SYSEXE]MISSING.DAT",
+          &boot_params,startup_file,&applied,param_buffer,sizeof param_buffer,
+          &param_bytes)==PORT_SYSBOOT_USEFILE_NOT_FOUND);
     vol.sys_image[8]=1;
     for(unsigned k=0;k<512;k++)vol.sys_params[k]=(uint8_t)(k*3u+7u);
     struct port_sysboot_param_location location={{4,6,8,0,4,0},0,200};

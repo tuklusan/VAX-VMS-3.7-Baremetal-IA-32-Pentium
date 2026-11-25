@@ -549,7 +549,7 @@ sysinitnamescheck: | build
 
 .PHONY: bootiocheck
 bootiocheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_bootio.c src/vms_boot_files11.c src/vms_sysboot_map.c src/vms_sysboot_read.c tests/test_bootio_host.c -o build/bootio_hosttest
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_bootio.c src/vms_boot_files11.c src/vms_sysboot_map.c src/vms_sysboot_read.c src/vms_ini_sysparams.c src/vms_sysboot_paramfile.c src/vms_sysboot_usefile.c tests/test_bootio_host.c -o build/bootio_hosttest
 	./build/bootio_hosttest
 
 .PHONY: initmfdcheck f11homecheck
