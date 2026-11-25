@@ -36,5 +36,9 @@ uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
 /* Validate a saved frame before SCH$SCHED hands it to the IA-32 IRET path. */
 uint32_t port_v37_ia32_context_validate(
     const struct port_v37_ia32_restore_frame *restore_frame);
+/* Convert a complete saved frame extent into a 32-bit TSS ESP0, rejecting
+ * address-space wrap before any privilege-stack register is changed. */
+uint32_t port_v37_ia32_context_stack_top(uintptr_t frame_address,
+    size_t frame_bytes,uint32_t *stack_top);
 
 #endif

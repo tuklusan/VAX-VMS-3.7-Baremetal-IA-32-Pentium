@@ -1448,7 +1448,7 @@ for original,length,ranges,note in [
        (62,67,'vms_v37_sched','port_v37_sched_resched_current','Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction'),
        (68,74,None,None,'source comments and SCH$SCHED entry separator'),
        (75,96,'vms_v37_sched','port_v37_sched_select','Highest resident COM queue selection validates the saved IA-32 IRET frame and returns its address with the selected PCB; IRQ0 invokes this transaction, but contextless NULL/SWAPPER are still not activated and per-process CR3 switching remains incomplete'),
-       (97,98,'vms_v37_ia32_context','port_v37_ia32_context_validate','Validate mode-matched selectors and return stack; arch_prepare_vms_restore_frame installs TSS ESP0 at the selected access-mode 1-3 context stack top'),
+       (97,98,'vms_v37_ia32_context','port_v37_ia32_context_validate','Validate mode-matched selectors and return stack; port_v37_ia32_context_stack_top bounds the 32-bit extent before arch_prepare_vms_restore_frame installs TSS ESP0 for access modes 1-3'),
        (99,106,None,None,'source idle wait and fatal empty-queue path lack native scheduler context restoration'),
        (107,108,None,None,'assembler end')],
        'The native IRQ0 path invokes resident SCH$RESCHED/SCH$SCHED, updates TSS ESP0 for selected access-mode 1-3 contexts, and IRETs into selected frames; initial NULL/SWAPPER contexts and per-process CR3 switching are absent, and executive wait/wake queues remain unbound.'),

@@ -5,6 +5,16 @@
 static int fail(const char *s){fprintf(stderr,"IA32 CONTEXT FAIL: %s\n",s);return 1;}
 
 int main(void){
+    uint32_t stack_top=0u;
+    if(port_v37_ia32_context_stack_top(UINT32_MAX-76u,76u,&stack_top)!=
+       PORT_V37_IA32_CONTEXT_OK||stack_top!=UINT32_MAX)
+        return fail("32-bit TSS stack top at address limit");
+    if(port_v37_ia32_context_stack_top(UINT32_MAX-75u,76u,&stack_top)!=
+       PORT_V37_IA32_CONTEXT_STACK)
+        return fail("TSS stack extent rejects 32-bit wrap");
+    if(port_v37_ia32_context_stack_top(0x100000000ull,76u,&stack_top)!=
+       PORT_V37_IA32_CONTEXT_STACK)
+        return fail("TSS stack address must fit IA-32");
     _Alignas(16) uint8_t stack[512];
     memset(stack,0xa5,sizeof stack);
     struct port_v37_ia32_restore_frame *frame=0;

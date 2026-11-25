@@ -76,3 +76,12 @@ uint32_t port_v37_ia32_context_validate(
     }
     return PORT_V37_IA32_CONTEXT_OK;
 }
+
+uint32_t port_v37_ia32_context_stack_top(uintptr_t frame_address,
+    size_t frame_bytes,uint32_t *stack_top){
+    if(!stack_top||!frame_bytes||frame_address>UINT32_MAX||
+       frame_bytes>UINT32_MAX||frame_address>UINT32_MAX-frame_bytes)
+        return PORT_V37_IA32_CONTEXT_STACK;
+    *stack_top=(uint32_t)(frame_address+frame_bytes);
+    return PORT_V37_IA32_CONTEXT_OK;
+}

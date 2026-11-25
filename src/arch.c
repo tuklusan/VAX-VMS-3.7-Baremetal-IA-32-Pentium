@@ -289,9 +289,11 @@ static int arch_prepare_vms_restore_frame(
     if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
         return 0;
     if(frame->registers.cs&3u){
-        const uintptr_t top=(uintptr_t)frame+sizeof(*frame);
-        if(top>UINT32_MAX)return 0;
-        tss.esp0=(uint32_t)top;
+        uint32_t top=0u;
+        if(port_v37_ia32_context_stack_top((uintptr_t)frame,sizeof(*frame),
+                                           &top)!=PORT_V37_IA32_CONTEXT_OK)
+            return 0;
+        tss.esp0=top;
     }
     arch_selected_restore_frame=frame;
     return 1;
