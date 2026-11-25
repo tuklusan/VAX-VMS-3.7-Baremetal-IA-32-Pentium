@@ -23221,7 +23221,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "MAXPROCESSCNT default 72 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "MAXPROCESSCNT default 72 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23240,7 +23240,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "BALSETCNT default 36 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "BALSETCNT default 36 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23259,7 +23259,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "IRPCOUNT default 60 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "IRPCOUNT default 60 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23278,7 +23278,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "WSMAX default 1024 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "WSMAX default 1024 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23297,11 +23297,30 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "NPAGEDYN default 64000 bytes copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "NPAGEDYN default 64000 bytes copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
             809,
+            821
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            822,
+            831
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "PAGEDYN default 80000 bytes copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
+        },
+        {
+          "original_lines": [
+            832,
             869
           ],
           "status": "unresolved",
@@ -23316,7 +23335,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LRPCOUNT default 4 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "LRPCOUNT default 4 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23335,7 +23354,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LRPSIZE default 576 bytes copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "LRPSIZE default 576 bytes copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23354,7 +23373,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "SRPCOUNT default 120 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "SRPCOUNT default 120 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23373,7 +23392,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "SRPSIZE default 96 bytes copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "SRPSIZE default 96 bytes copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23392,7 +23411,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "MPW_WRTCLUSTER default 96 pages copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "MPW_WRTCLUSTER default 96 pages copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23411,7 +23430,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "REALTIME_SPTS default 0 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "REALTIME_SPTS default 0 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23430,7 +23449,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LOCKIDTBL default 128 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "LOCKIDTBL default 128 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23449,7 +23468,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "RESHASHTBL default 32 copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "RESHASHTBL default 32 copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23468,7 +23487,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "DEADLOCK_WAIT default 10 seconds copied as a native default; configured PARAMS.DAT override is unresolved"
+          "function": "DEADLOCK_WAIT default 10 seconds copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved"
         },
         {
           "original_lines": [
@@ -23479,7 +23498,7 @@
           "reason": "Other system parameters and configured PARAMS.DAT overrides not ported"
         }
       ],
-      "unresolved_integration": "Only original INIT defaults for process, lock, packet, modified-page-writer, PHV and swap-map sizing are represented. SYSBOOT PARAMS.DAT overrides and the remaining SYSPARAM cells are unported."
+      "unresolved_integration": "Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including PAGEDYN, but native boot does not yet locate/apply that file; other SYSPARAM cells and consumers remain unported."
     }
   ]
 }

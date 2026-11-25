@@ -2690,6 +2690,7 @@ sysparam_defaults=[
     (766,772,'IRPCOUNT default 60'),
     (789,796,'WSMAX default 1024'),
     (801,808,'NPAGEDYN default 64000 bytes'),
+    (822,831,'PAGEDYN default 80000 bytes'),
     (870,876,'LRPCOUNT default 4'),
     (893,899,'LRPSIZE default 576 bytes'),
     (915,921,'SRPCOUNT default 120'),
@@ -2710,14 +2711,14 @@ for first,last,label in sysparam_defaults:
     sysparam_sections.append({'original_lines':[first,last],
         'status':'partial' if line else 'missing','pc_file':'src/vms_ini_sysparams.c',
         'pc_symbol':'port_vms37_init_param_defaults','pc_line':line,
-        'function':label+' copied as a native default; configured PARAMS.DAT override is unresolved'})
+        'function':label+' copied as a native default; SYSBOOT parameter-file decoder accepts overrides, but boot-time file lookup/application is unresolved'})
     cursor=last+1
 if cursor<=3007:
     sysparam_sections.append({'original_lines':[cursor,3007],
         'status':'unresolved','reason':'Other system parameters and configured PARAMS.DAT overrides not ported'})
 result['files'].append({'original_file':'SYS/SRC/SYSPARAM.MAR',
     'original_lines':3007,'sections':sysparam_sections,
-    'unresolved_integration':'Only original INIT defaults for process, lock, packet, modified-page-writer, PHV and swap-map sizing are represented. SYSBOOT PARAMS.DAT overrides and the remaining SYSPARAM cells are unported.'})
+    'unresolved_integration':'Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including PAGEDYN, but native boot does not yet locate/apply that file; other SYSPARAM cells and consumers remain unported.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')
