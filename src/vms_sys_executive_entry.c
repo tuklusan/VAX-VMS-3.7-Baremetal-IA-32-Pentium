@@ -850,10 +850,9 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         return PORT_SYS_EXEC_NORMAL;
     }
     if(p->phase==PORT_SYS_EXEC_INIT_SYSWCB){
-        /* Source INIT.MAR 1194-1212.  Real on-disk normalized map
-         * produced by the guest's SYSBOOT, consumed by resident SYS.EXE.
-         * WCB's remaining type/flags/fields need their real DEC layout;
-         * do not advertise an ACP-capable window or paged shell. */
+        /* Source INIT.MAR 1194-1212. Real SYSBOOT retrieval map is
+         * compacted behind the source-layout 48-byte WCB template. This
+         * mapping record is not an FCP access or a process page mapping. */
         if(!executive_interrupt_stack_ready || !executive_pflvec_ready ||
            executive_system_wcb_ready || !p->syswcb_settings)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -889,11 +888,12 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         /* The guest's own linked SYS.EXE header is deliberately limited
          * to tested structural fields. This is NOT the full VAX WCB. */
-        for(uint32_t i=0u;i<sizeof executive_wcb_header;i++)
-            executive_wcb_header[i]=0u;
-        executive_wcb_header[4]=sizeof executive_wcb_header;
+        if(port_ini_syswcb_template_init(executive_wcb_header,
+               sizeof executive_wcb_header)!=PORT_INI_SYSWCB_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
         const struct port_ini_syswcb_layout layout={
-            sizeof executive_wcb_header,4u,6u};
+            sizeof executive_wcb_header,PORT_INI_SYSWCB_SIZE_OFFSET,
+            PORT_INI_SYSWCB_NMAP_OFFSET};
         if(port_ini_syswcb_from_boot_map(s->normalized_boot_map,
                  s->boot_map_capacity,executive_wcb_header,
                  sizeof executive_wcb_header,&layout,

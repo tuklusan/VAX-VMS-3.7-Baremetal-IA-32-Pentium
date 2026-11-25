@@ -1,4 +1,5 @@
 #include "vms_ini_syswcb.h"
+#include "vms_v37_dyn_tags.h"
 #include <stdint.h>
 static uint16_t read16(const uint8_t *p){
     return (uint16_t)p[0] | (uint16_t)((uint16_t)p[1]<<8);
@@ -12,6 +13,19 @@ static void write16(uint8_t *p,uint16_t v){
 }
 static void write32(uint8_t *p,uint32_t v){
     for(uint32_t i=0;i<4u;i++)p[i]=(uint8_t)(v>>(8u*i));
+}
+uint32_t port_ini_syswcb_template_init(uint8_t *record,size_t capacity){
+    if(!record||capacity<PORT_INI_SYSWCB_HEADER_BYTES)
+        return PORT_INI_SYSWCB_BADPARAM;
+    uint8_t candidate[PORT_INI_SYSWCB_HEADER_BYTES]={0};
+    write16(candidate+PORT_INI_SYSWCB_SIZE_OFFSET,
+            PORT_INI_SYSWCB_HEADER_BYTES);
+    candidate[PORT_INI_SYSWCB_TYPE_OFFSET]=PORT_V37_DYN_WCB;
+    candidate[PORT_INI_SYSWCB_ACCESS_OFFSET]=
+        PORT_INI_SYSWCB_SOURCE_ACCESS;
+    write32(candidate+PORT_INI_SYSWCB_STVBN_OFFSET,1u);
+    for(size_t i=0u;i<sizeof candidate;i++)record[i]=candidate[i];
+    return PORT_INI_SYSWCB_OK;
 }
 uint32_t port_ini_syswcb_from_boot_map(
     uint8_t *boot_map,size_t capacity,

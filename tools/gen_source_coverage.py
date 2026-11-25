@@ -1759,7 +1759,7 @@ init_parts=[
     (1142,1165,'src/vms_ini_pflvec.c','port_ini_pflvec_init','Page and swap-file PTR record in loaded SYS.EXE, anchored to resident uninitialized NULLPFL storage; guest-checked, no actual pagefile service, SYSGEN values or shell WCB','partial'),
     (1166,1183,'src/vms_ini_pflvec.c','port_ini_interrupt_stack_limits','Source-defined 512-byte interrupt-stack bounds and bounded lock resource depth executed in loaded guest SYS.EXE using live IA-32 TSS.esp0; native IPL stack and lock manager remain incomplete','partial'),
     (1184,1188,'src/vms_v37_pcb.c','port_v37_pcb_finish_syspcb','INIT_SYSPCB low-word PID update preserving the GENPCB sequence and native PHD/PHYPCB fields; boot currently has no system PHD and cannot activate it','partial'),
-    (1189,1212,'src/vms_ini_syswcb.c','port_ini_syswcb_from_boot_map','Actual guest-executed 8-to-6 byte extent compaction in resident SYS.EXE from real Files-11 BOO$L_SYS_MAP, with resident partial native WCB header; original WCB constants and ACP consumers still unresolved','partial'),
+    (1189,1212,'src/vms_ini_syswcb.c','port_ini_syswcb_from_boot_map','Guest-executed 8-to-6 byte extent compaction from real Files-11 BOO$L_SYS_MAP and source-derived 48-byte SYSWCB template (size, DYN type, read/non-FCP/complete/cathedral access, VBN 1); live FCP mapping and ACP consumers remain unresolved','partial'),
     (1213,1231,None,None,'Original VAX PR$_NICR/ICCS/ICR clock-counter timing loop needs real IA-32 hardware equivalent','hardware-excluded'),
     (1232,1239,'src/vms_ini_dptlist.c','port_ini_dpt_attach_three','Source-verified DPTAB metadata bytes are staged in loaded SYS.EXE; actual linked driver images and IOC$GL_DPTLIST remain unresolved','partial'),
     (1240,1255,'src/vms_ini_syslog.c','port_ini_syslog_init','Original DYN$C_LOG=11 typed 48-byte records copied into guest SYS.EXE nonpaged addresses; DPT, boot UCB, SWAPINIT and live logical-name service pending','partial'),
@@ -1784,7 +1784,7 @@ for first,last,path,symbol,purpose,status in init_parts:
             'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':purpose})
 result['files'].append({'original_file':'SYS/SRC/INIT.MAR',
     'original_lines':1906,'sections':parts,
-    'unresolved_integration':'Source FIN_DATABASE names are staged only after a verified real ATA Files-11 read. SYS$DISK/SYS$SYSDEVICE translation is still confined to the bootstrap path; the later native DQA DDT binds only physical PBLK actions, with public channels and ACP absent. Other INIT operations, SYSTEM login, DCL and DECnet remain missing.'})
+    'unresolved_integration':'SYSWCB now contains the source-derived 48-byte WCB header and compact retrieval map, but is not attached to process PHD/UCB/FCP access state. Source FIN_DATABASE names are staged only after verified ATA Files-11 reads. SYS$DISK/SYS$SYSDEVICE translation remains confined to bootstrap; public channels, ACP file access, process activation, login/DCL and DECnet remain missing.'})
 
 # M238: PDAT.MAR GENPCB source layout and the static system PCB template.
 pdat_rows=[

@@ -10491,8 +10491,8 @@
           "status": "partial",
           "pc_file": "src/vms_ini_syswcb.c",
           "pc_symbol": "port_ini_syswcb_from_boot_map",
-          "pc_line": 16,
-          "function": "Actual guest-executed 8-to-6 byte extent compaction in resident SYS.EXE from real Files-11 BOO$L_SYS_MAP, with resident partial native WCB header; original WCB constants and ACP consumers still unresolved"
+          "pc_line": 30,
+          "function": "Guest-executed 8-to-6 byte extent compaction from real Files-11 BOO$L_SYS_MAP and source-derived 48-byte SYSWCB template (size, DYN type, read/non-FCP/complete/cathedral access, VBN 1); live FCP mapping and ACP consumers remain unresolved"
         },
         {
           "original_lines": [
@@ -10612,7 +10612,7 @@
           "reason": "Legacy 386 port requires original driver controller setup and INIT teardown / scheduler / pool integration"
         }
       ],
-      "unresolved_integration": "Source FIN_DATABASE names are staged only after a verified real ATA Files-11 read. SYS$DISK/SYS$SYSDEVICE translation is still confined to the bootstrap path; the later native DQA DDT binds only physical PBLK actions, with public channels and ACP absent. Other INIT operations, SYSTEM login, DCL and DECnet remain missing."
+      "unresolved_integration": "SYSWCB now contains the source-derived 48-byte WCB header and compact retrieval map, but is not attached to process PHD/UCB/FCP access state. Source FIN_DATABASE names are staged only after verified ATA Files-11 reads. SYS$DISK/SYS$SYSDEVICE translation remains confined to bootstrap; public channels, ACP file access, process activation, login/DCL and DECnet remain missing."
     },
     {
       "original_file": "SYS/SRC/PDAT.MAR",

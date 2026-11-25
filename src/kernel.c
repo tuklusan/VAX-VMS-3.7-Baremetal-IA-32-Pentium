@@ -3558,8 +3558,8 @@ void kmain(void) {
     bootstrap_message("INIT: loaded SYS.EXE recorded real IA-32 TSS privilege stack and lock depth.");
 
     /* Original INIT.MAR INI_SYSPCB: pass the actual SYSBOOT-constructed
-     * BOO$L_SYS_MAP to the loaded SYS.EXE. WCB header is still the
-     * documented incomplete native header, with no paging or ACP. */
+     * BOO$L_SYS_MAP to the loaded SYS.EXE. The source WCB mapping record is
+     * built, while process paging and ACP file access remain unbound. */
     static struct port_sys_exec_result wcb_result;
     const struct port_sys_exec_wcb_settings wcb_settings={
         .normalized_boot_map=(uint8_t *)sys_normalized_words,
@@ -3575,6 +3575,12 @@ void kmain(void) {
        wcb_result.signature!=PORT_SYS_EXEC_SYSWCB_RESULT_TAG ||
        !wcb_result.system_wcb ||
        wcb_result.system_wcb->mapping_count!=sys_extent_count ||
+       wcb_result.system_wcb->record[
+          PORT_INI_SYSWCB_TYPE_OFFSET]!=PORT_V37_DYN_WCB ||
+       wcb_result.system_wcb->record[
+          PORT_INI_SYSWCB_ACCESS_OFFSET]!=PORT_INI_SYSWCB_SOURCE_ACCESS ||
+       wcb_result.system_wcb->record[
+          PORT_INI_SYSWCB_STVBN_OFFSET]!=1u ||
        (uintptr_t)wcb_result.system_wcb<PORT_SYS_ELF_START ||
        (uintptr_t)wcb_result.system_wcb>
                     PORT_SYS_ELF_LIMIT-sizeof(struct port_ini_syswcb)){

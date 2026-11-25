@@ -1,4 +1,5 @@
 #include "vms_ini_syswcb.h"
+#include "vms_v37_dyn_tags.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +9,20 @@ static void wr32(uint8_t *p,uint32_t x){for(unsigned i=0;i<4;i++)p[i]=(uint8_t)(
 static void normalized(uint8_t *p,uint32_t count,uint32_t lbn){wr32(p,count);wr32(p+4u,lbn);}
 int main(void){
     uint8_t diskmap[512],keep[512],tmpl[48];
+    memset(tmpl,0xa5,sizeof tmpl);
+    CHECK(port_ini_syswcb_template_init(tmpl,sizeof tmpl)==PORT_INI_SYSWCB_OK);
+    CHECK(tmpl[PORT_INI_SYSWCB_SIZE_OFFSET]==48u&&
+          tmpl[PORT_INI_SYSWCB_SIZE_OFFSET+1u]==0u&&
+          tmpl[PORT_INI_SYSWCB_TYPE_OFFSET]==PORT_V37_DYN_WCB&&
+          tmpl[PORT_INI_SYSWCB_ACCESS_OFFSET]==
+              PORT_INI_SYSWCB_SOURCE_ACCESS&&
+          tmpl[PORT_INI_SYSWCB_NMAP_OFFSET]==0u&&
+          tmpl[PORT_INI_SYSWCB_NMAP_OFFSET+1u]==0u&&
+          tmpl[PORT_INI_SYSWCB_STVBN_OFFSET]==1u&&
+          tmpl[PORT_INI_SYSWCB_STVBN_OFFSET+1u]==0u&&
+          tmpl[0]==0u&&tmpl[4]==0u);
+    CHECK(port_ini_syswcb_template_init(tmpl,47u)==
+          PORT_INI_SYSWCB_BADPARAM);
     memset(diskmap,0xa5,sizeof diskmap);memset(tmpl,0xcc,sizeof tmpl);
     struct port_ini_syswcb_layout l={.header_length=sizeof tmpl,.size_word_offset=4,.map_count_word_offset=6};
     wr16(tmpl+l.size_word_offset,sizeof tmpl);wr16(tmpl+l.map_count_word_offset,0u);
