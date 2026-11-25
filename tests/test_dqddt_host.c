@@ -22,6 +22,23 @@ static int mock_write(void *ctx,uint32_t lbn,const uint16_t src[256]){
     unsigned *calls=ctx;(*calls)++;
     return lbn==7u&&src[0]==0x55aau&&src[255]==0xaa55u?0:-1;
 }
+struct async_start_fixture {
+    void (*done)(void *,int);
+    void *done_context;
+    uint16_t *sector;
+    uint32_t lbn,starts,completions;
+    int reject;
+};
+static int mock_async_start(void *v,uint32_t lbn,uint16_t sector[256],
+    void (*done)(void *,int),void *done_context){
+    struct async_start_fixture *f=v;
+    f->starts++;f->lbn=lbn;f->sector=sector;
+    if(f->reject)return f->reject;
+    f->done=done;f->done_context=done_context;return 0;
+}
+static void mock_async_done(void *v,int status){
+    struct async_start_fixture *f=v;(void)status;f->completions++;
+}
 static void mock_irq(void){}
 static uint32_t assign_lock(void *v){(void)v;return 1u;}
 static void assign_unlock(void *v){(void)v;}
@@ -211,6 +228,39 @@ int main(void){
         port_v37_read32(db+PORT_V37_UCB_BOOT_OFF+120u)==native_base);
     CHECK(port_v37_devices_check(db,sizeof db_words,
         (uint32_t)(uintptr_t)db,&info)==PORT_V37_DEV_OK);
+    struct async_start_fixture async={0};
+    uint16_t async_sector[256]={0};
+    struct port_dq_bootread_request async_request=request;
+    async_request.read_context=&async;
+    CHECK(port_v37_irp_prepare(irp,PORT_V37_IRP_SIZE,0x00712000u,
+        info.ucb[0],PORT_DQ_READPBLK)==PORT_V37_QIO_OK);
+    port_v37_write16(irp+42u,PORT_DQ_PHYSIO);
+    port_v37_write16(irp+50u,PORT_DQ_BOOTREAD_BYTES);
+    port_v37_write32(irp+PORT_V37_IRP_MEDIA,7u);
+    uint32_t async_status=port_dqddt_startio_async(&d,&native,&fdt,
+        &async_request,7u,async_sector,mock_async_start,mock_async_done,
+        &async);
+    CHECK(async_status==PORT_DQ_BOOTREAD_OK);
+    CHECK(async.starts==1u&&async.lbn==7u&&async.sector==async_sector&&
+        async.completions==0u&&async.done!=0);
+    CHECK(port_dqddt_startio_async(&d,&native,&fdt,&async_request,8u,
+        async_sector,mock_async_start,mock_async_done,&async)==
+        PORT_DQ_BOOTREAD_BAD);
+    CHECK(async.starts==1u);
+    for(unsigned i=0;i<256u;i++)async.sector[i]=(uint16_t)(0x7000u+i);
+    async.done(async.done_context,0);
+    CHECK(async.completions==1u&&async_sector[0]==0x7000u);
+    async.reject=-1;
+    CHECK(port_dqddt_startio_async(&d,&native,&fdt,&async_request,7u,
+        async_sector,mock_async_start,mock_async_done,&async)==
+        PORT_DQ_BOOTREAD_FAILED);
+    CHECK(async.starts==2u&&async.completions==1u);
+    async.reject=0;
+    port_v37_write16(irp+PORT_V37_IRP_FUNC,PORT_DQ_WRITEPBLK);
+    CHECK(port_dqddt_startio_async(&d,&native,&fdt,&async_request,7u,
+        async_sector,mock_async_start,mock_async_done,&async)==
+        PORT_DQ_BOOTREAD_BAD);
+    CHECK(async.starts==2u);
     const uint32_t bound_base=port_v37_read32(db+PORT_V37_DDB_BOOT_OFF+12u);
     CHECK(port_dqddt_publish_ioc(db,sizeof db_words,
         (uint32_t)(uintptr_t)db,&info,&d,&fdt,&native,&crb)==

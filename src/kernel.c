@@ -199,8 +199,28 @@ static void ata_async_completed(void *context,int status){
     (void)context;ata_async_status=status;ata_async_completions++;
 }
 struct ata_dq_async_bridge {
-    port_dq_ioc_async_done_fn done;
-    void *done_context;
+    port_dq_ioc_async_done_fn ioc_done;
+    void *ioc_done_context;
+    void (*ddt_done)(void *,int);
+    void *ddt_done_context;
+    const struct port_dqddt_stage *stage;
+    const struct port_dqddt_native *native;
+    const struct port_dq_fdt *fdt;
+    const uint8_t *device_db;
+    const struct port_v37_device_result *device_info;
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+        const struct port_v37_device_result *,const char *,size_t,
+        struct port_v37_ioc_result *);
+    uint32_t (*start_async)(const struct port_dqddt_stage *,
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,uint32_t,uint16_t [256],
+        port_dqddt_async_start_fn,void (*)(void *,int),void *);
+    uint32_t (*commit)(const struct port_dq_bootread_request *,
+        const uint16_t [256],struct port_dq_bootread_result *);
+    struct port_dq_bootread_request request;
+    struct port_dq_bootread_result result;
+    uint8_t irp[PORT_V37_IRP_SIZE] __attribute__((aligned(4)));
+    uint16_t *sector;
 };
 static struct ata_dq_async_bridge ata_dq_async_bridge;
 static uint16_t qio_sector[256];
@@ -2624,24 +2644,91 @@ static uint32_t m202_dq_queued_read(void *opaque,uint32_t lbn,
 
 static void m217_ata_dq_async_complete(void *opaque,int status){
     struct ata_dq_async_bridge *bridge=opaque;
-    if(bridge&&bridge->done)
-        bridge->done(bridge->done_context,status==PORT_ATA_OK?
-            PORT_DQ_IOC_OK:PORT_DQ_IOC_IO);
+    int completion=-1;
+    if(bridge&&bridge->commit&&status==PORT_ATA_OK&&
+       bridge->commit(&bridge->request,bridge->sector,
+           &bridge->result)==PORT_DQ_BOOTREAD_OK)
+        completion=0;
+    if(bridge&&bridge->ddt_done)
+        bridge->ddt_done(bridge->ddt_done_context,completion);
     ata_async_completed(0,status);
 }
-static int m217_ata_dq_async_start(void *opaque,uint32_t lbn,
+static int m217_ata_engine_start(void *opaque,uint32_t lbn,
+    uint16_t sector[256],void (*done)(void *,int),void *done_context){
+    struct ata_dq_async_bridge *bridge=opaque;
+    if(!bridge||!done)return PORT_ATA_X86_ASYNC_BAD;
+    bridge->ddt_done=done;bridge->ddt_done_context=done_context;
+    bridge->sector=sector;
+    return port_ata_x86_read28_async(lbn,sector,
+        m217_ata_dq_async_complete,bridge);
+}
+static void m217_dqddt_async_complete(void *opaque,int status){
+    struct ata_dq_async_bridge *bridge=opaque;
+    if(bridge&&bridge->ioc_done)
+        bridge->ioc_done(bridge->ioc_done_context,
+            status==0?PORT_DQ_IOC_OK:PORT_DQ_IOC_IO);
+}
+static int m217_dqddt_async_start(void *opaque,uint32_t lbn,
     uint16_t sector[256],port_dq_ioc_async_done_fn done,void *done_context){
     (void)opaque;
-    if(!done)return PORT_ATA_X86_ASYNC_BAD;
-    ata_dq_async_bridge.done=done;
-    ata_dq_async_bridge.done_context=done_context;
-    return port_ata_x86_read28_async(lbn,sector,
-        m217_ata_dq_async_complete,&ata_dq_async_bridge);
+    struct ata_dq_async_bridge *bridge=&ata_dq_async_bridge;
+    if(!bridge->stage||!bridge->native||!bridge->fdt||!bridge->device_db||
+       !bridge->device_info||!bridge->ioc_search||!bridge->start_async||
+       !done)return -1;
+    struct port_v37_ioc_result selected={0};
+    if(bridge->ioc_search(bridge->device_db,PORT_V37_DEVICE_BYTES,
+         bridge->device_info->list_head,bridge->device_info,"DQA0",4u,
+         &selected)!=PORT_V37_IOC_OK||selected.ddb!=bridge->device_info->ddb[0]||
+       selected.ucb!=bridge->device_info->ucb[0]||selected.unit!=0u||
+       !selected.driver_bound||
+       m202_get32(bridge->device_db+PORT_V37_DDB_BOOT_OFF+12u)!=
+           bridge->native->base||
+       m202_get32(bridge->device_db+PORT_V37_UCB_BOOT_OFF+120u)!=
+           bridge->native->base||
+       m202_get32(bridge->device_db+PORT_V37_UCB_BOOT_OFF+32u)==0u)
+        return -1;
+    for(unsigned i=0;i<sizeof bridge->irp;i++)bridge->irp[i]=0u;
+    m202_put16(bridge->irp+8u,PORT_V37_IRP_SIZE);
+    bridge->irp[10u]=PORT_V37_DYN_IRP;
+    m202_put32(bridge->irp+PORT_V37_IRP_UCB,selected.ucb);
+    m202_put16(bridge->irp+PORT_V37_IRP_FUNC,PORT_DQ_READPBLK);
+    m202_put16(bridge->irp+42u,PORT_DQ_PHYSIO);
+    m202_put16(bridge->irp+50u,PORT_DQ_BOOTREAD_BYTES);
+    m202_put32(bridge->irp+PORT_V37_IRP_MEDIA,lbn);
+    bridge->request=(struct port_dq_bootread_request){
+        .fdt=bridge->fdt,.device_db=bridge->device_db,
+        .device_info=bridge->device_info,.irp=bridge->irp,
+        .irp_bytes=sizeof bridge->irp,.sector=sector,
+        .sector_bytes=PORT_DQ_BOOTREAD_BYTES,.boot_unit=0u,
+        .read_sector=m202_ata_read_sector,.read_context=bridge};
+    bridge->result=(struct port_dq_bootread_result){0};
+    bridge->ioc_done=done;bridge->ioc_done_context=done_context;
+    const uint32_t started=bridge->start_async(bridge->stage,
+        bridge->native,bridge->fdt,&bridge->request,lbn,sector,
+        m217_ata_engine_start,m217_dqddt_async_complete,bridge);
+    return started==PORT_DQ_BOOTREAD_OK?0:-1;
 }
-static int m217_async_dq_probe(uint32_t crb_irq_before){
+static int m217_async_dq_probe(const struct port_dqddt_stage *stage,
+    const struct port_dq_fdt *fdt,const uint8_t *device_db,
+    const struct port_v37_device_result *device_info,
+    const struct port_dqddt_native *native,
+    uint32_t (*ioc_search)(const uint8_t *,size_t,uint32_t,
+       const struct port_v37_device_result *,const char *,size_t,
+       struct port_v37_ioc_result *),
+    uint32_t (*start_async)(const struct port_dqddt_stage *,
+        const struct port_dqddt_native *,const struct port_dq_fdt *,
+        const struct port_dq_bootread_request *,uint32_t,uint16_t [256],
+        port_dqddt_async_start_fn,void (*)(void *,int),void *),
+    uint32_t (*commit)(const struct port_dq_bootread_request *,
+        const uint16_t [256],struct port_dq_bootread_result *)){
     struct port_dq_ioc_queue queue;
+    const uint32_t crb_irq_before=arch_disk_irq_crb_count();
     ata_async_completions=0u;ata_async_status=PORT_ATA_TIMEOUT;
     const uint32_t async_irq_before=port_ata_x86_irq_count();
+    ata_dq_async_bridge=(struct ata_dq_async_bridge){
+        .stage=stage,.native=native,.fdt=fdt,.device_db=device_db,
+        .device_info=device_info,.ioc_search=ioc_search,
+        .start_async=start_async,.commit=commit};
     struct port_dq_ioc_iosb iosb={0};
     if(port_dq_ioc_init(&queue,m202_dq_queued_read,0)!=PORT_DQ_IOC_OK||
        port_dq_ioc_prepare(&queue,1u,1u,
@@ -2652,10 +2739,10 @@ static int m217_async_dq_probe(uint32_t crb_irq_before){
     uint32_t eflags,tag=0u;
     __asm__ volatile("pushfl; popl %0; cli":"=r"(eflags)::"memory");
     const uint32_t started=port_dq_ioc_start_async(&queue,
-        m217_ata_dq_async_start,&tag);
+        m217_dqddt_async_start,&tag);
     const uint32_t completed_before_irq=ata_async_completions;
     const uint32_t busy=port_dq_ioc_start_async(&queue,
-        m217_ata_dq_async_start,&tag);
+        m217_dqddt_async_start,&tag);
     if(eflags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
     if(started!=PORT_DQ_IOC_OK||tag!=1u||busy!=PORT_DQ_IOC_BUSY||
        completed_before_irq)return -1;
@@ -2667,9 +2754,15 @@ static int m217_async_dq_probe(uint32_t crb_irq_before){
        queue.packets[queue.active].state!=PORT_DQ_IOC_FINISHED||
        port_dq_ioc_post(&queue,&iosb)!=PORT_DQ_IOC_OK||
        iosb.tag!=1u||iosb.status!=PORT_DQ_IOC_OK||iosb.bytes!=512u||
+       ata_dq_async_bridge.result.lbn!=1u||
+       ata_dq_async_bridge.result.irp_status!=PORT_SYS85_NORMAL||
+       ata_dq_async_bridge.result.irp_second!=512u||
+       m202_get32(ata_dq_async_bridge.irp+PORT_V37_IRP_MEDIA)!=
+           PORT_SYS85_NORMAL||
        ata_async_sector[0]!=1u||queue.completed!=1u||queue.posted!=1u||
        queue.reads!=1u||port_dq_ioc_validate(&queue)!=PORT_DQ_IOC_OK||
-       arch_disk_irq_crb_count()!=crb_irq_before+2u)return -1;
+       arch_disk_irq_crb_count()!=crb_irq_before+1u)return -1;
+    ata_dq_async_bridge=(struct ata_dq_async_bridge){0};
     return 0;
 }
 static int m202_read_queued_sector(const struct port_dqddt_stage *stage,
@@ -3890,6 +3983,8 @@ void kmain(void) {
        !dq_ddt_result.dq_ddt_stage||!dq_ddt_result.dq_ddt_function||
        !dq_ddt_result.dq_ddt_dispatch_bootwrite||
        !dq_ddt_result.dq_ddt_startio||
+       !dq_ddt_result.dq_ddt_startio_async||
+       !dq_ddt_result.dq_bootread_commit||
        !dq_ddt_result.dq_crb||
        (uintptr_t)dq_ddt_result.dq_ddt_stage<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_stage>
@@ -3900,6 +3995,10 @@ void kmain(void) {
        (uintptr_t)dq_ddt_result.dq_ddt_dispatch_bootwrite>=PORT_SYS_ELF_LIMIT||
        (uintptr_t)dq_ddt_result.dq_ddt_startio<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_ddt_startio>=PORT_SYS_ELF_LIMIT||
+       (uintptr_t)dq_ddt_result.dq_ddt_startio_async<PORT_SYS_ELF_START||
+       (uintptr_t)dq_ddt_result.dq_ddt_startio_async>=PORT_SYS_ELF_LIMIT||
+       (uintptr_t)dq_ddt_result.dq_bootread_commit<PORT_SYS_ELF_START||
+       (uintptr_t)dq_ddt_result.dq_bootread_commit>=PORT_SYS_ELF_LIMIT||
        (uintptr_t)dq_ddt_result.dq_crb<PORT_SYS_ELF_START||
        (uintptr_t)dq_ddt_result.dq_crb>
            PORT_SYS_ELF_LIMIT-sizeof(struct port_dq_crb)||
@@ -4044,14 +4143,6 @@ void kmain(void) {
     }
     bootstrap_message("INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.");
     bootstrap_message("INIT: SYS.EXE allocated, completed and returned DQA0 IRP through resident source lookaside.");
-
-    /* The private queue retains its packet from the asynchronous DDT-side
-     * start until process-level IOC posting can safely retire it. */
-    if(m217_async_dq_probe(dq_crb_irqs_before)){
-        bootstrap_message("INIT: async DQ IOC post failed.");
-        bootstrap_halt();
-    }
-    bootstrap_message("INIT: private DQ IOC posted real async sector via IRQ14.");
 
     /* Source NLDRIVER.MAR DDT/FDT through SYSQIOREQ.MAR 741-749: two original
      * IRP$L_MEDIA statuses and an IOC$GL_PSBL append in actual loaded
@@ -4266,6 +4357,18 @@ void kmain(void) {
     bootstrap_message("INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.");
     bootstrap_message("INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.");
     bootstrap_message("INIT: ACP GETFIB returned the resident SYS.EXE FID from its allocated WCB.");
+
+    /* This asynchronous physical IRP is admitted only after the live DQA0
+     * DDB/UCB DDT publication and IOC$SEARCHDEV checks have succeeded. */
+    if(m217_async_dq_probe(dq_ddt_result.dq_ddt_stage,
+         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,
+         dq_publish_result.device_db,dq_publish_result.dq_native_ddt,
+         dq_publish_result.ioc_search,dq_ddt_result.dq_ddt_startio_async,
+         dq_ddt_result.dq_bootread_commit)){
+        bootstrap_message("INIT: published DQA0 async DDT/IOC/IRQ completion failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: published DQA0 DDT accepted async READPBLK; IRQ14 completed retained IRP and deferred IOC post.");
 
     int ata_write_probe=m202_ata_write_probe(dq_ddt_result.dq_ddt_stage,
         dq_result.dq_source_fdt,dq_publish_result.device_db_bytes,

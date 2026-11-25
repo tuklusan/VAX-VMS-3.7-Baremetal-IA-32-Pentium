@@ -79,6 +79,29 @@ uint32_t port_dqddt_startio(const struct port_dqddt_stage *stage,
 #endif
 }
 
+uint32_t port_dqddt_startio_async(const struct port_dqddt_stage *stage,
+    const struct port_dqddt_native *native,const struct port_dq_fdt *fdt,
+    const struct port_dq_bootread_request *request,uint32_t lbn,
+    uint16_t sector[256],port_dqddt_async_start_fn start,
+    void (*done)(void *,int),void *done_context){
+    if(!stage||!native||!fdt||!request||!sector||!start||!done||
+       port_dqddt_native_validate(stage,fdt,native)!=PORT_DQDDT_OK||
+       port_dqddt_function(stage,fdt,PORT_DQ_READPBLK)!=PORT_DQDDT_NATIVE||
+       !request->irp||request->irp_bytes!=PORT_V37_IRP_SIZE||
+       !request->sector||request->sector_bytes!=PORT_DQ_BOOTREAD_BYTES||
+       port_v37_read16(request->irp+PORT_V37_IRP_FUNC)!=PORT_DQ_READPBLK||
+       port_v37_read32(request->irp+PORT_V37_IRP_MEDIA)!=lbn)
+        return PORT_DQ_BOOTREAD_BAD;
+    struct port_dq_bootread_request active=*request;
+    active.sector=sector;
+    active.sector_bytes=PORT_DQ_BOOTREAD_BYTES;
+    active.active_ddt_base=native->base;
+    if(port_dq_bootread_preflight(&active)!=PORT_DQ_BOOTREAD_OK)
+        return PORT_DQ_BOOTREAD_BAD;
+    return start(active.read_context,lbn,sector,done,done_context)==0?
+        PORT_DQ_BOOTREAD_OK:PORT_DQ_BOOTREAD_FAILED;
+}
+
 uint32_t port_dqddt_bootread(const struct port_dqddt_stage *stage,
     const struct port_dq_fdt *fdt,const struct port_dq_bootread_request *q,
     struct port_dq_bootread_result *result,uint32_t lbn){

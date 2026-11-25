@@ -88,7 +88,6 @@ def main():
         b'INIT: SYS.EXE materialized native DQ DDT/FDT pointers (IOC publication pending).',
         b'INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.',
         b'INIT: SYS.EXE allocated, completed and returned DQA0 IRP through resident source lookaside.',
-        b'INIT: private DQ IOC posted real async sector via IRQ14.',
         b'INIT: SYS.EXE NLDRIVER completed two IRPs via linked DDT/FDT and EXE$FINISHIOC (IPL4 requested).',
         b'INIT: SYS.EXE IOCIOPOST serviced two NLA IRPs through IA-32 CPL0 software INT 0x90 (no process AST).',
         b'INIT: loaded SYS.EXE resident entry executed and verified.',
@@ -99,6 +98,7 @@ def main():
         b'INIT: ACP FCB source=3',
         b'INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.',
         b'INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.',
+        b'INIT: published DQA0 DDT accepted async READPBLK; IRQ14 completed retained IRP and deferred IOC post.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
         b'INIT stopped: remaining original initialization dependencies incomplete.']
     failures=[
@@ -156,6 +156,7 @@ def main():
         b'INIT: private asynchronous DQ IOC request setup failed.',
         b'INIT: asynchronous DQ IOC start/busy check failed.',
         b'INIT: async DQ IOC post failed.',
+        b'INIT: published DQA0 async DDT/IOC/IRQ completion failed.',
         b'INIT: IA-32 privilege transition stack is unprotected.',
         b'PORTLAB> ',b'Login successful',b'Login: ',b'\n$ ']
     passed=False

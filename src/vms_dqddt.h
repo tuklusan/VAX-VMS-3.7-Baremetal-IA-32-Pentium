@@ -64,6 +64,15 @@ uint32_t port_dqddt_dispatch_bootwrite(const struct port_dqddt_stage *,
 uint32_t port_dqddt_startio(const struct port_dqddt_stage *,
     const struct port_dqddt_native *,const struct port_dq_fdt *,
     const struct port_dq_bootread_request *,struct port_dq_bootread_result *);
+/* Admit one supervisor physical READPBLK through a published native DDT
+ * before arming a one-sector asynchronous hardware engine. Completion remains
+ * the caller's responsibility so IOC posting can be deferred safely. */
+typedef int (*port_dqddt_async_start_fn)(void *,uint32_t,uint16_t [256],
+    void (*)(void *,int),void *);
+uint32_t port_dqddt_startio_async(const struct port_dqddt_stage *,
+    const struct port_dqddt_native *,const struct port_dq_fdt *,
+    const struct port_dq_bootread_request *,uint32_t,uint16_t [256],
+    port_dqddt_async_start_fn,void (*)(void *,int),void *);
 uint32_t port_dqddt_bootwrite(const struct port_dqddt_stage *,
     const struct port_dq_fdt *,const struct port_dq_bootread_request *,
     struct port_dq_bootread_result *,uint32_t);

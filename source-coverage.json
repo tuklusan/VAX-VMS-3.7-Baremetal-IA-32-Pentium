@@ -10327,7 +10327,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2821,
+          "pc_line": 2914,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10365,7 +10365,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 2821,
+          "pc_line": 2914,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -22509,7 +22509,7 @@
           "pc_file": "src/vms_dq_ioc_async.c",
           "pc_symbol": "port_dq_ioc_start_async",
           "pc_line": 10,
-          "function": "DQ transfer start now admits one priority-selected private queue packet to the real asynchronous IRQ14 sector engine; no live DDT UCB busy arbitration or process IRP binding"
+          "function": "Priority-selected packet now enters published DQA0 DDT async READPBLK admission after IOC$SEARCHDEV and native DDT/UCB preflight; UCB busy arbitration, public SYS$QIO ownership and user process channel remain unimplemented"
         },
         {
           "original_lines": [
@@ -22520,7 +22520,7 @@
           "pc_file": "src/vms_dq_ioc_async.c",
           "pc_symbol": "port_dq_ioc_async_complete",
           "pc_line": 4,
-          "function": "Normal completion publishes terminal packet state at IRQ level; caller later runs bounded IOC post. Source IOSB/process channel/AST completion is not connected"
+          "function": "IRQ completion commits the retained supervisor IRP and UCB result through resident DQ source code before queue terminal state; caller later runs bounded private IOC post. Public IOSB and AST dispatch remain unconnected"
         },
         {
           "original_lines": [

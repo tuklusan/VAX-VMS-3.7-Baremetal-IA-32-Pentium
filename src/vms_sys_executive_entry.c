@@ -1858,6 +1858,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->dq_ddt_function=port_dqddt_function;
         p->result->dq_ddt_dispatch_bootwrite=port_dqddt_dispatch_bootwrite;
         p->result->dq_ddt_startio=port_dqddt_startio;
+        p->result->dq_ddt_startio_async=port_dqddt_startio_async;
+        p->result->dq_bootread_commit=port_dq_bootread_commit;
         p->result->dq_crb=&executive_dq_crb;
         p->result->signature=PORT_SYS_EXEC_DQ_DDT_TAG;
         return PORT_SYS_EXEC_NORMAL;
