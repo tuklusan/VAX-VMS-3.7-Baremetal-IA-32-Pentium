@@ -9,6 +9,8 @@ struct fixture {
     uint8_t pcbs[4][PORT_V37_PCB_BYTES];
     struct port_v37_ia32_restore_frame frames[4];
     uint8_t phds[4][PORT_V37_PHD_BYTES];
+    struct port_v37_wait_queue wait_queue;
+    uint32_t wait_queue_va;
     uint32_t pcb_va[4];
     uint32_t frame_va[4];
     uint32_t phd_va[4];
@@ -21,6 +23,7 @@ static uint32_t addr(void *context,const void *p){
     uintptr_t value=(uintptr_t)p;
     if(value>=begin&&value<end)return 0x00100000u+(uint32_t)(value-begin);
     for(unsigned i=0;i<4u;i++)if(p==f->pcbs[i])return f->pcb_va[i];
+    if(p==&f->wait_queue)return f->wait_queue_va;
     return 0u;
 }
 static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
@@ -38,6 +41,8 @@ static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
     for(unsigned i=0;i<4u;i++)
         if(va==f->phd_va[i]&&bytes<=sizeof f->phds[i])
             return f->phds[i];
+    if(va==f->wait_queue_va&&bytes<=sizeof f->wait_queue)
+        return (uint8_t *)&f->wait_queue;
     return 0;
 }
 static void wake(void *context,uint32_t pcb){
@@ -83,7 +88,10 @@ int main(void){
         .scheduler=&scheduler,.pcb_va={0x00200000u,0x00201000u,
                                        0x00202000u,0x00203000u},
         .frame_va={0x00400000u,0x00401000u,0x00402000u,0x00403000u},
-        .phd_va={0x00500000u,0x00501000u,0x00502000u,0x00503000u}};
+        .phd_va={0x00500000u,0x00501000u,0x00502000u,0x00503000u},
+        .wait_queue_va=0x00600000u};
+    f.wait_queue.forward=f.wait_queue.backward=f.wait_queue_va;
+    f.wait_queue.state=7u;
     const struct port_v37_sched_ops ops={&f,addr,resolve,wake,reschedule};
     if(port_v37_sched_init(&scheduler,&ops)!=PORT_V37_SCHED_OK||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
@@ -211,6 +219,39 @@ int main(void){
        get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR)
         return fail("interrupt dispatch rejects malformed outgoing frame");
     f.frames[0].registers.cs=0x08u;
-    puts("SYS/SRC/SCHED.MAR SCH$RESCHED/SCH$SCHED and RSE.MAR SCH$CHSE PASS");
+    f.frames[0].registers.eip=0x23456789u;
+    f.wait_queue.forward=0x00abcdefu;
+    if(port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
+           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_CORRUPT||
+       selected||restore_frame||scheduler.current_pcb!=f.pcb_va[0]||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR||
+       get32(f.phds[0]+PORT_V37_PHD_PC)!=0x12345678u)
+        return fail("SCH$WAITK rejects malformed source WQH before mutation");
+    f.wait_queue.forward=f.wait_queue.backward=f.wait_queue_va;
+    if(port_v37_sched_wait_current(&scheduler,f.wait_queue_va,
+           f.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_EMPTY||
+       selected||restore_frame||scheduler.current_pcb||
+       f.wait_queue.count!=1u||f.wait_queue.forward!=f.pcb_va[0]||
+       f.wait_queue.backward!=f.pcb_va[0]||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=f.wait_queue.state||
+       get32(f.phds[0]+PORT_V37_PHD_KSP)!=f.frame_va[0]||
+       get32(f.phds[0]+PORT_V37_PHD_PC)!=0x23456789u)
+        return fail("SYSWAIT SCH$WAITK saves context and queues source WQH");
+    const uint32_t wake_status=port_v37_sched_wake_waiter(&scheduler,
+           f.wait_queue_va,f.pcb_va[0],0u);
+    if(wake_status!=PORT_V37_SCHED_OK||f.wait_queue.count||
+       f.wait_queue.forward!=f.wait_queue_va||
+       f.wait_queue.backward!=f.wait_queue_va||
+       get16(f.pcbs[0]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       f.pcbs[0][PORT_V37_PCB_PRI]!=30u||
+       scheduler.summary[0]!=(1u<<30)||scheduler.ready_count[30]!=1u||
+       port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK){
+        fprintf(stderr,"wake status=%u count=%u fwd=%08x back=%08x state=%u summary=%08x check=%u\\n",
+            wake_status,f.wait_queue.count,f.wait_queue.forward,
+            f.wait_queue.backward,get16(f.pcbs[0]+PORT_V37_PCB_STATE),
+            scheduler.summary[0],port_v37_sched_check(&scheduler));
+        return fail("SYSWAIT wake removes WQH process and returns it via CHSE");
+    }
+    puts("SYSWAIT SCH$WAITK/WQH wake plus SCHED SCH$RESCHED/SCH$SCHED and RSE SCH$CHSE PASS");
     return 0;
 }

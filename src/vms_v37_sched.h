@@ -18,6 +18,11 @@ enum {PORT_V37_SCHED_OK=1u,PORT_V37_SCHED_BADPARAM=2u,
       PORT_V37_SCHED_EMPTY=16u,PORT_V37_SCHED_NO_CONTEXT=32u};
 
 struct port_v37_sched_head {uint32_t forward,backward;};
+/* SYSDEFQZ.MDL WQH: forward/back links, 16-bit count and wait state. */
+struct port_v37_wait_queue {
+    uint32_t forward,backward;
+    uint16_t count,state;
+};
 struct port_v37_sched_ops {
     void *context;
     uint32_t (*address)(void *,const void *);
@@ -60,5 +65,14 @@ uint32_t port_v37_sched_save_current(struct port_v37_scheduler *,
 uint32_t port_v37_sched_interrupt(struct port_v37_scheduler *,
     uint32_t interrupted_restore_frame_address,uint32_t *selected_pcb,
     uint32_t *selected_restore_frame);
+/* SYSWAIT.MAR SCH$WAITK queue/state/context transition. Quota/time charging,
+ * pending-AST delivery and the higher-level event-flag wait remain separate. */
+uint32_t port_v37_sched_wait_current(struct port_v37_scheduler *,
+    uint32_t wait_queue_address,uint32_t interrupted_restore_frame_address,
+    uint32_t *selected_pcb,uint32_t *selected_restore_frame);
+/* Remove one process from a source WQH and make it eligible through CHSE. */
+uint32_t port_v37_sched_wake_waiter(struct port_v37_scheduler *,
+    uint32_t wait_queue_address,uint32_t pcb_address,
+    uint8_t priority_increment_class);
 uint32_t port_v37_sched_check(const struct port_v37_scheduler *);
 #endif
