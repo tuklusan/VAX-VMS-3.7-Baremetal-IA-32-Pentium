@@ -94,11 +94,12 @@ uint32_t port_v37_sysqio_build_irp(
     put32(candidate+PORT_V37_IRP_ARB,spec->arb_va);
     if(request->dispatch.action_class==PORT_DQ_FDT_READ||
        request->dispatch.action_class==PORT_DQ_FDT_WRITE){
-        /* SYSQIOFDT EXE$READ/WRITE common path stores P2 as a
-         * full longword transfer byte count and P4 as carriage control.
+        /* SYSQIOFDT EXE$READ/WRITE applies MOVZWL P2 to R1, so the
+         * transfer byte count is the zero-extended low word. P4 is the
+         * carriage-control argument.
          * User-buffer accessibility, page locking and SVAPTE binding are
          * still required before this IRP can be submitted to a driver. */
-        put32(candidate+IRP_BCNT,request->args.parameter[1]);
+        put32(candidate+IRP_BCNT,(uint16_t)request->args.parameter[1]);
         candidate[IRP_CARCON]=(uint8_t)request->args.parameter[3];
     }
     /* SYSQIOFDT.MAR EXE$ONEPARM stores P1 in IRP$L_MEDIA before queuing.

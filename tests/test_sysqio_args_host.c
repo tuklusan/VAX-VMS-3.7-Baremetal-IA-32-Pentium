@@ -469,7 +469,7 @@ int main(void){
           one_parameter_irp,sizeof one_parameter_irp)!=
           PORT_V37_SYSQIO_IRP_BUILD_OK||
        !(get16(one_parameter_irp+42u)&2u)||
-       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0x1234ffffu||
+       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0xffffu||
        one_parameter_irp[64u]!=0x80u)
         return 71;
     struct transfer_access_test transfer_test={.read_ok=1,.write_ok=1};
@@ -480,8 +480,8 @@ int main(void){
           &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_OK||
        ast_status!=PORT_SYS85_NORMAL||transfer_test.writes!=1u||
        transfer_test.reads||transfer_test.address!=0x12345ff0u||
-       transfer_test.bytes!=0x1234ffffu||
-       transfer_buffer.address!=0x12345ff0u||transfer_buffer.bytes!=0x1234ffffu||
+       transfer_test.bytes!=0xffffu||
+       transfer_buffer.address!=0x12345ff0u||transfer_buffer.bytes!=0xffffu||
        transfer_buffer.direction!=PORT_V37_SYSQIO_BUFFER_WRITE_TO_USER)
         return 73;
     transfer_test.write_ok=0;transfer_buffer.address=0xdeadbeefu;
@@ -499,7 +499,7 @@ int main(void){
           one_parameter_irp,sizeof one_parameter_irp)!=
           PORT_V37_SYSQIO_IRP_BUILD_OK||
        (get16(one_parameter_irp+42u)&2u)||
-       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0x1234ffffu||
+       get32(one_parameter_irp+PORT_V37_IRP_BCNT)!=0xffffu||
        one_parameter_irp[64u]!=0x80u)
         return 72;
     transfer_test.write_ok=1;transfer_test.reads=transfer_test.writes=0u;
@@ -512,8 +512,7 @@ int main(void){
     transfer_test.reads=transfer_test.writes=0u;
     if(port_v37_sysqio_check_buffer(&write_request,&transfer_access,
           &transfer_buffer,&ast_status)!=PORT_V37_SYSQIO_BUFFER_OK||
-       transfer_test.reads!=1u||transfer_test.writes||
-       transfer_test.bytes!=0x10000u||transfer_buffer.bytes!=0x10000u)
+       transfer_test.reads||transfer_test.writes||transfer_buffer.bytes!=0u)
         return 76;
     write_request.args.function=PORT_DQ_MODIFY;
     if(port_v37_sysqio_preflight(&write_request.args,proc.access_mode,4u,

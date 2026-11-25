@@ -95,7 +95,7 @@ uint32_t port_v37_sysqio_check_buffer(
         return PORT_V37_SYSQIO_BUFFER_NONE;
     }
     const struct port_v37_sysqio_buffer candidate={
-        request->args.parameter[0],request->args.parameter[1],
+        request->args.parameter[0],(uint16_t)request->args.parameter[1],
         direction,0u};
     if(candidate.bytes&&!probe(memory,candidate.address,candidate.bytes)){
         *service_status=PORT_SYS85_ACCVIO;
@@ -110,7 +110,7 @@ uint32_t port_v37_sysqio_copy_to_user_buffer(
     const struct port_v37_sysqio_prepared *request,const void *source,
     uint32_t bytes){
     if(!request||request->dispatch.action_class!=PORT_DQ_FDT_READ||
-       !bytes||bytes>request->args.parameter[1])
+       !bytes||bytes>(uint16_t)request->args.parameter[1])
         return PORT_V37_SYSQIO_BUFFER_BAD;
     return port_user_copy_to_pinned(&request->transfer_pages,
         request->args.parameter[0],source,bytes)==PORT_USER_OK?
@@ -121,7 +121,7 @@ uint32_t port_v37_sysqio_copy_from_user_buffer(
     const struct port_v37_sysqio_prepared *request,void *destination,
     uint32_t bytes){
     if(!request||request->dispatch.action_class!=PORT_DQ_FDT_WRITE||
-       !bytes||bytes>request->args.parameter[1])
+       !bytes||bytes>(uint16_t)request->args.parameter[1])
         return PORT_V37_SYSQIO_BUFFER_BAD;
     return port_user_copy_from_pinned(&request->transfer_pages,destination,
         request->args.parameter[0],bytes)==PORT_USER_OK?

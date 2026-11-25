@@ -148,7 +148,7 @@ enum { PORT_V37_SYSQIO_BUFFER_OK=1u,PORT_V37_SYSQIO_BUFFER_BAD=2u,
        PORT_V37_SYSQIO_BUFFER_WRITE_TO_USER=2u };
 struct port_v37_sysqio_buffer {
     uint32_t address;
-    uint32_t bytes;
+    uint16_t bytes;
     uint8_t direction,reserved;
 };
 /* SYSQIOFDT READCHKR/WRITECHKR page-access stage. The output plan is
