@@ -8864,7 +8864,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11a_get_time",
-          "pc_line": 286,
+          "pc_line": 291,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -8898,7 +8898,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11b_get_time",
-          "pc_line": 288,
+          "pc_line": 293,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -9340,7 +9340,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11a_map_window",
-          "pc_line": 187,
+          "pc_line": 192,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -9374,7 +9374,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11b_map_window",
-          "pc_line": 191,
+          "pc_line": 196,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -9408,7 +9408,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11a_next_header",
-          "pc_line": 233,
+          "pc_line": 238,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -9442,7 +9442,7 @@
           "status": "mapped",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11b_next_header",
-          "pc_line": 239,
+          "pc_line": 244,
           "function": "Native ODS-1/ODS-2 routine"
         },
         {
@@ -9498,7 +9498,7 @@
           "status": "partial",
           "pc_file": "src/vms_f11_acp86.c",
           "pc_symbol": "port_f11b_map_window",
-          "pc_line": 191,
+          "pc_line": 196,
           "function": "Map callback and unmapped-block result; source window turn/retry and remapping are not wired"
         },
         {

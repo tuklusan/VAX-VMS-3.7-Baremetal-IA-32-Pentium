@@ -125,6 +125,12 @@ int main(int argc,char **argv){
     mm.success=0;
     assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==-1);
     assert(left==3u&&newucb==(void *)0x7u);
+    mm.success=1;mm.mapped=513u;
+    assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,3u,&left,&newucb,&mo)==-1);
+    assert(left==3u&&mm.bytes==1536u);
+    unsigned map_calls=mm.calls;
+    assert(port_f11b_map_window((void *)0x5u,(void *)0x9u,2u,UINT32_MAX,&left,&newucb,&mo)==-1);
+    assert(mm.calls==map_calls&&left==UINT32_MAX);
     struct hdrmock hm={0};hm.segment=3u;
     struct port_f11_86_file_control fc={(void *)0x123u};
     const struct port_f11_86_headerops ho={read_header,&hm};
