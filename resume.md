@@ -1771,3 +1771,12 @@ Verification: `make v37schedcheck` PASS; full `make -j2 all test` PASS (exit 0);
 
 Local M378 implementation commit: `e539dd70677d9fc844af5ce5f65832b0d1fbf89c`.
 Published GitHub main M378 implementation commit: `226f932c466b32b2c9403b0c78824e9f5b2118c9`.
+
+## M379 - Verify LEF result rollback and commit, 25 November 2026
+
+Expanded the RSE host regression to exercise source LEF completion separately from CEF. It corrupts the WQH tail after a valid LEF wait and verifies that the RSE saved-PC/R0 edits roll back without changing the blocked process; repairing the WQH allows saved syscall completion and CHSE wake to commit. This tests the existing host API and does not add live event-flag selection or scheduler integration.
+
+Verification: `make v37schedcheck` PASS; `python3 tools/gen_source_coverage.py`, `python3 tests/test_coverage_ranges.py`, `python3 tools/validate_source_ranges.py`, and `git diff --check` PASS (2,129 ranges; zero validation errors; totals unchanged). No QEMU run; this test change does not affect the guest. Login/DCL/DECnet/SET HOST remain unobserved.
+
+Local M379 test commit: `e519b6ff1bda6f35be0310646b20709227a8fb4b`.
+Published GitHub M379 test commit: `9449b69b782363db78afc10a5eb9bc0dc8b5128a`.
