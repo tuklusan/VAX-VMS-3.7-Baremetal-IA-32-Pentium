@@ -568,6 +568,13 @@ int main(void){
        prepared_irp!=(uint8_t *)(uintptr_t)0x55u||prepared_va!=0x55u||
        ast_status!=0xfeedu||memcmp(&integrated,&untouched,sizeof integrated))
         return 59;
+    prepared_irp=(uint8_t *)(uintptr_t)0x55u;prepared_va=0x55u;
+    if(port_v37_sysqio_prepare_irp(ap,sizeof ap,&proc,&begin_ops,0,
+          &pool,&pool_sync,&integrated,&prepared_irp,&prepared_va,
+          &ast_status)!=PORT_V37_SYSQIO_PREPARE_BEGIN||prepared_irp||
+       prepared_va||proc.direct_io_count!=1||proc.ast_count!=1||
+       memcmp(&integrated,&untouched,sizeof integrated))
+        return 84;
     /* A rejected request must not leave a stale caller-owned IRP pointer.
      * WAIT above deliberately retains its separate no-op output contract. */
     put32(ap+8u,0u);prepared_irp=(uint8_t *)(uintptr_t)0x55u;
