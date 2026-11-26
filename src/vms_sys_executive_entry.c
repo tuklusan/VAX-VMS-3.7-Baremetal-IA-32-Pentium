@@ -880,6 +880,19 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
          * templates still lack PHD/native context activation. */
         if(!executive_lockdb_ready || executive_procvec_ready ||
            !p->proc_settings)return PORT_SYS_EXEC_BAD_PARAMETERS;
+        /* Exercise the NPAGEDYN resolver against the live allocator boundary
+         * before installing it in SCH$CHSE/SCH$SCHED callbacks. */
+        const uintptr_t np_start=(uintptr_t)executive_np_base;
+        if(!np_start || np_start>UINT32_MAX || !executive_free_npages ||
+           executive_free_npages>UINT32_MAX-np_start ||
+           executive_vms_resolve(0,(uint32_t)np_start,1u)!=executive_np_base ||
+           executive_vms_resolve(0,
+               (uint32_t)(np_start+executive_free_npages-1u),1u)!=
+                   executive_np_base+executive_free_npages-1u ||
+           executive_vms_resolve(0,
+               (uint32_t)(np_start+executive_free_npages-1u),2u)!=0 ||
+           executive_vms_resolve(0,(uint32_t)(np_start-1u),1u)!=0)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
         uint32_t used=(executive_lockdb.pool_bytes+3u)&~3u;
         if(used>=executive_free_npages)return PORT_SYS_EXEC_BAD_PARAMETERS;
         struct port_ini_proc_settings settings=*p->proc_settings;
