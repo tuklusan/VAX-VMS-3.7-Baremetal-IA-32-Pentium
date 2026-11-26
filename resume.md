@@ -2485,3 +2485,13 @@ Verification: `make -j2 all swapinithashcheck sysexecentrycheck sourcerangecheck
 M450 implementation commit: `946da39`.
 
 Remaining: construct native VMS process address spaces and genuine INIT/NULL/SWAPPER contexts; run SWAPINIT in SWAPPER context and create SYSINIT; connect live public SYS$QIO completion to IOC/ACP/AST and process scheduling; implement image activation/login/DCL and verify DECnet SET HOST 0 second-session/LOGOUT in QEMU.
+
+## M451 — Search SWAPPER SYSTEM logical names through resident LOG$SEARCHLOG, 26 November 2026
+
+Added a bounded source-shaped LOG$SEARCHLOG lookup callback over the live SWAPPER SYSTEM RSHT. It validates the table geometry, bucket chain, linked record, hash and sorted name ordering; it returns source PORT_LOG status values and preserves the caller result on misses/errors. Host tests verify SYS$DISK and SYS$SYSDEVICE resolution, unknown-name NOTRAN behavior and corrupt-chain rejection. INIT exercises both successful lookups and a miss against the actual boot-created table before printing its diagnostic. This is limited to the two SYSTEM logical records created during bootstrap; it does not implement PCB/PHD modes, general public logical-name services or process-context execution.
+
+Verification: `make -j2 all` PASS; `make -j2 test exeportbatchcheck sourcerangecheck swapinithashcheck sysexecentrycheck` PASS; `make qemu-sysboot-m217` PASS with both SYS records resolving, followed by the unchanged incomplete contextless INIT stop. Source coverage: 2,192 ranges; 455/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,713 partial, 59,543 unresolved, 8,032 missing, 26,778 excluded, 917 hardware-excluded. Capture `logs/serial/qemu-m217-run-local-20261126T145240561629Z.log`, 6,429 bytes, SHA-256 `f7d632210616a4d0f033036cf84a25a35db3b049049724c889e33e8ed7f1ff6d`; QEMU runner exited and no runner remains. No SYSTEM login, DCL, DECnet Phase IV or SET HOST 0 was observed.
+
+M451 implementation commit: `5d229fc`.
+
+Remaining: build genuine source-order INIT/NULL/SWAPPER PHDs, address spaces and contexts; run SWAPINIT in SWAPPER and activate SYSINIT; connect public SYS$QIO to IOC, Files-11 ACP, process-aware AST completion and scheduling; continue native INIT, image activation, SYSTEM login/DCL, DECnet Phase IV, and verify the two-session SET HOST 0/LOGOUT sequence end-to-end in QEMU. No acceptance condition is complete.
