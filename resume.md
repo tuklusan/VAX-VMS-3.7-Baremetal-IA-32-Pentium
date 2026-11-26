@@ -2389,3 +2389,13 @@ Expanded the SCH$QAST host regression to exercise all nine source `SCH$RSE` AST 
 
 Verification: `make v37qastcheck v37schedcheck v37eventwaitcheck` PASS; full `make -j2 test` PASS. Source coverage remains 2,190 ranges, 455/4,566 original files indexed, zero mapped-function errors. No QEMU run; this host-only regression does not change runtime code. INIT remains incomplete; no SYSTEM login, DCL, DECnet Phase IV or SET HOST 0 was observed.
 M440 test commit: `4e2d77111232470d5f6eec363d9962fb7cc51acb`.
+
+## M441 - Bind resident SCH$RESCHED to native IA-32 vector 0x91, 26 November 2026
+
+Added a DPL0 software interrupt gate for native scheduler requests and connected SYS.EXE's source `SCH$RESCHED` callback through the kernel architecture bridge. Scheduler mutations performed under the source IPL_SYNCH equivalent restore their original IF state before a pending reschedule invokes vector 0x91; IRQ0 and the software gate share the selected-context restore path. The QEMU INIT probe issued a real resident scheduler request and verified entry through that gate, reaching the current contextless result without inventing a process frame. The interrupt adapter and request path do not create INIT/NULL/SWAPPER PHD contexts or implement process address-space switching.
+
+Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` PASS; `make qemu-sysboot-m217` PASS with the real guest diagnostic `INIT: SCH$RESCHED entered resident IA-32 vector 0x91; process contexts pending.` followed by the unchanged `INIT stopped: remaining original initialization dependencies incomplete.` Coverage validation: 2,190 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,710 partial, 59,546 unresolved, 8,032 missing, 26,778 excluded and 917 hardware-excluded. Capture `logs/serial/qemu-m217-run-local-20261126T135631388893Z.log`, 6,391 bytes, SHA-256 `ab51326ac04f7a9496946668c8f9180bdd6ff08dbb7e58b296507dfb715c41ba`; runner exited and no QEMU process remains. The public SYS$QIO live process path, AST delivery, INIT context activation, login, DCL, DECnet Phase IV and SET HOST 0 remain incomplete/not observed.
+
+M441 implementation and QEMU evidence commit: `119d087613e90fe6369629e82a025b9e7e1d7185`.
+
+Remaining: construct and activate genuine INIT/NULL/SWAPPER contexts using source INIT/PHD/process activation behavior; connect public SYS$QIO and Files-11 ACP completion to process AST/wake semantics; continue image activation and verify SYSTEM login/DCL and DECnet Phase IV SET HOST 0 second-session/LOGOUT end-to-end. No acceptance condition is complete.
