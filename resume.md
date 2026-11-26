@@ -2446,3 +2446,11 @@ Verification: `make v37qastcheck iopostendcheck iopostprocesscheck sourcerangech
 
 M446 implementation commit: `4f035d4218e5d00acfa3eac0d6bddcb9f40894ae`.
 M446 QEMU serial/evidence commit: `a87d210144e11fbe0ec2c00f4ef05add7abd5c1f`.
+
+## M447 - Verify direct KAST adapter PCB ownership and ordering, 26 November 2026
+
+Extended the QAST regression to exercise the direct-I/O scheduler adapter. A stale expected PCB is rejected without changing queue links; a valid PCB queues the KAST in source FIFO order through SCH$QAST. This only validates the adapter and scheduler boundary, not live IOC completion or AST execution.
+
+Verification: `make v37qastcheck` PASS. No source coverage changes or QEMU run; M446's QEMU evidence remains the latest runtime test and still stops at contextless INIT.
+
+M447 test commit: `1295822d27c944f75d0241a272ccdacb22862876`.
