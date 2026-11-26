@@ -2317,3 +2317,13 @@ Verification: `make v37schedcheck sourcerangecheck` PASS; full `make -j2 all tes
 M432 implementation and QEMU evidence commit: `317c08fe8ee49cf2dec3f921791bc598f61fccea`.
 
 Remaining: connect this activation path to real INIT/$CREPRC resource construction and process image startup; implement live public SYS$QIO, Files-11 ACP and process AST completion; then verify SYSTEM login/DCL and genuine DECnet Phase IV SET HOST 0 second-session/LOGOUT end-to-end.
+
+## M433 - Store ACTIVATE PID in the source PCB, 26 November 2026
+
+Completed the missing SYSCREPRC ACTIVATE PCB$L_PID write. `port_exe_creprc_activate_slot` now receives the already allocated source-layout PCB bytes, stores the sequence/PID before publishing the PCB vector slot, and leaves the PCB/vector/count/PID output unchanged when process-limit or PIX checks reject activation. Expanded host coverage verifies initial and wrapped PIDs in both PCB and vector. This remains a standalone activation primitive: public SYS$CREPRC, process resources, scheduler dispatch, image activation, and PID return are not connected.
+
+Verification: `make execreprccheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,184 ranges; 454/4,566 original files indexed; 17,230 mapped, 30,567 partial, 59,460 unresolved, 8,032 missing, 26,734 excluded, 917 hardware-excluded); `make qemu-sysboot-m217` PASS through the unchanged live DQA0 DDT/IRQ14/Files-11 ACP checks, then reaches the known incomplete INIT stop because NULL/SWAPPER contexts are absent. Actual capture `logs/serial/qemu-m217-run-local-20261126T021059031332Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; no SYSTEM login, DCL, DECnet Phase IV, or SET HOST 0 observed.
+
+M433 implementation and QEMU evidence commit: `41bd8ba63ff1e3fafd65f4c103114ca62ed77a81`.
+
+Remaining: create/activate actual INIT, NULL and SWAPPER process contexts and invoke source PROCSTRT/CREPRC paths; finish live public SYS$QIO process delivery and AST completion; resume initialization; activate/login SYSTEM and DCL; initialize DECnet Phase IV and verify genuine SET HOST 0 second-session login and LOGOUT end-to-end.
