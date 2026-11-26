@@ -95,6 +95,12 @@ uint32_t port_v37_sched_start_context_quotas(struct port_v37_scheduler *,
  * AST arrival for a noncurrent PCB. Caller must provide IPL_SYNCH callbacks. */
 uint32_t port_v37_sched_queue_ast(struct port_v37_scheduler *,
     uint32_t pcb_address,uint32_t acb_address);
+/* SCH$QAST followed by RPTEVT/SCH$RSE AST wake routing. `wait_queue_address`
+ * is the source WQH selected for the target's current PCB state. If wake
+ * routing fails, the AST remains committed to the target queue. */
+uint32_t port_v37_sched_queue_ast_rse(struct port_v37_scheduler *,
+    uint32_t pcb_address,uint32_t acb_address,uint32_t wait_queue_address,
+    uint8_t priority_increment_class);
 /* SCH$CHSEP precomputed-priority queue transition for COM/COMO processes. */
 uint32_t port_v37_sched_set_priority(struct port_v37_scheduler *,
     uint32_t pcb_address,uint8_t priority);

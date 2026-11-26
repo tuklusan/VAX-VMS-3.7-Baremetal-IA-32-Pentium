@@ -523,13 +523,13 @@ append_source_ranges('SYS/SRC/ASTDEL.MAR',671,'src/vms_astdel.c',[
   (426,'unresolved',None,'Normal executive/supervisor/user AST user-stack frame and VAX CHMK return paths are not implemented'),
   (454,'partial','port_astdel_queue_ipast','IPAST vector and special piggyback kernel AST enqueue'),
   (496,'excluded',None,'AST queue argument and condition descriptions'),
-  (586,'partial','src/vms_v37_sched.c','port_v37_sched_queue_ast','Resolve target PID and insert source ACB/IRP by KAST/access mode, maintain PHD ASTLVL and notify current/noncurrent AST arrival; AST dispatcher and process wake binding remain incomplete'),
+  (586,'partial','src/vms_v37_sched.c','port_v37_sched_queue_ast_rse','Resolve and insert source ACB/IRP by KAST/access mode, maintain PHD ASTLVL, notify arrival and apply RSE AST wake using an explicit source WQH; live PID lookup/IOC binding and AST dispatch remain incomplete'),
   (602,'excluded',None,'New AST level call contract and explanatory comments'),
   (626,'partial','port_astdel_new_level','Compute AST eligibility from per-mode queues'),
   (661,'excluded',None,'Swap and remove AST interface descriptions'),
   (668,'partial','port_astdel_swap','Queue replacement/removal entry; no native VAX register ABI'),
   (671,'excluded',None,'Original assembler END and file close')
-], 'No live scheduler/guest process binding, VAX AST return/user frame, IPL transition, or multiprocessor interlocks.')
+], 'AST queue insertion and explicit scheduler wake are host-tested, but no live IOC/process binding, VAX AST return/user frame, complete IPL transition, or multiprocessor interlocks are connected.')
 append_source_ranges('SYS/SRC/POSTEF.MAR',403,'src/vms_v37_sched.c',[
   (94,'excluded',None,'Original file history, declarations and VAX PSECT directives'),
   (135,'excluded',None,'SCH$POSTEF call contract and non-executable comments'),
@@ -1926,7 +1926,7 @@ rse_lines=735 # pinned original SYS/SRC/RSE.MAR line count at REVISION
 rse_sections=[]
 for first,last,path,symbol,description,status in [
  (1,193,None,None,'RSE AST declarations and AST state lookup/continuation dispatch remain unresolved','unresolved'),
- (194,207,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial AST event state mask and CHSE wake routing; AST queue/AST delivery semantics remain unresolved','partial'),
+ (194,207,'src/vms_v37_sched.c','port_v37_sched_queue_ast_rse','Queue a source ACB/IRP then apply the RSE AST state mask and wake an eligible resident waiter through CHSE; AST delivery and state-to-WQH lookup remain unresolved','partial'),
  (208,209,None,None,'RSE source separation before the event-flag table remains unresolved','unresolved'),
  (210,213,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial local/common event state dispatch; source event selection is supplied by the caller','partial'),
  (214,231,'src/vms_v37_sched.c','port_v37_sched_rse_event','Partial source state masks and wake dispatch for free-page, WAKE, RESUME and page-fault-complete events; caller supplies the actual wait-queue header and situational priority class','partial'),
@@ -1935,7 +1935,7 @@ for first,last,path,symbol,description,status in [
  (237,257,None,None,'RSE SWPOUT actions and illegal-event handling remain unresolved','unresolved'),
  (258,263,'src/vms_v37_sched.c','port_v37_sched_rse_event','For resident LEF/CEF waiters, mirror the already post-INT IA-32 EIP in PHD PC and return SS$_NORMAL through PHD R0/native EAX before CHSE; event-flag selection and IPL integration remain unresolved','partial'),
  (264,267,None,None,'RSE event-action connector and remaining report semantics are not yet integrated','unresolved'),
- (268,270,'src/vms_v37_sched.c','port_v37_sched_rse_event','Route the implemented RSE executable-state events through wait-queue removal and source CHSE scheduling; AST delivery and event-specific completion state remain unresolved','partial'),
+ (268,270,'src/vms_v37_sched.c','port_v37_sched_queue_ast_rse','Route an explicit source AST waiter WQH through wait-queue removal and CHSE; generic executable-state activation and event-specific completion remain unresolved','partial'),
  (271,332,None,None,'SCH$UNWAIT state-to-WQH resolution, common event-cluster queues and remaining event/AST support remain unresolved','unresolved'),
  (333,342,'src/vms_v37_sched.c','port_v37_sched_chse','Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial','partial'),
  (343,394,None,None,'SCH$CHSE IPL checks and preceding/following RSE entry paths remain unresolved','unresolved'),
@@ -1953,7 +1953,7 @@ for first,last,path,symbol,description,status in [
         'status':status,'reason':description})
 result['files'].append({'original_file':'SYS/SRC/RSE.MAR',
     'original_lines':rse_lines,'sections':rse_sections,
-    'unresolved_integration':'Host-tested partial SCH$RSE masks and WQH wake transitions now cover FPGA, WAKE, RESUME and PFCOM. AST/event-flag actions, PID-based wake paths, event completion return state, full IPL semantics, swapper execution and remaining scheduler routines are unresolved.'})
+    'unresolved_integration':'Host-tested SCH$QAST can trigger the RSE AST state mask when supplied the target wait WQH; AST dispatch, state-to-WQH lookup, event-flag actions, full IPL semantics, swapper execution and remaining scheduler routines are unresolved.'})
 
 # M107: per-source native assembly-free RTL routines, each saved as its own
 # source file with one callable symbol. These are host-tested and built into

@@ -9,6 +9,7 @@ struct fixture {
     uint8_t pcb[PORT_V37_PCB_BYTES];
     uint8_t phd[PORT_V37_PHD_BYTES];
     uint8_t acb[5][136];
+    struct port_v37_wait_queue wait;
     struct port_v37_scheduler scheduler;
     unsigned arrivals,current_levels;
     uint8_t last_level;
@@ -42,6 +43,9 @@ static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
     if(va>=0x5000u&&va<=0x5000u+sizeof f->scheduler.heads&&
        bytes<=0x5000u+sizeof f->scheduler.heads-va)
         return (uint8_t *)&f->scheduler.heads[0]+(va-0x5000u);
+    if(va>=0x6000u&&va<=0x6000u+sizeof f->wait&&
+       bytes<=0x6000u+sizeof f->wait-va)
+        return (uint8_t *)&f->wait+(va-0x6000u);
     return 0;
 }
 
@@ -148,6 +152,32 @@ int main(void){
        memcmp(candidate_links,f.acb[4],sizeof candidate_links)||
        f.arrivals!=2u||f.current_levels!=2u)
         return fail("corrupt existing AST queue rejected atomically");
+
+    put32(f.acb[2]+4u,0x1010u);
+    f.wait.forward=f.wait.backward=0x1000u;
+    f.wait.count=1u;f.wait.state=PORT_V37_SCH_MWAIT;
+    f.scheduler.current_pcb=0u;
+    put32(f.pcb+PORT_V37_PCB_SQFL,0x6000u);
+    put32(f.pcb+PORT_V37_PCB_SQBL,0x6000u);
+    put16(f.pcb+PORT_V37_PCB_STATE,PORT_V37_SCH_MWAIT);
+    make_acb(&f,4u,1u,seed.pid);
+    const uint32_t wake_status=port_v37_sched_queue_ast_rse(&f.scheduler,
+        0x1000u,0x3400u,0x6000u,0u);
+    if(wake_status!=PORT_V37_SCHED_OK||
+       f.wait.forward!=0x6000u||f.wait.backward!=0x6000u||
+       f.wait.count!=0u||
+       (uint16_t)(f.pcb[PORT_V37_PCB_STATE]|
+          ((uint16_t)f.pcb[PORT_V37_PCB_STATE+1u]<<8))!=
+              PORT_V37_SCH_COM||f.arrivals!=3u||
+       port_v37_sched_check(&f.scheduler)!=PORT_V37_SCHED_OK){
+        fprintf(stderr,"wake status=%u wqh=%08x/%08x count=%u state=%u "
+            "pcbstate=%u arrivals=%u sched=%u\n",wake_status,
+            f.wait.forward,f.wait.backward,f.wait.count,f.wait.state,
+            (unsigned)(f.pcb[PORT_V37_PCB_STATE]|(
+                (uint16_t)f.pcb[PORT_V37_PCB_STATE+1u]<<8)),f.arrivals,
+            port_v37_sched_check(&f.scheduler));
+        return fail("SCH$QAST arrival wakes resident AST waiter through RSE");
+    }
     puts("ASTDEL SCH$QAST source PCB queue ordering and PID checks PASS");
     return 0;
 }

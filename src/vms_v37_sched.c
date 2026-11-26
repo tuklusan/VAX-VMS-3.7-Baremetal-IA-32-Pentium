@@ -191,6 +191,25 @@ uint32_t port_v37_sched_queue_ast(struct port_v37_scheduler *s,
     return status;
 }
 
+uint32_t port_v37_sched_queue_ast_rse(struct port_v37_scheduler *s,
+    uint32_t pcb_address,uint32_t acb_address,uint32_t wait_queue_address,
+    uint8_t priority_increment_class){
+    if(!s||!wait_queue_address||
+       !s->ops.enter_synchronization||!s->ops.leave_synchronization)
+        return PORT_V37_SCHED_BADPARAM;
+    const uint32_t token=s->ops.enter_synchronization(s->ops.context);
+    uint32_t status=queue_ast_synchronized(s,pcb_address,acb_address);
+    if(status==PORT_V37_SCHED_OK){
+        status=port_v37_sched_rse_event(s,PORT_V37_RSE_AST,
+            wait_queue_address,pcb_address,priority_increment_class);
+        /* Processes outside SCH$RSE's AST wait-state mask retain the queued
+         * AST and otherwise complete QAST normally. */
+        if(status==PORT_V37_SCHED_IGNORED)status=PORT_V37_SCHED_OK;
+    }
+    s->ops.leave_synchronization(s->ops.context,token);
+    return status;
+}
+
 static uint32_t wait_queue_check(const struct port_v37_scheduler *s,
     uint32_t address,uint8_t **queue_out){
     if(address&3u)return PORT_V37_SCHED_BADPARAM;
