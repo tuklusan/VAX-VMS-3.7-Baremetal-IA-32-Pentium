@@ -2765,6 +2765,7 @@ sysparam_defaults=[
     (1544,1551,'LOCKIDTBL default 128'),
     (1557,1564,'RESHASHTBL default 32'),
     (1570,1577,'DEADLOCK_WAIT default 10 seconds'),
+    (1750,1755,'TIMEPROMPTWAIT default -1; zero disables operator wait; positive value bounds the startup time prompt'),
     (1781,1793,'LOGSHASHTBL default 128 SYSTEM hash entries'),
     (1794,1806,'LOGGHASHTBL default 32 GROUP hash entries'),
     (1807,1819,'LOGPHASHTBL default 128 PROCESS hash entries')]
@@ -2786,7 +2787,7 @@ if cursor<=3007:
         'status':'unresolved','reason':'Other system parameters and configured PARAMS.DAT overrides not ported'})
 result['files'].append({'original_file':'SYS/SRC/SYSPARAM.MAR',
     'original_lines':3007,'sections':sysparam_sections,
-    'unresolved_integration':'Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including all three logical-name hash table sizes, but native boot does not yet locate/apply that file and SWAPINIT has not yet allocated or linked the configured tables; other SYSPARAM cells and consumers remain unported.'})
+    'unresolved_integration':'Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including TIMEPROMPTWAIT and all three logical-name hash table sizes, but native boot does not yet locate/apply that file and SWAPINIT has not yet allocated or linked the configured tables; other SYSPARAM cells and consumers remain unported.'})
 
 # SWAPPER.MAR: native SWAPINIT starts with paged-pool setup, then prepares
 # logical-name hash geometry and allocates SYSTEM/GROUP RSHT records.

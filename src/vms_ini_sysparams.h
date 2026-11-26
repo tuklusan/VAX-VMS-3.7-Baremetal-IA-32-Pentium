@@ -39,6 +39,7 @@ struct port_vms37_init_params {
     uint32_t system_log_hash_entries;
     uint32_t group_log_hash_entries;
     uint32_t process_log_hash_entries;
+    int32_t terminal_prompt_wait;
 };
 
 enum { PORT_VMS37_SYSPARAM_OK=1u, PORT_VMS37_SYSPARAM_BAD=2u };

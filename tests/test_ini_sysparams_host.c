@@ -26,11 +26,12 @@ int main(void){
        p.balance_set_count!=36u||p.max_working_set!=1024u||
        p.system_log_hash_entries!=128u||p.group_log_hash_entries!=32u||
        p.process_log_hash_entries!=128u||
+       p.terminal_prompt_wait!=-1||
        port_vms37_init_param_defaults(0)!=PORT_VMS37_SYSPARAM_BAD){
         fputs("VMS 3.7 SYSPARAM defaults failed\n",stderr);
         return 1;
     }
-    uint8_t file[32u+8u*20u+8u]={0},startup[32];
+    uint8_t file[32u+9u*20u+8u]={0},startup[32];
     memcpy(file,"SYS$SYSTEM:STARTUP.COM",22u);
     size_t off=32u;
     off+=add_param(file+off,"MAXPROCESSCNT",9000u);
@@ -41,15 +42,17 @@ int main(void){
     off+=add_param(file+off,"LOGSHASHTBL",0u);
     off+=add_param(file+off,"LOGGHASHTBL",16384u);
     off+=add_param(file+off,"LOGPHASHTBL",256u);
+    off+=add_param(file+off,"TIMEPROMPTWAIT",12u);
     file[off+4u]=0xa5u; /* BOO$USEFILE stops at the zero longword. */
     uint32_t applied=0;
     if(port_vms37_init_params_apply_file(&p,file,off+5u,startup,
           &applied)!=PORT_VMS37_SYSPARAM_FILE_OK||
-       applied!=7u||p.max_processes!=8192u||
+       applied!=8u||p.max_processes!=8192u||
        p.nonpaged_dynamic_bytes!=16384u||p.lrp_count!=7u||
        p.paged_dynamic_bytes!=65537u||
        p.srp_count!=120u||p.system_log_hash_entries!=1u||
        p.group_log_hash_entries!=16383u||p.process_log_hash_entries!=256u||
+       p.terminal_prompt_wait!=12||
        memcmp(startup,file,32u)!=0){
         fputs("VMS SYSBOOT parameter-file merge failed\n",stderr);
         return 1;

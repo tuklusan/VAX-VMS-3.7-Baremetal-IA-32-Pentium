@@ -23,7 +23,8 @@ uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *p){
         .max_working_set=PORT_VMS37_DEFAULT_WSMAX, /* WSMAX */
         .system_log_hash_entries=PORT_VMS37_DEFAULT_LOGSHASHTBL,
         .group_log_hash_entries=PORT_VMS37_DEFAULT_LOGGHASHTBL,
-        .process_log_hash_entries=PORT_VMS37_DEFAULT_LOGPHASHTBL
+        .process_log_hash_entries=PORT_VMS37_DEFAULT_LOGPHASHTBL,
+        .terminal_prompt_wait=-1 /* TIMEPROMPTWAIT: negative means wait forever */
     };
     return PORT_VMS37_SYSPARAM_OK;
 }

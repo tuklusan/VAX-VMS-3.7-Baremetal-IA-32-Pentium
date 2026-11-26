@@ -23975,6 +23975,25 @@
         {
           "original_lines": [
             1578,
+            1749
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            1750,
+            1755
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_ini_sysparams.c",
+          "pc_symbol": "port_vms37_init_param_defaults",
+          "pc_line": 6,
+          "function": "TIMEPROMPTWAIT default -1; zero disables operator wait; positive value bounds the startup time prompt copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+        },
+        {
+          "original_lines": [
+            1756,
             1780
           ],
           "status": "unresolved",
@@ -24022,7 +24041,7 @@
           "reason": "Other system parameters and configured PARAMS.DAT overrides not ported"
         }
       ],
-      "unresolved_integration": "Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including all three logical-name hash table sizes, but native boot does not yet locate/apply that file and SWAPINIT has not yet allocated or linked the configured tables; other SYSPARAM cells and consumers remain unported."
+      "unresolved_integration": "Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including TIMEPROMPTWAIT and all three logical-name hash table sizes, but native boot does not yet locate/apply that file and SWAPINIT has not yet allocated or linked the configured tables; other SYSPARAM cells and consumers remain unported."
     },
     {
       "original_file": "SYS/SRC/SWAPPER.MAR",

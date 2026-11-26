@@ -42,6 +42,21 @@ uint32_t port_vms37_init_params_apply_file(
         if(!name_bytes||name_bytes>15u)return PORT_VMS37_SYSPARAM_FILE_BAD;
         const uint8_t *name=file+offset+1u;
         uint32_t value=read_le32(file+offset+16u);
+        static const char time_prompt_wait_name[]="TIMEPROMPTWAIT";
+        size_t time_prompt_wait_length=sizeof time_prompt_wait_name-1u;
+        size_t name_index=0u;
+        while(name_index<name_bytes&&name_index<time_prompt_wait_length&&
+              upper_ascii(name[name_index])==
+                  (uint8_t)time_prompt_wait_name[name_index])
+            name_index++;
+        if(name_bytes==time_prompt_wait_length&&
+           name_index==time_prompt_wait_length){
+            candidate.terminal_prompt_wait=(int32_t)(
+                value>32767u?32767u:value);
+            applied++;
+            offset+=20u;
+            continue;
+        }
         struct param_field fields[]={
             {"MAXPROCESSCNT",&candidate.max_processes,12u,8192u},
             {"REALTIME_SPTS",&candidate.realtime_spts,0u,UINT32_MAX},
