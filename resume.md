@@ -2070,3 +2070,414 @@ Local M407 implementation commit: `c26ed2d655c058424d71a5ca604d411fd2df54b8`.
 Published GitHub main M407 implementation commit: `c26ed2d655c058424d71a5ca604d411fd2df54b8`.
 
 Remaining work: call SWAPINIT only after native SWAPPER context activation; insert initial logical names and create TT0; complete PHD/native context creation and scheduling; public SYS$QIO with actual DQA0 dispatch, Files-11 ACP request handling and process AST completion; image activation, SYSTEM login/DCL, DECnet Phase IV, genuine SET HOST 0, second login/DCL and logout. Source coverage is incomplete (8,032 missing and 58,479 unresolved ranges in the indexed files).
+
+## M408 - Link SWAPINIT SYSTEM boot names into RSHT storage, 26 November 2026
+
+Extended the source-aligned SWAPINIT hash operation to link SYS$DISK and SYS$SYSDEVICE into the allocated SYSTEM RSHT using LOG$HASH bucket selection and sorted forward/back links. SYS.EXE copies the two initialized source LOG records into PAGEDYN before linking so the existing bootstrap logical-name table retains its links; owned copies and hash storage are released together on failure/teardown. Hash support accepts the source table exponent through 14. This is callable SWAPINIT preparation only: no SWAPPER process context invokes it yet, and general LOG$INSLOGN locking/supersession, TT0 creation and the SWAPPER loop remain absent.
+
+Verification: `make swapinithashcheck logsystemcheck` PASS; full `make -j2 all test` exited 0; coverage generation, range regression, `tools/validate_source_ranges.py`, and `git diff --check` PASS (2,154 ranges; 452/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,400 partial, 58,471 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). `make qemu-sysboot-m217` PASS: real DQA0 DDT/IRQ14/Files-11 ACP checks and scheduler entry completed, then INIT stopped because NULL/SWAPPER PHD contexts remain absent. Latest raw capture `logs/serial/qemu-m217-run-local-20261126T000924724914Z.log`: 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; three sequential captures are in the manifest. QEMU exited and no runner remains. Changed files were audited for configured secret patterns and original DEC source extensions; no matches/source files were found. No binary image is included.
+
+Local M408 implementation commit: 207db93b6a6cb967ebb6821b2a6e27a4dc55c6af.
+Published GitHub main M408 implementation commit: pending push.
+
+Remaining work: invoke SWAPINIT only after native SWAPPER activation; create TT0; complete NULL/SWAPPER PHD and native contexts; connect public SYS$QIO, DQA0 IOC and process-aware AST completion; integrate Files-11 ACP requests; scheduler and image activation; genuine SYSTEM login/DCL; DECnet Phase IV and genuine SET HOST 0, second login/DCL and LOGOUT. Source inventory remains incomplete (8,032 missing and 58,471 unresolved ranges among indexed files).
+
+## M408 - Link SWAPINIT SYSTEM boot names into RSHT storage, 26 November 2026
+
+Extended the source-aligned SWAPINIT hash operation to link SYS and SYS into the allocated SYSTEM RSHT using LOG bucket selection and sorted forward/back links. SYS.EXE now copies the two initialized source LOG records into PAGEDYN before linking so the existing bootstrap logical-name table retains its links; owned copies and hash storage are released together on failure/teardown. Hash support now accepts the full source table exponent through 14. This is callable SWAPINIT preparation only: no SWAPPER process context invokes it yet, and general LOG locking/supersession, TT0 creation and the SWAPPER loop remain absent.
+
+Verification: gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_swapinit_hash.c src/vms_exe_paged_pool.c src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_log_hash.c src/vms_log_name_compare.c src/vms_log_record_valid.c src/vms_ini_devicedb.c src/vms_ini_ddb_boot.c src/vms_ini_ddb_opa.c src/vms_ini_ddb_mb.c src/vms_ini_ddb_nl.c src/vms_ini_ucb_boot.c src/vms_ini_ucb_opa.c src/vms_ini_ucb_mb1.c src/vms_ini_ucb_mb2.c src/vms_ini_ucb_nl.c src/vms_ini_log_templates.c tests/test_exe_swapinit_hash_host.c -o build/swapinithashcheck
+./build/swapinithashcheck
+SWAPPER EXE$SWAPINIT RSHT geometry, zeroed buckets, DYN headers, rollback/coalescing PASS
+gcc -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=undefined -Isrc src/vms_log_copy_result.c src/vms_log_hash.c src/vms_log_name_compare.c src/vms_log_record_valid.c src/vms_log_source_addr.c src/vms_log_source_record.c src/vms_log_system_check.c src/vms_log_system_init.c src/vms_log_system_insert.c src/vms_log_system_lookup.c src/vms_log_system_validate.c src/vms_log_translate.c src/vms_ini_fin_check.c src/vms_ini_fin_commit.c src/vms_ini_fin_ddb_name.c src/vms_ini_fin_decimal.c src/vms_ini_fin_disk_record.c src/vms_ini_fin_physical.c src/vms_ini_fin_sysdev_record.c src/vms_ini_fin_system.c src/vms_ini_fin_validate.c src/vms_ini_devicedb.c src/vms_ini_ddb_boot.c src/vms_ini_ddb_opa.c src/vms_ini_ddb_mb.c src/vms_ini_ddb_nl.c src/vms_ini_ucb_boot.c src/vms_ini_ucb_opa.c src/vms_ini_ucb_mb1.c src/vms_ini_ucb_mb2.c src/vms_ini_ucb_nl.c src/vms_ini_log_templates.c src/vms_ini_syslog.c tests/test_log_system_host.c -o build/logsystemcheck
+ASAN_OPTIONS=detect_leaks=1 ./build/logsystemcheck
+LOGNAMSUB.MAR source SYSTEM LOG$HASH/SEARCHLOG/TRANSLATE initial names and overflow guards PASS PASS; full make: Nothing to be done for 'all'.
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ini_sysparams.c src/vms_sysboot_paramfile.c tests/test_ini_sysparams_host.c -o build/inisysparamscheck
+python3 tests/test_sysqio_resident.py build/sys.exe
+Resident SYS.EXE contains SYSQIO, source CCB, and translated caller-memory helpers; live service dispatch remains incomplete
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_ccb.c tests/test_v37_ccb_host.c -o build/v37ccbcheck
+./build/inisysparamscheck
+VMS 3.7 INIT SYSPARAM defaults match original parameter declarations
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_vmbargs.c tests/test_vmbargs_host.c -o build/vmbargs_hosttest
+./build/v37ccbcheck
+SYSASSIGN local UCB ownership/refcounts, IOC$FFCHAN and VCHAN checks PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_init_index.c src/vms_init_mfd.c src/vms_init_bitmap.c src/vms_f11_home.c src/vms_bootio.c src/vms_boot_files11.c tests/test_init_index_host.c -o build/test_init_index_host
+./build/vmbargs_hosttest
+PASS: VMBARGDEF and BOOT_DRIVER native page/driver tables
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_init_bitmap.c src/vms_f11_home.c tests/test_init_bitmap_host.c -o build/test_init_bitmap_host
+./build/test_init_bitmap_host
+PASS: INIT_BITMAP ODS-1 and ODS-2 control blocks, used/free allocation bits
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_init_mfd.c tests/test_init_mfd_host.c -o build/test_init_mfd_host
+./build/test_init_mfd_host
+PASS: source INIT_MFD ODS-1 RAD50 and ODS-2 directory records, disk write
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_f11_home.c tests/test_f11_home_host.c -o build/test_f11_home_host
+./build/test_init_index_host
+PASS: original INIT_INDEX+INIT_MFD+INIT_BITMAP build ODS-2 volume read by FIL$MOUNT
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_bootio.c src/vms_boot_files11.c src/vms_sysboot_map.c src/vms_sysboot_read.c src/vms_ini_sysparams.c src/vms_sysboot_paramfile.c src/vms_sysboot_usefile.c tests/test_bootio_host.c -o build/bootio_hosttest
+./build/test_f11_home_host
+PASS: CHECKSUM2 writeback, CHKHM1 ODS-1 and CHKHM2 ODS-2 checks
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysinit_names.c tests/test_sysinit_names_host.c -o build/sysinit_names_hosttest
+./build/sysinit_names_hosttest
+PASS: SYSINIT SYS$SYSTEM, SHARE, MESSAGE device and TOPSYS names
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_initvec.c tests/test_initvec_host.c -o build/initvec_hosttest
+./build/initvec_hosttest
+PASS: source INILOA header, self-relative INITVEC, absent image, invalid entries
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c tests/test_v37_pcb_host.c -o build/v37pcbcheck
+./build/v37pcbcheck
+SYSDEF.MDL PCB layout and PDAT.MAR GENPCB initialization PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c src/vms_v37_sched.c src/vms_v37_ia32_context.c tests/test_v37_sched_host.c -o build/v37schedcheck
+./build/bootio_hosttest
+PASS: BOOTIO original disk I/O, cache selection/allocation, image header; Files-11 home validation
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c src/vms_v37_sched.c src/vms_v37_ia32_context.c tests/test_v37_eventwait_host.c -o build/v37eventwaitcheck
+./build/v37schedcheck
+SYSWAIT SCH$WAITK/WQH wake plus SCHED SCH$RESCHED/SCH$SCHED and RSE SCH$CHSE PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_phd.c tests/test_v37_phd_host.c -o build/v37phdcheck
+./build/v37eventwaitcheck
+SYSWAIT WFLOR/WFLAND local+common flags, POSTEF wake, IPL restore and IA-32 completion PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_ia32_context.c tests/test_v37_ia32_context_host.c -o build/v37ia32ctxcheck
+./build/v37phdcheck
+SYSDEFMP.MDL PHD layout and PDAT.MAR GENPHD initialization PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_booparam.c tests/test_booparam_host.c -o build/booparam_hosttest
+./build/v37ia32ctxcheck
+IA-32 VMS access-mode 0-3 initial IRET context ABI PASS
+gcc -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_sysboot_pktmem.c tests/test_sysboot_pktmem_host.c -o build/pktlayoutcheck
+./build/booparam_hosttest
+PASS: SYS BOOPARAM full 96-byte layout, offsets, reset and SYSBOOT/INIT handoff.
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_boot_readprompt.c tests/test_boot_readprompt_host.c -o build/bootreadprompt_hosttest
+./build/bootreadprompt_hosttest
+PASS: BOO READPROMPT lazy _OPA0 channel, QIO IOSB, counted input, CRLF and failure paths.
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_exit.c tests/test_dcl_exit_host.c -o build/dcl_exit_hosttest
+ASAN_OPTIONS=detect_leaks=1 ./build/pktlayoutcheck
+original SYSBOOT 512-page/16-packet IRP-LRP-SRP virtual and resident allocation PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_status.c tests/test_dcl_status_host.c -o build/dcl_status_hosttest
+./build/dcl_exit_hosttest
+DCL EXIT expression/depth/rundown/batch and WAIT timer PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_if.c tests/test_dcl_if_host.c -o build/dcl_if_hosttest
+./build/dcl_status_hosttest
+DCL STATUS severity, symbols, ON ERROR, EXIT guard, YLEVEL PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_inquire.c tests/test_dcl_inquire_host.c -o build/dcl_inquire_hosttest
+./build/dcl_if_hosttest
+DCL IF expression, THEN syntax, flags, branch and error PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_on.c src/vms_dcl_status.c tests/test_dcl_on_host.c -o build/dcl_on_hosttest
+./build/dcl_inquire_hosttest
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_intimages.c tests/test_dcl_intimages_host.c -o build/dcl_intimages_hosttest
+./build/dcl_intimages_hosttest
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_goto.c tests/test_dcl_goto_host.c -o build/dcl_goto_hosttest
+./build/dcl_on_hosttest
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_descr.c tests/test_dcl_descr_host.c -o build/dcl_descr_hosttest
+./build/dcl_descr_hosttest
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_readrec.c tests/test_dcl_readrec_host.c -o build/dcl_readrec_hosttest
+./build/dcl_goto_hosttest
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_initial.c tests/test_dcl_initial_host.c -o build/dcl_initial_hosttest
+./build/dcl_readrec_hosttest
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_dcl_command.c tests/test_dcl_command_host.c -o build/dcl_command_hosttest
+./build/dcl_initial_hosttest
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_rem_protocol.c tests/test_rem_protocol_host.c -o build/rem_protocol_hosttest
+./build/rem_protocol_hosttest
+REM PROTOCOL host configuration, version, ECO, disconnect and channel checks PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_hpwd.c tests/test_hpwd_host.c -o build/hpwd_hosttest
+./build/hpwd_hosttest
+./build/dcl_command_hosttest
+PASS: full LOGIN HPWD hash algorithms and descriptor handling
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_uaf_v37.c tests/test_vms_uaf_v37_host.c -o build/v37uaf_hosttest
+DCL COMMAND host state, parsing and service checks PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_validate.c src/vms_uaf_v37.c src/vms_hpwd.c tests/test_validate_host_m110.c -o build/validate_hosttest
+./build/v37uaf_hosttest
+VMS 3.7 original UAF fields, flags, retained data and bounds PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_logintime.c tests/test_logintime_host.c -o build/logintime_hosttest
+./build/validate_hosttest
+PASS: LOGIN VALIDATE indexed account records, password, fallback, retry, privileges, close
+python3 tools/gen_source_coverage.py
+./build/logintime_hosttest
+PASS: LOGIN LIBDAYWK/LIBHOUR VMS epoch, leap years, live source, invalid arguments
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_login_fileio.c tests/test_login_fileio_host.c -o build/login_fileio_hosttest
+./build/login_fileio_hosttest
+LOGIN FILEIO stream/open/close, names, records, FAO, timer, cancel PASS
+python3 tools/gen_source_coverage.py
+Source ranges: 2154 ; missing mapped functions: 0
+python3 tests/test_disk_image.py
+Files-11 INDEXF-mapped SYS, SYSLOA386 and INILOA ELF32 images PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_logincmd.c tests/test_logincmd_host.c -o build/logincmd_hosttest
+./build/logincmd_hosttest
+LOGIN command username prompt, disk/CLI/command, quoted text and errors PASS
+python3 tools/gen_source_coverage.py
+Source ranges: 2154 ; missing mapped functions: 0
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_login_interact.c src/vms_login_fileio.c src/vms_logincmd.c src/vms_validate.c src/vms_uaf_v37.c src/vms_hpwd.c tests/test_login_interact_host_m110.c -o build/login_interact_hosttest
+Source ranges: 2154 ; missing mapped functions: 0
+gcc -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_dq_crb.c tests/test_dq_crb_host.c -o build/dqcrbcheck
+ASAN_OPTIONS=detect_leaks=1 ./build/dqcrbcheck
+./build/login_interact_hosttest
+LOGIN INTERACT isolated UAF fixture, command, terminal, password and welcome PASS
+python3 tools/gen_source_coverage.py
+DQ CRB native vector and source-layout checks passed
+gcc -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc -Itests src/vms_dq_ioc_async.c src/vms_dq_ioc_attempt.c src/vms_dq_ioc_cancel.c src/vms_dq_ioc_complete.c src/vms_dq_ioc_enqueue.c src/vms_dq_ioc_init.c src/vms_dq_ioc_iosb.c src/vms_dq_ioc_post.c src/vms_dq_ioc_prepare.c src/vms_dq_ioc_recover.c src/vms_dq_ioc_retry.c src/vms_dq_ioc_run.c src/vms_dq_ioc_service.c src/vms_dq_ioc_set_retry.c src/vms_dq_ioc_start.c src/vms_dq_ioc_transfer.c src/vms_dq_ioc_unit.c src/vms_dq_ioc_validate.c src/vms_dq_ioc_write.c tests/test_ioc_async_0.c tests/test_ioc_cancel_0.c tests/test_ioc_cancel_1.c tests/test_ioc_cancel_2.c tests/test_ioc_cancel_3.c tests/test_ioc_complete_0.c tests/test_ioc_complete_1.c tests/test_ioc_complete_2.c tests/test_ioc_complete_3.c tests/test_ioc_enqueue_0.c tests/test_ioc_enqueue_1.c tests/test_ioc_enqueue_2.c tests/test_ioc_enqueue_3.c tests/test_ioc_init_0.c tests/test_ioc_init_1.c tests/test_ioc_init_2.c tests/test_ioc_init_3.c tests/test_ioc_prepare_0.c tests/test_ioc_prepare_1.c tests/test_ioc_prepare_2.c tests/test_ioc_prepare_3.c tests/test_ioc_start_0.c tests/test_ioc_start_1.c tests/test_ioc_start_2.c tests/test_ioc_start_3.c tests/test_ioc_transfer_0.c tests/test_ioc_transfer_1.c tests/test_ioc_transfer_2.c tests/test_ioc_transfer_3.c tests/test_ioc_unit_0.c tests/test_ioc_validate_0.c tests/test_ioc_validate_1.c tests/test_ioc_validate_2.c tests/test_ioc_validate_3.c tests/test_ioc_main.c -o build/dqprivateioccheck
+Source ranges: 2154 ; missing mapped functions: 0
+gcc -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_dq_ioc_write.c tests/test_dq_ioc_write_host.c -o build/dqwriteioccheck
+./build/dqwriteioccheck
+DQ IOC WRITEPBLK source priority queue, owned payload and failure completion PASS
+gcc -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_ioc_mapvblk.c src/vms_ini_syswcb.c tests/test_ioc_mapvblk_host.c -o build/iocmapvblkcheck
+./build/iocmapvblkcheck
+IOSUBRAMS IOC$MAPVBLK WCB/FM2/EOF/contiguity/RVN/SYSWCB checks PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_sysqio_args.c src/vms_sysqio_pcb.c src/vms_v37_ccb.c src/vms_sysqio_irp_build.c src/vms_sysqio_irp_reserve.c src/vms_sysqio_normalize.c src/vms_sysqio_ast.c src/vms_sysqio_device_access.c src/vms_sysqio_ef.c src/vms_sysqio_iosb.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_userptr.c src/vms_exe_access.c src/vms_dq_fdt_access.c src/vms_dq_fdt_buffered.c src/vms_dq_fdt_build.c src/vms_dq_fdt_classify.c src/vms_dq_fdt_deaccess.c src/vms_dq_fdt_legal.c src/vms_dq_fdt_modify.c src/vms_dq_fdt_mount.c src/vms_dq_fdt_one.c src/vms_dq_fdt_read.c src/vms_dq_fdt_sense.c src/vms_dq_fdt_set.c src/vms_dq_fdt_validate.c src/vms_dq_fdt_write.c src/vms_dq_fdt_zero.c tests/test_sysqio_args_host.c -o build/sysqioargscheck
+./build/dqprivateioccheck
+DQ source-private IOC queued ATA IRP: 34 distinct regressions PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_irp_queue.c tests/test_irp_queue_host.c -o build/sysirpqueuecheck
+./build/sysqioargscheck
+SYS$QIO IRP, AST, device-state and VMS privilege checks PASS
+gcc -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_ini_packet_queues.c src/vms_qio_irp_pool.c tests/test_irp_pool_host.c -o build/irpalloccheck
+./build/sysirpqueuecheck
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c tests/test_exe_np_pool_host.c -o build/exenppoolcheck
+./build/exenppoolcheck
+MEMORYALC first-fit split, sorted coalesce, bounds, duplicate free and IPL restore PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_paged_pool.c src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c tests/test_exe_paged_pool_host.c -o build/exepagedpoolcheck
+ASAN_OPTIONS=detect_leaks=1 ./build/irpalloccheck
+MEMORYALC.MAR IRP lookaside allocate/return, FIFO, IPL and exhaustion PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_swapinit_hash.c src/vms_exe_paged_pool.c src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_log_hash.c src/vms_log_name_compare.c src/vms_log_record_valid.c src/vms_ini_devicedb.c src/vms_ini_ddb_boot.c src/vms_ini_ddb_opa.c src/vms_ini_ddb_mb.c src/vms_ini_ddb_nl.c src/vms_ini_ucb_boot.c src/vms_ini_ucb_opa.c src/vms_ini_ucb_mb1.c src/vms_ini_ucb_mb2.c src/vms_ini_ucb_nl.c src/vms_ini_log_templates.c tests/test_exe_swapinit_hash_host.c -o build/swapinithashcheck
+./build/exepagedpoolcheck
+MEMORYALC paged allocation: 16-byte size, first fit, exhaustion, return/coalesce, IPL PASS
+gcc -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_iopost_account.c src/vms_iopost_ccb.c src/vms_iopost_dirpost.c src/vms_iopost_drain.c src/vms_iopost_irpe.c src/vms_iopost_kernel_end.c src/vms_iopost_peek.c src/vms_iopost_pop.c src/vms_iopost_process_direct.c src/vms_iopost_service.c src/vms_iopost_unlock.c src/vms_iopost_validate.c src/vms_nl_ddt_bind.c src/vms_nl_ddt_build.c src/vms_nl_ddt_check.c src/vms_nl_ddt_dispatch.c src/vms_nl_ddt_iocreturn.c src/vms_nl_ddt_masks.c src/vms_nl_ddt_read.c src/vms_nl_ddt_source_lookup.c src/vms_nl_ddt_write.c src/vms_qio_abortio.c src/vms_qio_finishio.c src/vms_qio_finishioc.c src/vms_qio_irp_pool.c src/vms_qio_irp_prepare.c src/vms_qio_null.c src/vms_qio_post_append.c src/vms_qio_post_init.c src/vms_qio_post_validate.c src/vms_ioc_ddb.c src/vms_ioc_mapvblk.c src/vms_ioc_parse.c src/vms_ioc_phys.c src/vms_ioc_searchalc.c src/vms_ioc_searchdev.c src/vms_ioc_searchgen.c src/vms_ioc_strip.c src/vms_ioc_ucb.c src/vms_ioc_unit.c src/vms_ioc_upcase.c src/vms_ioc_validate.c src/vms_ini_devicedb.c src/vms_ini_ddb_boot.c src/vms_ini_ddb_opa.c src/vms_ini_ddb_mb.c src/vms_ini_ddb_nl.c src/vms_ini_ucb_boot.c src/vms_ini_ucb_opa.c src/vms_ini_ucb_mb1.c src/vms_ini_ucb_mb2.c src/vms_ini_ucb_nl.c src/vms_ini_procvec.c src/vms_sysqio_iosb.c src/vms_sysqio_pending.c src/vms_userptr.c src/vms_sys85.c src/vms_rtl85.c src/vms_rtl85_tables.c tests/test_iopost_irpe_host.c tests/test_iopost_end_host.c -o build/iopostendcheck
+./build/swapinithashcheck
+SWAPPER EXE$SWAPINIT RSHT geometry, zeroed buckets, DYN headers, rollback/coalescing PASS
+gcc -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_iopost_unlock.c tests/test_iopost_unlock_host.c -o build/iopostunlockcheck
+./build/iopostunlockcheck
+IOCIOPOST direct-I/O locked-page release and IRPE chain PASS
+gcc -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_iopost_account.c tests/test_iopost_account_host.c -o build/iopostaccountcheck
+./build/iopostaccountcheck
+IOCIOPOST DIRPOST PHD direct/buffered I/O accounting PASS
+gcc -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc src/vms_iopost_process_direct.c src/vms_iopost_unlock.c src/vms_ini_procvec.c src/vms_v37_pcb.c tests/test_iopost_process_host.c -o build/iopostprocesscheck
+./build/iopostprocesscheck
+IOCIOPOST positive-PID direct completion route and source PCB count PASS
+./build/iopostendcheck
+IOCIOPOST.MAR original kernel end-action REMQUE and bounded resident IRP completion PASS
+python3 tools/gen_source_coverage.py
+Source ranges: 2154 ; missing mapped functions: 0
+python3 tests/test_image.py
+Image checks PASS: signature, payload, disk count, first LBN and load address
+python3 tests/test_guest_layout.py
+Guest layout checks PASS: entry, AST/condition symbols, diagnostic opcodes, 35 vector stubs
+python3 tests/test_privilege_layout.py
+Privilege layout PASS: separate user page, TSS/stack symbols, 35 trap stubs, #PF site
+python3 tests/test_scheduler_layout.py
+M4 scheduler layout PASS: CPL3 task text, two stacks, saved frames, yield/exit hooks
+python3 tests/test_preempt_layout.py
+M5 static layout PASS: preemption, isolated CR3, AST frame trampoline, clock alias, IF restore
+python3 tests/test_source_audit.py
+Source inventory fixture checks PASS
+python3 tests/test_m6_layout.py
+M6 static checks PASS: PCB ABI, same-VA private frame mapping, reclaim
+python3 tests/test_m7_layout.py
+M7 linked layout PASS: two guarded stacks, TSS switching, bounds
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ast.c tests/test_ast_host.c -o build/ast_hosttest
+./build/ast_hosttest
+AST tests PASS: ordered KAST, FIFO modes, disable/active/IPL, quota, PID, cancel
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ast.c src/vms_astdel.c src/vms_astdel_selftest.c tests/test_astdel_host.c -o build/astdel_hosttest
+./build/astdel_hosttest
+ASTDEL host PASS: PID route/dispose, quota, sorted delivery, KAST, IPAST, wake/swap/remove, active/IPL, spurious
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_mutex.c src/vms_mutex_selftest.c src/vms_pcb.c src/vms_ast.c tests/test_mutex_host.c -o build/mutex_hosttest
+./build/mutex_hosttest
+MUTEX host PASS: nested owners, pending writers, release/retry, IO locks, resource wake, saved priorities
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_postef.c src/vms_postef_selftest.c src/vms_event.c src/vms_pcb.c src/vms_ast.c tests/test_postef_host.c -o build/postef_hosttest
+./build/postef_hosttest
+POSTEF host PASS: cluster assignment, PID, WASSET/CLR, AND/OR multi-wake, priority, common sync, backlog
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_condition.c tests/test_condition_host.c -o build/condition_hosttest
+./build/condition_hosttest
+Condition tests PASS: signals, mode isolation, resignal, continue, unwind, nesting guard
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_pmap.c tests/test_pmap_host.c -o build/pmap_hosttest
+./build/pmap_hosttest
+PASS: task permissions, range guard, kernel-stack guard PTE
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ast.c src/vms_pcb.c tests/test_pcb_host.c -o build/pcb_hosttest
+./build/pcb_hosttest
+PCB lifecycle PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_kstack.c tests/test_kstack_host.c -o build/kstack_hosttest
+./build/kstack_hosttest
+Kernel stack PASS: alignment, guard layout, bounds, canary
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_phys.c tests/test_phys_host.c -o build/phys_hosttest
+./build/phys_hosttest
+Physical frame allocator PASS: exhaust, recycle, I/O pins, free guard, bounds
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_vmem.c src/vms_phys.c tests/test_vmem_host.c -o build/vmem_hosttest
+./build/vmem_hosttest
+M48 VMem host PASS: demand-zero, IA-32 A/D, locked-frame release guard, reclaim
+python3 tests/test_m8_layout.py
+M8 linked layout PASS: user demand faults, native handler, reclaim
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ast.c src/vms_pcb.c src/vms_event.c tests/test_event_host.c -o build/event_hosttest
+./build/event_hosttest
+M9 event host PASS: OR/AND, clear, wait/ready, PCB lifecycle
+python3 tests/test_m9_layout.py
+M9 static checks PASS: kernel wait/ready, shared EF, CPL3 user probes
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ata.c tests/test_ata_host.c -o build/ata_hosttest
+./build/ata_hosttest
+M10 ATA host PASS: LBA28 port sequence, 256 words, error/timeout
+python3 tests/test_ata_irq_layout.py
+Primary ATA IRQ14 vector, PIC routing, handler and completion checks PASS
+python3 tests/test_disk_image.py
+Files-11 INDEXF-mapped SYS, SYSLOA386 and INILOA ELF32 images PASS
+python3 tests/test_m10_layout.py
+M10 ATA native boot: protected PIO and INILOA driver registration PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_ne2k.c tests/test_ne2k_host.c -o build/ne2k_hosttest
+./build/ne2k_hosttest
+M12 NE2000 host PASS: TX pad/full, RX, wrap, drops, reset faults
+python3 tests/test_m11_layout.py
+M11 NE2000 static checks PASS: I/O driver and guest commands
+python3 tests/test_m12_layout.py
+M12 NE2000 static PASS: remote-DMA, frame queues, monitor wiring
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_decnet.c tests/test_decnet_host.c -o build/decnet_hosttest
+./build/decnet_hosttest
+M13 DECnet host PASS: address, EtherType 6003, length, short route, padding
+python3 tests/test_m13_layout.py
+M13 DECnet short routing/driver integration static PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_decnet.c tests/test_hello_host.c -o build/hello_hosttest
+./build/hello_hosttest
+M14 DECnet endnode Hello host PASS: 34-byte field map, short length, errors
+python3 tests/test_m14_layout.py
+M14 Hello static PASS: polling loop integration, timer and symbols
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_decnet.c tests/test_router_host.c -o build/router_hosttest
+./build/router_hosttest
+M15 router Hello PASS: canonical parse, counts, elected router, expiry
+python3 tests/test_m15_layout.py
+M15 adjacency static PASS: receive polling, designated router, timeout
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_nsp.c src/vms_decnet.c tests/test_nsp_host.c -o build/nsp_hosttest
+./build/nsp_hosttest
+M16 NSP bounded control wire format PASS
+python3 tests/test_m16_layout.py
+M16 NSP guest integration/static symbols PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_nsp_link.c tests/test_nsp_link_host.c -o build/nsp_link_hosttest
+./build/nsp_link_hosttest
+M17 NSP link handshake, peer validation, retry timeout PASS
+python3 tests/test_m17_layout.py
+M17 NSP probe state machine linked/integrated PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_session.c src/vms_nsp.c src/vms_decnet.c tests/test_session_host.c -o build/session_hosttest
+./build/session_hosttest
+M18 NSP Session Control numbered-object request PASS
+python3 tests/test_m18_layout.py
+M18 Session Control diagnostic linked/guest-integrated PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_nsp_data.c src/vms_decnet.c tests/test_nsp_data_host.c -o build/nsp_data_hosttest
+./build/nsp_data_hosttest
+M19 NSP DATA segment / acknowledgment codec PASS
+python3 tests/test_m19_layout.py
+M19 NSP DATA/ACK symbols and guest integration PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_nsp_reliable.c tests/test_nsp_reliable_host.c -o build/nsp_reliable_hosttest
+./build/nsp_reliable_hosttest
+M20 NSP reliable stop-and-wait sequence/ACK/retry PASS
+python3 tests/test_m20_layout.py
+M20 retry/ACK guest integration PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_mirror.c tests/test_mirror_host.c -o build/mirror_hosttest
+./build/mirror_hosttest
+M21 DECnet object-25 Mirror protocol codec PASS
+python3 tests/test_m21_layout.py
+M21 Mirror object-25 guest integration PASS
+python3 tests/test_m21_boot.py
+Current live counted CHS boot loader and bounds PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_mirror_server.c src/vms_mirror.c src/vms_session.c src/vms_nsp_data.c src/vms_nsp_reliable.c src/vms_nsp.c src/vms_decnet.c tests/test_mirror_server_host.c -o build/mirror_server_hosttest
+./build/mirror_server_hosttest
+M22 inbound object-25 NSP Session/Mirror full-codec link PASS
+python3 tests/test_m22_layout.py
+M22 passive NSP Mirror listener guest integration PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_serial.c tests/test_serial_host.c -o build/serial_hosttest
+./build/serial_hosttest
+M23 UART serial output, CRLF, timeout and absent-port PASS
+python3 tests/test_m23_layout.py
+M23 COM1 serial capture, guest monitor integration PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_nsp_link.c src/vms_nsp_reliable.c src/vms_mirror_server.c src/vms_mirror.c src/vms_session.c src/vms_nsp_data.c src/vms_nsp.c src/vms_decnet.c tests/test_two_node_host.c -o build/two_node_hosttest
+./build/two_node_hosttest
+M24 2-node NSP CI/CA/CC/Session/Mirror, loss and retransmission PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_decnet.c src/vms_nsp.c src/vms_nsp_data.c src/vms_session.c src/vms_mirror.c tests/test_protocol_fuzz_host.c -o build/protocol_fuzz_hosttest
+./build/protocol_fuzz_hosttest
+M24 deterministic fuzz: 30,000 malformed/mutated wire frames PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_qio.c src/vms_event.c src/vms_ast.c tests/test_qio_host.c -o build/qio_hosttest
+./build/qio_hosttest
+M25 deferred block QIO + IOSB/event flag/user AST/error/cancel PASS
+python3 tests/test_m25_layout.py
+M25 VMS-inspired QIO service guest integration PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_qio.c src/vms_channels.c src/vms_event.c src/vms_ast.c tests/test_channels_host.c -o build/channels_hosttest
+./build/channels_hosttest
+M26 owned channel handles, stale protection, mixed processes, deferred QIO PASS
+python3 tests/test_m26_layout.py
+M26 owned QIO channel guest integration PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_userptr.c tests/test_userptr_host.c -o build/userptr_hosttest
+./build/userptr_hosttest
+M295 user pointer pinned I/O copy, crossings and rollback PASS
+python3 tests/test_m27_layout.py
+M27 true CPL3 pointer validation trap ABI linked PASS
+python3 tests/test_m28_layout.py
+M28 native CPL3 channel assign/deassign ABI linked PASS
+python3 tests/test_m29_layout.py
+M29 CPL3 QIO submit/poll with user-buffer checks linked PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_userptr.c tests/test_usercopy_host.c -o build/usercopy_hosttest
+./build/usercopy_hosttest
+M30 translated user copy, PDE crossings and atomic failure PASS
+python3 tests/test_m30_layout.py
+M30 translated CPL3 result-copy linked PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_qio.c src/vms_channels.c src/vms_event.c src/vms_ast.c tests/test_qio_cancel_owner_host.c -o build/qio_cancel_owner_hosttest
+./build/qio_cancel_owner_hosttest
+M31 owned QIO cancel, release, stale and wrong-PID denial PASS
+python3 tests/test_m31_layout.py
+M31 CPL3 cancel+release guest path linked PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_qio.c src/vms_channels.c src/vms_event.c src/vms_ast.c tests/test_teardown_host.c -o build/teardown_hosttest
+./build/teardown_hosttest
+M32 owner teardown, queued AST cancel, active callback atomic refusal PASS
+python3 tests/test_m32_layout.py
+M32 CPL3 process lifetime QIO cleanup linked PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_userptr.c src/vms_exe_access.c tests/test_usercopyin_host.c -o build/usercopyin_hosttest
+./build/usercopyin_hosttest
+M33 copy-from alias, read-only, PDE-crossing, atomic failure PASS
+python3 tests/test_m33_layout.py
+M33 CPL3 copy-in wireup and binary layout PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_userptr.c tests/test_usercopyv_host.c -o build/usercopyv_hosttest
+./build/usercopyv_hosttest
+M34 transactional copyv validation, alias overlap, PDE crossing PASS
+python3 tests/test_m34_layout.py
+M34 data+IOSB transactional syscall output linked PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_userptr.c src/vms_userio.c tests/test_userio_host.c -o build/userio_hosttest
+./build/userio_hosttest
+M35 CPL3 read-only descriptor, cross page, malformed outputs PASS
+python3 tests/test_m35_layout.py
+M35 decoded user QIO descriptor, CPL3 guest ABI and binary PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_serial.c tests/test_serial_rx_host.c -o build/serial_rx_hosttest
+./build/serial_rx_hosttest
+M36 serial COM1 input: ASCII, CRLF, erase, errors, no byte PASS
+python3 tests/test_m36_layout.py
+M36 raw/cooked UART console poll and fallback linked PASS
+python3 tests/test_m37_layout.py
+M37 counted single-sector CHS read, three retries, drive reset and UART CRLF PASS
+gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_userptr.c tests/test_user_disjoint_host.c -o build/user_disjoint_hosttest
+./build/user_disjoint_hosttest
+M38 pre-submit output alias and physical backing checks PASS
+python3 tests/test_m38_layout.py
+M38 physical overlap rejected before ring3 block I/O queue PASS
+python3 tests/test_m39_layout.py
+M39/M40 counted stage-2 disk allocation, 1.44MB CHS bounds and 0x10000 entry PASS
+python3 tests/test_m40_dma.py
+M40: 273 counted single-sector CHS reads, geometry and 64KiB DMA bounds PASS
+python3 tests/test_m41_a20.py
+M41 A20 fast gate, safe reset bit, verified nonaliasing, fatal path PASS
+python3 tools/boot16_probe.py
+BOOTBLOCK assembled BIOS loader, disk count, retries and protected handoff PASS
+python3 tools/kernel_image_verify.py
+M43 ELF32 PT_LOAD vs boot image, BSS, W^X and CPL3 alignment PASS
+python3 tests/test_m44_layout.py
+M44 early physical RAM alias guard linked before allocator PASS
+python3 tests/test_m47_qemu_manifest.py
+M110 historic guest-monitor manifest: 32 unique guest checks mapped to kernel PASS strings; QEMU snapshot disks PASS
+python3 tests/test_m49_stress_manifest.py
+M110: 32 baseline + 76 repeated guest checks, manifest PASS exited 0; coverage generation, range regression, {
+  "passed": true,
+  "indexed_original_files": 452,
+  "reported_line_counts": 141509,
+  "counts": {
+    "excluded": 26459,
+    "hardware-excluded": 917,
+    "mapped": 17230,
+    "missing": 8032,
+    "partial": 30400,
+    "unresolved": 58471
+  },
+  "errors": [],
+  "original_repository_files": 4566,
+  "unindexed_original_files": 4114
+}, and  PASS (2,154 ranges; 452/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,400 partial, 58,471 unresolved, 8,032 missing, 26,459 excluded, 917 hardware-excluded). python3 tools/qemu_sysboot_m217.py
+QEMU M217: 700-byte Files-11 chain read across two IOC-selected DQA0 DDT sectors via IRQ14 PASS PASS: real DQA0 DDT/IRQ14/Files-11 ACP checks and scheduler entry completed, then INIT stopped because NULL/SWAPPER PHD contexts remain absent. Latest raw capture : 6,309 bytes, SHA-256 ; three sequential captures are in the manifest. QEMU exited and no runner remains. Changed files were audited for configured secret patterns and original DEC source extensions; no matches/source files were found. No binary image is included.
+
+Local M408 implementation commit: 207db93b6a6cb967ebb6821b2a6e27a4dc55c6af.
+Published GitHub main M408 implementation commit: pending push.
+
+Remaining work: invoke SWAPINIT only after native SWAPPER activation; create TT0; complete NULL/SWAPPER PHD and native contexts; connect public SYS, DQA0 IOC and process-aware AST completion; integrate Files-11 ACP requests; scheduler and image activation; genuine SYSTEM login/DCL; DECnet Phase IV and genuine SET HOST 0, second login/DCL and LOGOUT. Source inventory remains incomplete (8,032 missing and 58,471 unresolved ranges among indexed files).
