@@ -1,6 +1,7 @@
 #ifndef VMS_EXE_CREPRC_H
 #define VMS_EXE_CREPRC_H
 #include <stdint.h>
+#include "vms_ini_procvec.h"
 
 enum {
     PORT_V37_PRC_STATUS_FLAGS=0x1ffu,
@@ -37,4 +38,12 @@ struct port_exe_creprc_result {
  * names, image activation and PID publication are separate stages. */
 uint32_t port_exe_creprc_preflight(const struct port_exe_creprc_caller *,
     const struct port_exe_creprc_request *,struct port_exe_creprc_result *);
+
+enum {PORT_EXE_CREPRC_SLOT_OK=1u,PORT_EXE_CREPRC_SLOT_BAD=2u,
+      PORT_EXE_CREPRC_SLOT_EXHAUSTED=4u};
+/* SYSCREPRC.MAR ACTIVATE 660-680: caller invokes only after resource
+ * allocation, while holding the source SYNCHIPL exclusion. */
+uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *,
+    uint32_t null_pcb_address,uint32_t new_pcb_address,
+    uint16_t *process_count,uint16_t process_limit,uint32_t *pid);
 #endif

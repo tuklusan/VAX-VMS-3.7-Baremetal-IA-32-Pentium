@@ -57,3 +57,46 @@ uint32_t port_exe_creprc_preflight(
     *result=candidate;
     return PORT_SS_NORMAL;
 }
+
+static uint32_t read32(const uint8_t *p){
+    return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
+        ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
+}
+static uint16_t read16(const uint8_t *p){
+    return (uint16_t)p[0]|((uint16_t)p[1]<<8);
+}
+static void write16(uint8_t *p,uint16_t x){
+    p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
+}
+static void write32(uint8_t *p,uint32_t x){
+    for(unsigned i=0u;i<4u;i++)p[i]=(uint8_t)(x>>(8u*i));
+}
+
+uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *vector,
+    uint32_t null_pcb_address,uint32_t new_pcb_address,
+    uint16_t *process_count,uint16_t process_limit,uint32_t *pid){
+    if(!vector||!vector->pcb_vector||!vector->sequence_vector||
+       !null_pcb_address||!new_pcb_address||(new_pcb_address&3u)||
+       !process_count||!pid||vector->max_pix<1u||
+       vector->system_pix!=vector->max_pix+1u||
+       vector->allocated_slots!=vector->system_pix+1u)
+        return PORT_EXE_CREPRC_SLOT_BAD;
+
+    uint32_t pix=vector->max_pix;
+    for(;;){
+        if(read32(vector->pcb_vector+pix*4u)==null_pcb_address)break;
+        if(pix==1u)return PORT_EXE_CREPRC_SLOT_EXHAUSTED;
+        --pix;
+    }
+    if(*process_count>=process_limit)
+        return PORT_EXE_CREPRC_SLOT_EXHAUSTED;
+
+    uint16_t sequence=(uint16_t)(read16(vector->sequence_vector+pix*2u)+1u);
+    if(sequence&0x8000u)sequence=0u;
+    const uint32_t candidate_pid=((uint32_t)sequence<<16)|pix;
+    write16(vector->sequence_vector+pix*2u,sequence);
+    write32(vector->pcb_vector+pix*4u,new_pcb_address);
+    ++*process_count;
+    *pid=candidate_pid;
+    return PORT_EXE_CREPRC_SLOT_OK;
+}

@@ -1779,13 +1779,32 @@
         {
           "original_lines": [
             410,
+            659
+          ],
+          "status": "unresolved",
+          "reason": "Quota processing, pagefile allocation, process flags, and PCB setup before ACTIVATE are absent"
+        },
+        {
+          "original_lines": [
+            660,
+            680
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_activate_slot",
+          "pc_line": 75,
+          "function": "Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer"
+        },
+        {
+          "original_lines": [
+            681,
             805
           ],
           "status": "unresolved",
-          "reason": "Quota processing, process construction, swap allocation, activation, PID publication and rollback are absent"
+          "reason": "Post-publication JIB/process accounting, scheduler CHSE, PID return, service exit and rollback are absent"
         }
       ],
-      "unresolved_integration": "Preflight only: caller memory probes are represented by validated accessibility inputs; no live service dispatch, PCB/PQB allocation, process activation, or PID output store. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout."
+      "unresolved_integration": "Preflight plus the source ACTIVATE PIX/PID/vector publication stage. Caller memory probes are accessibility inputs; PCB/PQB/JIB allocation, swap allocation, scheduler CHSE, public service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout."
     },
     {
       "original_file": "DCL/SRC/GOTO.MAR",
