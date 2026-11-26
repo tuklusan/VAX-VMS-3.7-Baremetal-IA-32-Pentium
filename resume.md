@@ -2564,3 +2564,9 @@ Added explicit Make dependencies for `src/vms_log_system.h` in the kernel and re
 M458 dependency/evidence commit: `d8897e38b6b20818f493d0b15b0cbee699d7c117`.
 
 Remaining: SYSINIT and public `$CRELNM` do not yet call the new insertion boundary. All original boot continuation, user I/O/ACP/AST integration, image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 acceptance remain incomplete.
+
+## M459 — Verify inserted SYSTEM logical translation, 26 November 2026
+
+Extended the LOGNAMSUB host regression to translate the newly inserted SYS$SYSTEM record to its source-formatted equivalence, reject a distinct duplicate-name record, and confirm the resident table remains intact at its five-record bound. `wsl make logsystemcheck` PASS under AddressSanitizer and UndefinedBehaviorSanitizer. This is host-only validation; the insertion callback is still not part of live SYSINIT or public `$CRELNM`.
+
+M459 test commit: `da1a52321de90d6b0c8294584775c10c9748de77`.
