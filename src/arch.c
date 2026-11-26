@@ -1069,7 +1069,6 @@ static int arch_vms_switch_cr3(uint32_t cr3){
 static int arch_vms_schedule_frame(struct port_trap_frame *f){
     if(!resident_vms_sched_interrupt)return 0;
     if(resident_vms_dispatch_deferred)return 0;
-    resident_vms_reschedule_pending=0u;
     uint32_t pcb=0u,next=0u;
     uint32_t status;
     const uint32_t wait_queue=resident_vms_wait_queue;
@@ -1259,6 +1258,10 @@ int arch_trap(struct port_trap_frame *f) {
         }
         if(resident_vms_reschedule_interrupts!=UINT32_MAX)
             resident_vms_reschedule_interrupts++;
+        /* A timer tick can arrive after an IPL_SYNCH transaction restores
+         * IF but before its pending SCH$RESCHED is dispatched. Only delivery
+         * on this software vector consumes that request. */
+        resident_vms_reschedule_pending=0u;
         return arch_vms_schedule_frame(f);
     }
     if (f->vector == 128) {

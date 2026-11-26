@@ -6161,7 +6161,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_save_current",
           "pc_line": 637,
-          "function": "Validate and save the outgoing IA-32 IRET frame through PHD KSP/PC, preserve PCB$L_PHYPCB as the hardware PCB physical address, then requeue through SCH$RESCHED; IRQ0 and deferred software-vector entry bind the native scheduler while source IPL edge cases remain incomplete"
+          "function": "Validate and save the outgoing IA-32 IRET frame through PHD KSP/PC, preserve PCB$L_PHYPCB as the hardware PCB physical address, then requeue through SCH$RESCHED; IRQ0 and vector 0x91 enter the scheduler, retaining a deferred reschedule request across an intervening timer tick; source IPL edge cases remain incomplete"
         },
         {
           "original_lines": [
@@ -6172,7 +6172,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
           "pc_line": 614,
-          "function": "Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction"
+          "function": "Requeue current resident PCB at the COM queue tail and set queue summary; invoked by live IRQ0 and vector 0x91 scheduler transactions"
         },
         {
           "original_lines": [
@@ -6191,7 +6191,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
           "pc_line": 531,
-          "function": "Highest resident COM queue selection resolves the saved IA-32 IRET frame through PHD KSP while retaining PCB$L_PHYPCB for the source hardware PCB; returns its address with selected PCB. IRQ0 invokes this transaction, but contextless NULL/SWAPPER remain unactivated and process page-table construction remains incomplete"
+          "function": "Highest resident COM queue selection resolves and validates the saved IA-32 IRET frame through PHD KSP while retaining PCB$L_PHYPCB for the source hardware PCB; returns its address with selected PCB and switches to the PIX-indexed IA-32 CR3. QEMU has scheduled native NULL, SWAPPER and SYSINIT contexts through SYSINIT's HIB wait; later INIT process activation and end-to-end scheduler behavior remain incomplete"
         },
         {
           "original_lines": [
@@ -6221,7 +6221,7 @@
           "reason": "assembler end"
         }
       ],
-      "unresolved_integration": "IRQ0 and source scheduler reschedule callbacks enter resident SCH$RESCHED/SCH$SCHED through IA-32 vector 0x91 after interrupt state restoration; selected access-mode 1-3 frames update TSS ESP0 and IRET. A resident PIX-indexed native CR3 sidecar now follows selected process frames, but INIT/NULL/SWAPPER address spaces and their contexts are not constructed or activated."
+      "unresolved_integration": "IRQ0 and source scheduler reschedule callbacks enter resident SCH$RESCHED/SCH$SCHED; deferred requests survive timer entry until vector 0x91 consumes them, and selected access-mode 1-3 frames update TSS ESP0 and IRET. Native NULL/SWAPPER/SYSINIT contexts and page tables are constructed and entered, and QEMU reaches SYSINIT's HIB wait with NULL selected. Validate repeated idle preemption/wake behavior and continue native INIT into STARTUP process creation, image activation and later services."
     },
     {
       "original_file": "SYS/SRC/NULLPROC.MAR",
@@ -6255,7 +6255,7 @@
           "reason": "assembler end"
         }
       ],
-      "unresolved_integration": "Idle task must be selected by the live process scheduler."
+      "unresolved_integration": "The live scheduler selects native NULL when SYSINIT enters HIB wait; recurring idle preemption and return after process wake have not yet been verified through a longer guest run."
     },
     {
       "original_file": "SYS/SRC/SYSASTCON.MAR",

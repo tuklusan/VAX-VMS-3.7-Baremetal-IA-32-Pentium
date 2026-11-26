@@ -2773,4 +2773,12 @@ Verification: `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32c
 
 M480 coverage statuses remain unchanged; generated line locations were refreshed. No DEC source, binary image, credential, or new external build dependency was introduced. SYSINIT startup, public QIO/process AST, login/DCL, DECnet and SET HOST 0 remain incomplete. Acceptance remains incomplete.
 
-M480 implementation/evidence commit: `d5bc32c` (`d5bc32c7be4574b43990230cdbedc1b93cbcdd5f`).
+M480 implementation/evidence commit: `d5bc32c` (`d5bc32c7be4574b43990230cdbedc1b93cbcdd5f`); resume commit: `127ddca` (`127ddca6fd34b1c3e08728b9dab7e649520107d7`).
+
+## M481 — Preserve deferred SCH$RESCHED across timer interrupts, 26 November 2026
+
+Fixed the lost deferred-reschedule request at the INIT transition. Previously `arch_vms_schedule_frame` cleared the pending flag on every scheduler entry, including IRQ0. If an IPL_SYNCH operation restored IF before its deferred software `INT 0x91` ran, a timer IRQ in that window could erase the request; the subsequent INIT assertion then observed no software-vector delivery. The pending bit is now consumed only when vector 0x91 is dispatched. This matches the native `SCH$RESCHED` callback contract and preserves deferred requests across hardware scheduling entry.
+
+Verification: full `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck sysexecentrycheck` PASS. Two sequential positive PARAMS.DAT campaigns (40 and 60 boots) all PASS, with a passing default QEMU boot between them; each guest reaches the SYSINIT HIB wait and reports NULL selected, with no lost SCH$CHSE delivery or invalid saved-CS rejection. This verifies this boundary under the tested boot workload; it does not prove later timer-driven idle preemption/wake behavior or complete INIT. Source-range validation PASS: 2,209 ranges, 456/4,566 original files indexed, zero errors; totals 17,158 mapped, 31,412 partial, 59,768 unresolved, 7,926 missing, 26,806 excluded, 917 hardware-excluded. QEMU manifest validation PASS at 748 captures; no QEMU process remains.
+
+Coverage entries for `SCHED.MAR` and `NULLPROC.MAR` now record the observed native NULL/SWAPPER/SYSINIT context scheduling and the remaining INIT/idle integration boundary. No original DEC sources, disk images, credentials, or external dependencies were added. STARTUP process creation, public SYS$QIO/process AST, login/DCL, DECnet Phase IV and SET HOST 0 remain incomplete. Acceptance remains incomplete.
