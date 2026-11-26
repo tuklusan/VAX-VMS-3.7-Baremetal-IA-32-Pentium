@@ -2465,3 +2465,12 @@ Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` completed w
 M448 implementation commit: `6823f1d`.
 
 Remaining: construct genuine IA-32 mappings and INIT/NULL/SWAPPER PHD contexts in source order; resume INIT; bind public SYS$QIO and ACP completion to IOC/AST/process scheduling; implement image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0 second-session/LOGOUT validation.
+
+
+## M449 — Verify per-process CR3 selection, 26 November 2026
+
+Extended the scheduler host regression with a second executable process context using an explicit, distinct IA-32 root. After SCH$RESCHED requeues the current process, SCH$SCHED selects the higher-priority process and returns its own saved frame and PIX-indexed CR3. This confirms per-process selection and resume state at the scheduler boundary; live VMS page-table construction and activation are still absent, and the QEMU boot remains at contextless INIT.
+
+Verification: `make v37schedcheck` PASS. Host-only test; no QEMU run or coverage inventory change. No login, DCL, DECnet or SET HOST 0 observed.
+
+M449 test commit: `8da679a`.
