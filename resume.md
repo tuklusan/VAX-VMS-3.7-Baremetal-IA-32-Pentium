@@ -2666,3 +2666,13 @@ Verification: `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32c
 Remaining: consume the PARAMS startup-file field and implement real TPWAIT/date-time solicitation and SETIME persistence; continue source-ordered SYSINIT startup-file access, system mount/ACP services and SYSMSG; bind public SYS$QIO to live user process I/O with AST completion; complete image activation, SYSTEM login/DCL, DECnet Phase IV, and the SET HOST 0/second-session/LOGOUT sequence. Final acceptance remains incomplete.
 
 M469 implementation/evidence commit: `0dbdf9ac24afc405f77dd296e45ee797d6d9f886`.
+
+## M470 — Preserve source WORD semantics for TIMEPROMPTWAIT, 26 November 2026
+
+Compared the SYSBOOT decoder with the pinned SYSPARAM/SYSBOOT sources. `TIMEPROMPTWAIT` is declared `SIZE=WORD`; SYSBOOT stores the low 16 bits with `INSV`, and SYSINIT later reads that word with signed `CVTWL`. The previous decoder's saturation at 32767 did not preserve that behavior. It now explicitly sign-extends the low 16 bits. Host cases verify 65535 becomes -1 and 32768 becomes -32768, while ordinary positive 12 remains 12. The scratch Files-11 QEMU fixture now carries both `IRPCOUNT=61` and `TIMEPROMPTWAIT=65535`; its `BOO$USEFILE` readback verifies both applied values. This validates parameter representation only: SYSINIT still does not implement TPWAIT-driven solicitation, timeout retries, or SETIME persistence.
+
+Verification: `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck` PASS; source coverage validation PASS (2,203 ranges; 455/4,566 original files indexed, zero errors; 17,158 mapped, 30,948 partial, 59,459 unresolved, 7,926 missing, 26,805 excluded, 917 hardware-excluded); serial manifest verification PASS (442 raw logs). Sequential `wsl make qemu-sysboot-params-check` and `wsl make qemu-sysboot-m217` both PASS. Positive fixture capture `logs/serial/qemu-m217-run-local-20261126T214557123802Z.log`: 6,883 bytes, SHA-256 `dd63af0ef91d96967ef58ec588b71a794191eab2cc90e2dfbeb2ed031888188e`; default fallback capture `logs/serial/qemu-m217-run-local-20261126T214601043645Z.log`: 6,812 bytes, SHA-256 `72c818afd0a440f79d60b6069ece27fc9819627af1917a97a83634f571966a74`. Both runners exited; no QEMU process remains.
+
+Remaining: implement TPWAIT prompt/persistence semantics and consume SYSBOOT's startup-file field; continue SYSINIT startup-file access, Files-11 system mount/ACP and SYSMSG; connect public SYS$QIO to live process DQA0 completion, IOSB/event/AST delivery; then process image activation, genuine SYSTEM login/DCL, DECnet Phase IV and SET HOST 0/second-login/LOGOUT. Final acceptance remains incomplete.
+
+M470 implementation/evidence commit: 60bbdf4bd13e798c9aba5a7b263bf278a7d92aa3.
