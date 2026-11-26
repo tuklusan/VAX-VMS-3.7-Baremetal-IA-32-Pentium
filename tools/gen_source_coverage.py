@@ -546,8 +546,9 @@ append_source_ranges('SYS/SRC/SYSCREPRC.MAR',805,'src/vms_exe_creprc.c',[
   (337,'partial','port_exe_creprc_preflight','Requested privilege readability and SETPRV/minimized privilege selection'),
   (349,'partial','port_exe_creprc_preflight','Priority privilege clamp and subprocess UIC/owner inheritance'),
   (391,'unresolved',None,'Duplicate process names, descriptor copying, PQB setup and creator context are absent'),
-  (409,'partial','port_exe_creprc_preflight','Status flag MBZ validation and required-privilege checks'),
-  (659,'unresolved',None,'Quota processing, pagefile allocation, process flags, and PCB setup before ACTIVATE are absent'),
+  (409,'partial','port_exe_creprc_apply_status_flags','Translate all nine validated $CREPRC status options to their SYSDEF PCB status bits, preserving privilege checks'),
+  (411,'unresolved',None,'PQL parsing/default minimums, PQB quota fields, detachable deductions and rollback remain absent'),
+  (659,'unresolved',None,'Pagefile allocation, process flags, and PCB setup before ACTIVATE are absent'),
   (680,'partial','port_exe_creprc_activate_slot','Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer'),
   (805,'unresolved',None,'Post-publication JIB/process accounting, scheduler CHSE, PID return, service exit and rollback are absent')
 ], 'Preflight plus the source ACTIVATE PIX/PID/vector publication stage. Caller memory probes are accessibility inputs; PCB/PQB/JIB allocation, swap allocation, scheduler CHSE, public service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout.')

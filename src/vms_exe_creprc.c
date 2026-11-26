@@ -94,6 +94,7 @@ uint32_t port_exe_creprc_allocate_pcb(struct port_exe_np_allocator *allocator,
     for(uint32_t i=PORT_V37_PCB_TYPE;i<PORT_V37_PCB_BYTES;i++)pcb[i]=0u;
     write16(pcb+PORT_V37_PCB_SIZE,160u);
     pcb[PORT_V37_PCB_BTYPE]=PORT_V37_DYN_PCB;
+    pcb[11u]=0u;
     *out=candidate;
     return PORT_EXE_CREPRC_ALLOC_OK;
 }
@@ -133,6 +134,7 @@ uint32_t port_exe_creprc_allocate_pqb(struct port_exe_np_allocator *allocator,
     for(uint32_t i=PORT_V37_PQB_BODY;i<PORT_V37_PQB_BYTES;i++)pqb[i]=0u;
     write16(pqb+PORT_V37_PQB_SIZE,PORT_V37_PQB_BYTES);
     pqb[PORT_V37_PQB_TYPE]=PORT_V37_DYN_PQB;
+    pqb[11u]=0u;
     *out=candidate;
     return PORT_EXE_CREPRC_ALLOC_OK;
 }
@@ -151,6 +153,33 @@ uint32_t port_exe_creprc_release_pqb(struct port_exe_np_allocator *allocator,
     return status==PORT_EXE_NP_POOL_OK?PORT_EXE_CREPRC_ALLOC_OK:
         (status==PORT_EXE_NP_POOL_CORRUPT||status==PORT_EXE_NP_POOL_DUP?
          PORT_EXE_CREPRC_ALLOC_CORRUPT:PORT_EXE_CREPRC_ALLOC_BAD);
+}
+
+uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
+    const struct port_exe_creprc_result *result){
+    if(!pcb||!result||pcb_bytes<PORT_V37_PCB_BYTES||
+       read16(pcb+PORT_V37_PCB_SIZE)!=160u||
+       pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB)
+        return PORT_SS_BADPARAM;
+    const uint32_t flags=result->status_flags;
+    if(flags&~(uint32_t)PORT_V37_PRC_STATUS_FLAGS)
+        return PORT_SS_IVSTSFLG;
+    static const uint8_t pcb_bit[9]={10u,9u,4u,15u,14u,19u,20u,21u,24u};
+    static const uint8_t privilege[9]={0xffu,0xffu,
+        PORT_V37_PRC_PRIV_PSWAPM,PORT_V37_PRC_PRIV_NOACNT,
+        PORT_V37_PRC_PRIV_DETACH,0xffu,PORT_V37_PRC_PRIV_DETACH,
+        PORT_V37_PRC_PRIV_DETACH,0xffu};
+    for(unsigned i=0u;i<9u;i++){
+        if(!(flags&(UINT32_C(1)<<i)))continue;
+        const uint8_t required=privilege[i];
+        if(required!=0xffu&&!has_privilege(result->privilege_mask,required))
+            return PORT_SS_NOPRIV;
+    }
+    uint32_t status=read32(pcb+PORT_V37_PCB_STS);
+    for(unsigned i=0u;i<9u;i++)
+        if(flags&(UINT32_C(1)<<i))status|=UINT32_C(1)<<pcb_bit[i];
+    write32(pcb+PORT_V37_PCB_STS,status);
+    return PORT_SS_NORMAL;
 }
 
 uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *vector,

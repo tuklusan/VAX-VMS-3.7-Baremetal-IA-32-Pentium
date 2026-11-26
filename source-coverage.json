@@ -1754,7 +1754,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_allocate_pqb",
-          "pc_line": 116,
+          "pc_line": 117,
           "function": "EXE$ALLOCPQB nonpaged allocation, DYN PQB header and source PQB body clear; conditional resource wait absent"
         },
         {
@@ -1802,17 +1802,25 @@
           ],
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
-          "pc_symbol": "port_exe_creprc_preflight",
-          "pc_line": 11,
-          "function": "Status flag MBZ validation and required-privilege checks"
+          "pc_symbol": "port_exe_creprc_apply_status_flags",
+          "pc_line": 158,
+          "function": "Translate all nine validated $CREPRC status options to their SYSDEF PCB status bits, preserving privilege checks"
         },
         {
           "original_lines": [
             410,
+            411
+          ],
+          "status": "unresolved",
+          "reason": "PQL parsing/default minimums, PQB quota fields, detachable deductions and rollback remain absent"
+        },
+        {
+          "original_lines": [
+            412,
             659
           ],
           "status": "unresolved",
-          "reason": "Quota processing, pagefile allocation, process flags, and PCB setup before ACTIVATE are absent"
+          "reason": "Pagefile allocation, process flags, and PCB setup before ACTIVATE are absent"
         },
         {
           "original_lines": [
@@ -1822,7 +1830,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_activate_slot",
-          "pc_line": 156,
+          "pc_line": 185,
           "function": "Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer"
         },
         {

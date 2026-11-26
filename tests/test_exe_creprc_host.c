@@ -99,6 +99,39 @@ int main(void){
         return fail("DYN PCB size and type fields");
     for(unsigned i=PORT_V37_PCB_TYPE;i<PORT_V37_PCB_BYTES;i++)
         if(pcb_bytes[i])return fail("SYSCREPRC zeroes the fixed PCB body");
+    struct port_exe_creprc_result flag_result={
+        .status_flags=PORT_V37_PRC_STATUS_FLAGS,
+        .privilege_mask=(UINT64_C(1)<<PORT_V37_PRC_PRIV_PSWAPM)|
+            (UINT64_C(1)<<PORT_V37_PRC_PRIV_NOACNT)|
+            (UINT64_C(1)<<PORT_V37_PRC_PRIV_DETACH)};
+    if(port_exe_creprc_apply_status_flags(pcb_allocation.address,
+          pcb_allocation.bytes,&flag_result)!=PORT_SS_NORMAL)
+        return fail("SYSCREPRC status flag translation");
+    uint32_t expected_flags=(UINT32_C(1)<<10)|(UINT32_C(1)<<9)|
+        (UINT32_C(1)<<4)|(UINT32_C(1)<<15)|(UINT32_C(1)<<14)|
+        (UINT32_C(1)<<19)|(UINT32_C(1)<<20)|(UINT32_C(1)<<21)|
+        (UINT32_C(1)<<24);
+    if(pcb_bytes[PORT_V37_PCB_STS]!=(uint8_t)expected_flags||
+       pcb_bytes[PORT_V37_PCB_STS+1u]!=(uint8_t)(expected_flags>>8)||
+       pcb_bytes[PORT_V37_PCB_STS+2u]!=(uint8_t)(expected_flags>>16)||
+       pcb_bytes[PORT_V37_PCB_STS+3u]!=(uint8_t)(expected_flags>>24))
+        return fail("all nine source status to PCB bits");
+    if(port_exe_creprc_apply_status_flags(pcb_allocation.address,
+          pcb_allocation.bytes,&flag_result)!=PORT_SS_NORMAL||
+       pcb_bytes[PORT_V37_PCB_STS]!=(uint8_t)expected_flags)
+        return fail("status translation is idempotent");
+    flag_result.privilege_mask=0u;
+    const uint32_t old_status=pcb_bytes[PORT_V37_PCB_STS];
+    if(port_exe_creprc_apply_status_flags(pcb_allocation.address,
+          pcb_allocation.bytes,&flag_result)!=PORT_SS_NOPRIV||
+       pcb_bytes[PORT_V37_PCB_STS]!=old_status)
+        return fail("status privilege rejection leaves PCB unchanged");
+    flag_result.status_flags=1u<<9;
+    flag_result.privilege_mask=UINT64_MAX;
+    if(port_exe_creprc_apply_status_flags(pcb_allocation.address,
+          pcb_allocation.bytes,&flag_result)!=PORT_SS_IVSTSFLG||
+       pcb_bytes[PORT_V37_PCB_STS]!=old_status)
+        return fail("reserved source status flag rejection is atomic");
     if(port_exe_creprc_release_pcb(&pcb_allocator,&pcb_allocation)!=
           PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
        port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)

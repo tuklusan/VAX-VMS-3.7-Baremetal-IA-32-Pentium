@@ -1,5 +1,6 @@
 #ifndef VMS_EXE_CREPRC_H
 #define VMS_EXE_CREPRC_H
+#include <stddef.h>
 #include <stdint.h>
 #include "vms_ini_procvec.h"
 #include "vms_exe_np_pool.h"
@@ -57,6 +58,9 @@ uint32_t port_exe_creprc_allocate_pqb(struct port_exe_np_allocator *,
     struct port_exe_np_allocation *);
 uint32_t port_exe_creprc_release_pqb(struct port_exe_np_allocator *,
     const struct port_exe_np_allocation *);
+/* SYSCREPRC.MAR status-flag translation after successful privilege checks. */
+uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
+    const struct port_exe_creprc_result *);
 /* SYSCREPRC.MAR ACTIVATE 660-680: caller invokes only after resource
  * allocation, while holding the source SYNCHIPL exclusion. */
 uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *,
