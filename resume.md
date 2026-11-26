@@ -2546,3 +2546,13 @@ Verification: `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32c
 
 M456 implementation/evidence commit: `58499ec52fd732a1964145298ec5bfe7377602a1`.
 M456 resume record commit: `f8f4d344bb352f1cc5570bde6f6173c7e68ca426`.
+
+## M457 — Bounded SYSTEM logical insertion boundary, 26 November 2026
+
+Expanded the resident LOGNAMSUB SYSTEM hash table from the two bootstrap entries to a five-record bounded map and added `port_log_system_add` for caller-built source DYN$C_LOG records. It validates record bounds and table integrity, rejects duplicate names/addresses, inserts into name-sorted hash chains, and supports translate/lookup over inserted records. Host coverage creates SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE records and verifies lookup and translation support. This is a lower-level insertion boundary only: it is not bound to SYSINIT, does not allocate records, implement LOG$LOCKR/access modes, or provide public $CRELNM. No guest runtime result is claimed for the new helper.
+
+Verification: clean `wsl make clean && wsl make -j2 all test exeportbatchcheck sourcerangecheck` PASS; `wsl make logsystemcheck` PASS with ASan/UBSan. Source coverage validation PASS: 2,200 ranges, 455/4,566 original files indexed, zero errors; 17,230 mapped, 30,764 partial, 59,465 unresolved, 8,032 missing, 26,805 excluded, 917 hardware-excluded. `wsl make qemu-sysboot-m217` PASS after clean rebuild: real guest repeated the known 700-byte Files-11 read across DQA0 DDT/IRQ14 and SWAPPER/NULL selection, then remained at incomplete INIT. An earlier incremental-build QEMU attempt failed the LOGNAMSUB bootstrap check after the struct ABI changed without rebuilding every consumer; clean rebuild fixed it. Both actual COM1 transcripts are retained: failed attempt SHA-256 `959a188ebcf004052168532341d4cff91c232cb4fb2475d1329c869acb8d0905`; successful run SHA-256 `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`. Serial manifest validation PASS (402 raw logs); the QEMU runner exited.
+
+M457 implementation/evidence commit: `5da3a4959b004056a4da5fcb5c2e6ef90a30be2d`.
+
+Remaining: wire genuine SYSINIT name creation through public logical-name services and continue source-order INIT/SYSINIT activation, real public SYS$QIO and ACP/AST process completion, image activation/login/DCL, DECnet Phase IV and end-to-end SET HOST 0/second-session/LOGOUT verification. All acceptance conditions remain incomplete.
