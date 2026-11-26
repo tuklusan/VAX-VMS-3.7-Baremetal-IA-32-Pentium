@@ -190,11 +190,13 @@ uint32_t port_v37_sched_chse(struct port_v37_scheduler *s,uint32_t address,
 }
 
 uint32_t port_v37_sched_start_context(struct port_v37_scheduler *s,
-    uint32_t pcb_address,uint32_t phd_address,uint32_t frame_address,
+    uint32_t pcb_address,uint32_t phd_address,uint32_t native_phy_pcb_address,
+    uint32_t frame_address,
     const struct port_v37_phd_seed *seed,uint8_t priority_class){
-    if(!s||!s->initialized||!pcb_address||!phd_address||!frame_address||
+    if(!s||!s->initialized||!pcb_address||!phd_address||
+       !native_phy_pcb_address||!frame_address||
        !seed||priority_class>=PORT_V37_SCH_INCREMENT_CLASSES||
-       (phd_address&3u)||(frame_address&3u))
+       (phd_address&3u)||(native_phy_pcb_address&3u)||(frame_address&3u))
         return PORT_V37_SCHED_BADPARAM;
     uint8_t *pcb=resolve(s,pcb_address,PORT_V37_PCB_BYTES);
     uint8_t *phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
@@ -225,7 +227,7 @@ uint32_t port_v37_sched_start_context(struct port_v37_scheduler *s,
         return PORT_V37_SCHED_BADPARAM;
     const uint8_t old_priority=pcb[PCBPRI];
     if(port_v37_pcb_bind_context(pcb,PORT_V37_PCB_BYTES,phd_address,
-           frame_address)!=PORT_V37_PCB_OK)
+           native_phy_pcb_address)!=PORT_V37_PCB_OK)
         return PORT_V37_SCHED_CORRUPT;
     for(unsigned i=0u;i<PORT_V37_PHD_BYTES;i++)phd[i]=candidate_phd[i];
     const uint32_t status=port_v37_sched_chse(s,pcb_address,priority_class);
@@ -308,7 +310,13 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
         return PORT_V37_SCHED_CORRUPT;
     /* SCH$SCHED executes LDPCTX after selecting. A PCB without its original
      * PHD and native processor context cannot be made current on IA-32. */
-    const uint32_t phy_pcb=get32(pcb+PORT_V37_PCB_PHYPCB);
+    const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
+    uint8_t *phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
+    if(!phd)return PORT_V37_SCHED_NO_CONTEXT;
+    /* PCB$L_PHYPCB remains the source hardware PCB physical address.
+     * The IA-32 restore frame is reached through the native KSP recorded
+     * in the process header; conflating these addresses corrupts LDPCTX. */
+    const uint32_t phy_pcb=get32(phd+PORT_V37_PHD_KSP);
     struct port_v37_ia32_restore_frame *const frame=
         (struct port_v37_ia32_restore_frame *)resolve(s,phy_pcb,
             sizeof(struct port_v37_ia32_restore_frame));
@@ -371,15 +379,12 @@ uint32_t port_v37_sched_save_current(struct port_v37_scheduler *s,
     const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
     uint8_t *const phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
     if(!phd)return PORT_V37_SCHED_NO_CONTEXT;
-    const uint32_t old_frame=get32(pcb+PORT_V37_PCB_PHYPCB);
     const uint32_t old_ksp=get32(phd+PORT_V37_PHD_KSP);
     const uint32_t old_pc=get32(phd+PORT_V37_PHD_PC);
-    put32(pcb+PORT_V37_PCB_PHYPCB,frame_address);
     put32(phd+PORT_V37_PHD_KSP,frame_address);
     put32(phd+PORT_V37_PHD_PC,frame->registers.eip);
     const uint32_t status=port_v37_sched_resched_current(s,s->current_pcb);
     if(status!=PORT_V37_SCHED_OK){
-        put32(pcb+PORT_V37_PCB_PHYPCB,old_frame);
         put32(phd+PORT_V37_PHD_KSP,old_ksp);
         put32(phd+PORT_V37_PHD_PC,old_pc);
     }
@@ -397,7 +402,6 @@ static uint32_t resume_interrupted_current(struct port_v37_scheduler *s,
     uint8_t *const pcb=resolve(s,address,PORT_V37_PCB_BYTES);
     if(!pcb||get16(pcb+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
        !(get32(pcb+PCBSTS)&PORT_V37_SCH_RESIDENT)||
-       get32(pcb+PORT_V37_PCB_PHYPCB)!=frame_address||
        pcb[PORT_V37_PCB_PRI]>=PORT_V37_SCH_PRIORITIES)
         return PORT_V37_SCHED_CORRUPT;
     const uint8_t priority=pcb[PORT_V37_PCB_PRI];
@@ -481,15 +485,12 @@ uint32_t port_v37_sched_wait_current(struct port_v37_scheduler *s,
     /* Preflight the wait-queue tail before changing the running process. */
     if(!resolve(s,get32(queue+4u),sizeof(struct port_v37_sched_head)))
         return PORT_V37_SCHED_UNRESOLVED;
-    const uint32_t old_phy=get32(pcb+PORT_V37_PCB_PHYPCB);
     const uint32_t old_ksp=get32(phd+PORT_V37_PHD_KSP);
     const uint32_t old_pc=get32(phd+PORT_V37_PHD_PC);
-    put32(pcb+PORT_V37_PCB_PHYPCB,interrupted_frame);
     put32(phd+PORT_V37_PHD_KSP,interrupted_frame);
     put32(phd+PORT_V37_PHD_PC,frame->registers.eip);
     status=wait_queue_insert_tail(s,wait_address,queue,pcb_address,pcb);
     if(status!=PORT_V37_SCHED_OK){
-        put32(pcb+PORT_V37_PCB_PHYPCB,old_phy);
         put32(phd+PORT_V37_PHD_KSP,old_ksp);
         put32(phd+PORT_V37_PHD_PC,old_pc);
         return status;
@@ -613,11 +614,12 @@ uint32_t port_v37_sched_rse_event(struct port_v37_scheduler *s,
     struct port_v37_ia32_restore_frame *frame=0;
     if(complete_wait){
         const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
-        const uint32_t frame_address=get32(pcb+PORT_V37_PCB_PHYPCB);
         phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
+        if(!phd)return PORT_V37_SCHED_NO_CONTEXT;
+        const uint32_t frame_address=get32(phd+PORT_V37_PHD_KSP);
         frame=(struct port_v37_ia32_restore_frame *)resolve(s,frame_address,
             sizeof(struct port_v37_ia32_restore_frame));
-        if(!phd||!frame)return PORT_V37_SCHED_NO_CONTEXT;
+        if(!frame)return PORT_V37_SCHED_NO_CONTEXT;
         if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
             return PORT_V37_SCHED_CORRUPT;
         old_pc=get32(phd+PORT_V37_PHD_PC);

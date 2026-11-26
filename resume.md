@@ -2092,3 +2092,14 @@ Local M409 implementation commit: `9620add557d3372b527e96c3fe8ab4abfc59c802`.
 Published GitHub main M409 implementation commit: pending push; origin remains M407 `fb0b9d59d7109bad04db9f94721f9b2f8258815c` because this environment has no GitHub HTTPS credential.
 
 Remaining work: wire initial mapped NULL/SWAPPER PHD/context creation to this activation primitive; activate SWAPPER and call SWAPINIT, create TT0; connect public SYS$QIO to DQA0 IOC with real process AST completion; integrate Files-11 ACP requests; complete process image activation, SYSTEM login/DCL, DECnet Phase IV, real SET HOST 0, second login/DCL and LOGOUT. Source inventory remains incomplete (8,032 missing and 58,471 unresolved ranges among indexed files).
+
+## M410 - Preserve source PCB hardware address in native scheduling, 26 November 2026
+
+Corrected the scheduler context model against INIT.MAR 1017-1026, SCHED.MAR 96, SWAPPER.MAR 1129, and SYSDEFMP.MDL: PCB names the physical hardware PCB, not the IA-32 restore frame. Initial activation now accepts the hardware PCB address separately. SCH, save/reschedule, wait, and resident event completion resolve the native IA-32 restore frame from the PHD KSP while leaving PCB unchanged. This fixes a source ABI violation in M409's activation helper; it does not create the NULL/SWAPPER hardware PCB mappings or integrate initial activation into INIT.
+
+Verification: make v37schedcheck PASS; full make -j2 all test exited 0; coverage generation, source-range regression, source validator, and git diff --check PASS (2,156 ranges; 452/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,396 partial, 58,471 unresolved, 8,032 missing, 26,463 excluded, 917 hardware-excluded). make qemu-sysboot-m217 PASS: real DQA0/IRQ14/Files-11 path runs, then actual guest stops because NULL/SWAPPER PHD contexts are absent. Capture logs/serial/qemu-m217-run-local-20261126T003243500207Z.log, 6,309 bytes, SHA-256 cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53; runner exited. No binary image or DEC source added.
+
+Local M410 changes: pending commit.
+Published GitHub main: remains M407 (b0b9d59d7109bad04db9f94721f9b2f8258815c); HTTPS push remains unauthenticated in this environment.
+
+Remaining work: create real source-mapped hardware PCB and per-process page/PHD contexts for NULL and SWAPPER, activate them in source INIT order, then execute SWAPINIT and build TT0. Public SYS dispatch and process-aware AST/Files-11 ACP path remain incomplete, as do image activation, SYSTEM login, DCL, DECnet Phase IV and end-to-end SET HOST 0/second-session/LOGOUT. Source inventory remains incomplete (8,032 missing and 58,471 unresolved ranges among indexed files).

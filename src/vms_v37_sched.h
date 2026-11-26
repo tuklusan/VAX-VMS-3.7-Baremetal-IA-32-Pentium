@@ -73,8 +73,9 @@ uint32_t port_v37_sched_chse(struct port_v37_scheduler *,uint32_t pcb_address,
 /* INIT process activation: bind a validated resident IA-32 restore frame to
  * an unbound source PCB/PHD pair, initialize the source PHD, then CHSE it. */
 uint32_t port_v37_sched_start_context(struct port_v37_scheduler *,
-    uint32_t pcb_address,uint32_t phd_address,uint32_t restore_frame_address,
-    const struct port_v37_phd_seed *,uint8_t priority_increment_class);
+    uint32_t pcb_address,uint32_t phd_address,uint32_t native_phy_pcb_address,
+    uint32_t restore_frame_address,const struct port_v37_phd_seed *,
+    uint8_t priority_increment_class);
 /* SCH$CHSEP precomputed-priority queue transition for COM/COMO processes. */
 uint32_t port_v37_sched_set_priority(struct port_v37_scheduler *,
     uint32_t pcb_address,uint8_t priority);

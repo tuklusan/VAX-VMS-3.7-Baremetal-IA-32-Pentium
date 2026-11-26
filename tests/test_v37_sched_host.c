@@ -139,8 +139,9 @@ int main(void){
         return fail("scheduler leaves contextless PCB queued");
     for(unsigned i=0;i<3u;i++){
         if(port_v37_pcb_bind_context(f.pcbs[i],sizeof f.pcbs[i],
-           f.phd_va[i],f.frame_va[i])!=PORT_V37_PCB_OK)
+           f.phd_va[i],0x00700000u+i*0x1000u)!=PORT_V37_PCB_OK)
             return fail("source PCB PHD/native context binding");
+        put32(f.phds[i]+PORT_V37_PHD_KSP,f.frame_va[i]);
         f.frames[i]=(struct port_v37_ia32_restore_frame){
             .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
             .registers={.eip=0x1000u+i*4u,.cs=0x08u,.eflags=2u}};
@@ -168,7 +169,7 @@ int main(void){
            &restore_frame)!=PORT_V37_SCHED_NO_CONTEXT||selected||restore_frame||
        scheduler.current_pcb!=f.pcb_va[2]||
        get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_CUR||
-       get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=f.frame_va[2]||
+       get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=0x00702000u||
        count(&f,15u)!=1u||
        scheduler.native_no_context_count!=UINT32_MAX||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
@@ -197,7 +198,7 @@ int main(void){
     f.frames[2].registers.eip=0x77777777u;
     if(port_v37_sched_save_current(&scheduler,f.frame_va[2])!=
            PORT_V37_SCHED_OK||
-       get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=f.frame_va[2]||
+       get32(f.pcbs[2]+PORT_V37_PCB_PHYPCB)!=0x00702000u||
        get32(f.phds[2]+PORT_V37_PHD_KSP)!=f.frame_va[2]||
        get32(f.phds[2]+PORT_V37_PHD_PC)!=0x77777777u||
        get16(f.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
@@ -446,17 +447,17 @@ int main(void){
     struct port_v37_phd_seed bad_start_phd=start_phd;
     bad_start_phd.p0_page_table|=1u;
     if(port_v37_sched_start_context(&start_scheduler,start.pcb_va[0],
-           start.phd_va[0],start.frame_va[0],&bad_start_phd,0u)!=
+           start.phd_va[0],0x00300000u,start.frame_va[0],&bad_start_phd,0u)!=
            PORT_V37_SCHED_BADPARAM||
        get32(start.pcbs[0]+PORT_V37_PCB_PHD)||
        get32(start.pcbs[0]+PORT_V37_PCB_PHYPCB)||
        port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
         return fail("invalid PHD mapping rejected before INIT context commit");
     if(port_v37_sched_start_context(&start_scheduler,start.pcb_va[0],
-           start.phd_va[0],start.frame_va[0],&start_phd,0u)!=
+           start.phd_va[0],0x00300000u,start.frame_va[0],&start_phd,0u)!=
            PORT_V37_SCHED_OK||
        get32(start.pcbs[0]+PORT_V37_PCB_PHD)!=start.phd_va[0]||
-       get32(start.pcbs[0]+PORT_V37_PCB_PHYPCB)!=start.frame_va[0]||
+       get32(start.pcbs[0]+PORT_V37_PCB_PHYPCB)!=0x00300000u||
        get32(start.phds[0]+PORT_V37_PHD_KSP)!=start.frame_va[0]||
        get32(start.phds[0]+PORT_V37_PHD_PC)!=start.frames[0].registers.eip||
        port_v37_sched_select(&start_scheduler,&selected,&restore_frame)!=
