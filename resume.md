@@ -2208,7 +2208,7 @@ Verification: `make execreprccheck exeportbatchcheck build/sys.exe` PASS; full `
 
 M420 implementation and QEMU evidence commit: `ffaf290412007be05322c418108fe9eb8ee92604`.
 
-Remaining: actual JIB/PQB defaults and quotas, process-state initialization, resource waits/rollback, INIT NULL/SWAPPER contexts and activation; public SYS$QIO/ACP/process AST; image activation; SYSTEM login/DCL; DECnet Phase IV and genuine SET HOST 0 two-session/LOGOUT verification. M419/M420 commits are local; publishing is pending because GitHub HTTPS push timed out in this environment.
+Remaining: actual JIB/PQB defaults and quotas, process-state initialization, resource waits/rollback, INIT NULL/SWAPPER contexts and activation; public SYS$QIO/ACP/process AST; image activation; SYSTEM login/DCL; DECnet Phase IV and genuine SET HOST 0 two-session/LOGOUT verification. The pending M419/M420 publication was resolved with the M425 push; see M426.
 
 ## M421 - Translate CREPRC status flags into source PCB state, 26 November 2026
 
@@ -2251,3 +2251,9 @@ Ported SYSCREPRC.MAR MOVSTRING name path: after upstream descriptor accessibilit
 Verification: `make execreprccheck build/sys.exe` PASS; `make exeportbatchcheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,176 ranges; 453/4,566 indexed files; zero validation errors; 17,230 mapped, 30,494 partial, 58,928 unresolved, 8,032 missing, 26,713 excluded, 917 hardware-excluded). Regression covers 15-byte maximum copy, PCB count/data, PQB transient clear, overlength and null input atomicity. Resident symbol confirmed. `make qemu-sysboot-m217` PASS through the live DQA0/IRQ14/Files-11 boot check, then incomplete INIT stop remains. Capture `logs/serial/qemu-m217-run-local-20261126T014128592264Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; serial manifest validates 369 logs. No user login, DCL, DECnet, or SET HOST 0 observed.
 
 M425 implementation and QEMU evidence commit: `6931d0f140722861fce4a766b5d728d24514dc20`.
+
+## M426 - Publish M419-M425 verified checkpoints, 26 November 2026
+
+Published local main through M425 to the sole active GitHub repository. Windows Git Credential Manager had working credentials; WSL Git did not. Remote `main` verified at `22ad8c4971cd0d7e7b1c29fc717aa8715729c1f3`, including separate implementation and resume-record commits for M419 through M425. Worktree was clean after push. Historical OpticOS remained untouched.
+
+Remaining: implement actual CREPRC/JIB/PQL defaults and quota rollback, then complete NULL/SWAPPER process context construction and INIT activation; integrate public SYS$QIO and process ASTs with DQA0/Files-11 ACP; finish image activation, SYSTEM login/DCL, DECnet Phase IV and real SET HOST 0 second-session/LOGOUT verification.
