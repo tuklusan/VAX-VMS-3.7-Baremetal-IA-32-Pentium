@@ -1,0 +1,73 @@
+IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.
+SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.
+SYSBOOT: Files-11 SYS.EXE native image loaded.
+INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.
+INIT: resident SYS.EXE PAGEDYN allocated and returned a 32-byte block.
+SYSBOOT: Files-11 SYSLOA386.EXE native image loaded.
+INIT: SYS.EXE linked live SYSLOA386 processor vectors.
+SYSBOOT: Files-11 INILOA.EXE native image loaded.
+INIT: INILOA IOMAP executed on real IA-32 boot adapter.
+INIT: loaded SYS.EXE built lock ID, resource hash and deadlock bitmap tables.
+INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.
+INIT: SCH$RESCHED entered resident IA-32 vector 0x91; process contexts pending.
+INIT: IA-32 IRQ0 bound resident VMS scheduler; PHD/context activation pending.
+INIT: loaded SYS.EXE initialized process header vector and swapper PTE records.
+INIT: loaded SYS.EXE initialized modified-page writer PTE/index map.
+INIT: loaded SYS.EXE allocated unbound pagefile pointer vector.
+INIT: loaded SYS.EXE recorded real IA-32 TSS privilege stack and lock depth.
+INIT: loaded SYS.EXE compacted real Files-11 SYS.EXE BOO$ WCB map.
+INIT: SYS.EXE staged MB/NL/OP DPT headers (driver images not linked).
+INIT: loaded SYS.EXE executed original NLDRIVER read/write FDT (IOC pending).
+INIT: SYS.EXE staged original DYN$C_LOG=11 records (logical service pending).
+INIT: SYS.EXE selected registered ATA boot adapter (DDB/UCB pending).
+INIT: SYS.EXE staged DQDRIVER 12 source FDT masks (disk DDT and ACP unbound).
+INIT: SYS.EXE linked NL$DDT DDTAB/FUNCTAB to NLA0 (other drivers absent).
+INIT: SYS.EXE DQ READPBLK fetched actual ATA Files-11 LBN1 (disk DDT/ACP not linked).
+INIT: SYS.EXE DQ READPBLK fetched real ATA LBN0 in second privileged IRP (no public QIO).
+INIT: SYS.EXE DQ READPBLK verified real ATA INDEXF.SYS FH2 in third privileged IRP (ACP unbound).
+INIT: SYS.EXE DQ READPBLK verified real ATA MFD FID 4,4,0 via INDEXF.SYS extent map (ACP unbound).
+INIT: SYS.EXE native FIL$FINDFILID traversed real MFD and SYSEXE.DIR to SYS.EXE FID 11 (ACP unbound).
+INIT: SYS.EXE FIL$READVBN verified real ATA SYS.EXE FH2 and native ELF32 via IRPs 8 and 9 (activation pending).
+INIT: SYS.EXE FIL$READVBN verified complete native executable PT_LOAD text against resident SYS.EXE (activation pending).
+INIT: SYS.EXE verified native SYSLOA386.EXE and INILOA.EXE text from real Files-11 ATA sectors (ACP unbound).
+INIT: SYS.EXE FIL$READVBN verified unaligned 1024-byte range through three real ATA IRPs (ACP unbound).
+INIT: SYS.EXE native FIL$FINDFILID reopened SYS.EXE through real MFD/SYSEXE/FH2 and verified 768 text bytes (ACP unbound).
+INIT: SYS.EXE native FIL$FINDFILID enumerated real SYSEXE.DIR image FIDs via ATA (ACP unbound).
+INIT: SYS.EXE FIL$RDCHKFILHDR collected source FH2 extent chain and verified 777 bytes via ATA (ACP unbound).
+INIT: SYS.EXE FIL$READVBN cursor compared 901 resident bytes through four physical ATA IRPs (ACP unbound).
+INIT: SYS.EXE source DQ_STARTIO private IOC queue completed three FIFO ATA IRPs with real resident text (DDT and ACP unbound).
+INIT: SYS.EXE RETRYERR/IOCIOPOST posted three source FIFO ATA IOSBs after live resident reads (no DQA0 DDT or IRQ).
+INIT: SYS.EXE FIL$READVBN used IOC private FIFO for two real ATA reads and matched 700 bytes (ACP/IRQ unbound).
+INIT: SYS.EXE private owner-scoped channel assigned, read 600 live ATA bytes and deassigned (ACP/$QIO unbound).
+INIT: SYS.EXE ATA sector reads completed through live primary IRQ14.
+INIT: SYS.EXE FIN_DATABASE staged DQA0 names and resident SYS$DISK/SYS$SYSDEVICE (logical lookup pending).
+INIT: SYS.EXE LOG$TRANSLATE resolved original SYS$DISK and SYS$SYSDEVICE names (system bootstrap only).
+INIT: SYS.EXE executed console XON/XOFF/STOP/RESUME transitions (TT driver absent).
+INIT: SYS.EXE IOC device search resolved NLA0 with native null DDT (others unbound).
+INIT: SYS.EXE IOC$SEARCHDEV resolved SYS$DISK/SYS$SYSDEVICE to unbound DQA0 and NLA0 to linked DDT (no $ASSIGN).
+INIT: SYS.EXE staged DQ DPTAB/DDTAB/FUNCTAB and native IRQ14 CRB; DQA0 DDT remains unbound.
+INIT: SYS.EXE RELOCDRV IOC$INITDRV applied source DQ DPT_STORE to private DQA0 records (DDT/CRB unbound).
+INIT: resident IOC$RELOC_DDT source DDT/FDT relocation verified (private only; DQA0 unbound).
+INIT: SYS.EXE materialized native DQ DDT/FDT pointers (IOC publication pending).
+INIT: SYS.EXE native DQ DDT STARTIO completed READPBLK through CRB IRQ14.
+INIT: SYS.EXE allocated, completed and returned DQA0 IRP through resident source lookaside.
+INIT: SYS.EXE NLDRIVER completed two IRPs via linked DDT/FDT and EXE$FINISHIOC (IPL4 requested).
+INIT: SYS.EXE IOCIOPOST serviced two NLA IRPs through IA-32 CPL0 software INT 0x90 (no process AST).
+INIT: loaded SYS.EXE resident entry executed and verified.
+INIT: resident SWAPPER hash-table entry is available; SWAPPER has not been activated.
+INIT: linked SYSLOA386 read real IDT, CR0, CR3, TSS, PIT and Files-11 boot home.
+INIT: actual IRQ0 advanced resident SYS.EXE VMS clock.
+INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).
+INIT: Files-11 FH2 chain read 700 SYS.EXE bytes across two sectors through IOC-selected DQA0 DDT/IRQ14.
+INIT: ACP FCB source=3
+INIT: ACP reclaimed rejected FCB allocation through MEMORYALC.
+INIT: ACP read-only WCB MAKACC/DEACCS balanced FCB, VCB, and MEMORYALC state.
+INIT: ACP GETFIB returned the resident SYS.EXE FID from its allocated WCB.
+INIT: Files-11 ACP read 700 SYS.EXE bytes via DQA0 DDT/IRQ14 and matched the FH2-chain sample.
+INIT: SYSWCB IOC$MAPVBLK mapping selected ACP SYS.EXE sectors before DQA0 DDT dispatch.
+INIT: DQA0 UCB busy serialized two retained DDT READPBLK IRPs through IRQ14 and deferred IOC post.
+INIT: M202 ATA scratch restore reread completed.
+INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.
+INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.
+INIT: live IRQ0 called SCH$RESCHED/SCH$SCHED; NULL/SWAPPER PHD contexts are still absent.
+INIT stopped: remaining original initialization dependencies incomplete.
