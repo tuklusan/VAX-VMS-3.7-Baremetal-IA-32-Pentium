@@ -2535,3 +2535,5 @@ Remaining: resume source-order INIT and process activation; implement TT0 `$CREP
 No native source changed in this verification checkpoint. A clean repeated host/build/layout/coverage run passed: `wsl make -j2 test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck` (exit 0). Coverage validation reports 2,200 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,764 partial, 59,465 unresolved, 8,032 missing, 26,805 excluded and 917 hardware-excluded.
 
 `wsl make qemu-sysboot-m217` passed. The fresh captured serial output repeats actual ACP access through DQA0 DDT/IRQ14 and the M454 SWAPPER/NULL selection messages. Capture `logs/serial/qemu-m217-run-local-20261126T153544108296Z.log`, 6,476 bytes, SHA-256 `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`; it matches the previous M454 trace exactly. QEMU runner exited; no QEMU process remains. This rerun adds no evidence for live public SYS$QIO, INIT completion, SYSTEM login/DCL, DECnet Phase IV, or SET HOST 0; those acceptance conditions remain incomplete.
+
+M455 verification/evidence commit: `ae4a1a8bd0abef65935c5206f4c3d1209f68d0ef`.
