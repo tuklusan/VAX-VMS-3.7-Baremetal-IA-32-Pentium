@@ -5,6 +5,8 @@
 #include "vms_v37_pcb.h"
 struct port_v37_ia32_restore_frame;
 struct port_v37_phd_seed;
+struct port_v37_phd_process_quotas;
+struct port_v37_phd_ws_quotas;
 
 enum {
     PORT_V37_SCH_PRIORITIES=32u,
@@ -76,6 +78,14 @@ uint32_t port_v37_sched_start_context(struct port_v37_scheduler *,
     uint32_t pcb_address,uint32_t phd_address,uint32_t native_phy_pcb_address,
     uint32_t restore_frame_address,const struct port_v37_phd_seed *,
     uint8_t priority_increment_class);
+/* PROCSTRT-ready variant: install source quota/privilege state in a candidate
+ * PHD before binding it to the PCB and making the process COM via CHSE. */
+uint32_t port_v37_sched_start_context_quotas(struct port_v37_scheduler *,
+    uint32_t pcb_address,uint32_t phd_address,uint32_t native_phy_pcb_address,
+    uint32_t restore_frame_address,const struct port_v37_phd_seed *,
+    uint16_t working_set_list_offset,
+    const struct port_v37_phd_process_quotas *,
+    const struct port_v37_phd_ws_quotas *,uint8_t priority_increment_class);
 /* SCH$CHSEP precomputed-priority queue transition for COM/COMO processes. */
 uint32_t port_v37_sched_set_priority(struct port_v37_scheduler *,
     uint32_t pcb_address,uint8_t priority);

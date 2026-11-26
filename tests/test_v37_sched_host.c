@@ -79,6 +79,9 @@ static uint32_t get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
        ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
+static uint64_t get64(const uint8_t *p){
+    return (uint64_t)get32(p)|(uint64_t)get32(p+4u)<<32;
+}
 static void put32(uint8_t *p,uint32_t v){
     p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);
     p[2]=(uint8_t)(v>>16);p[3]=(uint8_t)(v>>24);
@@ -481,6 +484,62 @@ int main(void){
        restore_frame!=start.frame_va[0]||
        port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
         return fail("INIT PHD/native-frame binding and executable CHSE activation");
-    puts("SYSWAIT/SCHED/RSE plus INIT PHD-frame binding and executable CHSE activation PASS");
+    const struct port_v37_pcb_seed quota_pcb={.address=start.pcb_va[1],
+        .pid=0x00010009u,.priority=12u,.name="USER",.name_bytes=4u};
+    if(port_v37_pcb_init_genpcb(start.pcbs[1],sizeof start.pcbs[1],
+           &quota_pcb)!=PORT_V37_PCB_OK)
+        return fail("PROCSTRT quota PCB template");
+    start.frames[1]=(struct port_v37_ia32_restore_frame){
+        .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
+        .registers={.cs=0x08u,.eflags=0x202u,.eip=0x00123456u,
+                    .user_ss=start.pcb_va[1]}};
+    struct port_v37_phd_seed quota_seed=start_phd;
+    quota_seed.initial_r4=start.pcb_va[1];
+    const struct port_v37_phd_process_quotas process_quotas={
+        .cpu_limit=0x10203040u,.ast_limit=37u,
+        .privileges=UINT64_C(0x0000000000400080),.base_priority=0u};
+    const struct port_v37_phd_ws_quotas ws_quotas={
+        .physical_pages=300u,.free_page_limit=20u,.max_working_set=256u,
+        .extent=300u,.quota=150u,.default_size=100u};
+    if(port_v37_sched_start_context_quotas(&start_scheduler,
+           start.pcb_va[1],start.phd_va[1],
+           start.phd_va[1]+PORT_V37_PHD_PCB,start.frame_va[1],&quota_seed,
+           64u,&process_quotas,&ws_quotas,0u)!=PORT_V37_SCHED_OK||
+       get32(start.phds[1]+PORT_V37_PHD_CPULIM)!=process_quotas.cpu_limit||
+       get16(start.phds[1]+PORT_V37_PHD_ASTLM)!=process_quotas.ast_limit||
+       start.phds[1][PORT_V37_PHD_AUTHPRI]!=
+           start.pcbs[1][PORT_V37_PCB_PRIB]||
+       get64(start.phds[1]+PORT_V37_PHD_PRIVMSK)!=process_quotas.privileges||
+       get64(start.phds[1]+PORT_V37_PHD_AUTHPRIV)!=process_quotas.privileges||
+       get16(start.phds[1]+PORT_V37_PHD_WSEXTENT)!=319u||
+       get16(start.phds[1]+PORT_V37_PHD_WSQUOTA)!=213u||
+       get16(start.phds[1]+PORT_V37_PHD_DFWSCNT)!=163u||
+       get32(start.pcbs[1]+PORT_V37_PCB_PHD)!=start.phd_va[1]||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("PROCSTRT quotas and privilege state precede executable CHSE");
+    const struct port_v37_pcb_seed rejected_pcb={.address=start.pcb_va[2],
+        .pid=0x0001000au,.priority=8u,.name="BAD",.name_bytes=3u};
+    if(port_v37_pcb_init_genpcb(start.pcbs[2],sizeof start.pcbs[2],
+           &rejected_pcb)!=PORT_V37_PCB_OK)
+        return fail("invalid quota activation PCB template");
+    start.frames[2]=(struct port_v37_ia32_restore_frame){
+        .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
+        .registers={.cs=0x08u,.eflags=0x202u,.eip=0x00123456u,
+                    .user_ss=start.pcb_va[2]}};
+    struct port_v37_phd_ws_quotas invalid_ws=ws_quotas;
+    invalid_ws.physical_pages=10u;invalid_ws.free_page_limit=20u;
+    struct port_v37_phd_seed rejected_seed=quota_seed;
+    rejected_seed.initial_r4=start.pcb_va[2];
+    if(port_v37_sched_start_context_quotas(&start_scheduler,
+           start.pcb_va[2],start.phd_va[2],
+           start.phd_va[2]+PORT_V37_PHD_PCB,start.frame_va[2],&rejected_seed,
+           64u,&process_quotas,&invalid_ws,0u)!=PORT_V37_SCHED_BADPARAM||
+       get32(start.pcbs[2]+PORT_V37_PCB_PHD)||
+       get32(start.pcbs[2]+PORT_V37_PCB_PHYPCB)||
+       memcmp(start.phds[2],(uint8_t[PORT_V37_PHD_BYTES]){0},
+              PORT_V37_PHD_BYTES)||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("invalid PROCSTRT quotas leave PCB/PHD/scheduler unpublished");
+    puts("SYSWAIT/SCHED/RSE plus transactional PROCSTRT PHD quota activation PASS");
     return 0;
 }
