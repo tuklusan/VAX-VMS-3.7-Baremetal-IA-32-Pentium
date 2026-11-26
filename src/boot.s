@@ -112,7 +112,9 @@ protected_entry:
     /* Keep the growing bootstrap stack above the kernel's BSS.  The BSS
      * limit remains below 0x9e000; kmain and resident SYS calls can nest
      * several KiB before switching to per-process stacks. */
-    movl $0x0009f000, %esp
+    /* Use the top of conventional RAM (0x9fc00) to retain a deep nested
+     * SYS.EXE bootstrap call chain below the growing kernel BSS. */
+    movl $0x0009fc00, %esp
     ljmp $0x08, $0x00010000
 
 .code16

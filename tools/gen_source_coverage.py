@@ -379,7 +379,7 @@ dcl_exit_map=[
      'top-level interactive image rundown or batch abort'),
     (133,150,None,None,'WAIT interface and record comments'),
     (151,169,'src/vms_dcl_exit.c','port_dcl_wait',
-     'mark operand, prepend zero-day, cancel timer, BINTIM, SETIMR and WAITFR'),
+     'mark operand, prepend zero-day and use native BINTIM parsing before timer-service callbacks; real SETIMR/WAITFR process dispatch remains unbound'),
     (170,171,None,None,'VAX assembler ending and blank line'),
 ]
 new=[]

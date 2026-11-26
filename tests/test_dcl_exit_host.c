@@ -29,11 +29,13 @@ int main(void){struct fixture f={0};const struct port_dcl_ops ops={
  CHECK(port_dcl_exit(&p,"",&ops,&f,&status)==PORT_DCL_EXIT_LOGOUT);
  CHECK(f.abort==1&&p.exiting==1);
  CHECK(port_dcl_wait_delta("00:00:01.50",&f.ticks)&&f.ticks==15000000u);
- CHECK(port_dcl_wait_delta("23:59:59.9999999",&f.ticks)&&f.ticks==863999999999u);
+ CHECK(port_dcl_wait_delta("23:59:59.9999999",&f.ticks)&&f.ticks==864000000000u);
+ CHECK(port_dcl_wait_delta("00:00:00.004",&f.ticks)&&f.ticks==0u);
+ CHECK(port_dcl_wait_delta("00:00:00.005",&f.ticks)&&f.ticks==100000u);
+ CHECK(port_dcl_wait_delta("00:00:00.12345678",&f.ticks)&&f.ticks==1200000u);
  CHECK(!port_dcl_wait_delta("24:00:00",&f.ticks));
  CHECK(!port_dcl_wait_delta("01:60:00",&f.ticks));
  CHECK(!port_dcl_wait_delta("01:59:60",&f.ticks));
- CHECK(!port_dcl_wait_delta("00:00:00.12345678",&f.ticks));
  CHECK(port_dcl_wait("00:00:00.02",&ops,&f));
  CHECK(f.cancel==1&&f.timer==1&&f.wait==1&&f.efn==31u&&f.ticks==200000u);
  puts("DCL EXIT expression/depth/rundown/batch and WAIT timer PASS");return 0;

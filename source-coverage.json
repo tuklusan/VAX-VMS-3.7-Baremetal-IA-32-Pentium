@@ -1171,7 +1171,7 @@
           "status": "mapped",
           "pc_file": "src/vms_dcl_exit.c",
           "pc_symbol": "port_dcl_exit",
-          "pc_line": 3,
+          "pc_line": 4,
           "function": "preserve status and evaluate optional binary expression"
         },
         {
@@ -1182,7 +1182,7 @@
           "status": "mapped",
           "pc_file": "src/vms_dcl_exit.c",
           "pc_symbol": "port_dcl_exit",
-          "pc_line": 3,
+          "pc_line": 4,
           "function": "save $STATUS and unwind one indirect command level"
         },
         {
@@ -1193,7 +1193,7 @@
           "status": "mapped",
           "pc_file": "src/vms_dcl_exit.c",
           "pc_symbol": "port_dcl_exit",
-          "pc_line": 3,
+          "pc_line": 4,
           "function": "top-level interactive image rundown or batch abort"
         },
         {
@@ -1212,8 +1212,8 @@
           "status": "mapped",
           "pc_file": "src/vms_dcl_exit.c",
           "pc_symbol": "port_dcl_wait",
-          "pc_line": 68,
-          "function": "mark operand, prepend zero-day, cancel timer, BINTIM, SETIMR and WAITFR"
+          "pc_line": 52,
+          "function": "mark operand, prepend zero-day and use native BINTIM parsing before timer-service callbacks; real SETIMR/WAITFR process dispatch remains unbound"
         },
         {
           "original_lines": [
@@ -1943,7 +1943,7 @@
           "status": "partial",
           "pc_file": "src/vms_bintim.c",
           "pc_symbol": "port_vms_bintim",
-          "pc_line": 205,
+          "pc_line": 202,
           "function": "Native absolute/delta syntax conversion, defaults, range checks and hundredth rounding; descriptor validation, public SYS$BINTIM dispatch and current-time service binding remain absent"
         },
         {
@@ -3533,7 +3533,7 @@
           "status": "mapped",
           "pc_file": "src/boot.s",
           "pc_symbol": "stage2_magic",
-          "pc_line": 197,
+          "pc_line": 199,
           "function": "boot file size, first LBN and kernel destination"
         },
         {

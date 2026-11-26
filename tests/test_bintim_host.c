@@ -33,6 +33,8 @@ int main(void) {
     expect("29-FEB-2024",now,absolute(2024,2,29,12,34,56,78));
     expect("  1-JAN-2000 0:0:0.999 ",now,
            absolute(2000,1,1,0,0,1,0));
+    expect("31-DEC-2023 23:59:59.999",now,
+           absolute(2024,1,1,0,0,0,0));
 
     uint64_t unchanged=0x55u;
     assert(port_vms_bintim("31-FEB-2024",11u,now,&unchanged)==

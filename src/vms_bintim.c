@@ -155,9 +155,6 @@ static int parse_clock(const char *s,size_t n,size_t *at,
     }
     if(digits==1u)hundredth*=10u;
     else if(digits>=2u&&rounding>=5u)++hundredth;
-    if(hundredth>=100u){hundredth=0u;++t->second;
-        if(t->second>=60u){t->second=0u;++t->minute;
-            if(t->minute>=60u){t->minute=0u;++t->hour;}}}
     if(t->hour>23u)return 0;
     t->hundredth=hundredth;
     skip_space(s,n,at);
@@ -191,7 +188,7 @@ static int parse_delta(const char *s,size_t n,uint64_t *candidate){
     struct civil_time t={0};
     if(at<n&&!parse_clock(s,n,&at,&t,0))return 0;
     if(days>9999u||t.hour>23u||t.minute>59u||t.second>59u||
-       t.hundredth>99u)return 0;
+       t.hundredth>100u)return 0;
     uint64_t magnitude=(uint64_t)days*TICKS_PER_DAY+
         (uint64_t)t.hour*3600u*TICKS_PER_SECOND+
         (uint64_t)t.minute*60u*TICKS_PER_SECOND+

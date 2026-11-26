@@ -1,4 +1,5 @@
 #include "vms_dcl_exit.h"
+#include "vms_bintim.h"
 
 int port_dcl_exit(struct port_dcl_process *p,const char *expr,
                   const struct port_dcl_ops *ops,void *ctx,uint32_t *result) {
@@ -35,34 +36,17 @@ int port_dcl_exit(struct port_dcl_process *p,const char *expr,
     return PORT_DCL_EXIT_LOGOUT;
 }
 
-static int parse_two(const char **p,uint64_t *number,unsigned limit) {
-    unsigned digits=0;uint64_t value=0;
-    while(**p>='0'&&**p<='9'){
-        if(++digits>2)return 0;
-        value=value*10u+(unsigned)(*(*p)++-'0');
-    }
-    if(!digits||value>limit)return 0;
-    *number=value;return 1;
-}
 int port_dcl_wait_delta(const char *time,uint64_t *ticks100ns) {
     if(!time||!ticks100ns)return 0;
-    while(*time==' '||*time=='\t')time++;
-    /* The DCL source prepends a zero-day field before BINTIM. */
-    uint64_t hours,minutes,seconds,frac=0;uint32_t scale=10000000u;
-    if(!parse_two(&time,&hours,23u)||*time++!=':'||
-       !parse_two(&time,&minutes,59u)||*time++!=':'||
-       !parse_two(&time,&seconds,59u))return 0;
-    if(*time=='.'){
-        time++;unsigned digits=0;
-        while(*time>='0'&&*time<='9'){
-            if(++digits>7)return 0;
-            scale/=10u;frac+=(uint64_t)(*time++-'0')*scale;
-        }
-        if(!digits)return 0;
-    }
-    while(*time==' '||*time=='\t')time++;
-    if(*time)return 0;
-    *ticks100ns=((hours*3600u+minutes*60u+seconds)*10000000u)+frac;
+    size_t length=0u;
+    while(time[length]&&length<253u)++length;
+    if(time[length])return 0;
+    char input[255]={'0',' '};
+    for(size_t i=0u;i<length;i++)input[i+2u]=time[i];
+    uint64_t binary=0u;
+    if(port_vms_bintim(input,length+2u,0u,&binary)!=PORT_BINTIM_NORMAL)
+        return 0;
+    *ticks100ns=UINT64_C(0)-binary;
     return 1;
 }
 int port_dcl_wait(const char *spec,const struct port_dcl_ops *ops,void *ctx) {
