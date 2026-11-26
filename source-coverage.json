@@ -1644,7 +1644,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 1076,
+          "pc_line": 1078,
           "function": "Set a source-layout local event bit and wake a satisfied LEF waiter; PID lookup and live SETEF dispatch remain absent"
         },
         {
@@ -1655,7 +1655,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 1076,
+          "pc_line": 1078,
           "function": "Set a source-layout normal/master CEF bit and scan its WQH for satisfied resident waiters; nonresident CEF waiters use source EVENTE/CHSE to COMO without completing saved result; slave CEB replication remains unsupported"
         },
         {
@@ -1674,7 +1674,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "event_condition",
-          "pc_line": 938,
+          "pc_line": 940,
           "function": "Evaluate the source EFWM and WALL wait-any/wait-all predicate for a resident PCB"
         },
         {
@@ -4004,7 +4004,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_sysinit_start",
-          "pc_line": 852,
+          "pc_line": 853,
           "function": "Scheduled native SYSINIT translates SYS$SYSDEVICE, applies source underscore/TOPSYS rules, creates/verifies the three SYSTEM logicals, reads IA-32 CMOS RTC time, and updates the resident VMS clock; LOCKDOWN and full SETIME solicitation/parameter persistence remain absent"
         },
         {
@@ -4023,7 +4023,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_sysinit_start",
-          "pc_line": 852,
+          "pc_line": 853,
           "function": "scheduled SIP_SETTIME reads IA-32 RTC and updates the resident VMS clock; operator prompt/TPWAIT, SYS$SETIME, TODR and persistent SYSPARAM writeback remain absent"
         }
       ],
@@ -6160,7 +6160,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_save_current",
-          "pc_line": 635,
+          "pc_line": 637,
           "function": "Validate and save the outgoing IA-32 IRET frame through PHD KSP/PC, preserve PCB$L_PHYPCB as the hardware PCB physical address, then requeue through SCH$RESCHED; IRQ0 and deferred software-vector entry bind the native scheduler while source IPL edge cases remain incomplete"
         },
         {
@@ -6171,7 +6171,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
-          "pc_line": 612,
+          "pc_line": 614,
           "function": "Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction"
         },
         {
@@ -6363,7 +6363,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_event",
-          "pc_line": 1062,
+          "pc_line": 1064,
           "function": "native functional counterpart to original section"
         },
         {
@@ -6374,7 +6374,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_current",
-          "pc_line": 727,
+          "pc_line": 729,
           "function": "native functional counterpart to original section"
         },
         {
@@ -10805,7 +10805,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 927,
+          "pc_line": 934,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -10884,7 +10884,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_vms_sched_chse",
-          "pc_line": 789,
+          "pc_line": 790,
           "function": "Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; VAX PCB PHYPCB translation and native process contexts remain incomplete"
         },
         {
@@ -11134,7 +11134,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_sys_executive_entry",
-          "pc_line": 1042,
+          "pc_line": 1049,
           "function": "Allocate source-sized 128-byte NULL and 640-byte SWAPPER kernel stacks plus separate native P0/P1 tables and PHDs in NPAGEDYN; process tables are currently flat supervisor identity maps, not VAX P0/P1 translations"
         },
         {
@@ -22936,7 +22936,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 689,
+          "pc_line": 690,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -23657,7 +23657,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_alopaged",
-          "pc_line": 99,
+          "pc_line": 100,
           "function": "EXE$ALOPAGED entry uses the resident PAGEDYN free list; QEMU verifies a 17-byte request rounds to 32 bytes and is returned; no process I/O or runtime VMS caller, SCH$LOCKW wait, extension or resource wake is wired"
         },
         {
@@ -23706,7 +23706,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_deapaged",
-          "pc_line": 105,
+          "pc_line": 106,
           "function": "EXE$DEAPAGED returns aligned blocks to the SYSBOOT-carved resident PAGEDYN free list; QEMU verifies completion and duplicate-free rejection; IRP header decoding, SCH$LOCKW, PGDYN resource wake and process caller wiring remain unresolved"
         },
         {
@@ -24160,7 +24160,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_swapinit_log_tables",
-          "pc_line": 66,
+          "pc_line": 67,
           "function": "Prepare the two original SYSTEM logical-name records from initialized SYSLOG templates during boot; SWAPPER context remains absent; native bootstrap wrapper copies the original records into PAGEDYN"
         },
         {
@@ -24201,7 +24201,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_swapper_start",
-          "pc_line": 826,
+          "pc_line": 827,
           "function": "The scheduled SWAPPER entry searches the live SYS/GROUP logical state and uses the source resident HIB wait queue; free-page balancing, modified-page writeback, power-fail AST work and SWAPPER restart logic remain absent; live HIB queue block and selection of NULL are observed, but SWAPPER balance/swap functions remain unimplemented"
         },
         {

@@ -535,6 +535,7 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
         return PORT_V37_SCHED_BADPARAM;
     *selected_address=0u;*restore_frame=0u;
     s->last_select_error=0u;
+    s->last_select_pix=0u;
     uint32_t bits=s->summary[0];
     if(!bits)return PORT_V37_SCHED_EMPTY;
     unsigned q=0u;
@@ -569,6 +570,8 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
         s->last_select_error=4u;
         return PORT_V37_SCHED_NO_CONTEXT;
     }
+    const uint32_t pix=get16(pcb+PORT_V37_PCB_PID);
+    s->last_select_pix=pix;
     const uint32_t context_status=port_v37_ia32_context_validate(frame);
     if(context_status!=PORT_V37_IA32_CONTEXT_OK){
         s->last_select_error=5u;
@@ -576,7 +579,6 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
         return PORT_V37_SCHED_CORRUPT;
     }
     s->last_select_context_error=PORT_V37_IA32_CONTEXT_OK;
-    const uint32_t pix=get16(pcb+PORT_V37_PCB_PID);
     uint32_t native_cr3=0u;
     if(s->ops.native_cr3_by_pix){
         if(pix>=s->ops.native_cr3_slots||

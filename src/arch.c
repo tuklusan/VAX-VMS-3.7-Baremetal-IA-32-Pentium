@@ -1099,12 +1099,16 @@ static int arch_vms_schedule_frame(struct port_trap_frame *f){
         return ARCH_TRAP_RESTORE_SELECTED_FRAME;
     }
     if(wait_queue&&resident_vms_schedule_message){
-        char message[]="SCH$WAITK scheduling error 0 CS 00.";
+        char message[]="SCH$WAITK err 0 st 0 P 00 CS 00.";
         const uint32_t digit=status%10u;
-        message[27]=(char)('0'+digit);
+        message[14]=(char)('0'+digit);
+        message[19]=(char)('0'+resident_vms_scheduler->last_select_error%10u);
+        const uint32_t pix=resident_vms_scheduler->last_select_pix%100u;
+        message[23]=(char)('0'+pix/10u);
+        message[24]=(char)('0'+pix%10u);
         const uint32_t cs=resident_vms_scheduler->last_select_context_error%100u;
-        message[32]=(char)('0'+cs/10u);
-        message[33]=(char)('0'+cs%10u);
+        message[29]=(char)('0'+cs/10u);
+        message[30]=(char)('0'+cs%10u);
         resident_vms_schedule_message(message);
     }
     arch_report_fault(f->vector,f->error,f->eip);

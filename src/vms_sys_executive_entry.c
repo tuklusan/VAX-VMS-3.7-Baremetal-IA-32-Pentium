@@ -1,4 +1,5 @@
 #include "vms_sys_executive_entry.h"
+#define PORT_SYS_EXEC_CONTEXT_STACK_BYTES 4096u
 #include "vms_exe_sched.h"
 #include "vms_exe_creprc.h"
 #include "vms_exe_scbvector.h"
@@ -897,19 +898,25 @@ static void executive_sysinit_start(void *argument){
         executive_vms_process_message(
             "SYSINIT: native scheduled context created and verified SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE.");
     uint64_t current_time=0u;
+#if defined(__i386__)
     uint32_t time_flags;
     __asm__ volatile("pushfl; popl %0; cli":"=r"(time_flags)::"memory");
+#endif
     if(!executive_vms_read_system_time||
        !executive_vms_read_system_time(executive_vms_system_time_context,
                                        &current_time)||!current_time){
+#if defined(__i386__)
         __asm__ volatile("pushl %0; popfl"::"r"(time_flags):"memory","cc");
+#endif
         if(executive_vms_process_message)
             executive_vms_process_message(
                 "SYSINIT: SIP_SETTIME could not read valid IA-32 RTC time.");
         for(;;)__asm__ volatile("pause":::"memory");
     }
     port_exe_systime_store(&executive_clock,current_time);
+#if defined(__i386__)
     __asm__ volatile("pushl %0; popfl"::"r"(time_flags):"memory","cc");
+#endif
     if(executive_vms_process_message)
         executive_vms_process_message(
             "SYSINIT: SIP_SETTIME set the resident VMS clock from the IA-32 RTC.");
@@ -1055,7 +1062,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            !p->vms_context_settings->read_system_time)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         void *raw=0;uint32_t allocated=0u;
-        const uint32_t need=6u*4096u+4095u+128u+2u*640u+
+        const uint32_t need=6u*4096u+4095u+3u*PORT_SYS_EXEC_CONTEXT_STACK_BYTES+
                             3u*PORT_V37_PHD_BYTES;
         if(port_exe_np_pool_alloc(&executive_np_pool,need,&raw,&allocated)!=
               PORT_EXE_NP_POOL_OK||!raw)
@@ -1067,7 +1074,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         }
         const uintptr_t aligned=(raw_address+4095u)&~(uintptr_t)4095u;
         const uintptr_t allocation_end=raw_address+allocated;
-        const uintptr_t required_end=aligned+6u*4096u+128u+2u*640u+
+        const uintptr_t required_end=aligned+6u*4096u+
+                                     3u*PORT_SYS_EXEC_CONTEXT_STACK_BYTES+
                                      3u*PORT_V37_PHD_BYTES;
         if(allocation_end<raw_address||allocation_end>UINT32_MAX||
            required_end>allocation_end){
@@ -1084,11 +1092,11 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         executive_vms_contexts.stack[0]=(uint8_t *)
             (executive_vms_contexts.p1[2]+1024u);
         executive_vms_contexts.stack[1]=
-            executive_vms_contexts.stack[0]+128u;
+            executive_vms_contexts.stack[0]+PORT_SYS_EXEC_CONTEXT_STACK_BYTES;
         executive_vms_contexts.stack[2]=
-            executive_vms_contexts.stack[1]+640u;
+            executive_vms_contexts.stack[1]+PORT_SYS_EXEC_CONTEXT_STACK_BYTES;
         executive_vms_contexts.phd[0]=
-            executive_vms_contexts.stack[2]+640u;
+            executive_vms_contexts.stack[2]+PORT_SYS_EXEC_CONTEXT_STACK_BYTES;
         executive_vms_contexts.phd[1]=executive_vms_contexts.phd[0]+
                                       PORT_V37_PHD_BYTES;
         executive_vms_contexts.phd[2]=executive_vms_contexts.phd[1]+
@@ -1129,7 +1137,9 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
              .eflags=0x202u,.code_selector=0x08u,.data_selector=0x10u,
              .access_mode=0u}
         };
-        const size_t stack_bytes[3]={128u,640u,640u};
+        const size_t stack_bytes[3]={PORT_SYS_EXEC_CONTEXT_STACK_BYTES,
+                                     PORT_SYS_EXEC_CONTEXT_STACK_BYTES,
+                                     PORT_SYS_EXEC_CONTEXT_STACK_BYTES};
         for(unsigned i=0u;i<3u;i++)
             if(port_v37_ia32_context_init(executive_vms_contexts.stack[i],
                    stack_bytes[i],&seed[i],&frame[i])!=
