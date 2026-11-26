@@ -2,6 +2,7 @@
 #include "vms_v37_pcb.h"
 #include "vms_v37_phd.h"
 #include "vms_v37_dyn_tags.h"
+#include "vms_iopost_end.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -218,8 +219,21 @@ int main(void){
     put32(f.pcb+PORT_V37_PCB_SQBL,wq_va);
     put16(f.pcb+PORT_V37_PCB_STATE,PORT_V37_SCH_MWAIT);
     make_acb(&f,4u,1u,seed.pid);
-    const uint32_t wake_status=port_v37_sched_queue_ast_rse(&f.scheduler,
-        0x1000u,0x3400u,0u,0u);
+    uint8_t proc_pool[64]={0};struct port_ini_procvec procvec={0};
+    const struct port_ini_proc_settings proc_settings={
+        .max_processes=2u,.system_pcb_address=0x5000u,
+        .null_pcb_address=0x6000u,.dyn_pcbvec_type=1u};
+    if(port_ini_procvec_init(proc_pool,sizeof proc_pool,&proc_settings,
+          &procvec)!=PORT_INI_PROC_OK||
+       port_ini_procvec_set_pcb(&procvec,1u,0x1000u)!=PORT_INI_PROC_OK)
+        return fail("IOPOST process-vector fixture");
+    const struct port_v37_iopost_sched_binding binding={
+        .scheduler=&f.scheduler,.process_vector=&procvec,
+        .priority_increment_class=0u};
+    const uint32_t wake_status=port_v37_iopost_sched_queue_ast(
+        (void *)&binding,seed.pid,0x3400u);
+    if(wake_status!=PORT_V37_IOPOST_OK)
+        return fail("IOCIOPOST DIRPOST to source QAST/RSE bridge");
     if(wake_status!=PORT_V37_SCHED_OK||
        wait->forward!=wq_va||wait->backward!=wq_va||wait->count!=0u||
        (uint16_t)(f.pcb[PORT_V37_PCB_STATE]|

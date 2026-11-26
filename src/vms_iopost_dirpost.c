@@ -73,7 +73,11 @@ uint32_t port_v37_iopost_dirpost(uint8_t *irp,size_t irp_bytes,
     if(port_v37_iopost_irpe_release(&irpe_plan,ops->free_irpe,
                                     ops->context,pid)!=PORT_V37_IOPOST_OK)
         return PORT_V37_IOPOST_BAD;
-    if(quota_ast)ops->queue_ast(ops->context,pid,irp_va);
-    else ops->free_irp(ops->context,pid,irp_va);
+    /* A callback failure follows completed CCB/IOSB/event/IRPE mutations;
+     * surface it as corruption so the caller cannot retry completion. */
+    if(quota_ast){
+        if(ops->queue_ast(ops->context,pid,irp_va)!=PORT_V37_IOPOST_OK)
+            return PORT_V37_IOPOST_CORRUPT;
+    }else ops->free_irp(ops->context,pid,irp_va);
     return PORT_V37_IOPOST_OK;
 }

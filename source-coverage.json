@@ -22876,7 +22876,7 @@
           "pc_file": "src/vms_iopost_process_direct.c",
           "pc_symbol": "port_v37_iopost_process_direct",
           "pc_line": 28,
-          "function": "Resolve positive PID process index through source PCB vector, verify PCB sequence, and charge PCB$W_DIOCNT before direct completion; buffered route remains deferred"
+          "function": "Resolve positive PID process index through source PCB vector, verify PCB sequence, charge PCB$W_DIOCNT and unlock direct buffers before KAST; scheduler callback is available but live IOC binding and buffered route remain unresolved"
         },
         {
           "original_lines": [
@@ -22936,7 +22936,7 @@
           "pc_file": "src/vms_iopost_dirpost.c",
           "pc_symbol": "port_v37_iopost_dirpost",
           "pc_line": 12,
-          "function": "DIRPOST process I/O accounting and ordered completion; PID/IRP pending registry validates ownership before accounting, then copies IOSB through retained pages and releases pins before SCH$POSTEF; live scheduler and process binding remain absent"
+          "function": "DIRPOST process I/O accounting and ordered completion; PID/IRP pending registry validates ownership before accounting, then copies IOSB through retained pages and releases pins before SCH$POSTEF; scheduler-backed PID-vector SCH$QAST/RSE callback is implemented but live IOC binding remains absent"
         },
         {
           "original_lines": [

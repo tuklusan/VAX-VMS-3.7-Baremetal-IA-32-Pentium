@@ -59,8 +59,9 @@ static uint32_t dirpost_complete_pinned(void *v,uint32_t pid,uint32_t irp_va,
 static void dirpost_event(void *v,uint32_t pid,uint8_t efn){
     struct dirpost_rig *r=v;r->order++;r->pid=pid;r->efn=efn;
 }
-static void dirpost_ast(void *v,uint32_t pid,uint32_t irp_va){
+static uint32_t dirpost_ast(void *v,uint32_t pid,uint32_t irp_va){
     struct dirpost_rig *r=v;r->order++;r->pid=pid;r->irp_va=irp_va;
+    return PORT_V37_IOPOST_OK;
 }
 static void dirpost_free(void *v,uint32_t pid,uint32_t irp_va){
     struct dirpost_rig *r=v;r->order++;r->pid=pid;r->irp_va=irp_va;

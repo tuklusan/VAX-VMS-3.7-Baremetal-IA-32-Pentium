@@ -537,7 +537,7 @@ v37schedcheck: | build
 
 .PHONY: v37qastcheck
 v37qastcheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c src/vms_v37_sched.c src/vms_v37_phd.c src/vms_v37_ia32_context.c tests/test_v37_qast_host.c -o build/v37qastcheck
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c src/vms_v37_sched.c src/vms_v37_phd.c src/vms_v37_ia32_context.c src/vms_ini_procvec.c src/vms_iopost_sched_ast.c tests/test_v37_qast_host.c -o build/v37qastcheck
 	./build/v37qastcheck
 
 .PHONY: v37eventwaitcheck
@@ -1454,11 +1454,11 @@ nlddtcheck: $(M122_NL_DDT_OBJS) | build
 	./build/nlddtcheck
 
 # M123: bounded source IOCIOPOST kernel end-action only; PCB/KAST absent.
-$(M123_IOPOST_OBJS): build/%.o: src/%.c src/vms_iopost_end.h src/vms_qio_post.h | build
+$(M123_IOPOST_OBJS): build/%.o: src/%.c src/vms_iopost_end.h src/vms_qio_post.h src/vms_v37_sched.h src/vms_ini_procvec.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 .PHONY: iopostendcheck
 iopostendcheck: $(M123_IOPOST_OBJS) | build
-	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M123_IOPOST_SRCS) $(M122_NL_DDT_SRCS) $(M121_QIO_SRCS) $(M120_IOC_SRCS) $(M118_DB_SRCS) src/vms_ini_procvec.c src/vms_sysqio_iosb.c src/vms_sysqio_pending.c src/vms_userptr.c src/vms_sys85.c src/vms_rtl85.c src/vms_rtl85_tables.c tests/test_iopost_irpe_host.c tests/test_iopost_end_host.c -o build/iopostendcheck
+	$(CC) -std=c11 -O2 -g -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=undefined -Isrc $(M123_IOPOST_SRCS) $(M122_NL_DDT_SRCS) $(M121_QIO_SRCS) $(M120_IOC_SRCS) $(M118_DB_SRCS) src/vms_ini_procvec.c src/vms_v37_sched.c src/vms_v37_pcb.c src/vms_v37_phd.c src/vms_v37_ia32_context.c src/vms_sysqio_iosb.c src/vms_sysqio_pending.c src/vms_userptr.c src/vms_sys85.c src/vms_rtl85.c src/vms_rtl85_tables.c tests/test_iopost_irpe_host.c tests/test_iopost_end_host.c -o build/iopostendcheck
 	./build/iopostendcheck
 
 .PHONY: iopostunlockcheck

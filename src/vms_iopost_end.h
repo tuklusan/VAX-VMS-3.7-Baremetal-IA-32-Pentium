@@ -7,6 +7,7 @@
 #include "vms_v37_phd.h"
 #include "vms_ini_procvec.h"
 #include "vms_v37_pcb.h"
+#include "vms_v37_sched.h"
 /* SYS/SRC/IOCIOPOST.MAR 115-165. The original kernel end action
  * recognises a negative VAX system-space address in IRP$L_PID; native
  * IA-32 uses the checked supervisor-only SYS.EXE mapping instead.
@@ -61,6 +62,7 @@ typedef uint32_t (*port_v37_iopost_user_qio_complete_fn)(void *,uint32_t,
     uint32_t,uint32_t,uint8_t,uint32_t,uint32_t);
 typedef void (*port_v37_iopost_event_fn)(void *,uint32_t,uint8_t);
 typedef void (*port_v37_iopost_packet_fn)(void *,uint32_t,uint32_t);
+typedef uint32_t (*port_v37_iopost_queue_ast_fn)(void *,uint32_t,uint32_t);
 typedef int (*port_v37_iopost_resolve_irpe_fn)(void *,uint32_t,
     const uint8_t **,size_t *);
 struct port_v37_iopost_irpe_plan {
@@ -85,7 +87,7 @@ struct port_v37_iopost_dirpost_ops {
     port_v37_iopost_user_qio_validate_fn validate_user_qio;
     port_v37_iopost_user_qio_complete_fn complete_user_qio;
     port_v37_iopost_event_fn post_event;
-    port_v37_iopost_packet_fn queue_ast;
+    port_v37_iopost_queue_ast_fn queue_ast;
     port_v37_iopost_packet_fn free_irp;
     port_v37_iopost_resolve_irpe_fn resolve_irpe;
     port_v37_iopost_packet_fn free_irpe;
@@ -96,6 +98,16 @@ struct port_v37_iopost_dirpost_ops {
  * PHD, guarded IOSB store, event/AST queues and IRP lookaside. */
 uint32_t port_v37_iopost_dirpost(uint8_t *,size_t,uint32_t,
     const struct port_v37_iopost_dirpost_ops *);
+/* Binding for the scheduler-backed completion callbacks below. Queueing an
+ * AST also applies source SCH$RSE wake routing using the process state. */
+struct port_v37_iopost_sched_binding {
+    struct port_v37_scheduler *scheduler;
+    const struct port_ini_procvec *process_vector;
+    uint8_t priority_increment_class;
+};
+uint32_t port_v37_iopost_sched_queue_ast(void *,uint32_t,uint32_t);
+uint32_t port_v37_iopost_sched_queue_kast(void *,uint32_t,uint32_t,
+    uint32_t);
 typedef void (*port_v37_iopost_unlock_pages_fn)(void *,uint32_t,uint32_t);
 struct port_v37_iopost_unlock_ops {
     void *context;
