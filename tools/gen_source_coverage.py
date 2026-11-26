@@ -539,7 +539,9 @@ append_source_ranges('SYS/SRC/POSTEF.MAR',403,'src/vms_v37_sched.c',[
 append_source_ranges('SYS/SRC/SYSCREPRC.MAR',805,'src/vms_exe_creprc.c',[
   (247,'excluded',None,'Source declarations, ABI description, history and comments'),
   (259,'partial','port_exe_creprc_preflight','Model PID output probe, subprocess/detached policy and DETACH authorization'),
-  (324,'unresolved',None,'PCB/PQB/JIB allocation and initialization, quota ownership and rollback are not implemented'),
+  (270,'unresolved',None,'SYS$SYSDISK translation and tiny-process descriptor preparation are not implemented'),
+  (282,'partial','port_exe_creprc_allocate_pcb','EXE$ALLOCPCB nonpaged allocation, DYN PCB header and source PCB body clear; conditional resource wait absent'),
+  (324,'unresolved',None,'PQB/JIB allocation, PCB queue/default setup, quota ownership and rollback remain absent'),
   (337,'partial','port_exe_creprc_preflight','Requested privilege readability and SETPRV/minimized privilege selection'),
   (349,'partial','port_exe_creprc_preflight','Priority privilege clamp and subprocess UIC/owner inheritance'),
   (391,'unresolved',None,'Duplicate process names, descriptor copying, PQB setup and creator context are absent'),

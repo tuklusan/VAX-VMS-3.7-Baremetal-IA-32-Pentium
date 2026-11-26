@@ -1724,16 +1724,35 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_preflight",
-          "pc_line": 9,
+          "pc_line": 11,
           "function": "Model PID output probe, subprocess/detached policy and DETACH authorization"
         },
         {
           "original_lines": [
             260,
+            270
+          ],
+          "status": "unresolved",
+          "reason": "SYS$SYSDISK translation and tiny-process descriptor preparation are not implemented"
+        },
+        {
+          "original_lines": [
+            271,
+            282
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_allocate_pcb",
+          "pc_line": 77,
+          "function": "EXE$ALLOCPCB nonpaged allocation, DYN PCB header and source PCB body clear; conditional resource wait absent"
+        },
+        {
+          "original_lines": [
+            283,
             324
           ],
           "status": "unresolved",
-          "reason": "PCB/PQB/JIB allocation and initialization, quota ownership and rollback are not implemented"
+          "reason": "PQB/JIB allocation, PCB queue/default setup, quota ownership and rollback remain absent"
         },
         {
           "original_lines": [
@@ -1743,7 +1762,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_preflight",
-          "pc_line": 9,
+          "pc_line": 11,
           "function": "Requested privilege readability and SETPRV/minimized privilege selection"
         },
         {
@@ -1754,7 +1773,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_preflight",
-          "pc_line": 9,
+          "pc_line": 11,
           "function": "Priority privilege clamp and subprocess UIC/owner inheritance"
         },
         {
@@ -1773,7 +1792,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_preflight",
-          "pc_line": 9,
+          "pc_line": 11,
           "function": "Status flag MBZ validation and required-privilege checks"
         },
         {
@@ -1792,7 +1811,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_activate_slot",
-          "pc_line": 75,
+          "pc_line": 116,
           "function": "Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer"
         },
         {

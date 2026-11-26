@@ -1,10 +1,18 @@
 #include "vms_exe_creprc.h"
 #include "vms_exe_gettim.h"
 #include "vms_exe_setprv.h"
+#include "vms_v37_dyn_tags.h"
+#include "vms_v37_pcb.h"
 #include <stdio.h>
 #include <string.h>
 
 static int fail(const char *name){fprintf(stderr,"CREPRC FAIL: %s\n",name);return 1;}
+static uint32_t test_raise_ipl(void *opaque){
+    uint32_t *ipl=opaque;uint32_t previous=*ipl;*ipl=2u;return previous;
+}
+static void test_restore_ipl(void *opaque,uint32_t previous){
+    *(uint32_t *)opaque=previous;
+}
 int main(void){
     const struct port_exe_creprc_caller caller={
         .pid=0x00010023u,.uic=0x00020020u,.base_priority=15u,
@@ -71,6 +79,44 @@ int main(void){
     struct port_exe_creprc_caller malformed=caller;malformed.base_priority=32u;
     if(port_exe_creprc_preflight(&malformed,&request,&result)!=PORT_SS_BADPARAM)
         return fail("source PCB priority validation");
+    _Alignas(8) uint8_t pcb_pool_memory[512];
+    uint32_t pool_ipl=0u;
+    const struct port_v37_irp_pool_sync pool_sync={
+        &pool_ipl,test_raise_ipl,test_restore_ipl};
+    struct port_exe_np_pool pcb_pool={0};
+    struct port_exe_np_allocator pcb_allocator={
+        .variable=&pcb_pool,.sync=&pool_sync};
+    struct port_exe_np_allocation pcb_allocation={0};
+    if(port_exe_np_pool_init(&pcb_pool,pcb_pool_memory,
+          sizeof pcb_pool_memory,&pool_sync)!=PORT_EXE_NP_POOL_OK||
+       port_exe_creprc_allocate_pcb(&pcb_allocator,&pcb_allocation)!=
+          PORT_EXE_CREPRC_ALLOC_OK||!pcb_allocation.address||
+       pcb_allocation.bytes!=160u||pool_ipl!=0u)
+        return fail("EXE$ALLOCPCB source pool allocation, size and IPL");
+    const uint8_t *const pcb_bytes=pcb_allocation.address;
+    if(pcb_bytes[8u]!=160u||pcb_bytes[9u]||
+       pcb_bytes[10u]!=PORT_V37_DYN_PCB||pcb_bytes[11u])
+        return fail("DYN PCB size and type fields");
+    for(unsigned i=PORT_V37_PCB_TYPE;i<PORT_V37_PCB_BYTES;i++)
+        if(pcb_bytes[i])return fail("SYSCREPRC zeroes the fixed PCB body");
+    if(port_exe_creprc_release_pcb(&pcb_allocator,&pcb_allocation)!=
+          PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
+       port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)
+        return fail("PCB allocation rollback returns/coalesces NP pool");
+    _Alignas(8) uint8_t small_pool_memory[152];
+    struct port_exe_np_pool small_pool={0};
+    struct port_exe_np_allocation untouched={
+        (void *)(uintptr_t)0x1000u,160u,PORT_EXE_NP_FROM_VARIABLE,
+        PORT_V37_DYN_PCB};
+    const struct port_exe_np_allocation untouched_before=untouched;
+    if(port_exe_np_pool_init(&small_pool,small_pool_memory,
+          sizeof small_pool_memory,&pool_sync)!=PORT_EXE_NP_POOL_OK)
+        return fail("small NP pool fixture");
+    pcb_allocator.variable=&small_pool;
+    if(port_exe_creprc_allocate_pcb(&pcb_allocator,&untouched)!=
+          PORT_EXE_CREPRC_ALLOC_NOMEM||
+       memcmp(&untouched,&untouched_before,sizeof untouched))
+        return fail("PCB allocation exhaustion leaves output untouched");
     uint8_t vector_storage[64];
     struct port_ini_procvec vector={0};
     const struct port_ini_proc_settings settings={
@@ -116,6 +162,6 @@ int main(void){
     if(port_exe_creprc_activate_slot(&malformed_vector,0x1000u,0x8000u,
           &process_count,5u,&pid)!=PORT_EXE_CREPRC_SLOT_BAD)
         return fail("reject malformed source PIX/system/slot geometry");
-    puts("SYSCREPRC policy and source PIX/PID activation semantics PASS");
+    puts("SYSCREPRC preflight, PCB allocation, PIX/PID activation semantics PASS");
     return 0;
 }

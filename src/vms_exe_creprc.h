@@ -2,6 +2,7 @@
 #define VMS_EXE_CREPRC_H
 #include <stdint.h>
 #include "vms_ini_procvec.h"
+#include "vms_exe_np_pool.h"
 
 enum {
     PORT_V37_PRC_STATUS_FLAGS=0x1ffu,
@@ -41,6 +42,14 @@ uint32_t port_exe_creprc_preflight(const struct port_exe_creprc_caller *,
 
 enum {PORT_EXE_CREPRC_SLOT_OK=1u,PORT_EXE_CREPRC_SLOT_BAD=2u,
       PORT_EXE_CREPRC_SLOT_EXHAUSTED=4u};
+enum {PORT_EXE_CREPRC_ALLOC_OK=1u,PORT_EXE_CREPRC_ALLOC_BAD=2u,
+      PORT_EXE_CREPRC_ALLOC_NOMEM=4u,PORT_EXE_CREPRC_ALLOC_CORRUPT=8u};
+/* SYSCREPRC.MAR EXE$ALLOCPCB and PCB clear: allocation only. Conditional
+ * SSRWAIT resource waiting and the rest of process initialization are later. */
+uint32_t port_exe_creprc_allocate_pcb(struct port_exe_np_allocator *,
+    struct port_exe_np_allocation *);
+uint32_t port_exe_creprc_release_pcb(struct port_exe_np_allocator *,
+    const struct port_exe_np_allocation *);
 /* SYSCREPRC.MAR ACTIVATE 660-680: caller invokes only after resource
  * allocation, while holding the source SYNCHIPL exclusion. */
 uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *,
