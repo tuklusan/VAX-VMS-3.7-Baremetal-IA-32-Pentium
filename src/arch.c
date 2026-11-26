@@ -1099,9 +1099,12 @@ static int arch_vms_schedule_frame(struct port_trap_frame *f){
         return ARCH_TRAP_RESTORE_SELECTED_FRAME;
     }
     if(wait_queue&&resident_vms_schedule_message){
-        char message[]="SCH$WAITK scheduling failed with status 0.";
+        char message[]="SCH$WAITK scheduling error 0 CS 00.";
         const uint32_t digit=status%10u;
-        message[sizeof message-3u]=(char)('0'+digit);
+        message[27]=(char)('0'+digit);
+        const uint32_t cs=resident_vms_scheduler->last_select_context_error%100u;
+        message[32]=(char)('0'+cs/10u);
+        message[33]=(char)('0'+cs%10u);
         resident_vms_schedule_message(message);
     }
     arch_report_fault(f->vector,f->error,f->eip);

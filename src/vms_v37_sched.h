@@ -75,6 +75,9 @@ struct port_v37_scheduler {
     uint32_t initialized;
     uint32_t native_interrupt_count,native_no_context_count;
     uint32_t current_cr3;
+    /* Native scheduler error location for SYSINIT's fatal wait diagnostics. */
+    uint32_t last_select_error;
+    uint32_t last_select_context_error;
 };
 typedef uint32_t (*port_v37_sched_interrupt_fn)(struct port_v37_scheduler *,
     uint32_t,uint32_t *,uint32_t *);

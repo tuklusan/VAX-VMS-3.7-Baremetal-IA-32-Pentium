@@ -534,6 +534,7 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
     if(!s||!s->initialized||!selected_address||!restore_frame)
         return PORT_V37_SCHED_BADPARAM;
     *selected_address=0u;*restore_frame=0u;
+    s->last_select_error=0u;
     uint32_t bits=s->summary[0];
     if(!bits)return PORT_V37_SCHED_EMPTY;
     unsigned q=0u;
@@ -541,18 +542,22 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
     const uint32_t head=head_address(s,q);
     const uint32_t address=s->heads[q].forward;
     uint8_t *pcb=resolve(s,address,PORT_V37_PCB_BYTES);
-    if(!head||address==head||!pcb)return PORT_V37_SCHED_CORRUPT;
+    if(!head||address==head||!pcb){
+        s->last_select_error=1u;return PORT_V37_SCHED_CORRUPT;
+    }
     int found=0;
     if(list_contains(s,q,address,&found)!=PORT_V37_SCHED_OK||!found||
        get16(pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
        pcb[Q_TYPE]!=PORT_V37_DYN_PCB||
-       get16(pcb+PCBSTATE)!=PORT_V37_SCH_COM||pcb[PCBPRI]!=q)
+       get16(pcb+PCBSTATE)!=PORT_V37_SCH_COM||pcb[PCBPRI]!=q){
+        s->last_select_error=2u;
         return PORT_V37_SCHED_CORRUPT;
+    }
     /* SCH$SCHED executes LDPCTX after selecting. A PCB without its original
      * PHD and native processor context cannot be made current on IA-32. */
     const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
     uint8_t *phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
-    if(!phd)return PORT_V37_SCHED_NO_CONTEXT;
+    if(!phd){s->last_select_error=3u;return PORT_V37_SCHED_NO_CONTEXT;}
     /* PCB$L_PHYPCB remains the source hardware PCB physical address.
      * The IA-32 restore frame is reached through the native KSP recorded
      * in the process header; conflating these addresses corrupts LDPCTX. */
@@ -560,20 +565,33 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
     struct port_v37_ia32_restore_frame *const frame=
         (struct port_v37_ia32_restore_frame *)resolve(s,phy_pcb,
             sizeof(struct port_v37_ia32_restore_frame));
-    if(!get32(pcb+PORT_V37_PCB_PHD)||!frame)
+    if(!get32(pcb+PORT_V37_PCB_PHD)||!frame){
+        s->last_select_error=4u;
         return PORT_V37_SCHED_NO_CONTEXT;
-    if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
+    }
+    const uint32_t context_status=port_v37_ia32_context_validate(frame);
+    if(context_status!=PORT_V37_IA32_CONTEXT_OK){
+        s->last_select_error=5u;
+        s->last_select_context_error=frame->registers.cs&255u;
         return PORT_V37_SCHED_CORRUPT;
+    }
+    s->last_select_context_error=PORT_V37_IA32_CONTEXT_OK;
     const uint32_t pix=get16(pcb+PORT_V37_PCB_PID);
     uint32_t native_cr3=0u;
     if(s->ops.native_cr3_by_pix){
         if(pix>=s->ops.native_cr3_slots||
            !(native_cr3=s->ops.native_cr3_by_pix[pix])||
-           (native_cr3&4095u))return PORT_V37_SCHED_NO_CONTEXT;
+           (native_cr3&4095u)){
+            s->last_select_error=6u;return PORT_V37_SCHED_NO_CONTEXT;
+        }
     }
-    if(!s->ready_count[q])return PORT_V37_SCHED_CORRUPT;
+    if(!s->ready_count[q]){
+        s->last_select_error=7u;return PORT_V37_SCHED_CORRUPT;
+    }
     uint32_t status=list_remove(s,address,pcb);
-    if(status!=PORT_V37_SCHED_OK)return status;
+    if(status!=PORT_V37_SCHED_OK){
+        s->last_select_error=8u;return status;
+    }
     if(list_empty(s,q))set_summary(s,q,0);
     s->ready_count[q]--;
     put16(pcb+PCBSTATE,PORT_V37_SCH_CUR);
@@ -587,6 +605,7 @@ uint32_t port_v37_sched_select(struct port_v37_scheduler *s,
     s->current_cr3=native_cr3;
     *selected_address=address;
     *restore_frame=phy_pcb;
+    s->last_select_error=0u;
     return PORT_V37_SCHED_OK;
 }
 
