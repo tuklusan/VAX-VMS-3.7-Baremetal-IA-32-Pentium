@@ -106,6 +106,8 @@ struct port_sys_exec_context_settings {
     uint32_t (*make_process_cr3)(uint32_t *,uint32_t *,uint32_t *);
     uint32_t (*wait_current)(uint32_t);
     void (*process_message)(const char *);
+    int (*read_system_time)(void *,uint64_t *);
+    void *system_time_context;
 };
 struct port_sys_exec_result {
     uint32_t signature;

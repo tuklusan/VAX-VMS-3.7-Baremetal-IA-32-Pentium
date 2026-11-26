@@ -3114,6 +3114,9 @@ extern uint32_t arch_pit_ticks(void);
 static uint32_t native_sysloa_ticks(void *ctx){
     (void)ctx;return arch_pit_ticks();
 }
+static int native_sysinit_read_system_time(void *ctx,uint64_t *ticks){
+    (void)ctx;return port_rtc_x86_now(0,ticks);
+}
 static void native_vms_sched_request(void *ctx){
     (void)ctx;arch_request_vms_reschedule();
 }
@@ -3571,9 +3574,15 @@ void kmain(void) {
         bootstrap_message("INIT: source SCH$CHSE resident queue transition failed.");
         bootstrap_halt();
     }
-    if(arch_vms_reschedule_requests()!=resched_requests_before+1u||
-       arch_vms_reschedule_interrupts()<resched_interrupts_before+1u||
-       proc_result.vms_scheduler->native_no_context_count<
+    if(arch_vms_reschedule_requests()!=resched_requests_before+1u){
+        bootstrap_message("INIT: source SCH$CHSE reschedule request callback did not run.");
+        bootstrap_halt();
+    }
+    if(arch_vms_reschedule_interrupts()<resched_interrupts_before+1u){
+        bootstrap_message("INIT: source SCH$CHSE software reschedule interrupt was not delivered.");
+        bootstrap_halt();
+    }
+    if(proc_result.vms_scheduler->native_no_context_count<
            context_misses_before+1u){
         bootstrap_message("INIT: source SCH$CHSE did not reach native SCH$RESCHED.");
         bootstrap_halt();
@@ -4839,7 +4848,8 @@ void kmain(void) {
     const struct port_sys_exec_context_settings contexts_settings={
         .make_process_cr3=arch_vms_make_process_cr3,
         .wait_current=arch_vms_wait_current,
-        .process_message=bootstrap_message};
+        .process_message=bootstrap_message,
+        .read_system_time=native_sysinit_read_system_time};
     const struct port_sys_exec_start contexts_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&contexts_result,

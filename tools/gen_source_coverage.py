@@ -1024,15 +1024,15 @@ result['files'].append({'original_file':'SYS/SRC/FILEREAD.MAR',
                        'original_lines':1999,'sections':sections,
                        'unresolved_integration':'Structure level 1, numeric/UIC directories, directory cache, full FIL$OPENFILE and remaining error cases need work. M137 reads real INDEXF.SYS FH2 in resident supervisor memory; M138 follows its FH2 retrieval-pointer map to read MFD FID 4,4,0 in another privileged IRP. M139 resolves MFD->SYSEXE.DIR->SYS.EXE FIDs via actual resident directory reads. M140 physically reads SYS.EXE FH2 and first native ELF32 sector using separate IRPs, but does not activate an image, bind Files-11 ACP or publish DQA0 DDT. M144 also verifies real SYSLOA386/INILOA supervisor text from Files-11 mapped physical sectors. M145 adds bounded multi-VBN directory search using the same FH2 map and a caller-supplied native disk callback; early SYS.EXE uses only its already-read VBN1 cache, not a live Files-11 ACP. M146 adds byte-granular FH2-mapped source FIL$READVBN with partial-I/O accounting and a real guest ATA read of an unaligned three-sector range, still outside any live public IOC/ACP. M147-M149 adds bounded source FIL$FINDFILID -> FIL$RDCHKFILHDR -> FIL$READVBN directory/file lookup and version enumeration over real native ATA reads, with independent FH2 verification, atomic lookup output, error-injection tests and host/guest checks; all remain privileged private boot operations, not a public Files-11 ACP. M150-M152 additionally follows source FIL$RDCHKFILHDR extension FID chains using the original SYSBOOT normalized extent decoder, protects against cycles/physical overflow, and reads cross-extent bytes through real privileged ATA sector callbacks; test fixtures include disjoint second-header extents. M216 rereads 64 SYS.EXE bytes through the published DQA0 DDT selected by IOC$SEARCHDEV using a real READPBLK/IRQ14 completion, confirming the FH2 chain callback reaches the native DDT; this is still supervisor INIT integration, not ACP or public $QIO. M217 extends the verified post-publication read to 700 unaligned file bytes across two sectors, requires exactly two READPBLK IRPs through the published DDT and compares the bytes against the independent chain cache; this remains supervisor INIT integration, not ACP or public QIO. No active ACP or VAX process image activation. M185-M192 adds a limited supervisor-only owner-scoped channel assignment, seek, read, status and release layer over the private Files-11 IOC bridge; this is not original process $ASSIGN, public $QIO, or ACP.'})
 
-# SYSINIT remains incomplete. Only its three source-defined system
-# logical names and translation loop have a native implementation.
+# SYSINIT remains incomplete. Its source names and native RTC SETIME boundary
+# execute in the scheduled context; subsequent startup phases remain absent.
 sysinit_sections = [
     (1,311,None,None,'SYSINIT other storage and service definitions are missing','missing'),
     (312,332,'src/vms_sysinit_names.c','port_sip_create_system_names','source SYSTEM logical names and directory strings','partial'),
     (333,528,None,None,'other startup process and disk descriptors remain missing','missing'),
     (529,562,None,None,'entry and service description','excluded'),
     (563,577,None,None,'process entry and lockdown are not implemented','missing'),
-    (578,628,'src/vms_sysinit_log_table.c','port_sip_create_system_names_in_table','Scheduled native SYSINIT process translates SYS$SYSDEVICE, applies source underscore/TOPSYS directory rules, and creates the three source SYSTEM logical records; later time, paging, ACP and startup phases remain absent','partial'),
+    (578,628,'src/vms_sys_executive_entry.c','executive_sysinit_start','Scheduled native SYSINIT translates SYS$SYSDEVICE, applies source underscore/TOPSYS rules, creates/verifies the three SYSTEM logicals, reads IA-32 CMOS RTC time, and updates the resident VMS clock; LOCKDOWN and full SETIME solicitation/parameter persistence remain absent','partial'),
     (629,1905,None,None,'time setup, paging/swap, RMS, F11ACP, SYSMSG and STARTUP not implemented','missing')
 ]
 sections=[]
@@ -1047,7 +1047,7 @@ for first,last,path,symbol,reason,status in sysinit_sections:
                          'pc_symbol':symbol,'pc_line':line,'function':reason})
 result['files'].append({'original_file':'SYSINI/SRC/SYSINIT.MAR',
                        'original_lines':1905,'sections':sections,
-                       'unresolved_integration':'The source name-creation loop now runs in a scheduled native SYSINIT kernel context against the resident SYSTEM table. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. SYSINIT time setup, paging/swap, RMS, F11 ACP, SYSMSG and STARTUP remain unimplemented.'})
+                       'unresolved_integration':'The source name-creation loop and CMOS-backed resident clock update now run in scheduled native SYSINIT. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. Original prompting/TPWAIT behavior and SYSPARAM persistence, then paging/swap, RMS, F11 ACP, SYSMSG and STARTUP remain unimplemented.'})
 
 # Original INIT disk creation modules. One full original source file per
 # section group, with source line ranges mapped by actual PC function names.

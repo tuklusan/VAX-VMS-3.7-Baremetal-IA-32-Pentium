@@ -3957,10 +3957,10 @@
             628
           ],
           "status": "partial",
-          "pc_file": "src/vms_sysinit_log_table.c",
-          "pc_symbol": "port_sip_create_system_names_in_table",
-          "pc_line": 39,
-          "function": "Scheduled native SYSINIT process translates SYS$SYSDEVICE, applies source underscore/TOPSYS directory rules, and creates the three source SYSTEM logical records; later time, paging, ACP and startup phases remain absent"
+          "pc_file": "src/vms_sys_executive_entry.c",
+          "pc_symbol": "executive_sysinit_start",
+          "pc_line": 848,
+          "function": "Scheduled native SYSINIT translates SYS$SYSDEVICE, applies source underscore/TOPSYS rules, creates/verifies the three SYSTEM logicals, reads IA-32 CMOS RTC time, and updates the resident VMS clock; LOCKDOWN and full SETIME solicitation/parameter persistence remain absent"
         },
         {
           "original_lines": [
@@ -3971,7 +3971,7 @@
           "reason": "time setup, paging/swap, RMS, F11ACP, SYSMSG and STARTUP not implemented"
         }
       ],
-      "unresolved_integration": "The source name-creation loop now runs in a scheduled native SYSINIT kernel context against the resident SYSTEM table. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. SYSINIT time setup, paging/swap, RMS, F11 ACP, SYSMSG and STARTUP remain unimplemented."
+      "unresolved_integration": "The source name-creation loop and CMOS-backed resident clock update now run in scheduled native SYSINIT. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. Original prompting/TPWAIT behavior and SYSPARAM persistence, then paging/swap, RMS, F11 ACP, SYSMSG and STARTUP remain unimplemented."
     },
     {
       "original_file": "INIT/SRC/INIMFD.B32",
@@ -10730,7 +10730,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3127,
+          "pc_line": 3130,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10749,7 +10749,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 904,
+          "pc_line": 923,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -10787,7 +10787,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3127,
+          "pc_line": 3130,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -10828,7 +10828,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_vms_sched_chse",
-          "pc_line": 783,
+          "pc_line": 785,
           "function": "Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; VAX PCB PHYPCB translation and native process contexts remain incomplete"
         },
         {
@@ -11078,7 +11078,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_sys_executive_entry",
-          "pc_line": 997,
+          "pc_line": 1016,
           "function": "Allocate source-sized 128-byte NULL and 640-byte SWAPPER kernel stacks plus separate native P0/P1 tables and PHDs in NPAGEDYN; process tables are currently flat supervisor identity maps, not VAX P0/P1 translations"
         },
         {
@@ -24107,7 +24107,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_swapper_start",
-          "pc_line": 820,
+          "pc_line": 822,
           "function": "The scheduled SWAPPER entry searches the live SYS/GROUP logical state and uses the source resident HIB wait queue; free-page balancing, modified-page writeback, power-fail AST work and SWAPPER restart logic remain absent; live HIB queue block and selection of NULL are observed, but SWAPPER balance/swap functions remain unimplemented"
         },
         {

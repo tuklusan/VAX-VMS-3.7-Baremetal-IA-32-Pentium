@@ -726,6 +726,8 @@ struct executive_vms_initial_contexts {
 static struct executive_vms_initial_contexts executive_vms_contexts;
 static uint32_t (*executive_vms_wait_current)(uint32_t);
 static void (*executive_vms_process_message)(const char *);
+static int (*executive_vms_read_system_time)(void *,uint64_t *);
+static void *executive_vms_system_time_context;
 static struct port_v37_scheduler executive_vms_scheduler;
 static uint16_t executive_vms_process_count;
 static uint32_t *executive_vms_native_cr3_by_pix;
@@ -890,6 +892,23 @@ static void executive_sysinit_start(void *argument){
     if(executive_vms_process_message)
         executive_vms_process_message(
             "SYSINIT: native scheduled context created and verified SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE.");
+    uint64_t current_time=0u;
+    uint32_t time_flags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(time_flags)::"memory");
+    if(!executive_vms_read_system_time||
+       !executive_vms_read_system_time(executive_vms_system_time_context,
+                                       &current_time)||!current_time){
+        __asm__ volatile("pushl %0; popfl"::"r"(time_flags):"memory","cc");
+        if(executive_vms_process_message)
+            executive_vms_process_message(
+                "SYSINIT: SIP_SETTIME could not read valid IA-32 RTC time.");
+        for(;;)__asm__ volatile("pause":::"memory");
+    }
+    port_exe_systime_store(&executive_clock,current_time);
+    __asm__ volatile("pushl %0; popfl"::"r"(time_flags):"memory","cc");
+    if(executive_vms_process_message)
+        executive_vms_process_message(
+            "SYSINIT: SIP_SETTIME set the resident VMS clock from the IA-32 RTC.");
     const uint32_t wait=executive_vms_address(0,
         &executive_vms_scheduler.wait_headers[PORT_V37_SCH_HIB]);
     for(;;){
@@ -1006,7 +1025,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
            !p->vms_context_settings||
            !p->vms_context_settings->make_process_cr3||
            !p->vms_context_settings->wait_current||
-           !p->vms_context_settings->process_message)
+           !p->vms_context_settings->process_message||
+           !p->vms_context_settings->read_system_time)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         void *raw=0;uint32_t allocated=0u;
         const uint32_t need=6u*4096u+4095u+128u+2u*640u+
@@ -1052,6 +1072,10 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->vms_context_error=2u;
         executive_vms_wait_current=p->vms_context_settings->wait_current;
         executive_vms_process_message=p->vms_context_settings->process_message;
+        executive_vms_read_system_time=
+            p->vms_context_settings->read_system_time;
+        executive_vms_system_time_context=
+            p->vms_context_settings->system_time_context;
         const uintptr_t null_pc=(uintptr_t)port_exe_nullproc;
         const uintptr_t swapper_pc=(uintptr_t)executive_swapper_start;
         const uintptr_t sysinit_pc=(uintptr_t)executive_sysinit_start;
