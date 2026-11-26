@@ -1773,7 +1773,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_init_pcb_queues",
-          "pc_line": 240,
+          "pc_line": 272,
           "function": "Initialize source self-linked AST/lock queues, AST enable mask, ARB address, termination mailbox and shell page count"
         },
         {
@@ -1863,24 +1863,43 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_apply_status_flags",
-          "pc_line": 213,
+          "pc_line": 245,
           "function": "Translate all nine validated $CREPRC status options to their SYSDEF PCB status bits, preserving privilege checks"
         },
         {
           "original_lines": [
             410,
-            411
+            430
           ],
-          "status": "unresolved",
-          "reason": "PQL parsing/default minimums, PQB quota fields, detachable deductions and rollback remain absent"
+          "status": "excluded",
+          "reason": "Comments documenting PQL bytecode, minimums and duplicate-entry rules"
         },
         {
           "original_lines": [
-            412,
+            431,
+            469
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_apply_quota_list",
+          "pc_line": 213,
+          "function": "Initialize PQB quotas from supplied source defaults, parse bounded PQL entries with last duplicate winning, enforce minima transactionally"
+        },
+        {
+          "original_lines": [
+            470,
+            638
+          ],
+          "status": "unresolved",
+          "reason": "Per-quota privilege/owner policy, PCB counters, JIB charging, WS/CPU accounting and quota overrun handling remain absent"
+        },
+        {
+          "original_lines": [
+            639,
             659
           ],
           "status": "unresolved",
-          "reason": "Pagefile allocation, process flags, and PCB setup before ACTIVATE are absent"
+          "reason": "Pagefile allocation, process flags and PCB setup before ACTIVATE are absent"
         },
         {
           "original_lines": [
@@ -1890,7 +1909,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_activate_slot",
-          "pc_line": 263,
+          "pc_line": 295,
           "function": "Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer"
         },
         {

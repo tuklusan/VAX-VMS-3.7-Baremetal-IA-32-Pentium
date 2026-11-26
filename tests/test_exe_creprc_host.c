@@ -217,6 +217,39 @@ int main(void){
           pqb_allocation.bytes)!=PORT_SS_NORMAL||
        memcmp(pqb_bytes+PORT_V37_PQB_USERNAME,"SYSTEM      ",12u))
         return fail("SYSCREPRC fixed-width SYSTEM username default");
+    static const uint32_t quota_defaults[PORT_V37_PQL_COUNT]={
+        6u,6u,8192u,0u,6u,16u,2048u,8u,8u,200u,100u,20u,200u};
+    static const uint32_t quota_minima[PORT_V37_PQL_COUNT]={
+        2u,2u,1024u,0u,2u,2u,256u,0u,0u,10u,10u,2u,10u};
+    static const uint8_t quota_list[]={
+        1u,1u,0u,0u,0u, 1u,7u,0u,0u,0u, 2u,1u,0u,0u,0u,
+        13u,44u,1u,0u,0u, 0u};
+    static const uint32_t quota_expected[PORT_V37_PQL_COUNT]={
+        7u,2u,8192u,0u,6u,16u,2048u,8u,8u,200u,100u,20u,300u};
+    if(port_exe_creprc_apply_quota_list(pqb_allocation.address,
+          pqb_allocation.bytes,quota_list,sizeof quota_list,
+          quota_defaults,quota_minima)!=PORT_SS_NORMAL)
+        return fail("SYSCREPRC quota list/default/minimum processing");
+    for(unsigned i=0u;i<PORT_V37_PQL_COUNT;i++)
+        if(test_get32(pqb_bytes+PORT_V37_PQB_QUOTAS+4u*i)!=
+           quota_expected[i])return fail("PQL duplicate-last, minimum and defaults");
+    memcpy(pqb_snapshot,pqb_bytes,sizeof pqb_snapshot);
+    static const uint8_t bad_quota[]={14u,1u,0u,0u,0u,0u};
+    static const uint8_t truncated_quota[]={1u,1u};
+    static const uint8_t unterminated_quota[]={1u,1u,0u,0u,0u};
+    if(port_exe_creprc_apply_quota_list(pqb_allocation.address,
+          pqb_allocation.bytes,bad_quota,sizeof bad_quota,
+          quota_defaults,quota_minima)!=PORT_SS_IVQUOTAL||
+       memcmp(pqb_snapshot,pqb_bytes,sizeof pqb_snapshot)||
+       port_exe_creprc_apply_quota_list(pqb_allocation.address,
+          pqb_allocation.bytes,truncated_quota,sizeof truncated_quota,
+          quota_defaults,quota_minima)!=PORT_SS_ACCVIO||
+       memcmp(pqb_snapshot,pqb_bytes,sizeof pqb_snapshot)||
+       port_exe_creprc_apply_quota_list(pqb_allocation.address,
+          pqb_allocation.bytes,unterminated_quota,sizeof unterminated_quota,
+          quota_defaults,quota_minima)!=PORT_SS_ACCVIO||
+       memcmp(pqb_snapshot,pqb_bytes,sizeof pqb_snapshot))
+        return fail("PQL invalid code/access/truncation failure atomicity");
     if(port_exe_creprc_release_pqb(&pcb_allocator,&pqb_allocation)!=
           PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
        port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)

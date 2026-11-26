@@ -210,6 +210,38 @@ uint32_t port_exe_creprc_copy_process_name(uint8_t *pcb,size_t pcb_bytes,
     return PORT_SS_NORMAL;
 }
 
+uint32_t port_exe_creprc_apply_quota_list(uint8_t *pqb,size_t pqb_bytes,
+    const uint8_t *list,size_t list_bytes,
+    const uint32_t defaults[PORT_V37_PQL_COUNT],
+    const uint32_t minima[PORT_V37_PQL_COUNT]){
+    if(!pqb||!defaults||!minima||pqb_bytes<PORT_V37_PQB_BYTES||
+       read16(pqb+PORT_V37_PQB_SIZE)!=PORT_V37_PQB_BYTES||
+       pqb[PORT_V37_PQB_TYPE]!=PORT_V37_DYN_PQB)
+        return PORT_SS_BADPARAM;
+    if(list_bytes&&!list)return PORT_SS_ACCVIO;
+    uint32_t values[PORT_V37_PQL_COUNT];
+    for(unsigned i=0u;i<PORT_V37_PQL_COUNT;i++)values[i]=defaults[i];
+    size_t offset=0u;int terminated=0;
+    while(offset<list_bytes){
+        const uint8_t code=list[offset++];
+        if(!code){terminated=1;break;}
+        if(code>PORT_V37_PQL_COUNT)return PORT_SS_IVQUOTAL;
+        if(list_bytes-offset<4u)return PORT_SS_ACCVIO;
+        const uint32_t value=(uint32_t)list[offset]|
+            ((uint32_t)list[offset+1u]<<8)|
+            ((uint32_t)list[offset+2u]<<16)|
+            ((uint32_t)list[offset+3u]<<24);
+        offset+=4u;
+        values[code-1u]=value;
+    }
+    if(list_bytes&&!terminated)return PORT_SS_ACCVIO;
+    for(unsigned i=0u;i<PORT_V37_PQL_COUNT;i++)
+        if((int32_t)values[i]<(int32_t)minima[i])values[i]=minima[i];
+    for(unsigned i=0u;i<PORT_V37_PQL_COUNT;i++)
+        write32(pqb+PORT_V37_PQB_QUOTAS+4u*i,values[i]);
+    return PORT_SS_NORMAL;
+}
+
 uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
     const struct port_exe_creprc_result *result){
     if(!pcb||!result||pcb_bytes<PORT_V37_PCB_BYTES||
