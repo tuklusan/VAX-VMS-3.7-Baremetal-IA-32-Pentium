@@ -59,6 +59,8 @@ uint32_t port_v37_iopost_process_direct(uint8_t *irp,size_t irp_bytes,
         return unlocked==PORT_V37_IOPOST_UNLOCK_DEFER?
             PORT_V37_IOPOST_PROCESS_DEFER:unlocked;
     }
-    ops->queue_kast(ops->context,pid,pcb_va,irp_va);
+    if(ops->queue_kast(ops->context,pid,pcb_va,irp_va)!=
+       PORT_V37_IOPOST_OK)
+        return PORT_V37_IOPOST_CORRUPT;
     return PORT_V37_IOPOST_OK;
 }

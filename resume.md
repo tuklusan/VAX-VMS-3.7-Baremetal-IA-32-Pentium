@@ -2429,3 +2429,9 @@ Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` PASS; sourc
 M444 implementation and QEMU evidence commit: `cb79991e389f4f8cb56417a7dce6d8e17d1b730d`.
 
 Remaining: provide valid source-order INIT/NULL/SWAPPER PHDs and IA-32 contexts; implement the absent SWAPPER entry and remaining INIT dependencies; connect real public SYS$QIO, ACP, AST dispatch and process activation; then verify the requested SYSTEM/DCL and DECnet two-session SET HOST 0/LOGOUT sequence end-to-end.
+
+## M445 - Make direct-I/O KAST failure non-retryable, 26 November 2026
+
+Changed the IOCIOPOST positive-PID direct-I/O completion callback to return its result. If KAST insertion fails after DIOCNT charging and direct-page unlock, completion now reports corruption rather than a retryable defer that would release the same pins twice. Host regression exercises this post-unlock failure and verifies the callback result and already-committed accounting. This remains a helper-level path: process-aware IOC completion is not bound to live SYS$QIO or the scheduler, and no runtime success is claimed.
+
+Verification: `make iopostprocesscheck sourcerangecheck` PASS; `make -j2 all test exeportbatchcheck` PASS (repeat run exit 0). Source coverage validation: 2,190 ranges, 455/4,566 original files indexed, zero errors; coverage counts unchanged from M444. No QEMU run; the helper is not on the live completion path. M444's latest QEMU evidence remains the contextless INIT stop; login, DCL, DECnet Phase IV and SET HOST 0 remain unobserved.

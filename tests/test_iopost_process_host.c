@@ -6,7 +6,7 @@
 
 struct rig {
     uint8_t pcb[PORT_V37_PCB_BYTES];
-    uint32_t unlock_calls,pte,pages,kast_calls,pid,pcb_va,irp_va;
+    uint32_t unlock_calls,pte,pages,kast_calls,pid,pcb_va,irp_va,kast_status;
 };
 static uint32_t read16(const uint8_t *p){return (uint32_t)p[0]|((uint32_t)p[1]<<8);}
 static void write16(uint8_t *p,uint16_t v){p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);}
@@ -21,8 +21,9 @@ static int pcb_resolve(void *ctx,uint32_t va,uint8_t **out,size_t *bytes){
 static void unlock(void *ctx,uint32_t pte,uint32_t pages){
     struct rig *r=ctx;++r->unlock_calls;r->pte=pte;r->pages=pages;
 }
-static void queue_kast(void *ctx,uint32_t pid,uint32_t pcb,uint32_t irp){
+static uint32_t queue_kast(void *ctx,uint32_t pid,uint32_t pcb,uint32_t irp){
     struct rig *r=ctx;++r->kast_calls;r->pid=pid;r->pcb_va=pcb;r->irp_va=irp;
+    return r->kast_status?r->kast_status:PORT_V37_IOPOST_OK;
 }
 int main(void){
     struct rig r={0};
@@ -48,21 +49,30 @@ int main(void){
     assert(read16(r.pcb+PORT_V37_PCB_DIOCNT)==0u&&r.unlock_calls==1u&&
            r.pte==0x5000u&&r.pages==2u&&r.kast_calls==1u&&
            r.pid==seed.pid&&r.pcb_va==0x2000u&&r.irp_va==0x6000u);
+    /* Once the direct-I/O pins are released, KAST insertion failure cannot
+     * be returned as retryable: a retry would unlock the same pages twice. */
+    r.kast_status=PORT_V37_IOPOST_CORRUPT;
+    assert(port_v37_iopost_process_direct(irp,sizeof irp,0x6000u,&ops)==
+           PORT_V37_IOPOST_CORRUPT);
+    assert(read16(r.pcb+PORT_V37_PCB_DIOCNT)==1u&&r.unlock_calls==2u&&
+           r.kast_calls==2u);
+    r.kast_status=0u;
+    write16(r.pcb+PORT_V37_PCB_DIOCNT,0u);
     write16(irp+42u,1u);
     assert(port_v37_iopost_process_direct(irp,sizeof irp,0x6000u,&ops)==
            PORT_V37_IOPOST_PROCESS_DEFER);
-    assert(read16(r.pcb+PORT_V37_PCB_DIOCNT)==0u&&r.unlock_calls==1u&&
-           r.kast_calls==1u);
+    assert(read16(r.pcb+PORT_V37_PCB_DIOCNT)==0u&&r.unlock_calls==2u&&
+           r.kast_calls==2u);
     write16(irp+42u,UINT16_C(1u<<4));
     assert(port_v37_iopost_process_direct(irp,sizeof irp,0x6000u,&ops)==
            PORT_V37_IOPOST_PROCESS_DEFER);
-    assert(read16(r.pcb+PORT_V37_PCB_DIOCNT)==0u&&r.unlock_calls==1u&&
-           r.kast_calls==1u);
+    assert(read16(r.pcb+PORT_V37_PCB_DIOCNT)==0u&&r.unlock_calls==2u&&
+           r.kast_calls==2u);
     write16(irp+42u,0u);write32(irp+12u,0x00080002u);
     assert(port_v37_iopost_process_direct(irp,sizeof irp,0x6000u,&ops)==
            PORT_V37_IOPOST_PROCESS_DEFER);
-    assert(read16(r.pcb+PORT_V37_PCB_DIOCNT)==0u&&r.unlock_calls==1u&&
-           r.kast_calls==1u);
+    assert(read16(r.pcb+PORT_V37_PCB_DIOCNT)==0u&&r.unlock_calls==2u&&
+           r.kast_calls==2u);
     puts("IOCIOPOST positive-PID direct completion route and source PCB count PASS");
     return 0;
 }

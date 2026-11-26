@@ -112,7 +112,7 @@ uint32_t port_v37_iopost_unlock_direct(uint8_t *,size_t,
 uint32_t port_v37_iopost_account_phd(uint8_t *,size_t,uint8_t);
 typedef int (*port_v37_iopost_resolve_pcb_fn)(void *,uint32_t,
     uint8_t **,size_t *);
-typedef void (*port_v37_iopost_queue_kast_fn)(void *,uint32_t,uint32_t,
+typedef uint32_t (*port_v37_iopost_queue_kast_fn)(void *,uint32_t,uint32_t,
     uint32_t);
 struct port_v37_iopost_process_ops {
     void *context;
@@ -125,6 +125,8 @@ struct port_v37_iopost_process_ops {
 };
 /* IOCIOPOST.MAR process-vector/direct-I/O portion: resolve positive PID,
  * charge PCB$W_DIOCNT, unlock direct buffers, and queue the completion KAST.
+ * A failed KAST after unlock is reported as corruption, never as retryable
+ * deferral, because the source completion has already released the pins.
  * Buffered, paging, swap and segmented-virtual requests remain unhandled. */
 uint32_t port_v37_iopost_process_direct(uint8_t *,size_t,uint32_t,
     const struct port_v37_iopost_process_ops *);
