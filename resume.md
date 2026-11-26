@@ -2277,3 +2277,13 @@ Verification: full `make -j2 all test exeportbatchcheck` PASS; `make sourcerange
 M428 implementation and QEMU evidence commit: `e52dc8bfdba951e7e0e6c17578e38de9e45656c5`.
 
 Remaining: allocate/initialize PHD and native stack/frame records from NPAGEDYN, establish the runnable INIT/SYSTEM context before scheduling NULL/SWAPPER, then continue source-ordered INIT, public SYS$QIO/ACP/process AST, image activation, login/DCL and DECnet verification.
+
+## M429 - Exercise NPAGEDYN scheduler resolver at INIT, 26 November 2026
+
+Added live INIT validation of the resident scheduler resolver using the exact NPAGEDYN start/end: first and last allocated bytes resolve, the last-byte cross-boundary span is rejected, and an address immediately before the pool is rejected. This verifies the newly opened VMS nonpaged-record path against SYS.EXE's runtime allocation boundary before the resolver is installed in scheduler callbacks. It does not yet allocate PHDs/stacks or activate any process.
+
+Verification: full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,178 ranges; 453/4,566 original source files indexed; zero errors; 17,230 mapped, 30,533 partial, 58,868 unresolved, 8,032 missing, 26,734 excluded, 917 hardware-excluded); `git diff --check` PASS. `make qemu-sysboot-m217` PASS, proving the live boundary checks executed before reaching the unchanged INIT stop. Capture `logs/serial/qemu-m217-run-local-20261126T015615415252Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; QEMU exited. No login, DCL, DECnet or SET HOST 0 observed.
+
+M429 implementation and QEMU evidence commit: `0b744ba7cbf289edd36d733c487920a7f3ab3d41`.
+
+Remaining: dynamically allocate and initialize PHD plus native saved-frame/stack records, bind them to source PCBs, and integrate a runnable INIT/SYSTEM context before NULL/SWAPPER scheduling; continue public SYS$QIO, Files-11 ACP, process AST, image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 second-session/LOGOUT.
