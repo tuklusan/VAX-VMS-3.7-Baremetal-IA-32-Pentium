@@ -2148,3 +2148,13 @@ Verification: `make v37ia32ctxcheck v37schedcheck` PASS; full `make -j2 all test
 Local M414 implementation commit: `8ec26ee3a590ee6a4b7bb3efdab10f2704406c47`. Published main before M414: `6011d53ce6f46d846e5f4110fc4a526d3c0d6ae1`; M414 verification checkpoint `b2e0abb3a021ab6c1f6f812e4ac42e08ecaf0886` was pushed.
 
 Remaining work: allocate source-ordered NULL/SWAPPER PHDs, stacks and process mappings and invoke these contexts at the proper INIT point; port SWAPINIT/TT0/SWAPPER loop, live SYS$QIO, Files-11 ACP and process AST completion; then image activation, SYSTEM login/DCL, DECnet Phase IV and real SET HOST 0/second-session/LOGOUT.
+
+## M415 - Port CREPRC process policy preflight, 26 November 2026
+
+Added a source-matched, host-testable pre-allocation `$CREPRC` policy stage: PID output and privilege-mask access checks, DETACH authorization for independent UICs, privilege-mask inheritance/minimization with SETPRV, SETPRI priority clamping, subprocess UIC/owner inheritance, status-flag MBZ validation, and the PSWAPM/NOACNT/DETACH privilege requirements. The implementation is intentionally not linked into SYS.EXE or exposed as a live service: it does not allocate PCB/PQB/JIB, apply status bits to PCB state, establish quotas, create/swap/activate a process, or publish a PID. `PRVDEF.MDL` is absent from the pinned checkout; privilege bit assignments use the standard VMS definitions and remain marked as such in the source map.
+
+Verification: full `make -j2 all test` PASS (exit 0); current `make execreprccheck build/vms_exe_creprc.o` PASS; source coverage generation, range regression and validator PASS (2,164 ranges; 453/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,451 partial, 58,974 unresolved, 8,032 missing, 26,710 excluded, 917 hardware-excluded). `git diff --check` PASS. No QEMU run: the new policy helper is not in the resident image and has no guest dispatch path, so it does not alter the M217 boot. Changed paths were scanned for restricted source extensions and recognized credential patterns; none found. No DEC source or binary image added.
+
+M415 implementation commit: `997e53df0ecda7609aece0e6a0b1392ce84bd6e9`.
+
+Remaining work: integrate genuine PCB/PQB/JIB allocation, source status-to-PCB translations and quota handling with rollback; activate processes through INIT and the native scheduler; connect public SYS$QIO to DQA0/ACP/AST; then SYSTEM login, DCL, DECnet Phase IV and end-to-end SET HOST 0/second login/LOGOUT. Acceptance remains incomplete.
