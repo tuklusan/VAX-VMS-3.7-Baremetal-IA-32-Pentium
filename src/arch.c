@@ -25,7 +25,7 @@
 #include "vms_v37_ia32_context.h"
 #include "vms_v37_sched.h"
 
-extern const uint32_t arch_isr_table[37];
+extern const uint32_t arch_isr_table[38];
 extern uint32_t port_gdt[];
 extern void arch_load_tr(void);
 extern void arch_enter_ring3(void (*entry)(void), void *stack_top, uint32_t parameter);
@@ -85,6 +85,9 @@ static uint8_t vms_ring_probe_stack[2][512] __attribute__((aligned(16)));
 static struct port_v37_ia32_restore_frame *vms_ring_probe_frames[3];
 static struct port_v37_scheduler *resident_vms_scheduler;
 static port_v37_sched_interrupt_fn resident_vms_sched_interrupt;
+static volatile uint32_t resident_vms_reschedule_pending;
+static volatile uint32_t resident_vms_reschedule_requests;
+static volatile uint32_t resident_vms_reschedule_interrupts;
 
 int arch_adopt_vms_scheduler(struct port_v37_scheduler *scheduler,
                              port_v37_sched_interrupt_fn interrupt){
@@ -98,9 +101,41 @@ int arch_adopt_vms_scheduler(struct port_v37_scheduler *scheduler,
     }
     resident_vms_scheduler=scheduler;
     resident_vms_sched_interrupt=interrupt;
+    resident_vms_reschedule_pending=0u;
     __asm__ volatile("":::"memory");
     if(flags&0x200u)__asm__ volatile("sti":::"memory");
     return 1;
+}
+
+/* SCH$RESCHED's UP native hook. A software interrupt is raised only after
+ * an IPL_SYNCH transaction has restored the caller's interrupt state. */
+void arch_request_vms_reschedule(void){
+    uint32_t flags;
+    __asm__ volatile("pushfl; popl %0":"=r"(flags)::"memory");
+    if(!resident_vms_scheduler||!resident_vms_sched_interrupt)return;
+    if(resident_vms_reschedule_requests!=UINT32_MAX)
+        resident_vms_reschedule_requests++;
+    resident_vms_reschedule_pending=1u;
+    if(flags&UINT32_C(0x200)){
+        resident_vms_reschedule_pending=0u;
+        __asm__ volatile("int $0x91":::"memory");
+    }
+}
+
+uint32_t arch_vms_reschedule_requests(void){
+    return resident_vms_reschedule_requests;
+}
+uint32_t arch_vms_reschedule_interrupts(void){
+    return resident_vms_reschedule_interrupts;
+}
+
+void arch_run_pending_vms_reschedule(void){
+    uint32_t flags;
+    __asm__ volatile("pushfl; popl %0":"=r"(flags)::"memory");
+    if(!(flags&UINT32_C(0x200))||!resident_vms_reschedule_pending||
+       !resident_vms_scheduler||!resident_vms_sched_interrupt)return;
+    resident_vms_reschedule_pending=0u;
+    __asm__ volatile("int $0x91":::"memory");
 }
 
 /* Prepare the common interrupt-return path for a scheduler-selected VMS
@@ -953,6 +988,24 @@ static void gate_set(unsigned v, uint32_t handler, unsigned dpl) {
     idt[v].offset_hi = (uint16_t)(handler >> 16);
 }
 
+static int arch_vms_schedule_frame(struct port_trap_frame *f){
+    if(!resident_vms_sched_interrupt)return 0;
+    resident_vms_reschedule_pending=0u;
+    uint32_t pcb=0u,next=0u;
+    const uint32_t status=resident_vms_sched_interrupt(resident_vms_scheduler,
+        (uint32_t)(uintptr_t)((uint8_t *)f-
+            offsetof(struct port_v37_ia32_restore_frame,registers)),
+        &pcb,&next);
+    if(status==PORT_V37_SCHED_NO_CONTEXT||status==PORT_V37_SCHED_EMPTY)
+        return 0;
+    if(status==PORT_V37_SCHED_OK&&pcb&&next&&
+       arch_prepare_vms_restore_frame(
+           (struct port_v37_ia32_restore_frame *)(uintptr_t)next))
+        return ARCH_TRAP_RESTORE_SELECTED_FRAME;
+    arch_report_fault(f->vector,f->error,f->eip);
+    for(;;)__asm__ volatile("cli; hlt");
+}
+
 /* Probe A20 before paging, while the 1-MiB frame allocator is unused.
  * Two distinct physical bytes must remain distinct when bit 20 is set.
  * Restore both locations; do not corrupt firmware or allocator memory. */
@@ -1000,6 +1053,7 @@ void arch_init(void) {
     gate_set(128, arch_isr_table[34],3);
     gate_set(144, arch_isr_table[35],0);
     gate_set(46, arch_isr_table[36],0); /* primary ATA channel IRQ14 */
+    gate_set(145, arch_isr_table[37],0); /* SCH$RESCHED software request */
     port_iopost_swi_init(&resident_iopost_irq);
     struct descriptor_ptr idtr = {(uint16_t)(sizeof(idt) - 1), (uint32_t)idt};
     __asm__ volatile("lidt %0" : : "m"(idtr));
@@ -1066,6 +1120,15 @@ int arch_trap(struct port_trap_frame *f) {
             for(;;)__asm__ volatile("cli; hlt");
         }
         return 0;
+    }
+    if(f->vector==145u){
+        if((f->cs&3u)!=0u){
+            arch_report_fault(f->vector,f->error,f->eip);
+            for(;;)__asm__ volatile("cli; hlt");
+        }
+        if(resident_vms_reschedule_interrupts!=UINT32_MAX)
+            resident_vms_reschedule_interrupts++;
+        return arch_vms_schedule_frame(f);
     }
     if (f->vector == 128) {
         if(vms_ring_probe_active&&
@@ -1479,26 +1542,9 @@ int arch_trap(struct port_trap_frame *f) {
         *(volatile uint32_t *)0x400000u=ticks;
         outb(0x20, 0x20);  /* EOI to master PIC */
         if(resident_vms_sched_interrupt){
-            uint32_t pcb=0u,next=0u;
-            const uint32_t status=resident_vms_sched_interrupt(
-                resident_vms_scheduler,
-                (uint32_t)(uintptr_t)((uint8_t *)f-
-                    offsetof(struct port_v37_ia32_restore_frame,registers)),
-                &pcb,&next);
-            if(status==PORT_V37_SCHED_NO_CONTEXT){
-                /* The source PCB stays queued until INIT supplies its PHD
-                 * and native context; do not fabricate an idle frame. */
-            }else if(status==PORT_V37_SCHED_OK){
-                if(!pcb||!next||!arch_prepare_vms_restore_frame(
-                      (struct port_v37_ia32_restore_frame *)(uintptr_t)next)){
-                    arch_report_fault(f->vector,f->error,f->eip);
-                    for(;;)__asm__ volatile("cli; hlt");
-                }
-                return ARCH_TRAP_RESTORE_SELECTED_FRAME;
-            }else{
-                arch_report_fault(f->vector,f->error,f->eip);
-                for(;;)__asm__ volatile("cli; hlt");
-            }
+            const int result=arch_vms_schedule_frame(f);
+            if(result==ARCH_TRAP_RESTORE_SELECTED_FRAME)return result;
+            /* Contextless source PCBs remain queued; no idle frame is made. */
         }
         if (sched_active && sched_preempt && (f->cs&3u)==3u) {
             unsigned from=sched_current;

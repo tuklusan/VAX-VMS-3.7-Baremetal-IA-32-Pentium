@@ -290,6 +290,10 @@ struct port_sys_exec_start {
     const struct port_sys_exec_wcb_settings *syswcb_settings;
     const struct port_ini_io_state *bootdev_state;
     const struct port_sys_exec_dq_boot_settings *dq_boot_io;
+    /* IA-32 bridge for SCH$RESCHED after a source scheduler queue commit. */
+    void *vms_scheduler_arch_context;
+    void (*vms_scheduler_request)(void *);
+    void (*vms_scheduler_run_pending)(void *);
 };
 uint32_t port_sys_executive_entry(const struct port_sys_exec_start *parameters);
 #endif

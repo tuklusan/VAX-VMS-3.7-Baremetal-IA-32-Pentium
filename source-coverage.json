@@ -6105,7 +6105,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_save_current",
           "pc_line": 567,
-          "function": "Validate and save the outgoing IA-32 IRET frame through PHD KSP/PC, preserve PCB$L_PHYPCB as the hardware PCB physical address, then requeue through SCH$RESCHED; live trap/IPL entry remains unintegrated"
+          "function": "Validate and save the outgoing IA-32 IRET frame through PHD KSP/PC, preserve PCB$L_PHYPCB as the hardware PCB physical address, then requeue through SCH$RESCHED; IRQ0 and deferred software-vector entry bind the native scheduler while source IPL edge cases remain incomplete"
         },
         {
           "original_lines": [
@@ -6165,7 +6165,7 @@
           "reason": "assembler end"
         }
       ],
-      "unresolved_integration": "The native IRQ0 path invokes resident SCH$RESCHED/SCH$SCHED, updates TSS ESP0 for selected access-mode 1-3 contexts, and IRETs into selected frames; initial NULL/SWAPPER contexts and per-process CR3 switching are absent, and executive wait/wake queues remain unbound."
+      "unresolved_integration": "IRQ0 and source scheduler reschedule callbacks enter resident SCH$RESCHED/SCH$SCHED through IA-32 vector 0x91 after interrupt state restoration; selected access-mode 1-3 frames update TSS ESP0 and IRET, while initial NULL/SWAPPER contexts and per-process CR3 switching remain absent."
     },
     {
       "original_file": "SYS/SRC/NULLPROC.MAR",
@@ -10730,7 +10730,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3107,
+          "pc_line": 3117,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10749,7 +10749,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 756,
+          "pc_line": 773,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -10787,7 +10787,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3107,
+          "pc_line": 3117,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -11234,7 +11234,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_queue_ast_rse",
           "pc_line": 225,
-          "function": "Queue a source ACB/IRP then apply the RSE AST state mask and wake an eligible resident waiter through CHSE; AST delivery and state-to-WQH lookup remain unresolved"
+          "function": "Queue a source ACB/IRP, resolve the executable-state WQH and apply the RSE AST mask, then wake an eligible resident waiter through CHSE; AST delivery and source entry IPL checks remain unresolved"
         },
         {
           "original_lines": [
@@ -11321,7 +11321,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_queue_ast_rse",
           "pc_line": 225,
-          "function": "Route an explicit source AST waiter WQH through wait-queue removal and CHSE; generic executable-state activation and event-specific completion remain unresolved"
+          "function": "Resolve the source AST wait state executable-state WQH, remove it and apply CHSE; AST delivery and event-specific completion remain unresolved"
         },
         {
           "original_lines": [
@@ -11340,7 +11340,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_chse",
           "pc_line": 305,
-          "function": "Encode source B_PINC and executable-state queue summary behavior; callback side effects and complete source entry conditions remain partial"
+          "function": "Encode source B_PINC, executable-state queue summary, and the bound native reschedule request; source IPL checks remain partial"
         },
         {
           "original_lines": [

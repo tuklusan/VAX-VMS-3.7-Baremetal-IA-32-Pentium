@@ -23,10 +23,10 @@ def offset(name):
 assert binary[offset('arch_probe_int3')]==0xcc, 'INT3 test instruction missing'
 assert binary[offset('arch_probe_ud2'):offset('arch_probe_ud2')+2]==b'\x0f\x0b', 'UD2 test instruction missing'
 assert symbols['arch_probe_int3_after']==symbols['arch_probe_int3']+1
-# A valid table of addresses for the 35 installed vector entry points.
+# A valid table of addresses for the 38 installed vector entry points.
 table=offset('arch_isr_table')
-assert table+35*4<=len(binary)
-for idx in range(35):
+assert table+38*4<=len(binary)
+for idx in range(38):
     target=int.from_bytes(binary[table+idx*4:table+(idx+1)*4],'little')
     assert 0x10000<=target<0x10000+len(binary), f'IDT stub {idx} points outside loaded payload'
-print('Guest layout checks PASS: entry, AST/condition symbols, diagnostic opcodes, 35 vector stubs')
+print('Guest layout checks PASS: entry, AST/condition symbols, diagnostic opcodes, 38 vector stubs')

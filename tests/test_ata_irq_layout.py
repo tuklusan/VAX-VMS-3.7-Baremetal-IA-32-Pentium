@@ -8,6 +8,10 @@ ata = (root / 'src/vms_ata_x86.c').read_text()
 assert 'vector_no_error 46' in asm
 assert '144,46' in asm
 assert 'gate_set(46, arch_isr_table[36],0)' in arch
+assert 'vector_no_error 145' in asm
+assert '144,46,145' in asm
+assert 'gate_set(145, arch_isr_table[37],0)' in arch
+assert 'f->vector==145u' in arch and 'arch_vms_schedule_frame(f)' in arch
 assert 'outb(0x21,0xfa)' in arch and 'outb(0xA1,0xbf)' in arch
 assert 'f->vector == 46' in arch and 'outb(0xa0,0x20)' in arch
 assert 'port_ata_x86_irq' in ata and 'ATA_STATUS' in ata

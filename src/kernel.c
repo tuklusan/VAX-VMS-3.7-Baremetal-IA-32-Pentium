@@ -78,6 +78,10 @@ extern int arch_adopt_executive_clock(const struct port_exe_systime *,
                                      void (*tick)(void));
 extern int arch_adopt_vms_scheduler(struct port_v37_scheduler *,
     port_v37_sched_interrupt_fn);
+extern void arch_request_vms_reschedule(void);
+extern void arch_run_pending_vms_reschedule(void);
+extern uint32_t arch_vms_reschedule_requests(void);
+extern uint32_t arch_vms_reschedule_interrupts(void);
 extern uint32_t arch_iopost_bind(uint32_t (*)(void));
 extern uint32_t arch_iopost_trigger(void);
 extern uint32_t arch_iopost_count(void);
@@ -3100,6 +3104,12 @@ extern uint32_t arch_pit_ticks(void);
 static uint32_t native_sysloa_ticks(void *ctx){
     (void)ctx;return arch_pit_ticks();
 }
+static void native_vms_sched_request(void *ctx){
+    (void)ctx;arch_request_vms_reschedule();
+}
+static void native_vms_sched_run_pending(void *ctx){
+    (void)ctx;arch_run_pending_vms_reschedule();
+}
 static struct port_f11_volume bootstrap_volume;
 static void bootstrap_halt(void){
     for(;;)__asm__ volatile("cli; hlt");
@@ -3473,7 +3483,9 @@ void kmain(void) {
     const struct port_sys_exec_start proc_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&proc_result,
-        .phase=PORT_SYS_EXEC_INIT_PROCVEC,.proc_settings=&proc_settings};
+        .phase=PORT_SYS_EXEC_INIT_PROCVEC,.proc_settings=&proc_settings,
+        .vms_scheduler_request=native_vms_sched_request,
+        .vms_scheduler_run_pending=native_vms_sched_run_pending};
     if(loaded_sys(&proc_request)!=PORT_SYS_EXEC_NORMAL ||
        proc_result.signature!=PORT_SYS_EXEC_PV_RESULT_TAG ||
        !proc_result.process_vector ||
@@ -3533,6 +3545,16 @@ void kmain(void) {
         bootstrap_message("INIT: IA-32 IRQ0 scheduler binding failed.");
         bootstrap_halt();
     }
+    const uint32_t resched_requests_before=arch_vms_reschedule_requests();
+    const uint32_t resched_interrupts_before=arch_vms_reschedule_interrupts();
+    arch_request_vms_reschedule();
+    if(arch_vms_reschedule_requests()!=resched_requests_before+1u||
+       arch_vms_reschedule_interrupts()!=resched_interrupts_before+1u||
+       proc_result.vms_scheduler->native_no_context_count==0u){
+        bootstrap_message("INIT: native SCH$RESCHED software gate failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: SCH$RESCHED entered resident IA-32 vector 0x91; process contexts pending.");
     bootstrap_message("INIT: IA-32 IRQ0 bound resident VMS scheduler; PHD/context activation pending.");
 
     /* Original INIT.MAR INI_PHV and INI_SWAP reserve the process header

@@ -709,6 +709,12 @@ _Alignas(8) static uint8_t executive_vms_system_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_null_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_swapper_pcb[PORT_V37_PCB_BYTES];
 static struct port_v37_scheduler executive_vms_scheduler;
+struct executive_vms_scheduler_arch {
+    void *context;
+    void (*request)(void *);
+    void (*run_pending)(void *);
+};
+static struct executive_vms_scheduler_arch executive_vms_scheduler_arch;
 /* DSBINT/ENBINT translation for UP IA-32: prevent local IRQ/trap interleaving
  * while the original IPL_SYNCH scheduler/event transaction mutates shared
  * PCB, CEB and WQH records, then restore the caller's IF state exactly. */
@@ -719,8 +725,19 @@ static uint32_t executive_vms_enter_synchronization(void *unused){
 }
 static void executive_vms_leave_synchronization(void *unused,uint32_t flags){
     (void)unused;__asm__ volatile("":::"memory");
-    if(flags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
+    if(flags&UINT32_C(0x200)){
+        __asm__ volatile("sti":::"memory");
+        if(executive_vms_scheduler_arch.run_pending)
+            executive_vms_scheduler_arch.run_pending(
+                executive_vms_scheduler_arch.context);
+    }
     else __asm__ volatile("cli":::"memory");
+}
+static void executive_vms_request_reschedule(void *unused){
+    (void)unused;
+    if(executive_vms_scheduler_arch.request)
+        executive_vms_scheduler_arch.request(
+            executive_vms_scheduler_arch.context);
 }
 static uint32_t executive_vms_address(void *unused,const void *p){
     (void)unused;
@@ -930,7 +947,11 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             .context=0,.address=executive_vms_address,
             .resolve=executive_vms_resolve,
             .enter_synchronization=executive_vms_enter_synchronization,
-            .leave_synchronization=executive_vms_leave_synchronization};
+            .leave_synchronization=executive_vms_leave_synchronization,
+            .request_reschedule=executive_vms_request_reschedule};
+        executive_vms_scheduler_arch.context=p->vms_scheduler_arch_context;
+        executive_vms_scheduler_arch.request=p->vms_scheduler_request;
+        executive_vms_scheduler_arch.run_pending=p->vms_scheduler_run_pending;
         if(port_ini_procvec_set_pcb(&executive_procvec,1u,
               (uint32_t)(uintptr_t)executive_vms_swapper_pcb)!=PORT_INI_PROC_OK||
            port_v37_sched_init(&executive_vms_scheduler,&sched_ops)!=
