@@ -1817,8 +1817,10 @@ init_parts=[
     (756,837,'src/kernel.c','kmain','Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete','partial'),
     (838,859,None,None,'INILOA code deallocation requires full nonpaged pool','unresolved'),
     (860,992,'src/vms_ini_lockdb.c','port_ini_lockdb_init','Realtime SPT bitmap, lock ID chain, power-of-two resource hash and optional process bitmap structures (DYNDEF and consumers unresolved)','partial'),
-    (993,1031,'src/vms_ini_procvec.c','port_ini_procvec_init','Resident source PCB pointer/sequence arrays; SYSTEM and NULL entries now point at SYSDEF-layout PCB templates, but their PHD/native contexts are absent','partial'),
-    (1032,1068,'src/vms_ini_phv_swap.c','port_ini_phvswap_init','Native PHV/system slot and swapper PTE map DYN record construction; pager and swapper process are not running','partial'),
+    (993,1020,'src/vms_ini_procvec.c','port_ini_procvec_init','Resident source PCB pointer/sequence arrays; SYSTEM and NULL entries now point at SYSDEF-layout PCB templates','partial'),
+    (1021,1026,'src/vms_v37_sched.c','port_v37_sched_start_context','Bind a zeroed PHD and prevalidated native restore frame into a source PCB and CHSE it; INIT does not yet provide mapped initial process contexts','partial'),
+    (1027,1030,None,None,'Source comments separating INI_PSTATE from INI_PHV','excluded'),
+    (1031,1068,'src/vms_ini_phv_swap.c','port_ini_phvswap_init','Native PHV/system slot and swapper PTE map DYN record construction; pager and swapper process are not running','partial'),
     (1069,1089,'src/vms_ini_mpw.c','port_ini_mpw_init','Modified-page-writer PTE and PHV index record allocation, no pager consumer','partial'),
     (1090,1141,'src/vms_ini_pflvec.c','port_ini_pflvec_init','Source-derived global page-file count and null PFL shell VBN/window arithmetic; host-only, no operational shell WCB yet','partial'),
     (1142,1165,'src/vms_ini_pflvec.c','port_ini_pflvec_init','Page and swap-file PTR record in loaded SYS.EXE, anchored to resident uninitialized NULLPFL storage; guest-checked, no actual pagefile service, SYSGEN values or shell WCB','partial'),
@@ -1849,7 +1851,7 @@ for first,last,path,symbol,purpose,status in init_parts:
             'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':purpose})
 result['files'].append({'original_file':'SYS/SRC/INIT.MAR',
     'original_lines':1906,'sections':parts,
-    'unresolved_integration':'SYSWCB now contains the source-derived 48-byte WCB header and compact retrieval map, but is not attached to process PHD/UCB/FCP access state. Source FIN_DATABASE names are staged only after verified ATA Files-11 reads. SYS$DISK/SYS$SYSDEVICE translation remains confined to bootstrap; public channels, ACP file access, process activation, login/DCL and DECnet remain missing.'})
+    'unresolved_integration':'A callable scheduler helper can bind a supplied zeroed PHD/native frame and queue a source PCB, but INIT does not construct mapped NULL/SWAPPER contexts or invoke it. SYSWCB is not attached to process PHD/UCB/FCP access state; source FIN_DATABASE names are staged only after verified ATA Files-11 reads. SYS$DISK/SYS$SYSDEVICE translation remains confined to bootstrap; public channels, ACP file access, login/DCL and DECnet remain missing.'})
 
 # M238: PDAT.MAR GENPCB source layout and the static system PCB template.
 pdat_rows=[

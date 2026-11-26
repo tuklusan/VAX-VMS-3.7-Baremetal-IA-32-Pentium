@@ -189,6 +189,57 @@ uint32_t port_v37_sched_chse(struct port_v37_scheduler *s,uint32_t address,
     return PORT_V37_SCHED_OK;
 }
 
+uint32_t port_v37_sched_start_context(struct port_v37_scheduler *s,
+    uint32_t pcb_address,uint32_t phd_address,uint32_t frame_address,
+    const struct port_v37_phd_seed *seed,uint8_t priority_class){
+    if(!s||!s->initialized||!pcb_address||!phd_address||!frame_address||
+       !seed||priority_class>=PORT_V37_SCH_INCREMENT_CLASSES||
+       (phd_address&3u)||(frame_address&3u))
+        return PORT_V37_SCHED_BADPARAM;
+    uint8_t *pcb=resolve(s,pcb_address,PORT_V37_PCB_BYTES);
+    uint8_t *phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
+    struct port_v37_ia32_restore_frame *frame=
+        (struct port_v37_ia32_restore_frame *)resolve(s,frame_address,
+            sizeof(struct port_v37_ia32_restore_frame));
+    if(!pcb||!phd||!frame)return PORT_V37_SCHED_UNRESOLVED;
+    const uint16_t old_state=get16(pcb+PORT_V37_PCB_STATE);
+    if(get16(pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+       pcb[Q_TYPE]!=PORT_V37_DYN_PCB||pcb[PCBPRI]>=32u||
+       pcb[PCBPRIB]>=32u||
+       get32(pcb+PORT_V37_PCB_PHD)||get32(pcb+PORT_V37_PCB_PHYPCB)||
+       old_state!=PORT_V37_PCB_STATE_CURRENT||
+       get32(pcb+SQFL)!=pcb_address||get32(pcb+SQBL)!=pcb_address)
+        return PORT_V37_SCHED_CORRUPT;
+    if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK||
+       frame->registers.eip!=seed->entry_pc||
+       frame_address>UINT32_MAX-sizeof(*frame))
+        return PORT_V37_SCHED_CORRUPT;
+    for(unsigned i=0u;i<PORT_V37_PHD_BYTES;i++)
+        if(phd[i])return PORT_V37_SCHED_CORRUPT;
+    struct port_v37_phd_seed candidate_seed=*seed;
+    candidate_seed.native_ksp=frame_address;
+    candidate_seed.priority=(uint8_t)(31u-pcb[PCBPRIB]);
+    uint8_t candidate_phd[PORT_V37_PHD_BYTES];
+    if(port_v37_phd_init_genphd(candidate_phd,sizeof candidate_phd,
+           &candidate_seed)!=PORT_V37_PHD_OK)
+        return PORT_V37_SCHED_BADPARAM;
+    const uint8_t old_priority=pcb[PCBPRI];
+    if(port_v37_pcb_bind_context(pcb,PORT_V37_PCB_BYTES,phd_address,
+           frame_address)!=PORT_V37_PCB_OK)
+        return PORT_V37_SCHED_CORRUPT;
+    for(unsigned i=0u;i<PORT_V37_PHD_BYTES;i++)phd[i]=candidate_phd[i];
+    const uint32_t status=port_v37_sched_chse(s,pcb_address,priority_class);
+    if(status!=PORT_V37_SCHED_OK){
+        for(unsigned i=0u;i<PORT_V37_PHD_BYTES;i++)phd[i]=0u;
+        pcb[PCBPRI]=old_priority;
+        put16(pcb+PORT_V37_PCB_STATE,old_state);
+        put32(pcb+PORT_V37_PCB_PHD,0u);
+        put32(pcb+PORT_V37_PCB_PHYPCB,0u);
+        return status;
+    }
+    return PORT_V37_SCHED_OK;
+}
+
 uint32_t port_v37_sched_set_priority(struct port_v37_scheduler *s,
     uint32_t address,uint8_t priority){
     if(!s||!s->initialized||!address||priority>=PORT_V37_SCH_PRIORITIES)

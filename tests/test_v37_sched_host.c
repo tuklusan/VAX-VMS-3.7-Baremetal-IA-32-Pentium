@@ -421,6 +421,49 @@ int main(void){
        f.swapper_wakes!=swaps_before_setpri+1u||count(&f,49u)!=1u||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("RSE SETPRI nonresident COMO and swapper wake transition");
-    puts("SYSWAIT SCH$WAITK/WQH wake plus SCHED SCH$RESCHED/SCH$SCHED and RSE SCH$CHSE PASS");
+    struct port_v37_scheduler start_scheduler;
+    struct fixture start={.scheduler=&start_scheduler,
+        .pcb_va={0x00800000u,0x00801000u,0x00802000u,0x00803000u},
+        .frame_va={0x00900000u,0x00901000u,0x00902000u,0x00903000u},
+        .phd_va={0x00a00000u,0x00a01000u,0x00a02000u,0x00a03000u},
+        .wait_queue_va=0x00b00000u};
+    start.wait_queue.forward=start.wait_queue.backward=start.wait_queue_va;
+    if(port_v37_sched_init(&start_scheduler,&(struct port_v37_sched_ops){
+           &start,addr,resolve,wake,reschedule,0,0})!=PORT_V37_SCHED_OK)
+        return fail("initial process activation scheduler setup");
+    const struct port_v37_pcb_seed start_pcb={.address=start.pcb_va[0],
+        .pid=0x00010008u,.priority=16u,.name="SYSTEM",.name_bytes=6u};
+    if(port_v37_pcb_init_genpcb(start.pcbs[0],sizeof start.pcbs[0],
+           &start_pcb)!=PORT_V37_PCB_OK)
+        return fail("initial process activation PCB template");
+    start.frames[0]=(struct port_v37_ia32_restore_frame){
+        .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
+        .registers={.cs=0x08u,.eflags=0x202u,.eip=0x00123456u}};
+    const struct port_v37_phd_seed start_phd={.entry_pc=0x00123456u,
+        .p0_page_table=0x00c00000u,.p0_limit=12u,
+        .p1_page_table=0x00c01000u,.p1_limit=0x200000u,
+        .first_free_p1_va=0x7ffffe00u,.priority=0u,.ast_level=4u};
+    struct port_v37_phd_seed bad_start_phd=start_phd;
+    bad_start_phd.p0_page_table|=1u;
+    if(port_v37_sched_start_context(&start_scheduler,start.pcb_va[0],
+           start.phd_va[0],start.frame_va[0],&bad_start_phd,0u)!=
+           PORT_V37_SCHED_BADPARAM||
+       get32(start.pcbs[0]+PORT_V37_PCB_PHD)||
+       get32(start.pcbs[0]+PORT_V37_PCB_PHYPCB)||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("invalid PHD mapping rejected before INIT context commit");
+    if(port_v37_sched_start_context(&start_scheduler,start.pcb_va[0],
+           start.phd_va[0],start.frame_va[0],&start_phd,0u)!=
+           PORT_V37_SCHED_OK||
+       get32(start.pcbs[0]+PORT_V37_PCB_PHD)!=start.phd_va[0]||
+       get32(start.pcbs[0]+PORT_V37_PCB_PHYPCB)!=start.frame_va[0]||
+       get32(start.phds[0]+PORT_V37_PHD_KSP)!=start.frame_va[0]||
+       get32(start.phds[0]+PORT_V37_PHD_PC)!=start.frames[0].registers.eip||
+       port_v37_sched_select(&start_scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||selected!=start.pcb_va[0]||
+       restore_frame!=start.frame_va[0]||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("INIT PHD/native-frame binding and executable CHSE activation");
+    puts("SYSWAIT/SCHED/RSE plus INIT PHD-frame binding and executable CHSE activation PASS");
     return 0;
 }
