@@ -2537,3 +2537,11 @@ No native source changed in this verification checkpoint. A clean repeated host/
 `wsl make qemu-sysboot-m217` passed. The fresh captured serial output repeats actual ACP access through DQA0 DDT/IRQ14 and the M454 SWAPPER/NULL selection messages. Capture `logs/serial/qemu-m217-run-local-20261126T153544108296Z.log`, 6,476 bytes, SHA-256 `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`; it matches the previous M454 trace exactly. QEMU runner exited; no QEMU process remains. This rerun adds no evidence for live public SYS$QIO, INIT completion, SYSTEM login/DCL, DECnet Phase IV, or SET HOST 0; those acceptance conditions remain incomplete.
 
 M455 verification/evidence commit: `ae4a1a8bd0abef65935c5206f4c3d1209f68d0ef`.
+
+## M456 — Bind SYSCREPRC PIX/PID activation to native scheduler startup, 26 November 2026
+
+Added `port_exe_creprc_activate_native`. Under caller-held executive synchronization, it publishes the source PIX/PID before installing the prebuilt native PHD and IA-32 restore frame and making the process runnable with SCH$CHSE. A rejected PHD/frame/context rolls back the PIX pointer, process count and PCB PID while retaining the advanced sequence value. Host regressions cover successful publication/context/CR3/COM insertion and failure rollback. This composes final activation only; it requires preallocated resources and does not implement JIB/accounting, image loading/mapping, public SYS$CREPRC dispatch, or SYSINIT.
+
+Verification: `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck` PASS (exit 0); `wsl make qemu-sysboot-m217` PASS. QEMU capture `logs/serial/qemu-m217-run-local-20261126T154445280710Z.log`, 6,476 bytes, SHA-256 `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`, observed M454 SWAPPER resolution/block and NULL selection after the native image rebuilt. Coverage validation: 2,200 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,764 partial, 59,465 unresolved, 8,032 missing, 26,805 excluded, 917 hardware-excluded. QEMU exited; no runner remains. SYSTEM login/DCL and DECnet/SET HOST acceptance remain unverified and incomplete.
+
+M456 implementation/evidence commit: `58499ec52fd732a1964145298ec5bfe7377602a1`.
