@@ -51,8 +51,11 @@ uint32_t port_vms37_init_params_apply_file(
             name_index++;
         if(name_bytes==time_prompt_wait_length&&
            name_index==time_prompt_wait_length){
-            candidate.terminal_prompt_wait=(int32_t)(
-                value>32767u?32767u:value);
+            /* SYSPARAM declares TPWAIT as a WORD. BOO$SETVALUE inserts the
+             * low 16 bits; SIP_SETTIME later CVTWL sign-extends that word. */
+            const uint16_t word=(uint16_t)value;
+            candidate.terminal_prompt_wait=(int32_t)word-
+                ((word&UINT16_C(0x8000))?65536:0);
             applied++;
             offset+=20u;
             continue;

@@ -42,6 +42,7 @@ int main(void){
     off+=add_param(file+off,"LOGSHASHTBL",0u);
     off+=add_param(file+off,"LOGGHASHTBL",16384u);
     off+=add_param(file+off,"LOGPHASHTBL",256u);
+    const size_t time_wait_offset=off;
     off+=add_param(file+off,"TIMEPROMPTWAIT",12u);
     file[off+4u]=0xa5u; /* BOO$USEFILE stops at the zero longword. */
     uint32_t applied=0;
@@ -55,6 +56,21 @@ int main(void){
        p.terminal_prompt_wait!=12||
        memcmp(startup,file,32u)!=0){
         fputs("VMS SYSBOOT parameter-file merge failed\n",stderr);
+        return 1;
+    }
+    struct port_vms37_init_params time_params=p;
+    put32(file+time_wait_offset+16u,65535u);
+    if(port_vms37_init_params_apply_file(&time_params,file,off+5u,startup,
+          &applied)!=PORT_VMS37_SYSPARAM_FILE_OK||
+       time_params.terminal_prompt_wait!=-1){
+        fputs("VMS TPWAIT WORD sign extension failed\n",stderr);
+        return 1;
+    }
+    put32(file+time_wait_offset+16u,32768u);
+    if(port_vms37_init_params_apply_file(&time_params,file,off+5u,startup,
+          &applied)!=PORT_VMS37_SYSPARAM_FILE_OK||
+       time_params.terminal_prompt_wait!=INT16_MIN){
+        fputs("VMS TPWAIT signed WORD boundary failed\n",stderr);
         return 1;
     }
     struct port_vms37_init_params unchanged=p;

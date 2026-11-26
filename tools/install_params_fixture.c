@@ -69,7 +69,9 @@ static int build_parameter_block(uint8_t data[BLOCK]){
     const unsigned at=32u;
     data[at]=8u;memcpy(data+at+1u,"IRPCOUNT",8u);
     put32(data+at+16u,61u);
-    /* Zero longword at offset 52 terminates BOO$USEFILE's record scan. */
+    data[at+20u]=14u;memcpy(data+at+21u,"TIMEPROMPTWAIT",14u);
+    put32(data+at+36u,65535u);
+    /* Zero longword at offset 72 terminates BOO$USEFILE's record scan. */
     return 1;
 }
 static int add_file(struct disk *d,const struct port_f11_volume *v){
@@ -104,7 +106,7 @@ static int add_file(struct disk *d,const struct port_f11_volume *v){
     put16(header+8u,PARAM_FID);put16(header+10u,PARAM_FID);
     header[20u]=1u;header[21u]=0u;
     put32(header+24u,1u<<16u);put32(header+28u,2u<<16u);
-    put16(header+32u,56u);
+    put16(header+32u,76u);
     memset(header+76u,' ',20u);memcpy(header+76u,"PARAMS.DAT;1",12u);
     memset(header+130u,0,380u);
     put16(header+130u,(uint16_t)(0x4000u|((data_lbn>>16u)&0x3fu)<<8u));
@@ -143,9 +145,9 @@ static int add_file(struct disk *d,const struct port_f11_volume *v){
           "SYS$SYSDEVICE:[SYSEXE]PARAMS.DAT",&params,startup,&applied,
           readback,sizeof readback,&bytes);
     if(use_status!=PORT_SYSBOOT_USEFILE_OK||params.irp_count!=61u||
-       applied!=1u||bytes!=BLOCK)
+       params.terminal_prompt_wait!=-1||applied!=2u||bytes!=BLOCK)
         {fprintf(stderr,"fixture: BOO$USEFILE readback failed status=%u IRP=%u count=%u bytes=%zu\n",use_status,params.irp_count,applied,bytes);return 0;}
-    printf("Installed scratch Files-11 PARAMS.DAT: FID %u IRPCOUNT=61; BOO$USEFILE readback verified\n",PARAM_FID);
+    printf("Installed scratch Files-11 PARAMS.DAT: FID %u IRPCOUNT=61 TIMEPROMPTWAIT=65535; BOO$USEFILE readback verified\n",PARAM_FID);
     return 1;
 }
 int main(int argc,char **argv){
