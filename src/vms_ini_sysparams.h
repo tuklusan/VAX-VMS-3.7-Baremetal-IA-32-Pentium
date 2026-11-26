@@ -20,10 +20,10 @@
 #define PORT_VMS37_DEFAULT_LOGSHASHTBL 128u
 #define PORT_VMS37_DEFAULT_LOGGHASHTBL 32u
 #define PORT_VMS37_DEFAULT_LOGPHASHTBL 128u
+#define PORT_VMS37_STARTUP_FILE_BYTES 32u
 
-/* Native subset of SYSPARAM.MAR defaults consumed by INIT. SYSBOOT's
- * PARAMS.DAT override path is not yet ported; callers must not label these
- * defaults as the configured values when a parameter file is present. */
+/* Native subset of SYSPARAM.MAR defaults consumed by INIT. SYSBOOT applies
+ * the supported bounded PARAMS.DAT subset before allocating resident pools. */
 struct port_vms37_init_params {
     uint32_t max_processes;
     uint32_t realtime_spts;
@@ -47,6 +47,16 @@ enum { PORT_VMS37_SYSPARAM_FILE_OK=1u,
        PORT_VMS37_SYSPARAM_FILE_BAD=2u,
        PORT_VMS37_SYSPARAM_FILE_TRUNCATED=4u };
 uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *);
+/* SYSPARAM.MAR EXE$GT_STARTUP default (32-byte ASCIC startup file field). */
+static inline void port_vms37_startup_file_default(
+    uint8_t startup_file[PORT_VMS37_STARTUP_FILE_BYTES]){
+    if(!startup_file)return;
+    static const uint8_t value[]={
+        22u,'S','Y','S','$','S','Y','S','T','E','M',':',
+        'S','T','A','R','T','U','P','.','C','O','M'};
+    for(unsigned i=0u;i<PORT_VMS37_STARTUP_FILE_BYTES;i++)
+        startup_file[i]=i<sizeof value?value[i]:0u;
+}
 /* Decode the fixed-header/20-byte-entry file format consumed by SYSBOOT's
  * BOO$USEFILE. Only the native INIT parameter subset above is applied. */
 uint32_t port_vms37_init_params_apply_file(

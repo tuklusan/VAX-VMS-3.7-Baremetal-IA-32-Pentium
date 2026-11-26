@@ -3264,7 +3264,9 @@ void kmain(void) {
     /* SYSBOOT BOO$USEFILE: read the optional Files-11 parameter image before
      * deriving any INIT pool/queue settings from SYSPARAM. The bounded native
      * decoder commits the whole parameter set only after a valid terminator. */
-    static uint8_t sysboot_startup_file[32];
+    static uint8_t sysboot_startup_file[PORT_VMS37_STARTUP_FILE_BYTES]={
+        22u,'S','Y','S','$','S','Y','S','T','E','M',':',
+        'S','T','A','R','T','U','P','.','C','O','M'};
     static uint8_t sysboot_param_buffer[32768];
     uint32_t sysboot_param_count=0u;
     size_t sysboot_param_bytes=0u;

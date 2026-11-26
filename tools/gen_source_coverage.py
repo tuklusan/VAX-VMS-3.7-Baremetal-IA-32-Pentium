@@ -2770,17 +2770,25 @@ sysparam_defaults=[
     (1781,1793,'LOGSHASHTBL default 128 SYSTEM hash entries'),
     (1794,1806,'LOGGHASHTBL default 32 GROUP hash entries'),
     (1807,1819,'LOGPHASHTBL default 128 PROCESS hash entries')]
+sysparam_defaults.append((2948,2952,
+    'EXE$GT_STARTUP default SYS$SYSTEM:STARTUP.COM stored as a 32-byte ASCIC field; SYSBOOT PARAMS.DAT replaces it when present, but SYSINIT does not yet consume the field for STARTUP process input'))
 sysparam_sections=[]
 cursor=1
 for first,last,label in sysparam_defaults:
     if cursor<first:
         sysparam_sections.append({'original_lines':[cursor,first-1],
             'status':'unresolved','reason':'Other system parameters or parameter override handling not ported'})
-    line=line_for_symbol('src/vms_ini_sysparams.c','port_vms37_init_param_defaults')
+    if first==2948:
+        pc_file='src/kernel.c'
+        symbol='kmain'
+    else:
+        pc_file='src/vms_ini_sysparams.c'
+        symbol='port_vms37_init_param_defaults'
+    line=line_for_symbol(pc_file,symbol)
     if line is None:missing+=1
     sysparam_sections.append({'original_lines':[first,last],
-        'status':'partial' if line else 'missing','pc_file':'src/vms_ini_sysparams.c',
-        'pc_symbol':'port_vms37_init_param_defaults','pc_line':line,
+        'status':'partial' if line else 'missing','pc_file':pc_file,
+        'pc_symbol':symbol,'pc_line':line,
         'function':label+' copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present'})
     cursor=last+1
 if cursor<=3007:

@@ -66,6 +66,7 @@ static int insert_entry(struct disk *d,const struct port_f11_volume *v,
 }
 static int build_parameter_block(uint8_t data[BLOCK]){
     memset(data,0,BLOCK);
+    port_vms37_startup_file_default(data);
     const unsigned at=32u;
     data[at]=8u;memcpy(data+at+1u,"IRPCOUNT",8u);
     put32(data+at+16u,61u);
@@ -147,6 +148,12 @@ static int add_file(struct disk *d,const struct port_f11_volume *v){
     if(use_status!=PORT_SYSBOOT_USEFILE_OK||params.irp_count!=61u||
        params.terminal_prompt_wait!=-1||applied!=2u||bytes!=BLOCK)
         {fprintf(stderr,"fixture: BOO$USEFILE readback failed status=%u IRP=%u count=%u bytes=%zu\n",use_status,params.irp_count,applied,bytes);return 0;}
+    uint8_t expected_startup[32];
+    port_vms37_startup_file_default(expected_startup);
+    if(memcmp(startup,expected_startup,sizeof startup)!=0){
+        fputs("fixture: PARAMS.DAT startup-file field did not round trip\n",stderr);
+        return 0;
+    }
     printf("Installed scratch Files-11 PARAMS.DAT: FID %u IRPCOUNT=61 TIMEPROMPTWAIT=65535; BOO$USEFILE readback verified\n",PARAM_FID);
     return 1;
 }

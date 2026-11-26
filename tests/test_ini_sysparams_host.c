@@ -15,6 +15,20 @@ static size_t add_param(uint8_t *p,const char *name,uint32_t value){
 }
 
 int main(void){
+    uint8_t startup_default[PORT_VMS37_STARTUP_FILE_BYTES];
+    port_vms37_startup_file_default(startup_default);
+    static const uint8_t expected_startup[23]={
+        22u,'S','Y','S','$','S','Y','S','T','E','M',':',
+        'S','T','A','R','T','U','P','.','C','O','M'};
+    if(memcmp(startup_default,expected_startup,sizeof expected_startup)!=0){
+        fputs("VMS 3.7 default startup file field failed\n",stderr);
+        return 1;
+    }
+    for(unsigned i=sizeof expected_startup;i<sizeof startup_default;i++)
+        if(startup_default[i]){
+            fputs("VMS 3.7 startup field tail was not zeroed\n",stderr);
+            return 1;
+        }
     struct port_vms37_init_params p={0};
     if(port_vms37_init_param_defaults(&p)!=PORT_VMS37_SYSPARAM_OK||
        p.max_processes!=72u||p.realtime_spts!=0u||p.irp_count!=60u||
@@ -32,7 +46,7 @@ int main(void){
         return 1;
     }
     uint8_t file[32u+9u*20u+8u]={0},startup[32];
-    memcpy(file,"SYS$SYSTEM:STARTUP.COM",22u);
+    memcpy(file,startup_default,sizeof startup_default);
     size_t off=32u;
     off+=add_param(file+off,"MAXPROCESSCNT",9000u);
     off+=add_param(file+off,"NPAGEDYN",1024u);

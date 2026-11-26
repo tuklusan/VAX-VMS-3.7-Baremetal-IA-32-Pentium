@@ -23714,7 +23714,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "MAXPROCESSCNT default 72 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23733,7 +23733,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "BALSETCNT default 36 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23752,7 +23752,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "IRPCOUNT default 60 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23771,7 +23771,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "WSMAX default 1024 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23790,7 +23790,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "NPAGEDYN default 64000 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23809,7 +23809,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "PAGEDYN default 80000 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23828,7 +23828,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "LRPCOUNT default 4 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23847,7 +23847,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "LRPSIZE default 576 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23866,7 +23866,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "SRPCOUNT default 120 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23885,7 +23885,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "SRPSIZE default 96 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23904,7 +23904,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "MPW_WRTCLUSTER default 96 pages copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23923,7 +23923,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "REALTIME_SPTS default 0 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23942,7 +23942,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "LOCKIDTBL default 128 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23961,7 +23961,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "RESHASHTBL default 32 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23980,7 +23980,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "DEADLOCK_WAIT default 10 seconds copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -23999,7 +23999,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "TIMEPROMPTWAIT default -1; zero disables operator wait; positive value bounds the startup time prompt copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -24018,7 +24018,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "LOGSHASHTBL default 128 SYSTEM hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -24029,7 +24029,7 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "LOGGHASHTBL default 32 GROUP hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
@@ -24040,12 +24040,31 @@
           "status": "partial",
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
-          "pc_line": 6,
+          "pc_line": 7,
           "function": "LOGPHASHTBL default 128 PROCESS hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
             1820,
+            2947
+          ],
+          "status": "unresolved",
+          "reason": "Other system parameters or parameter override handling not ported"
+        },
+        {
+          "original_lines": [
+            2948,
+            2952
+          ],
+          "status": "partial",
+          "pc_file": "src/kernel.c",
+          "pc_symbol": "kmain",
+          "pc_line": 3132,
+          "function": "EXE$GT_STARTUP default SYS$SYSTEM:STARTUP.COM stored as a 32-byte ASCIC field; SYSBOOT PARAMS.DAT replaces it when present, but SYSINIT does not yet consume the field for STARTUP process input copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
+        },
+        {
+          "original_lines": [
+            2953,
             3007
           ],
           "status": "unresolved",
