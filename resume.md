@@ -2436,3 +2436,4 @@ Changed the IOCIOPOST positive-PID direct-I/O completion callback to return its 
 
 Verification: `make iopostprocesscheck sourcerangecheck` PASS; `make -j2 all test exeportbatchcheck` PASS (repeat run exit 0). Source coverage validation: 2,190 ranges, 455/4,566 original files indexed, zero errors; coverage counts unchanged from M444. `make qemu-sysboot-m217` PASS through real DQA0 IRQ14 and Files-11 ACP checks, then reaches the known contextless INIT stop; the helper is not on the live completion path. Capture `logs/serial/qemu-m217-run-local-20261126T141805777751Z.log`, 6,395 bytes, SHA-256 `4382c9e2fd033d0fadcd39651fd1aa3844bbb2fd579ff1d6d1531d7f6661b9de`; QEMU runner exited, and no QEMU process remains. Login, DCL, DECnet Phase IV and SET HOST 0 remain unobserved.
 M445 implementation commit: `79719e9bec0e30ca3d0fea9088887aac855cb43f`.
+M445 QEMU capture/manifest commit: `addad543ec7b8d534780f8c2963e21d692c2959e`.
