@@ -2556,3 +2556,11 @@ Verification: clean `wsl make clean && wsl make -j2 all test exeportbatchcheck s
 M457 implementation/evidence commit: `5da3a4959b004056a4da5fcb5c2e6ef90a30be2d`.
 
 Remaining: wire genuine SYSINIT name creation through public logical-name services and continue source-order INIT/SYSINIT activation, real public SYS$QIO and ACP/AST process completion, image activation/login/DCL, DECnet Phase IV and end-to-end SET HOST 0/second-session/LOGOUT verification. All acceptance conditions remain incomplete.
+
+## M458 — Rebuild all LOGNAMSUB ABI consumers, 26 November 2026
+
+Added explicit Make dependencies for `src/vms_log_system.h` in the kernel and resident SYS executive objects. The five-record SYSTEM table changed a structure consumed by both objects; the first incremental QEMU run exposed that those consumers had remained stale. After the dependency fix, `wsl make build/kernel.o build/vms_sys_executive_entry.o all` rebuilt both ABI consumers, and `wsl make qemu-sysboot-m217` passed through the real DQA0/IRQ14 ACP read and SWAPPER/NULL scheduler checkpoint. The 6,476-byte COM1 capture `logs/serial/qemu-m217-run-local-20261126T155655265834Z.log` hashes to `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`. Serial manifest validation PASS (403 logs); runner exited.
+
+M458 dependency/evidence commit: `d8897e38b6b20818f493d0b15b0cbee699d7c117`.
+
+Remaining: SYSINIT and public `$CRELNM` do not yet call the new insertion boundary. All original boot continuation, user I/O/ACP/AST integration, image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 acceptance remain incomplete.
