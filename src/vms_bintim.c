@@ -215,3 +215,48 @@ uint32_t port_vms_bintim(const char *text,size_t bytes,uint64_t current_time,
     *binary_time=candidate;
     return PORT_BINTIM_NORMAL;
 }
+
+uint32_t port_vms_numtim(uint16_t numeric_time[7],
+                         const uint64_t *binary_time,
+                         uint64_t current_time){
+    if(!numeric_time)return PORT_NUMTIM_ACCVIO;
+    const uint64_t value=binary_time?*binary_time:current_time;
+    const int delta=(value>>63)!=0u;
+    const uint64_t magnitude=delta?(~value+1u):value;
+    uint64_t fraction=0u;
+    const uint64_t days=divide_u64(magnitude,TICKS_PER_DAY,&fraction);
+    uint16_t converted[7]={0u,0u,0u,0u,0u,0u,0u};
+    if(delta){
+        if(days>=10000u)return PORT_NUMTIM_IVTIME;
+        converted[2]=(uint16_t)days;
+    }else{
+        /* Convert days from 17-Nov-1858 through the same Gregorian civil
+         * arithmetic used by BINTIM, retaining dates before the Unix epoch. */
+        if(days>INT64_MAX||fraction>=TICKS_PER_DAY)
+            return PORT_NUMTIM_IVTIME;
+        const uint64_t z=days+(719468u-VMS_UNIX_DAY_OFFSET);
+        uint64_t doe64=0u;
+        const uint64_t era=divide_u64(z,146097u,&doe64);
+        const unsigned doe=(unsigned)doe64;
+        const unsigned yoe=(doe-doe/1460u+doe/36524u-doe/146096u)/365u;
+        const uint64_t year=(uint64_t)yoe+era*400u;
+        const unsigned doy=doe-(365u*yoe+yoe/4u-yoe/100u);
+        const unsigned mp=(5u*doy+2u)/153u;
+        const unsigned day=doy-(153u*mp+2u)/5u+1u;
+        const int month=(int)mp+(mp<10u?3:-9);
+        const uint64_t actual_year=year+(month<=2);
+        if(actual_year>UINT16_MAX||month<1||month>12||day<1||day>31)
+            return PORT_NUMTIM_IVTIME;
+        converted[0]=(uint16_t)actual_year;
+        converted[1]=(uint16_t)month;
+        converted[2]=(uint16_t)day;
+    }
+    const uint64_t seconds=divide_u64(fraction,TICKS_PER_SECOND,&fraction);
+    const uint32_t second_of_day=(uint32_t)seconds;
+    converted[3]=(uint16_t)(second_of_day/3600u);
+    converted[4]=(uint16_t)((second_of_day/60u)%60u);
+    converted[5]=(uint16_t)(second_of_day%60u);
+    converted[6]=(uint16_t)divide_u64(fraction,100000u,NULL);
+    for(unsigned i=0u;i<7u;i++)numeric_time[i]=converted[i];
+    return PORT_NUMTIM_NORMAL;
+}

@@ -45,6 +45,39 @@ int main(void) {
     assert(port_vms_bintim("1 00:00:00.x",12u,now,&unchanged)==
            PORT_BINTIM_IVTIME);
     assert(port_vms_bintim(NULL,1u,now,&unchanged)==PORT_BINTIM_IVTIME);
-    puts("EXE$BINTIM absolute defaults, delta sign, range and rounding PASS");
+
+    uint16_t numeric[7]={0};
+    assert(port_vms_numtim(numeric,&now,0u)==PORT_NUMTIM_NORMAL);
+    const uint16_t leap_expected[7]={2024u,2u,29u,12u,34u,56u,78u};
+    assert(memcmp(numeric,leap_expected,sizeof numeric)==0);
+    assert(port_vms_numtim(numeric,NULL,now)==PORT_NUMTIM_NORMAL);
+    assert(memcmp(numeric,leap_expected,sizeof numeric)==0);
+    const uint64_t delta=(uint64_t)(-(int64_t)(TICKS*(86400u+2u*3600u+
+                                3u*60u+4u)+7800000u));
+    assert(port_vms_numtim(numeric,&delta,now)==PORT_NUMTIM_NORMAL);
+    const uint16_t delta_expected[7]={0u,0u,1u,2u,3u,4u,78u};
+    assert(memcmp(numeric,delta_expected,sizeof numeric)==0);
+    const uint64_t too_long=(uint64_t)(-(int64_t)(UINT64_C(10000)*86400u*TICKS));
+    for(unsigned i=0u;i<7u;i++)numeric[i]=0xaaaa;
+    assert(port_vms_numtim(numeric,&too_long,now)==PORT_NUMTIM_IVTIME);
+    for(unsigned i=0u;i<7u;i++)assert(numeric[i]==0xaaaau);
+    assert(port_vms_numtim(NULL,&now,0u)==PORT_NUMTIM_ACCVIO);
+    const uint16_t epoch_expected[7]={1858u,11u,17u,0u,0u,0u,0u};
+    const uint64_t epoch=0u;
+    assert(port_vms_numtim(numeric,&epoch,now)==PORT_NUMTIM_NORMAL);
+    assert(memcmp(numeric,epoch_expected,sizeof numeric)==0);
+    const uint64_t century1900=absolute(1900,2,28,23,59,59,99);
+    const uint16_t century1900_expected[7]={1900u,2u,28u,23u,59u,59u,99u};
+    assert(port_vms_numtim(numeric,&century1900,now)==PORT_NUMTIM_NORMAL);
+    assert(memcmp(numeric,century1900_expected,sizeof numeric)==0);
+    const uint64_t century2000=absolute(2000,2,29,0,0,0,1);
+    const uint16_t century2000_expected[7]={2000u,2u,29u,0u,0u,0u,1u};
+    assert(port_vms_numtim(numeric,&century2000,now)==PORT_NUMTIM_NORMAL);
+    assert(memcmp(numeric,century2000_expected,sizeof numeric)==0);
+    const uint64_t century2100=absolute(2100,3,1,0,0,0,0);
+    const uint16_t century2100_expected[7]={2100u,3u,1u,0u,0u,0u,0u};
+    assert(port_vms_numtim(numeric,&century2100,now)==PORT_NUMTIM_NORMAL);
+    assert(memcmp(numeric,century2100_expected,sizeof numeric)==0);
+    puts("EXE$BINTIM and EXE$NUMTIM absolute/delta conversion and limits PASS");
     return 0;
 }

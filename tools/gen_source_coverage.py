@@ -568,9 +568,9 @@ append_source_ranges('SYS/SRC/SYSCREPRC.MAR',805,'src/vms_exe_creprc.c',[
 append_source_ranges('SYS/SRC/SYSCVRTIM.MAR',774,'src/vms_bintim.c',[
   (314,'unresolved',None,'EXE$ASCTIM output conversion is not implemented'),
   (578,'partial','port_vms_bintim','Native absolute/delta syntax conversion, defaults, range checks and hundredth rounding; descriptor validation, public SYS$BINTIM dispatch and current-time service binding remain absent'),
-  (773,'unresolved',None,'EXE$NUMTIM binary-to-numeric conversion and live system clock snapshot are not implemented'),
+  (773,'partial','port_vms_numtim','Native absolute/delta binary-to-numeric conversion with seven-word VMS output, current-time selection and the source 9999-day delta limit; public SYS$NUMTIM dispatch and caller-memory access checks remain absent'),
   (774,'excluded',None,'Original assembler END directive')
-], 'Only the host-tested/native-resident BINTIM conversion core exists; service dispatcher, caller descriptors and EXE$NUMTIM remain incomplete.')
+], 'The host-tested/native-resident BINTIM and NUMTIM conversion cores are partial; public service dispatch, caller descriptors/access checks, EXE$ASCTIM and related conversion services remain incomplete.')
 goto_sections=[
     (1, 85, None, None, 'source banner, VAX declarations and calling convention'),
     (86, 94, 'src/vms_dcl_goto.c', 'port_dcl_goto',

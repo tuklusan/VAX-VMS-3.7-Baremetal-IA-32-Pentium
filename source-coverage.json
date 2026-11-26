@@ -1951,8 +1951,11 @@
             579,
             773
           ],
-          "status": "unresolved",
-          "reason": "EXE$NUMTIM binary-to-numeric conversion and live system clock snapshot are not implemented"
+          "status": "partial",
+          "pc_file": "src/vms_bintim.c",
+          "pc_symbol": "port_vms_numtim",
+          "pc_line": 219,
+          "function": "Native absolute/delta binary-to-numeric conversion with seven-word VMS output, current-time selection and the source 9999-day delta limit; public SYS$NUMTIM dispatch and caller-memory access checks remain absent"
         },
         {
           "original_lines": [
@@ -1963,7 +1966,7 @@
           "reason": "Original assembler END directive"
         }
       ],
-      "unresolved_integration": "Only the host-tested/native-resident BINTIM conversion core exists; service dispatcher, caller descriptors and EXE$NUMTIM remain incomplete."
+      "unresolved_integration": "The host-tested/native-resident BINTIM and NUMTIM conversion cores are partial; public service dispatch, caller descriptors/access checks, EXE$ASCTIM and related conversion services remain incomplete."
     },
     {
       "original_file": "DCL/SRC/GOTO.MAR",
