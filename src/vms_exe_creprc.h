@@ -48,7 +48,9 @@ enum {PORT_EXE_CREPRC_ALLOC_OK=1u,PORT_EXE_CREPRC_ALLOC_BAD=2u,
 enum {PORT_V37_PQB_BYTES=496u,PORT_V37_PQB_SIZE=8u,
       PORT_V37_PQB_TYPE=10u,PORT_V37_PQB_BODY=12u,
       PORT_V37_PQB_PRIVILEGES=0u,
+      PORT_V37_PQB_IMAGE=12u,
       PORT_V37_PQB_USERNAME=388u,PORT_V37_PQB_USERNAME_BYTES=12u};
+enum {PORT_SS_IVLOGNAM=340u};
 /* SYSCREPRC.MAR EXE$ALLOCPCB and PCB clear: allocation only. Conditional
  * SSRWAIT resource waiting and the rest of process initialization are later. */
 uint32_t port_exe_creprc_allocate_pcb(struct port_exe_np_allocator *,
@@ -66,6 +68,9 @@ uint32_t port_exe_creprc_set_pqb_system_username(uint8_t *pqb,
 /* Apply the identity, granted privileges and priority selected by preflight. */
 uint32_t port_exe_creprc_apply_identity(uint8_t *pcb,size_t pcb_bytes,
     uint8_t *pqb,size_t pqb_bytes,const struct port_exe_creprc_result *);
+/* Copy the already-probed MOVSTRING process name into PCB$T_LNAME. */
+uint32_t port_exe_creprc_copy_process_name(uint8_t *pcb,size_t pcb_bytes,
+    uint8_t *pqb,size_t pqb_bytes,const uint8_t *name,size_t name_bytes);
 /* SYSCREPRC.MAR status-flag translation after successful privilege checks. */
 uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
     const struct port_exe_creprc_result *);

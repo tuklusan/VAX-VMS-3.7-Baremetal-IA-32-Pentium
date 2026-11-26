@@ -188,6 +188,31 @@ int main(void){
        test_get32(pqb_bytes+PORT_V37_PQB_PRIVILEGES+4u)!=
           (uint32_t)(identity_result.privilege_mask>>32))
         return fail("SYSCREPRC PQB grants, PCB priority, UIC and owner fields");
+    static const uint8_t process_name[15]="ABCDEFGHIJKLMNO";
+    if(port_exe_creprc_copy_process_name(pcb_allocation.address,
+          pcb_allocation.bytes,pqb_allocation.address,pqb_allocation.bytes,
+          process_name,sizeof process_name)!=PORT_SS_NORMAL||
+       pcb_bytes[PORT_V37_PCB_LNAME]!=sizeof process_name||
+       memcmp(pcb_bytes+PORT_V37_PCB_LNAME+1u,process_name,
+          sizeof process_name))
+        return fail("SYSCREPRC MOVSTRING process name into PCB LNAME");
+    for(unsigned i=0u;i<8u;i++)
+        if(pqb_bytes[PORT_V37_PQB_IMAGE+i])
+            return fail("SYSCREPRC clears transient PQB image name");
+    uint8_t pcb_snapshot[160],pqb_snapshot[PORT_V37_PQB_BYTES];
+    memcpy(pcb_snapshot,pcb_bytes,sizeof pcb_snapshot);
+    memcpy(pqb_snapshot,pqb_bytes,sizeof pqb_snapshot);
+    if(port_exe_creprc_copy_process_name(pcb_allocation.address,
+          pcb_allocation.bytes,pqb_allocation.address,pqb_allocation.bytes,
+          process_name,16u)!=PORT_SS_IVLOGNAM||
+       memcmp(pcb_snapshot,pcb_bytes,sizeof pcb_snapshot)||
+       memcmp(pqb_snapshot,pqb_bytes,sizeof pqb_snapshot)||
+       port_exe_creprc_copy_process_name(pcb_allocation.address,
+          pcb_allocation.bytes,pqb_allocation.address,pqb_allocation.bytes,
+          NULL,1u)!=PORT_SS_ACCVIO||
+       memcmp(pcb_snapshot,pcb_bytes,sizeof pcb_snapshot)||
+       memcmp(pqb_snapshot,pqb_bytes,sizeof pqb_snapshot))
+        return fail("SYSCREPRC process name invalid length/access atomicity");
     if(port_exe_creprc_set_pqb_system_username(pqb_allocation.address,
           pqb_allocation.bytes)!=PORT_SS_NORMAL||
        memcmp(pqb_bytes+PORT_V37_PQB_USERNAME,"SYSTEM      ",12u))

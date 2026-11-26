@@ -189,6 +189,27 @@ uint32_t port_exe_creprc_apply_identity(uint8_t *pcb,size_t pcb_bytes,
     return PORT_SS_NORMAL;
 }
 
+uint32_t port_exe_creprc_copy_process_name(uint8_t *pcb,size_t pcb_bytes,
+    uint8_t *pqb,size_t pqb_bytes,const uint8_t *name,size_t name_bytes){
+    if(!pcb||!pqb||pcb_bytes<160u||pqb_bytes<PORT_V37_PQB_BYTES||
+       read16(pcb+PORT_V37_PCB_SIZE)!=160u||
+       pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
+       read16(pqb+PORT_V37_PQB_SIZE)!=PORT_V37_PQB_BYTES||
+       pqb[PORT_V37_PQB_TYPE]!=PORT_V37_DYN_PQB)
+        return PORT_SS_BADPARAM;
+    if(name_bytes>15u)return PORT_SS_IVLOGNAM;
+    if(name_bytes&&!name)return PORT_SS_ACCVIO;
+    if(!name_bytes)return PORT_SS_NORMAL;
+    pqb[PORT_V37_PQB_IMAGE]=(uint8_t)name_bytes;
+    for(size_t i=0u;i<name_bytes;i++)
+        pqb[PORT_V37_PQB_IMAGE+1u+i]=name[i];
+    pcb[PORT_V37_PCB_LNAME]=(uint8_t)name_bytes;
+    for(size_t i=0u;i<name_bytes;i++)
+        pcb[PORT_V37_PCB_LNAME+1u+i]=name[i];
+    for(unsigned i=0u;i<8u;i++)pqb[PORT_V37_PQB_IMAGE+i]=0u;
+    return PORT_SS_NORMAL;
+}
+
 uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
     const struct port_exe_creprc_result *result){
     if(!pcb||!result||pcb_bytes<PORT_V37_PCB_BYTES||

@@ -1773,7 +1773,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_init_pcb_queues",
-          "pc_line": 219,
+          "pc_line": 240,
           "function": "Initialize source self-linked AST/lock queues, AST enable mask, ARB address, termination mailbox and shell page count"
         },
         {
@@ -1809,10 +1809,21 @@
         {
           "original_lines": [
             317,
+            322
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_copy_process_name",
+          "pc_line": 192,
+          "function": "Validate the 15-byte source name limit, copy ASCIC name to PCB LNAME and clear transient PQB image name"
+        },
+        {
+          "original_lines": [
+            323,
             323
           ],
           "status": "unresolved",
-          "reason": "PQB process names and default account/directory/logicals are absent"
+          "reason": "PQB default account/directory/logicals are absent"
         },
         {
           "original_lines": [
@@ -1852,7 +1863,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_apply_status_flags",
-          "pc_line": 192,
+          "pc_line": 213,
           "function": "Translate all nine validated $CREPRC status options to their SYSDEF PCB status bits, preserving privilege checks"
         },
         {
@@ -1879,7 +1890,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_activate_slot",
-          "pc_line": 242,
+          "pc_line": 263,
           "function": "Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer"
         },
         {
