@@ -2219,3 +2219,11 @@ Verification: `make execreprccheck build/sys.exe` PASS; full `make -j2 all test 
 M421 implementation and boot-evidence commit: `b9eba69288440f30e11e5e99f260e3f2df872e24`.
 
 Remaining: CREPRC defaults/JIB/PQL quotas, process flags and resource rollback; real INIT NULL/SWAPPER PHD contexts and scheduling; public SYS$QIO/Files-11 ACP/process AST integration; image activation; SYSTEM login/DCL and DECnet Phase IV; genuine SET HOST 0 second session and LOGOUT.
+
+## M422 - Initialize CREPRC PCB queue and ARB anchors, 26 November 2026
+
+Ported SYSCREPRC.MAR lines 304-311: initialize AST and lock queue headers as native guest self-links, enable all four AST access modes, set the ARB pointer to the inline PCB privilege mask, and copy the termination mailbox unit and shell page count. Address wrap/alignment and PCB header validation occur before any mutation. Tightened coverage ranges so unimplemented JIB sharing/quota charging and PQB username/default initialization remain explicitly unresolved.
+
+Verification: `make execreprccheck build/sys.exe` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,174 ranges; 453/4,566 files indexed; zero errors; 17,230 mapped, 30,487 partial, 58,935 unresolved, 8,032 missing, 26,713 excluded, 917 hardware-excluded). Host regressions check queue pointers, ASTEN, ARB, TMBU, PPGCNT, and rejection of guest address overflow atomically. `nm` and linked layout confirm resident helper remains in aperture. `make qemu-sysboot-m217` PASS through the DQA0/IRQ14/Files-11 test, then stops at incomplete INIT because NULL/SWAPPER PHD contexts remain absent. Capture `logs/serial/qemu-m217-run-local-20261126T013355927767Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; manifest validates 366 logs. No login, DCL, DECnet or SET HOST 0 observed. No DEC source or binary image added.
+
+M422 implementation and QEMU evidence commit: `db306d6520e20338850cb38696fafab472064fa2`.
