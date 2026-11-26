@@ -2373,3 +2373,12 @@ Verification: `make v37qastcheck v37schedcheck sourcerangecheck` PASS; full `mak
 
 Remaining: bind QAST/RSE to actual IOC process completions and derive wait WQHs from live process state; create/schedule INIT, NULL and SWAPPER contexts; finish public SYS$QIO/ACP, image activation, SYSTEM login/DCL and the genuine DECnet SET HOST 0 second-session/LOGOUT sequence.
 M438 implementation/evidence commit: `d89c806e75688f8584bbdf2dbaa1806148e0b201`. Serial SHA-256 verified: `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`.
+
+## M439 - Initialize source state-indexed wait headers and route AST wakes, 26 November 2026
+
+Added resident `SCH$AQ_WQHDR` state-indexed wait-header backing using source `SDAT.MAR` ordering and initialized its links/state values. `SCH$QAST`/AST arrival can now select the WQH from the target PCB state; CEF waits resolve their embedded CEB WQH, and other `SCH$RSE` AST-wait states use the indexed array. Expanded the executive resolver and host address maps to include the scheduler data. QAST host regression verifies automatic MWAIT WQH selection and wake to COM. Original `SDAT.MAR` coverage was added as partial for scheduler header initialization; source global packing, swapper globals, and other scheduler dependencies remain unresolved. These helpers are not yet connected to live IOC process completion or AST dispatch.
+
+Verification: targeted `make v37qastcheck v37schedcheck v37eventwaitcheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,190 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,710 partial, 59,546 unresolved, 8,032 missing, 26,778 excluded and 917 hardware-excluded). `make qemu-sysboot-m217` PASS through actual DQA0 DDT/IRQ14, Files-11 ACP and asynchronous I/O, then stops at the existing INIT boundary because NULL/SWAPPER PHD contexts are absent. Capture `logs/serial/qemu-m217-run-local-20261126T134148257796Z.log`, 6,307 bytes, SHA-256 `9c98068bf2532f34eb4150a6c0f536483c28ee0abcaa23062a6a7f1b194828c2`; QEMU runner exited. No login, DCL, DECnet Phase IV or SET HOST 0 observed.
+
+Remaining: connect scheduler wake/AST posting to real IOC post completion and process structures; construct/activate INIT, NULL and SWAPPER contexts to continue boot; finish public SYS$QIO, image activation, SYSTEM login/DCL and DECnet SET HOST 0 second-session/LOGOUT acceptance. No end-to-end acceptance condition is complete.
+M439 implementation/evidence commit: `be7d50c39c3237b8393c25165765cf1ce7dd8872`.
