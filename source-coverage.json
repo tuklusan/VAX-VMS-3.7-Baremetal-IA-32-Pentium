@@ -3783,7 +3783,7 @@
         "Native IA-32 SYS.EXE is a separately linked ELF32 file installed in the original Files-11 directory; the VAX image record format is CPU-specific",
         "SYSBOOT ELF32 LOAD_CODE streams real PT_LOAD bytes from the F11 VBN map into reserved supervisor RAM"
       ],
-      "unresolved_integration": "SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. Native INIT consumes the source-sized NPAGEDYN interval below the SRP/IRP/LRP ranges for its resident executive structures. A named Files-11 parameter-file reader merges only the INIT subset; the SYSBOOT command interpreter, complete BOO$SEARCH descriptor table and guest-time invocation remain unported. WCB overlay and packet pool PFN/SPT mapping remain incomplete; process startup is unresolved."
+      "unresolved_integration": "SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. Native INIT consumes the source-sized NPAGEDYN interval below the SRP/IRP/LRP ranges for its resident executive structures. Native boot opens optional SYS$SYSDEVICE:[SYSEXE]PARAMS.DAT through Files-11 and applies the supported INIT subset. Its startup-file field is retained but not yet consumed; TPWAIT prompt/persistence, the SYSBOOT command interpreter and full BOO$SEARCH descriptor table remain unported. WCB overlay and packet pool PFN/SPT mapping remain incomplete; process startup is unresolved."
     },
     {
       "original_file": "SYS/SRC/FILEREAD.MAR",
@@ -10741,7 +10741,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3131,
+          "pc_line": 3132,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10798,7 +10798,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3131,
+          "pc_line": 3132,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -23715,7 +23715,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "MAXPROCESSCNT default 72 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "MAXPROCESSCNT default 72 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23734,7 +23734,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "BALSETCNT default 36 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "BALSETCNT default 36 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23753,7 +23753,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "IRPCOUNT default 60 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "IRPCOUNT default 60 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23772,7 +23772,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "WSMAX default 1024 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "WSMAX default 1024 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23791,7 +23791,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "NPAGEDYN default 64000 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "NPAGEDYN default 64000 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23810,7 +23810,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "PAGEDYN default 80000 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "PAGEDYN default 80000 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23829,7 +23829,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LRPCOUNT default 4 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "LRPCOUNT default 4 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23848,7 +23848,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LRPSIZE default 576 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "LRPSIZE default 576 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23867,7 +23867,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "SRPCOUNT default 120 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "SRPCOUNT default 120 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23886,7 +23886,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "SRPSIZE default 96 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "SRPSIZE default 96 bytes copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23905,7 +23905,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "MPW_WRTCLUSTER default 96 pages copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "MPW_WRTCLUSTER default 96 pages copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23924,7 +23924,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "REALTIME_SPTS default 0 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "REALTIME_SPTS default 0 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23943,7 +23943,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LOCKIDTBL default 128 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "LOCKIDTBL default 128 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23962,7 +23962,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "RESHASHTBL default 32 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "RESHASHTBL default 32 copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -23981,7 +23981,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "DEADLOCK_WAIT default 10 seconds copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "DEADLOCK_WAIT default 10 seconds copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -24000,7 +24000,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "TIMEPROMPTWAIT default -1; zero disables operator wait; positive value bounds the startup time prompt copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "TIMEPROMPTWAIT default -1; zero disables operator wait; positive value bounds the startup time prompt copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -24019,7 +24019,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LOGSHASHTBL default 128 SYSTEM hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "LOGSHASHTBL default 128 SYSTEM hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -24030,7 +24030,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LOGGHASHTBL default 32 GROUP hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "LOGGHASHTBL default 32 GROUP hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -24041,7 +24041,7 @@
           "pc_file": "src/vms_ini_sysparams.c",
           "pc_symbol": "port_vms37_init_param_defaults",
           "pc_line": 6,
-          "function": "LOGPHASHTBL default 128 PROCESS hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved"
+          "function": "LOGPHASHTBL default 128 PROCESS hash entries copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -24052,7 +24052,7 @@
           "reason": "Other system parameters and configured PARAMS.DAT overrides not ported"
         }
       ],
-      "unresolved_integration": "Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including TIMEPROMPTWAIT and all three logical-name hash table sizes, but native boot does not yet locate/apply that file and SWAPINIT has not yet allocated or linked the configured tables; other SYSPARAM cells and consumers remain unported."
+      "unresolved_integration": "Only the listed original INIT defaults are represented. Native SYSBOOT applies the supported PARAMS.DAT subset, including TIMEPROMPTWAIT and all three logical-name hash table sizes, if the optional file is present. SYSINIT does not implement TPWAIT prompting or SETIME persistence, and SWAPINIT has not allocated or linked all configured tables; other SYSPARAM cells and consumers remain unported."
     },
     {
       "original_file": "SYS/SRC/SWAPPER.MAR",

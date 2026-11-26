@@ -1,4 +1,5 @@
 #include "vms_sysboot_elf.h"
+#include "vms_sysboot_paramfile.h"
 #include "vms_iniloa_entry.h"
 #include "vms_ini_pc_bus.h"
 #include "vms_sys_executive_entry.h"
@@ -3260,10 +3261,28 @@ void kmain(void) {
         bootstrap_message("INIT: original SYSPARAM defaults unavailable.");
         bootstrap_halt();
     }
+    /* SYSBOOT BOO$USEFILE: read the optional Files-11 parameter image before
+     * deriving any INIT pool/queue settings from SYSPARAM. The bounded native
+     * decoder commits the whole parameter set only after a valid terminator. */
+    static uint8_t sysboot_startup_file[32];
+    static uint8_t sysboot_param_buffer[32768];
+    uint32_t sysboot_param_count=0u;
+    size_t sysboot_param_bytes=0u;
+    uint32_t param_status=port_sysboot_usefile(boot_io,1u,&bootstrap_volume,
+        "SYS$SYSDEVICE:[SYSEXE]PARAMS.DAT",&init_params,
+        sysboot_startup_file,&sysboot_param_count,sysboot_param_buffer,
+        sizeof sysboot_param_buffer,&sysboot_param_bytes);
+    if(param_status==PORT_SYSBOOT_USEFILE_NOT_FOUND){
+        bootstrap_message("SYSBOOT: PARAMS.DAT absent; source SYSPARAM defaults retained.");
+    }else if(param_status!=PORT_SYSBOOT_USEFILE_OK){
+        bootstrap_message("SYSBOOT: PARAMS.DAT read or decode failed.");
+        bootstrap_halt();
+    }else{
+        bootstrap_message("SYSBOOT: Files-11 PARAMS.DAT applied before INIT allocation.");
+    }
     /* BOOTS/SRC/SYSBOOT.MAR: carved lookaside packet pages are provided to
-     * SYS.EXE before the CPU-specific load vector table is linked. Counts,
-     * sizes and the resident nonpaged limit use original SYSPARAM defaults;
-     * PARAMS.DAT overrides and virtual NPAGEVIR mapping remain unresolved. */
+     * SYS.EXE before the CPU-specific load vector table is linked. Virtual
+     * NPAGEVIR mapping remains unresolved. */
     const struct port_boo_packet_settings packet_profile={
         .irp_length=PORT_V37_IRP_SIZE,
         .irp_count=init_params.irp_count,

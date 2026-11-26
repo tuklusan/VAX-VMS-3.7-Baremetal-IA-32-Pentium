@@ -41,6 +41,7 @@ def main():
         b'IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.',
         b'SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.',
         b'SYSBOOT: Files-11 SYS.EXE native image loaded.',
+        b'SYSBOOT: PARAMS.DAT absent; source SYSPARAM defaults retained.',
         b'INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.',
         b'SYSBOOT: Files-11 SYSLOA386.EXE native image loaded.',
         b'INIT: SYS.EXE linked live SYSLOA386 processor vectors.',

@@ -994,7 +994,7 @@ for first,last,path,symbol,reason,status in sysboot_read_ranges:
 result['files'].append({'original_file':'BOOTS/SRC/SYSBOOT.MAR',
                        'original_lines':2897,'sections':sections,
                        'platform_changes':['Native IA-32 SYS.EXE is a separately linked ELF32 file installed in the original Files-11 directory; the VAX image record format is CPU-specific', 'SYSBOOT ELF32 LOAD_CODE streams real PT_LOAD bytes from the F11 VBN map into reserved supervisor RAM'],
-    'unresolved_integration':'SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. Native INIT consumes the source-sized NPAGEDYN interval below the SRP/IRP/LRP ranges for its resident executive structures. A named Files-11 parameter-file reader merges only the INIT subset; the SYSBOOT command interpreter, complete BOO$SEARCH descriptor table and guest-time invocation remain unported. WCB overlay and packet pool PFN/SPT mapping remain incomplete; process startup is unresolved.'})
+    'unresolved_integration':'SYSBOOT normalized BOO$L_SYS_MAP retrieval pointers now derive from live Files-11 SYS.EXE extents. Native INIT consumes the source-sized NPAGEDYN interval below the SRP/IRP/LRP ranges for its resident executive structures. Native boot opens optional SYS$SYSDEVICE:[SYSEXE]PARAMS.DAT through Files-11 and applies the supported INIT subset. Its startup-file field is retained but not yet consumed; TPWAIT prompt/persistence, the SYSBOOT command interpreter and full BOO$SEARCH descriptor table remain unported. WCB overlay and packet pool PFN/SPT mapping remain incomplete; process startup is unresolved.'})
 
 fileread_sections=[
     (1,740,None,None,'other FILEREAD declarations, cache setup, full filename parser and open logic','missing'),
@@ -2748,8 +2748,8 @@ result['files'].append({'original_file':'SYS/SRC/MEMORYALC.MAR',
     'unresolved_integration':'Native SYS.EXE initializes the source-sized PAGEDYN interval carved from its resident BSS and exports EXE$ALOPAGED/EXE$DEAPAGED-equivalent entries; QEMU exercises one aligned allocation/free through the actual resident entries, but no process/runtime service consumes the pool. PAGEDYN SPT/PFN mapping, POOLPGING, extension, mutex waits/wakeup and working-set/PHD users remain unresolved. The source-sized NPAGEDYN interval backs INIT structures, but nonpaged extension/resource waits and public SYS$QIO integration also remain incomplete.'})
 
 # SYSPARAM.MAR supplies system defaults consumed by INIT. The native subset
-# records the original declarations, while SYSBOOT PARAMS.DAT overrides and
-# all other parameter cells are intentionally still unresolved.
+# records the original declarations, while SYSBOOT applies supported
+# PARAMS.DAT overrides and all other parameter cells remain unresolved.
 sysparam_defaults=[
     (638,646,'MAXPROCESSCNT default 72'),
     (753,760,'BALSETCNT default 36'),
@@ -2781,14 +2781,14 @@ for first,last,label in sysparam_defaults:
     sysparam_sections.append({'original_lines':[first,last],
         'status':'partial' if line else 'missing','pc_file':'src/vms_ini_sysparams.c',
         'pc_symbol':'port_vms37_init_param_defaults','pc_line':line,
-        'function':label+' copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; boot-time file lookup/application is unresolved'})
+        'function':label+' copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present'})
     cursor=last+1
 if cursor<=3007:
     sysparam_sections.append({'original_lines':[cursor,3007],
         'status':'unresolved','reason':'Other system parameters and configured PARAMS.DAT overrides not ported'})
 result['files'].append({'original_file':'SYS/SRC/SYSPARAM.MAR',
     'original_lines':3007,'sections':sysparam_sections,
-    'unresolved_integration':'Only the listed original INIT defaults are represented. The bounded SYSBOOT PARAMS.DAT decoder applies the supported subset, including TIMEPROMPTWAIT and all three logical-name hash table sizes, but native boot does not yet locate/apply that file and SWAPINIT has not yet allocated or linked the configured tables; other SYSPARAM cells and consumers remain unported.'})
+    'unresolved_integration':'Only the listed original INIT defaults are represented. Native SYSBOOT applies the supported PARAMS.DAT subset, including TIMEPROMPTWAIT and all three logical-name hash table sizes, if the optional file is present. SYSINIT does not implement TPWAIT prompting or SETIME persistence, and SWAPINIT has not allocated or linked all configured tables; other SYSPARAM cells and consumers remain unported.'})
 
 # SWAPPER.MAR: native SWAPINIT starts with paged-pool setup, then prepares
 # logical-name hash geometry and allocates SYSTEM/GROUP RSHT records.
