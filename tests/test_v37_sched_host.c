@@ -441,8 +441,10 @@ int main(void){
         return fail("initial process activation PCB template");
     start.frames[0]=(struct port_v37_ia32_restore_frame){
         .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
-        .registers={.cs=0x08u,.eflags=0x202u,.eip=0x00123456u}};
+        .registers={.cs=0x08u,.eflags=0x202u,.eip=0x00123456u,
+                    .user_ss=start.pcb_va[0]}};
     const struct port_v37_phd_seed start_phd={.entry_pc=0x00123456u,
+        .initial_r4=start.pcb_va[0],
         .p0_page_table=0x00c00000u,.p0_limit=12u,
         .p1_page_table=0x00c01000u,.p1_limit=0x200000u,
         .first_free_p1_va=0x7ffffe00u,.priority=0u,.ast_level=4u};
@@ -456,6 +458,15 @@ int main(void){
        get32(start.pcbs[0]+PORT_V37_PCB_PHYPCB)||
        port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
         return fail("invalid PHD mapping rejected before INIT context commit");
+    start.frames[0].registers.user_ss++;
+    if(port_v37_sched_start_context(&start_scheduler,start.pcb_va[0],
+           start.phd_va[0],start.phd_va[0]+PORT_V37_PHD_PCB,
+           start.frame_va[0],&start_phd,0u)!=PORT_V37_SCHED_CORRUPT||
+       get32(start.pcbs[0]+PORT_V37_PCB_PHD)||
+       get32(start.pcbs[0]+PORT_V37_PCB_PHYPCB)||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("native entry stack argument must preserve source PHD R4");
+    start.frames[0].registers.user_ss--;
     if(port_v37_sched_start_context(&start_scheduler,start.pcb_va[0],
            start.phd_va[0],start.phd_va[0]+PORT_V37_PHD_PCB,
            start.frame_va[0],&start_phd,0u)!=

@@ -20,18 +20,20 @@ int main(void){
     struct port_v37_ia32_restore_frame *frame=0;
     const struct port_v37_ia32_context_seed kernel={
         .cr3=0x00123000u,.entry_pc=0x00101000u,.eflags=0x202u,
+        .initial_kernel_argument=0x00112233u,
         .code_selector=0x08u,.data_selector=0x10u,.access_mode=0u};
     const uint32_t kernel_status=port_v37_ia32_context_init(stack,sizeof stack,
         &kernel,&frame);
     if(kernel_status!=PORT_V37_IA32_CONTEXT_OK||!frame||
        (uintptr_t)frame<(uintptr_t)stack||
        (uintptr_t)frame+sizeof(*frame)>(uintptr_t)stack+sizeof stack||
-       ((uintptr_t)frame&15u)||frame->gs!=0x10u||frame->fs!=0x10u||
+       ((uintptr_t)frame&15u)!=8u||frame->gs!=0x10u||frame->fs!=0x10u||
        frame->es!=0x10u||frame->ds!=0x10u||
        frame->registers.eip!=kernel.entry_pc||
        frame->registers.cs!=kernel.code_selector||
        frame->registers.eflags!=kernel.eflags||
-       frame->registers.user_esp||frame->registers.user_ss){
+       frame->registers.user_esp||
+       frame->registers.user_ss!=kernel.initial_kernel_argument){
         fprintf(stderr,"status=%u frame=%p",kernel_status,(void *)frame);
         if(frame)fprintf(stderr," gs=%x fs=%x es=%x ds=%x eip=%x cs=%x flags=%x useresp=%x userss=%x\n",
             frame->gs,frame->fs,frame->es,frame->ds,
@@ -40,6 +42,10 @@ int main(void){
             frame->registers.user_ss);
         return fail("initial supervisor IRET frame");
     }
+    frame->registers.user_esp=0x12345678u;
+    frame->registers.user_ss=0x87654321u;
+    if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)
+        return fail("same-CPL IRET ignores unsaved ESP/SS stack words");
 
     const struct port_v37_ia32_context_seed user={
         .cr3=0x00200000u,.entry_pc=0x00401000u,

@@ -1644,7 +1644,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 809,
+          "pc_line": 811,
           "function": "Set a source-layout local event bit and wake a satisfied LEF waiter; PID lookup and live SETEF dispatch remain absent"
         },
         {
@@ -1655,7 +1655,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 809,
+          "pc_line": 811,
           "function": "Set a source-layout normal/master CEF bit and scan its WQH for satisfied resident waiters; nonresident CEF waiters use source EVENTE/CHSE to COMO without completing saved result; slave CEB replication remains unsupported"
         },
         {
@@ -1674,7 +1674,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "event_condition",
-          "pc_line": 671,
+          "pc_line": 673,
           "function": "Evaluate the source EFWM and WALL wait-any/wait-all predicate for a resident PCB"
         },
         {
@@ -5885,7 +5885,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_save_current",
-          "pc_line": 368,
+          "pc_line": 370,
           "function": "Validate and save the outgoing IA-32 IRET frame through PHD KSP/PC, preserve PCB$L_PHYPCB as the hardware PCB physical address, then requeue through SCH$RESCHED; live trap/IPL entry remains unintegrated"
         },
         {
@@ -5896,7 +5896,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
-          "pc_line": 345,
+          "pc_line": 347,
           "function": "Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction"
         },
         {
@@ -5915,7 +5915,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
-          "pc_line": 291,
+          "pc_line": 293,
           "function": "Highest resident COM queue selection resolves the saved IA-32 IRET frame through PHD KSP while retaining PCB$L_PHYPCB for the source hardware PCB; returns its address with selected PCB. IRQ0 invokes this transaction, but contextless NULL/SWAPPER remain unactivated and per-process CR3 switching remains incomplete"
         },
         {
@@ -5926,8 +5926,8 @@
           "status": "partial",
           "pc_file": "src/vms_v37_ia32_context.c",
           "pc_symbol": "port_v37_ia32_context_validate",
-          "pc_line": 57,
-          "function": "Validate mode-matched selectors and return stack; port_v37_ia32_context_stack_top bounds the 32-bit extent before arch_prepare_vms_restore_frame installs TSS ESP0 for access modes 1-3"
+          "pc_line": 69,
+          "function": "Validate mode-matched selectors; same-CPL kernel IRET ignores unsaved ESP/SS stack words while lower-mode returns validate their user stack; port_v37_ia32_context_stack_top bounds the 32-bit extent before arch_prepare_vms_restore_frame installs TSS ESP0 for access modes 1-3"
         },
         {
           "original_lines": [
@@ -6088,7 +6088,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_event",
-          "pc_line": 795,
+          "pc_line": 797,
           "function": "native functional counterpart to original section"
         },
         {
@@ -6099,7 +6099,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_current",
-          "pc_line": 460,
+          "pc_line": 462,
           "function": "native functional counterpart to original section"
         },
         {
@@ -10849,7 +10849,7 @@
           "pc_file": "src/vms_v37_phd.c",
           "pc_symbol": "port_v37_phd_init_genphd",
           "pc_line": 20,
-          "function": "Encode PDAT.MAR GENPHD fields in the 376-byte PHD; set Q_PRIVMSK to all ones while preserving zero-initialized AUTHPRIV, and map the embedded hardware PCB at offset 112; native P0/P1 mappings and activation remain missing"
+          "function": "Encode PDAT.MAR GENPHD fields in the 376-byte PHD; set Q_PRIVMSK to all ones, preserve zero-initialized AUTHPRIV, reject reserved ASTLVL values above the source disabled value 4, and map the embedded hardware PCB at offset 112. For CPL0 initial processes, the IA-32 frame maps source R4 to the first native C argument with valid entry stack alignment; process page mappings and INIT activation remain missing"
         },
         {
           "original_lines": [
@@ -10950,7 +10950,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 569,
+          "pc_line": 571,
           "function": "Partial AST event state mask and CHSE wake routing; AST queue/AST delivery semantics remain unresolved"
         },
         {
@@ -10969,7 +10969,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 569,
+          "pc_line": 571,
           "function": "Partial local/common event state dispatch; source event selection is supplied by the caller"
         },
         {
@@ -10980,7 +10980,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 569,
+          "pc_line": 571,
           "function": "Partial source state masks and wake dispatch for free-page, WAKE, RESUME and page-fault-complete events; caller supplies the actual wait-queue header and situational priority class"
         },
         {
@@ -10999,7 +10999,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 569,
+          "pc_line": 571,
           "function": "Partial SETPRI event state dispatch to a precomputed SCH$CHSEP priority transition"
         },
         {
@@ -11018,7 +11018,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 569,
+          "pc_line": 571,
           "function": "For resident LEF/CEF waiters, mirror the already post-INT IA-32 EIP in PHD PC and return SS$_NORMAL through PHD R0/native EAX before CHSE; event-flag selection and IPL integration remain unresolved"
         },
         {
@@ -11037,7 +11037,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_rse_event",
-          "pc_line": 569,
+          "pc_line": 571,
           "function": "Route the implemented RSE executable-state events through wait-queue removal and source CHSE scheduling; AST delivery and event-specific completion state remain unresolved"
         },
         {
@@ -11086,7 +11086,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_set_priority",
-          "pc_line": 245,
+          "pc_line": 247,
           "function": "Partial precomputed-priority COM/COMO CHSEP removal, COMQS/ready accounting, queue insertion and reschedule/swapper callbacks; IPL bugcheck semantics remain unresolved"
         },
         {

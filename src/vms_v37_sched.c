@@ -214,6 +214,8 @@ uint32_t port_v37_sched_start_context(struct port_v37_scheduler *s,
         return PORT_V37_SCHED_CORRUPT;
     if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK||
        frame->registers.eip!=seed->entry_pc||
+       ((frame->registers.cs&3u)==0u&&
+          frame->registers.user_ss!=seed->initial_r4)||
        frame_address>UINT32_MAX-sizeof(*frame))
         return PORT_V37_SCHED_CORRUPT;
     for(unsigned i=0u;i<PORT_V37_PHD_BYTES;i++)

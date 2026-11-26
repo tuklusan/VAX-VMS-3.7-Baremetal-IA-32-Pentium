@@ -33,10 +33,21 @@ uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
     }else if(!seed->initial_stack){
         return PORT_V37_IA32_CONTEXT_STACK;
     }
+    if(seed->access_mode&&seed->initial_kernel_argument)
+        return PORT_V37_IA32_CONTEXT_STACK;
     const uintptr_t top=(uintptr_t)kernel_stack+stack_bytes;
+    uintptr_t frame_address;
+    if(seed->access_mode==0u){
+        /* After same-CPL IRET ESP points at frame+68. Place that address at
+         * 12 mod 16, the i386 C entry alignment after a return-address push. */
+        frame_address=((top-sizeof(struct port_v37_ia32_restore_frame)-8u)&
+                       ~(uintptr_t)15u)+8u;
+    }else{
+        frame_address=(top-sizeof(struct port_v37_ia32_restore_frame))&
+                      ~(uintptr_t)15u;
+    }
     struct port_v37_ia32_restore_frame *const frame=
-        (struct port_v37_ia32_restore_frame *)
-            ((top-sizeof(*frame))&~(uintptr_t)15u);
+        (struct port_v37_ia32_restore_frame *)frame_address;
     const struct port_v37_ia32_restore_frame candidate={
         .gs=seed->data_selector,.fs=seed->data_selector,
         .es=seed->data_selector,.ds=seed->data_selector,
@@ -46,7 +57,8 @@ uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
             .vector=0u,.error=0u,.eip=seed->entry_pc,
             .cs=seed->code_selector,.eflags=seed->eflags,
             .user_esp=seed->access_mode?seed->initial_stack:0u,
-            .user_ss=seed->access_mode?seed->data_selector:0u
+            .user_ss=seed->access_mode?seed->data_selector:
+                     seed->initial_kernel_argument
         }
     };
     *frame=candidate;
@@ -68,8 +80,9 @@ uint32_t port_v37_ia32_context_validate(
        !(frame->registers.eflags&2u))
         return PORT_V37_IA32_CONTEXT_FLAGS;
     if(mode==0u){
-        if(frame->registers.user_esp||frame->registers.user_ss)
-            return PORT_V37_IA32_CONTEXT_STACK;
+        /* Same-CPL IRET ignores these words. For an initial frame they hold
+         * the null C return address and argument; for live traps they overlap
+         * the interrupted kernel stack and are not CPU-saved ESP/SS fields. */
     }else if(!frame->registers.user_esp||
              frame->registers.user_ss!=data[mode]){
         return PORT_V37_IA32_CONTEXT_STACK;

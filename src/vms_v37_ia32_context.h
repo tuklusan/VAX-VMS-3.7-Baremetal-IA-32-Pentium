@@ -20,16 +20,17 @@ struct port_v37_ia32_restore_frame {
 };
 
 struct port_v37_ia32_context_seed {
-    uint32_t cr3,entry_pc,initial_stack,eflags;
+    uint32_t cr3,entry_pc,initial_stack,eflags,initial_kernel_argument;
     uint16_t code_selector,data_selector;
     uint8_t access_mode;
     uint8_t reserved;
 };
 
 /* Construct the initial native saved frame at the top of a process-owned
- * kernel stack. VMS access modes map to matching IA-32 CPL0-CPL3. Nonzero
- * modes require caller-mapped stack and page tables. The returned pointer
- * names registers, as arch_trap expects. */
+ * kernel stack. VMS access modes map to matching IA-32 CPL0-CPL3. For a
+ * CPL0 process, the post-IRET stack contains a null return address followed
+ * by initial_kernel_argument, mapping source R4 to the C entry argument.
+ * Nonzero modes require caller-mapped stack and page tables. */
 uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
     const struct port_v37_ia32_context_seed *,
     struct port_v37_ia32_restore_frame **restore_frame);

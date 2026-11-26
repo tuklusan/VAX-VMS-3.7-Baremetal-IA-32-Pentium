@@ -14,7 +14,7 @@ build/boot.bin: build/boot.o
 	$(LD) -m elf_i386 -Ttext 0x7c00 -e _start --oformat binary $< -o $@
 build/start.o: src/start.s | build
 	$(AS) --32 $< -o $@
-build/arch.o: src/arch.c src/vms_dq_crb.h src/vms_exe_gettim.h src/vms_exe_sched.h src/vms_logintime.h src/vms_postef.h src/vms_mutex.h src/vms_condition.h src/vms_ast.h src/vms_pmap.h src/vms_pcb.h src/vms_phys.h src/vms_vmem.h src/vms_event.h src/vms_ata.h src/vms_ne2k.h src/vms_decnet.h src/vms_nsp.h src/vms_nsp_link.h src/vms_session.h src/vms_nsp_data.h src/vms_nsp_reliable.h src/vms_mirror.h src/vms_mirror_server.h src/vms_serial.h src/vms_qio.h src/vms_channels.h src/vms_userptr.h src/vms_userio.h src/vms_channels.h src/vms_kstack.h src/vms_ramcheck.h | build
+build/arch.o: src/arch.c src/vms_dq_crb.h src/vms_exe_gettim.h src/vms_exe_sched.h src/vms_logintime.h src/vms_postef.h src/vms_mutex.h src/vms_condition.h src/vms_ast.h src/vms_pmap.h src/vms_pcb.h src/vms_phys.h src/vms_vmem.h src/vms_event.h src/vms_ata.h src/vms_ne2k.h src/vms_decnet.h src/vms_nsp.h src/vms_nsp_link.h src/vms_session.h src/vms_nsp_data.h src/vms_nsp_reliable.h src/vms_mirror.h src/vms_mirror_server.h src/vms_serial.h src/vms_qio.h src/vms_channels.h src/vms_userptr.h src/vms_userio.h src/vms_channels.h src/vms_kstack.h src/vms_ramcheck.h src/vms_v37_ia32_context.h src/vms_v37_sched.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 build/vms_dq_crb.o: src/vms_dq_crb.c src/vms_dq_crb.h src/vms_v37_dyn_tags.h | build
 	$(CC) $(CFLAGS) -c $< -o $@

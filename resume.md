@@ -2135,3 +2135,16 @@ Verification: full `make -j2 all test` exited 0 (`/tmp/m413-test.log`, no compil
 Local M413 implementation commit: `cd54ca2e95eea519c2b8a2d9b67afe357629b56e`. Published main M412: `c1504a2746e2585d5c4a0dab2159e562d4b591e6`; M413 implementation and verification checkpoint `97f5d93e6d1d01edc71351d02c033ebaa06e1bb9` are pushed.
 
 Remaining work: construct source-ordered NULL/SWAPPER PHD and stack mappings, initial IA-32 contexts, and the SWAPPER startup/TT0 process path; integrate live public SYS$QIO, process AST delivery, and ACP requests; then native image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 second-session/LOGOUT verification.
+
+
+## M414 - Build native CPL0 process entry frames with source R4 argument, 26 November 2026
+
+Initial IA-32 CPL0 contexts now use the post-IRET stack as a native i386 C entry: the frame is aligned so ESP has the expected 12-mod-16 entry alignment, the saved null return address is followed by source PHD R4 as the first argument, and SCH$CHSE activation rejects mismatched frame/PHD arguments. Same-CPL IRET ignores the trailing words as hardware ESP/SS, which are unsaved stack contents on live kernel interrupts. This is an activation primitive; INIT still does not supply the NULL/SWAPPER page mappings or invoke it.
+
+Added missing `build/arch.o` dependencies on the shared IA-32 context/scheduler headers. The first QEMU run after changing the context seed ABI exposed the stale-object bug: it failed at the early CPL1/CPL2 IRET probe. That real failed capture is retained. Rebuilding with the corrected dependency and rerunning QEMU passed the full M217 source-order regression; INIT still stops because NULL/SWAPPER contexts are absent.
+
+Verification: `make v37ia32ctxcheck v37schedcheck` PASS; full `make -j2 all test` exited 0 (`/tmp/m414-final-test.log`); `make qemu-sysboot-m217` PASS after the required `arch.o` rebuild; coverage generation, source-range regression and source validator PASS (2,156 ranges; 452/4,566 original files indexed; zero errors; 17,230 mapped, 30,396 partial, 58,471 unresolved, 8,032 missing, 26,463 excluded, 917 hardware-excluded). Failed capture `logs/serial/qemu-m217-run-local-20261126T005140903404Z.log`: 57 bytes, SHA-256 `4f80a0ea65de11981c2e9ec5cdc7bdaa08cd57cb304c52f77e0ebae14f2b2cf4`. Passing capture `logs/serial/qemu-m217-run-local-20261126T005209373421Z.log`: 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; QEMU exited.
+
+Local M414 changes: pending commit. Published main M413: `6011d53ce6f46d846e5f4110fc4a526d3c0d6ae1`.
+
+Remaining work: allocate source-ordered NULL/SWAPPER PHDs, stacks and process mappings and invoke these contexts at the proper INIT point; port SWAPINIT/TT0/SWAPPER loop, live SYS$QIO, Files-11 ACP and process AST completion; then image activation, SYSTEM login/DCL, DECnet Phase IV and real SET HOST 0/second-session/LOGOUT.
