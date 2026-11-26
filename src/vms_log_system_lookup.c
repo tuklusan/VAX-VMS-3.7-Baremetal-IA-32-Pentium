@@ -13,7 +13,6 @@ uint32_t port_log_system_lookup(const struct port_log_system_table *t,
         uint8_t *r=port_log_source_record(t,record);
         if(!r||r[10u]!=PORT_V37_DYN_LOG||r[11u]!=PORT_LOG_SYSTEM||
            r[20u]>PORT_LOG_MAX_NAME||
-           port_v37_read16(r+8u)<PORT_LOG_REC_LEN||
            port_v37_read16(r+8u)>PORT_LOG_MAX_REC_LEN||
            22u+(size_t)r[20u]>port_v37_read16(r+8u)||
            23u+(size_t)r[20u]+r[21u+r[20u]]>

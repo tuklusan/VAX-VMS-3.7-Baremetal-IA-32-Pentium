@@ -147,8 +147,24 @@ static int rejection(void){
     CHECK(!f.table.ready);
     return 0;
 }
+static int rootsys(void){
+    struct fixture f;CHECK(!prepare(&f));
+    CHECK(port_log_system_init(&f.table,f.disk,f.sys,sizeof f.disk,4u)==PORT_LOG_OK);
+    const uint32_t addresses[3]={(uint32_t)(uintptr_t)f.sysnames[0],
+        (uint32_t)(uintptr_t)f.sysnames[1],
+        (uint32_t)(uintptr_t)f.sysnames[2]};
+    const uint8_t no_topsys[10]={0u};
+    CHECK(port_sip_create_system_names_in_table(&f.table,f.sysnames,
+          addresses,no_topsys)==PORT_SIP_OK);
+    struct port_log_result result={0};uint8_t value[PORT_LOG_MAX_REC_LEN]={0};
+    CHECK(port_log_translate(&f.table,"SYS$SYSTEM",10u,0u,value,
+          sizeof value,&result)==PORT_LOG_OK);
+    CHECK(result.bytes==14u&&!memcmp(value,"_DQA0:[SYSEXE]",14u));
+    CHECK(port_log_system_check(&f.table)==PORT_LOG_OK);
+    return 0;
+}
 int main(void){
-    CHECK(!direct());CHECK(!collision());CHECK(!rejection());
+    CHECK(!direct());CHECK(!collision());CHECK(!rejection());CHECK(!rootsys());
     puts("LOGNAMSUB.MAR source SYSTEM LOG$HASH/SEARCHLOG/TRANSLATE initial names and overflow guards PASS");
     return 0;
 }

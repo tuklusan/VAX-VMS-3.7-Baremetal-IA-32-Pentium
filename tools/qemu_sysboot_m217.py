@@ -103,8 +103,9 @@ def main():
         b'INIT: DQA0 UCB busy serialized two retained DDT READPBLK IRPs through IRQ14 and deferred IOC post.',
         b'INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
-        b'INIT: bound source NULL/SWAPPER PHDs to native IA-32 frames and process page tables.',
+        b'INIT: bound source NULL/SWAPPER/SYSINIT PHDs to native IA-32 frames and process page tables.',
         b'SWAPPER: scheduled native context resolved SYS$DISK and SYS$SYSDEVICE.',
+        b'SYSINIT: native scheduled context created and verified SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE.',
         b'SCH$WAITK blocked SWAPPER; SCH$SCHED selected NULL.']
     failures=[
         b'*** x86 fault:',
@@ -152,6 +153,9 @@ def main():
         b'INIT: primary ATA IRQ14 did not complete a sector read.',
         b'INIT: live SYS.EXE PIT clock did not advance.',
         b'INIT: native NULL/SWAPPER PHD or context binding failed.',
+        b'INIT: native process PHD/context binding failed at stage ',
+        b'SYSINIT: source SYSTEM logical creation failed.',
+        b'SYSINIT: source logical translation verification failed.',
         b'INIT: marked QEMU ATA PIO write/readback/restore regression failed.',
         b'INIT: asynchronous ATA scratch write failed.',
         b'INIT: asynchronous ATA write readback failed.',

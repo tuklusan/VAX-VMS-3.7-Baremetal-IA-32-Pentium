@@ -9,8 +9,7 @@ uint32_t port_log_system_add(struct port_log_system_table *t,uint8_t *record,
     if(!t||!t->ready||!record||!address||bytes<PORT_LOG_REC_LEN)
         return PORT_LOG_BAD;
     const size_t rec_len=port_v37_read16(record+8u);
-    if(rec_len<PORT_LOG_REC_LEN||
-       rec_len>PORT_LOG_MAX_REC_LEN||bytes<rec_len||
+    if(rec_len>PORT_LOG_MAX_REC_LEN||bytes<rec_len||
        t->count<2u||t->count>=PORT_LOG_RECORDS||
        port_log_system_check(t)!=PORT_LOG_OK||
        record[10u]!=PORT_V37_DYN_LOG||record[11u]!=PORT_LOG_SYSTEM||

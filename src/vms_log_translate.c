@@ -23,8 +23,7 @@ uint32_t port_log_translate(const struct port_log_system_table *t,
                   PORT_LOG_NOTRAN,0u,0u,out);
     if(status!=PORT_LOG_OK)return status;
     const uint8_t *const r=port_log_source_record(t,address);
-    if(!r||port_v37_read16(r+8u)<PORT_LOG_REC_LEN||
-       port_v37_read16(r+8u)>PORT_LOG_MAX_REC_LEN||
+    if(!r||port_v37_read16(r+8u)>PORT_LOG_MAX_REC_LEN||
        22u+(size_t)r[20u]>port_v37_read16(r+8u))return PORT_LOG_CYCLE;
     const unsigned offset=21u+r[20u];
     const unsigned n=r[offset];

@@ -1032,7 +1032,7 @@ sysinit_sections = [
     (333,528,None,None,'other startup process and disk descriptors remain missing','missing'),
     (529,562,None,None,'entry and service description','excluded'),
     (563,577,None,None,'process entry and lockdown are not implemented','missing'),
-    (578,628,'src/vms_sysinit_log_table.c','port_sip_create_system_names_in_table','TRNLOG through resident SYSTEM table, source underscore handling, directory composition, and bounded CRELOG record insertion; not yet called by a live SYSINIT process','partial'),
+    (578,628,'src/vms_sysinit_log_table.c','port_sip_create_system_names_in_table','Scheduled native SYSINIT process translates SYS$SYSDEVICE, applies source underscore/TOPSYS directory rules, and creates the three source SYSTEM logical records; later time, paging, ACP and startup phases remain absent','partial'),
     (629,1905,None,None,'time setup, paging/swap, RMS, F11ACP, SYSMSG and STARTUP not implemented','missing')
 ]
 sections=[]
@@ -1047,7 +1047,7 @@ for first,last,path,symbol,reason,status in sysinit_sections:
                          'pc_symbol':symbol,'pc_line':line,'function':reason})
 result['files'].append({'original_file':'SYSINI/SRC/SYSINIT.MAR',
                        'original_lines':1905,'sections':sections,
-                       'unresolved_integration':'The source system-name creation loop is host-tested against the bounded resident SYSTEM hash table but is not invoked by a live SYSINIT process. Time, paging/swap, RMS, F11 ACP and STARTUP remain unimplemented.'})
+                       'unresolved_integration':'The source name-creation loop now runs in a scheduled native SYSINIT kernel context against the resident SYSTEM table. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. SYSINIT time setup, paging/swap, RMS, F11 ACP, SYSMSG and STARTUP remain unimplemented.'})
 
 # Original INIT disk creation modules. One full original source file per
 # section group, with source line ranges mapped by actual PC function names.

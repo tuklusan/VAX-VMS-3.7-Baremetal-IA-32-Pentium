@@ -2517,12 +2517,17 @@ static const struct port_boo_console_io bootstrap_qio={
 };
 static struct port_boo_console bootstrap_console;
 static void bootstrap_message(const char *text){
+    uint32_t saved_flags;
+    /* The scheduled SYSINIT and SWAPPER contexts share this console object.
+     * Keep a whole QIO line atomic against the IRQ0 preemption scheduler. */
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(saved_flags)::"memory");
     unsigned n=0;
     while(text[n]&&n<PORT_BOO_OUTBUF_SIZE-3u){
         bootstrap_console.outbuf[n]=text[n];n++;
     }
     bootstrap_console.outlen=(uint16_t)n;
     (void)port_rio_output_line(&bootstrap_console);
+    __asm__ volatile("pushl %0; popfl"::"r"(saved_flags):"memory","cc");
 }
 /* The write-path regression is explicitly armed by disposable QEMU media.
  * It runs only with QEMU fw_cfg and a full marker sector, and restores it. */
@@ -4843,12 +4848,25 @@ void kmain(void) {
     if(loaded_sys(&contexts_request)!=PORT_SYS_EXEC_NORMAL||
        contexts_result.signature!=PORT_SYS_EXEC_CONTEXTS_TAG||
        contexts_result.vms_contexts_ready!=1u||
+       !contexts_result.sysinit_vms_pcb||
+       (uintptr_t)contexts_result.sysinit_vms_pcb<PORT_SYS_ELF_START||
+       (uintptr_t)contexts_result.sysinit_vms_pcb>
+           PORT_SYS_ELF_LIMIT-PORT_V37_PCB_BYTES||
+       m202_get32(contexts_result.sysinit_vms_pcb+PORT_V37_PCB_PID)!=
+           UINT32_C(0x00010002)||
+       m202_get32(contexts_result.sysinit_vms_pcb+PORT_V37_PCB_PHD)==0u||
+       m202_get32(contexts_result.sysinit_vms_pcb+PORT_V37_PCB_PHYPCB)==0u||
+       ((uint16_t)contexts_result.sysinit_vms_pcb[PORT_V37_PCB_STATE]|
+         (uint16_t)contexts_result.sysinit_vms_pcb[PORT_V37_PCB_STATE+1u]<<8)!=
+            PORT_V37_SCH_COM||
        m202_get32(proc_result.null_vms_pcb+PORT_V37_PCB_PHD)==0u||
        m202_get32(proc_result.swapper_vms_pcb+PORT_V37_PCB_PHD)==0u){
-        bootstrap_message("INIT: native NULL/SWAPPER PHD or context binding failed.");
+        char message[]="INIT: native process PHD/context binding failed at stage 0.";
+        message[sizeof message-3u]=(char)('0'+contexts_result.vms_context_error);
+        bootstrap_message(message);
         bootstrap_halt();
     }
-    bootstrap_message("INIT: bound source NULL/SWAPPER PHDs to native IA-32 frames and process page tables.");
+    bootstrap_message("INIT: bound source NULL/SWAPPER/SYSINIT PHDs to native IA-32 frames and process page tables.");
     arch_request_vms_reschedule();
     bootstrap_message("INIT: native process scheduler returned unexpectedly.");
     bootstrap_halt();

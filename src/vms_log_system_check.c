@@ -20,7 +20,6 @@ uint32_t port_log_system_check(const struct port_log_system_table *t){
             if(++steps>t->count)return PORT_LOG_CYCLE;
             uint8_t *r=port_log_source_record(t,cur);
             if(!r||r[11u]!=PORT_LOG_SYSTEM||r[10u]!=PORT_V37_DYN_LOG||
-               port_v37_read16(r+8u)<PORT_LOG_REC_LEN||
                port_v37_read16(r+8u)>PORT_LOG_MAX_REC_LEN||
                r[20u]==0u||r[20u]>PORT_LOG_MAX_NAME||
                22u+(size_t)r[20u]>port_v37_read16(r+8u)||

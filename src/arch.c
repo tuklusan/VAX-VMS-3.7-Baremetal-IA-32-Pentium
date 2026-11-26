@@ -93,7 +93,7 @@ static volatile uint32_t resident_vms_reschedule_pending;
 static volatile uint32_t resident_vms_reschedule_requests;
 static volatile uint32_t resident_vms_reschedule_interrupts;
 static volatile uint32_t resident_vms_wait_queue;
-static uint32_t vms_process_directories[2];
+static uint32_t vms_process_directories[3];
 static uint32_t vms_process_directory_count;
 
 int arch_adopt_vms_scheduler(struct port_v37_scheduler *scheduler,
@@ -394,7 +394,7 @@ uint32_t arch_vms_make_process_cr3(uint32_t *p0_table,uint32_t *p1_table,
        (uintptr_t)p1_table>UINT32_MAX-4095u||
        (uintptr_t)p0_table>=UINT32_C(0x00400000)||
        (uintptr_t)p1_table>=UINT32_C(0x00400000)||
-       vms_process_directory_count>=2u)return 0u;
+       vms_process_directory_count>=3u)return 0u;
     const uint32_t slot=vms_process_directory_count;
     const uint32_t directory_physical=port_phys_alloc(&physical_pool);
     if(!directory_physical)return 0u;
@@ -1070,6 +1070,12 @@ static int arch_vms_schedule_frame(struct port_trap_frame *f){
             resident_vms_schedule_message(
                 "SCH$WAITK blocked SWAPPER; SCH$SCHED selected NULL.");
         return ARCH_TRAP_RESTORE_SELECTED_FRAME;
+    }
+    if(wait_queue&&resident_vms_schedule_message){
+        char message[]="SCH$WAITK scheduling failed with status 0.";
+        const uint32_t digit=status%10u;
+        message[sizeof message-3u]=(char)('0'+digit);
+        resident_vms_schedule_message(message);
     }
     arch_report_fault(f->vector,f->error,f->eip);
     for(;;)__asm__ volatile("cli; hlt");

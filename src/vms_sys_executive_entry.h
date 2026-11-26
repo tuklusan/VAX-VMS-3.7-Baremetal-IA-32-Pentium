@@ -277,7 +277,9 @@ struct port_sys_exec_result {
     port_v37_sched_interrupt_fn vms_sched_interrupt;
     uint32_t (*vms_sched_wait)(struct port_v37_scheduler *,uint32_t,uint32_t,
                                uint32_t *,uint32_t *);
-    uint32_t vms_contexts_ready,vms_swapper_p0_table,vms_swapper_p1_table;
+    uint32_t vms_contexts_ready,vms_context_error;
+    const uint8_t *sysinit_vms_pcb;
+    uint32_t vms_swapper_p0_table,vms_swapper_p1_table;
     /* SYSBOOT carved interval backing the source NPAGEDYN pool. */
     uint32_t npaged_pool_base,npaged_pool_bytes;
     /* SYSBOOT carved resident PAGEDYN interval; user/mapping consumers remain. */
