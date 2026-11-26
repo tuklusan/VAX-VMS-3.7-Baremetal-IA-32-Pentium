@@ -3965,13 +3965,24 @@
         {
           "original_lines": [
             629,
-            1905
+            1799
           ],
           "status": "missing",
-          "reason": "time setup, paging/swap, RMS, F11ACP, SYSMSG and STARTUP not implemented"
+          "reason": "SYSINIT startup-file lookup, image mapping, mount, ACP and SYSMSG paths are not implemented"
+        },
+        {
+          "original_lines": [
+            1800,
+            1905
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sys_executive_entry.c",
+          "pc_symbol": "executive_sysinit_start",
+          "pc_line": 848,
+          "function": "scheduled SIP_SETTIME reads IA-32 RTC and updates the resident VMS clock; operator prompt/TPWAIT, SYS$SETIME, TODR and persistent SYSPARAM writeback remain absent"
         }
       ],
-      "unresolved_integration": "The source name-creation loop and CMOS-backed resident clock update now run in scheduled native SYSINIT. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. Original prompting/TPWAIT behavior and SYSPARAM persistence, then paging/swap, RMS, F11 ACP, SYSMSG and STARTUP remain unimplemented."
+      "unresolved_integration": "The source name-creation loop and a limited CMOS-backed clock update run in scheduled native SYSINIT. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. SIP_SETTIME lacks operator prompting, TPWAIT policy, SYS$SETIME state/timer updates and SYSPARAM persistence. SYSINIT startup-file lookup, image mapping, mount, ACP, SYSMSG and STARTUP remain unimplemented."
     },
     {
       "original_file": "INIT/SRC/INIMFD.B32",
@@ -10730,7 +10741,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3130,
+          "pc_line": 3131,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10787,7 +10798,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3130,
+          "pc_line": 3131,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {

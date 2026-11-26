@@ -1033,7 +1033,8 @@ sysinit_sections = [
     (529,562,None,None,'entry and service description','excluded'),
     (563,577,None,None,'process entry and lockdown are not implemented','missing'),
     (578,628,'src/vms_sys_executive_entry.c','executive_sysinit_start','Scheduled native SYSINIT translates SYS$SYSDEVICE, applies source underscore/TOPSYS rules, creates/verifies the three SYSTEM logicals, reads IA-32 CMOS RTC time, and updates the resident VMS clock; LOCKDOWN and full SETIME solicitation/parameter persistence remain absent','partial'),
-    (629,1905,None,None,'time setup, paging/swap, RMS, F11ACP, SYSMSG and STARTUP not implemented','missing')
+    (629,1799,None,None,'SYSINIT startup-file lookup, image mapping, mount, ACP and SYSMSG paths are not implemented','missing'),
+    (1800,1905,'src/vms_sys_executive_entry.c','executive_sysinit_start','scheduled SIP_SETTIME reads IA-32 RTC and updates the resident VMS clock; operator prompt/TPWAIT, SYS$SETIME, TODR and persistent SYSPARAM writeback remain absent','partial')
 ]
 sections=[]
 for first,last,path,symbol,reason,status in sysinit_sections:
@@ -1047,7 +1048,7 @@ for first,last,path,symbol,reason,status in sysinit_sections:
                          'pc_symbol':symbol,'pc_line':line,'function':reason})
 result['files'].append({'original_file':'SYSINI/SRC/SYSINIT.MAR',
                        'original_lines':1905,'sections':sections,
-                       'unresolved_integration':'The source name-creation loop and CMOS-backed resident clock update now run in scheduled native SYSINIT. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. Original prompting/TPWAIT behavior and SYSPARAM persistence, then paging/swap, RMS, F11 ACP, SYSMSG and STARTUP remain unimplemented.'})
+                       'unresolved_integration':'The source name-creation loop and a limited CMOS-backed clock update run in scheduled native SYSINIT. Initial TOPSYS is empty for the root-directory boot volume; record allocation and LOG$LOCKR/public $CRELNM are absent. SIP_SETTIME lacks operator prompting, TPWAIT policy, SYS$SETIME state/timer updates and SYSPARAM persistence. SYSINIT startup-file lookup, image mapping, mount, ACP, SYSMSG and STARTUP remain unimplemented.'})
 
 # Original INIT disk creation modules. One full original source file per
 # section group, with source line ranges mapped by actual PC function names.

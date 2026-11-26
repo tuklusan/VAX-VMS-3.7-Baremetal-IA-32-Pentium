@@ -82,6 +82,7 @@ extern int arch_adopt_vms_scheduler(struct port_v37_scheduler *,
     uint32_t,uint32_t,uint32_t *,uint32_t *),uint32_t,
     void (*)(const char *));
 extern void arch_request_vms_reschedule(void);
+extern void arch_vms_scheduler_defer_dispatch(uint32_t);
 extern uint32_t arch_vms_make_process_cr3(uint32_t *,uint32_t *,uint32_t *);
 extern uint32_t arch_vms_wait_current(uint32_t);
 extern void arch_run_pending_vms_reschedule(void);
@@ -4855,6 +4856,7 @@ void kmain(void) {
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&contexts_result,
         .phase=PORT_SYS_EXEC_INIT_CONTEXTS,
         .vms_context_settings=&contexts_settings};
+    arch_vms_scheduler_defer_dispatch(1u);
     if(loaded_sys(&contexts_request)!=PORT_SYS_EXEC_NORMAL||
        contexts_result.signature!=PORT_SYS_EXEC_CONTEXTS_TAG||
        contexts_result.vms_contexts_ready!=1u||
@@ -4885,6 +4887,7 @@ void kmain(void) {
     }
     bootstrap_message("INIT: bound source NULL/SWAPPER/SYSINIT PHDs to native IA-32 frames and process page tables.");
     bootstrap_message("INIT: SYSCREPRC published dynamic SYSINIT PID/PIX and activated its native context.");
+    arch_vms_scheduler_defer_dispatch(0u);
     arch_request_vms_reschedule();
     bootstrap_message("INIT: native process scheduler returned unexpectedly.");
     bootstrap_halt();

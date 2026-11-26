@@ -176,8 +176,10 @@ int main(void) {
     memcpy(vol.sys_params,"SYS$SYSTEM:STARTUP.COM",22u);
     vol.sys_params[32]=13u;memcpy(vol.sys_params+33,"MAXPROCESSCNT",13u);
     set32(vol.sys_params+48u,80u);
-    /* BOO$USEFILE stops on the zero record longword after this entry. */
-    vol.sys_params[56]=0x7bu;
+    vol.sys_params[52]=14u;memcpy(vol.sys_params+53,"TIMEPROMPTWAIT",14u);
+    set32(vol.sys_params+68u,12u);
+    /* BOO$USEFILE stops on the zero record longword after both entries. */
+    vol.sys_params[76]=0x7bu;
     struct port_f11_fid found={0};
     const struct port_f11_fid mfd={4,4,0};
     CHECK(port_f11_find_file(&vd,1,&mounted,mfd,"SYSEXE.DIR",1,&found)==PORT_F11_HOME_OK);
@@ -198,7 +200,8 @@ int main(void) {
           &boot_params,startup_file,&applied,param_buffer,sizeof param_buffer,
           &param_bytes);
     CHECK(use_status==PORT_SYSBOOT_USEFILE_OK);
-    CHECK(applied==1u&&boot_params.max_processes==80u&&
+    CHECK(applied==2u&&boot_params.max_processes==80u&&
+          boot_params.terminal_prompt_wait==12&&
           param_bytes==512u&&memcmp(startup_file,vol.sys_params,32u)==0);
     struct port_vms37_init_params params_before=boot_params;
     CHECK(port_sysboot_usefile(&vd,1u,&mounted,"[SYSEXE]PARAMS.DAT",
@@ -206,7 +209,7 @@ int main(void) {
           PORT_SYSBOOT_USEFILE_SMALL);
     CHECK(memcmp(&boot_params,&params_before,sizeof boot_params)==0);
     uint8_t valid_param_block[512];memcpy(valid_param_block,vol.sys_params,512u);
-    memset(vol.sys_params+52u,0xffu,4u);
+    vol.sys_params[52u]=16u;
     CHECK(port_sysboot_usefile(&vd,1u,&mounted,"[SYSEXE]PARAMS.DAT",
           &boot_params,startup_file,&applied,param_buffer,sizeof param_buffer,
           &param_bytes)==PORT_SYSBOOT_USEFILE_PARAMETERS);

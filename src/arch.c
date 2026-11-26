@@ -90,6 +90,7 @@ static uint32_t (*resident_vms_sched_wait)(struct port_v37_scheduler *,
 static uint32_t resident_vms_null_pcb;
 static void (*resident_vms_schedule_message)(const char *);
 static volatile uint32_t resident_vms_reschedule_pending;
+static volatile uint32_t resident_vms_dispatch_deferred;
 static volatile uint32_t resident_vms_reschedule_requests;
 static volatile uint32_t resident_vms_reschedule_interrupts;
 static volatile uint32_t resident_vms_wait_queue;
@@ -131,10 +132,22 @@ void arch_request_vms_reschedule(void){
     if(resident_vms_reschedule_requests!=UINT32_MAX)
         resident_vms_reschedule_requests++;
     resident_vms_reschedule_pending=1u;
-    if(flags&UINT32_C(0x200)){
+    if((flags&UINT32_C(0x200))&&!resident_vms_dispatch_deferred){
         resident_vms_reschedule_pending=0u;
         __asm__ volatile("int $0x91":::"memory");
     }
+}
+
+/* INIT may finish binding several queued source PCBs while kmain still owns
+ * the only resumable bootstrap frame. Defer dispatch until that transaction
+ * is validated and kmain explicitly yields. IRQ work and clock ticks remain
+ * enabled; only the scheduler selection is held. */
+void arch_vms_scheduler_defer_dispatch(uint32_t defer){
+    uint32_t flags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
+    resident_vms_dispatch_deferred=defer?1u:0u;
+    __asm__ volatile("":::"memory");
+    if(flags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
 }
 
 uint32_t arch_vms_reschedule_requests(void){
@@ -147,7 +160,8 @@ uint32_t arch_vms_reschedule_interrupts(void){
 void arch_run_pending_vms_reschedule(void){
     uint32_t flags;
     __asm__ volatile("pushfl; popl %0":"=r"(flags)::"memory");
-    if(!(flags&UINT32_C(0x200))||!resident_vms_reschedule_pending||
+    if(!(flags&UINT32_C(0x200))||resident_vms_dispatch_deferred||
+       !resident_vms_reschedule_pending||
        !resident_vms_scheduler||!resident_vms_sched_interrupt)return;
     resident_vms_reschedule_pending=0u;
     __asm__ volatile("int $0x91":::"memory");
@@ -1042,6 +1056,7 @@ static int arch_vms_switch_cr3(uint32_t cr3){
 
 static int arch_vms_schedule_frame(struct port_trap_frame *f){
     if(!resident_vms_sched_interrupt)return 0;
+    if(resident_vms_dispatch_deferred)return 0;
     resident_vms_reschedule_pending=0u;
     uint32_t pcb=0u,next=0u;
     uint32_t status;
