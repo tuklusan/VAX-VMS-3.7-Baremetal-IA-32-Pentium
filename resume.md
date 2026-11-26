@@ -2445,3 +2445,4 @@ Added scheduler-backed DIRPOST and direct-I/O callback adapters. They resolve th
 Verification: `make v37qastcheck iopostendcheck iopostprocesscheck sourcerangecheck` PASS; `make -j2 all test exeportbatchcheck` PASS; `make qemu-sysboot-m217` PASS through real DQA0 IRQ14/Files-11 checks, then stops at the unchanged contextless INIT boundary. Capture `logs/serial/qemu-m217-run-local-20261126T142223994745Z.log`, 6,395 bytes, SHA-256 `4382c9e2fd033d0fadcd39651fd1aa3844bbb2fd579ff1d6d1531d7f6661b9de`; QEMU exited, no runner remains. Source coverage: 2,190 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,710 partial, 59,546 unresolved, 8,032 missing, 26,778 excluded, 917 hardware-excluded. No login, DCL, DECnet Phase IV or SET HOST 0 observed.
 
 M446 implementation commit: `4f035d4218e5d00acfa3eac0d6bddcb9f40894ae`.
+M446 QEMU serial/evidence commit: `a87d210144e11fbe0ec2c00f4ef05add7abd5c1f`.
