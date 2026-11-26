@@ -2132,6 +2132,6 @@ GENPHD now rejects ASTLVL values above 4 before mutating a PHD. SYSDEFMP.MDL all
 
 Verification: full `make -j2 all test` exited 0 (`/tmp/m413-test.log`, no compiler errors, test failures, or make errors); coverage generation, source-range regression and source validator PASS (2,156 ranges; 452/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,396 partial, 58,471 unresolved, 8,032 missing, 26,463 excluded, 917 hardware-excluded). `make qemu-sysboot-m217` PASS; real boot still stops at INIT with NULL/SWAPPER PHD contexts absent. Capture `logs/serial/qemu-m217-run-local-20261126T004418626917Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; QEMU exited.
 
-Local M413 changes: pending commit. Published main M412: `c1504a2746e2585d5c4a0dab2159e562d4b591e6`.
+Local M413 implementation commit: `cd54ca2e95eea519c2b8a2d9b67afe357629b56e`. Published main M412: `c1504a2746e2585d5c4a0dab2159e562d4b591e6`; M413 and its resume are being published.
 
 Remaining work: construct source-ordered NULL/SWAPPER PHD and stack mappings, initial IA-32 contexts, and the SWAPPER startup/TT0 process path; integrate live public SYS$QIO, process AST delivery, and ACP requests; then native image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 second-session/LOGOUT verification.
