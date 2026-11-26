@@ -2708,3 +2708,9 @@ Verification: `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32c
 No original DEC source, binary image, secrets, or new build dependency was added. Coverage inventory remains 455/4,566 original files indexed and is not a claim of functional completeness. Remaining: real SYSINIT time solicitation/persistence and startup-file execution; process creation/image activation; public SYS$QIO through the live DQA0 IOC/ACP and process AST path; SYSTEM login/DCL; DECnet Phase IV and end-to-end SET HOST 0, second SYSTEM login, and LOGOUT. Acceptance remains incomplete.
 
 M473 implementation commit: `8c85f254760d4c20b5fbee460230f52ed6029b76`.
+
+## M474 — Stress the deferred INIT scheduler regression, 26 November 2026
+
+Ran five additional `wsl make qemu-sysboot-m217` executions sequentially after M473; all five passed. Each real guest reached SYSINIT's RTC update and scheduler wait/NULL-selection checkpoint, with no status-4 wait failure or missing reschedule interrupt. The sole QEMU runner exited after each run. Identical 6,898-byte COM1 transcripts are retained in the manifest: `logs/serial/qemu-m217-run-local-20261126T222322615082Z.log`, `...222326504803Z.log`, `...222330490400Z.log`, `...222334402196Z.log`, and `...222338311728Z.log`; each SHA-256 is `ae40ddf02c804546dca14fcc7f29e529df94838eb15a232e1ca21803ba72568e`.
+
+This validates only scheduler checkpoint stability. STARTUP process activation, public SYS$QIO, live ACP/AST process completion, SYSTEM login/DCL, DECnet Phase IV, and SET HOST 0 remain incomplete.
