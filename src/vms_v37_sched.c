@@ -92,6 +92,99 @@ static uint32_t list_contains(const struct port_v37_scheduler *s,unsigned q,
     return PORT_V37_SCHED_OK;
 }
 
+enum { ACB_LINK_FL=0u,ACB_LINK_BL=4u,ACB_SIZE=8u,ACB_RMOD=11u,
+       ACB_PID=12u,ACB_BYTES=28u,ACB_MODE_MASK=3u,ACB_KAST=0x80u };
+
+static uint32_t queue_ast_synchronized(struct port_v37_scheduler *s,
+    uint32_t pcb_address,uint32_t acb_address){
+    if(!s||!s->initialized||!pcb_address||!acb_address||
+       (pcb_address&3u)||(acb_address&3u)||
+       pcb_address>UINT32_MAX-PORT_V37_PCB_BYTES||
+       acb_address>UINT32_MAX-ACB_BYTES)
+        return PORT_V37_SCHED_BADPARAM;
+    uint8_t *pcb=resolve(s,pcb_address,PORT_V37_PCB_BYTES);
+    uint8_t *acb=resolve(s,acb_address,ACB_BYTES);
+    if(!pcb||!acb)return PORT_V37_SCHED_UNRESOLVED;
+    const uint32_t pid=get32(pcb+PORT_V37_PCB_PID);
+    const uint32_t head=pcb_address+PORT_V37_PCB_ASTQFL;
+    if(get16(pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+       pcb[Q_TYPE]!=PORT_V37_DYN_PCB||!pid||
+       get16(acb+ACB_SIZE)<ACB_BYTES||get32(acb+ACB_PID)!=pid||
+       acb_address==head)
+        return PORT_V37_SCHED_CORRUPT;
+
+    const uint32_t initial_first=get32(pcb+PORT_V37_PCB_ASTQFL);
+    const uint32_t tail=get32(pcb+PORT_V37_PCB_ASTQBL);
+    uint32_t cursor=initial_first,previous=head,seen=0u;
+    uint32_t insert_before=head,insert_previous=0u;
+    const uint8_t new_rmod=acb[ACB_RMOD];
+    const uint8_t new_kast=(uint8_t)((new_rmod&ACB_KAST)!=0u);
+    while(cursor!=head){
+        if(seen++>=8192u)return PORT_V37_SCHED_CORRUPT;
+        uint8_t *node=resolve(s,cursor,ACB_BYTES);
+        if(!node||get32(node+ACB_LINK_BL)!=previous)
+            return PORT_V37_SCHED_CORRUPT;
+        const uint8_t old_rmod=node[ACB_RMOD];
+        const uint8_t old_kast=(uint8_t)((old_rmod&ACB_KAST)!=0u);
+        if(insert_before==head&&
+           ((new_kast&&!old_kast)||
+            (!new_kast&&!old_kast&&
+             (old_rmod&ACB_MODE_MASK)>(new_rmod&ACB_MODE_MASK)))){
+            insert_before=cursor;insert_previous=previous;
+        }
+        previous=cursor;cursor=get32(node+ACB_LINK_FL);
+    }
+    if(previous!=tail)return PORT_V37_SCHED_CORRUPT;
+    if(insert_before==head)insert_previous=tail;
+    uint8_t *previous_node=insert_previous==head?
+        pcb+PORT_V37_PCB_ASTQFL:resolve(s,insert_previous,ACB_BYTES);
+    uint8_t *next_node=insert_before==head?
+        pcb+PORT_V37_PCB_ASTQFL:resolve(s,insert_before,ACB_BYTES);
+    if(!previous_node||!next_node||
+       get32(next_node+ACB_LINK_BL)!=insert_previous)
+        return PORT_V37_SCHED_CORRUPT;
+    const uint32_t phd_address=get32(pcb+PORT_V37_PCB_PHD);
+    uint8_t *phd=0;
+    if(get32(pcb+PORT_V37_PCB_STS)&PORT_V37_PCB_STS_RESIDENT){
+        phd=resolve(s,phd_address,PORT_V37_PHD_BYTES);
+        if(!phd)return PORT_V37_SCHED_NO_CONTEXT;
+    }
+    const uint32_t first=(initial_first==head||insert_previous==head)?
+        acb_address:initial_first;
+    uint8_t *first_acb=first==acb_address?acb:resolve(s,first,ACB_BYTES);
+    if(!first_acb)return PORT_V37_SCHED_CORRUPT;
+    const uint8_t first_rmod=first_acb[ACB_RMOD];
+    const uint8_t ast_level=(first_rmod&ACB_KAST)?0u:
+        (uint8_t)(first_rmod&ACB_MODE_MASK);
+
+    /* All links and PID state are checked before source INSQUE mutates the
+     * target queue. Equal-mode requests retain their arrival order. */
+    put32(acb+ACB_LINK_FL,insert_before);
+    put32(acb+ACB_LINK_BL,insert_previous);
+    put32(previous_node+ACB_LINK_FL,acb_address);
+    put32(next_node+ACB_LINK_BL,acb_address);
+    if(phd){
+        phd[PORT_V37_PHD_ASTLVL]=ast_level;
+        if(s->current_pcb==pcb_address){
+            if(s->ops.set_current_ast_level)
+                s->ops.set_current_ast_level(s->ops.context,ast_level);
+        }else if(s->ops.ast_arrival)
+            s->ops.ast_arrival(s->ops.context,pcb_address);
+    }else if(s->ops.ast_arrival)
+        s->ops.ast_arrival(s->ops.context,pcb_address);
+    return PORT_V37_SCHED_OK;
+}
+
+uint32_t port_v37_sched_queue_ast(struct port_v37_scheduler *s,
+    uint32_t pcb_address,uint32_t acb_address){
+    if(!s||!s->ops.enter_synchronization||!s->ops.leave_synchronization)
+        return PORT_V37_SCHED_BADPARAM;
+    const uint32_t token=s->ops.enter_synchronization(s->ops.context);
+    const uint32_t status=queue_ast_synchronized(s,pcb_address,acb_address);
+    s->ops.leave_synchronization(s->ops.context,token);
+    return status;
+}
+
 static uint32_t wait_queue_check(const struct port_v37_scheduler *s,
     uint32_t address,uint8_t **queue_out){
     if(address&3u)return PORT_V37_SCHED_BADPARAM;

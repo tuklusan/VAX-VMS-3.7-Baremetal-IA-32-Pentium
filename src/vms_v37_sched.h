@@ -52,6 +52,10 @@ struct port_v37_sched_ops {
      * examining shared event flags or mutating WQH/scheduler state. */
     uint32_t (*enter_synchronization)(void *);
     void (*leave_synchronization)(void *,uint32_t);
+    /* SCH$QAST reports AST arrival to a noncurrent target; current targets
+     * receive the newly derived processor AST level. */
+    void (*ast_arrival)(void *,uint32_t);
+    void (*set_current_ast_level)(void *,uint8_t);
 };
 struct port_v37_scheduler {
     struct port_v37_sched_head heads[PORT_V37_SCH_QUEUES];
@@ -86,6 +90,11 @@ uint32_t port_v37_sched_start_context_quotas(struct port_v37_scheduler *,
     uint16_t working_set_list_offset,
     const struct port_v37_phd_process_quotas *,
     const struct port_v37_phd_ws_quotas *,uint8_t priority_increment_class);
+/* ASTDEL.MAR SCH$QAST: validate PID, insert the ACB/IRP by KAST then
+ * ascending access mode (FIFO within a mode), update PHD ASTLVL, and report
+ * AST arrival for a noncurrent PCB. Caller must provide IPL_SYNCH callbacks. */
+uint32_t port_v37_sched_queue_ast(struct port_v37_scheduler *,
+    uint32_t pcb_address,uint32_t acb_address);
 /* SCH$CHSEP precomputed-priority queue transition for COM/COMO processes. */
 uint32_t port_v37_sched_set_priority(struct port_v37_scheduler *,
     uint32_t pcb_address,uint8_t priority);

@@ -226,10 +226,10 @@ static union {uint32_t align;uint16_t words[256];} executive_dq_image_header;
 static union {uint32_t align;uint16_t words[256];} executive_dq_image_data;
 static struct port_dq_bootread_result executive_dq_image_io[2];
 static struct port_dq_image_result executive_dq_image_probe;
-/* M161-M168: source DQ_STARTIO/IOCIOPOST request queue is private.
- * Its actual physical callback remains the privileged ATA IRP adapter;
- * no public IOC DQA0 unit is published by this stage. */
-static struct port_dq_ioc_queue executive_dq_private_ioc;
+/* The pre-DDT three-sector IOC regression and the later native DQA0 IOC
+ * engine run in ordered INIT phases. They share this queue storage; the
+ * public DQA0 phase reinitializes it after the private regression returns. */
+static struct port_dq_ioc_queue executive_dq_native_ioc;
 /* Separate read-only Files-11 -> private IOC bridge. The IOC packet
  * buffer is resident, not allocated on the small bootstrap stack. */
 static struct port_dq_ioc_queue executive_f11_ioc_queue;
@@ -339,7 +339,6 @@ static struct port_dqddt_stage executive_dqddt;
 static uint32_t executive_dqddt_ready;
 static struct port_dq_crb executive_dq_crb;
 static uint32_t executive_dq_crb_read_ready;
-static struct port_dq_ioc_queue executive_dq_native_ioc;
 struct executive_dq_ioc_context {
     port_dq_native_read_fn read_sector;
     void *read_context;
@@ -1703,31 +1702,31 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
          * This is not a live DQA0 DDT nor user $QIO/ACP. */
         struct executive_f11_context iocctx={dq,completed,0u,
             executive_devicedb_result.ucb[0]};
-        if(port_dq_ioc_init(&executive_dq_private_ioc,
+        if(port_dq_ioc_init(&executive_dq_native_ioc,
              executive_f11_native_sector,&iocctx)!=PORT_DQ_IOC_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         for(uint32_t i=0;i<3u;i++){
             uint32_t lbn=0u;
             if(port_f11_chain_lbn(&executive_f11_chain,
                  (text_offset>>9)+1u+i,&lbn)!=PORT_F11_CHAIN_OK||
-               port_dq_ioc_prepare(&executive_dq_private_ioc,
+               port_dq_ioc_prepare(&executive_dq_native_ioc,
                  0xd100u+i,lbn,
                  executive_init_io_scratch.ioc_private_sectors[i],512u)
                     !=PORT_DQ_IOC_OK||
-               port_dq_ioc_set_retry(&executive_dq_private_ioc,
+               port_dq_ioc_set_retry(&executive_dq_native_ioc,
                    0xd100u+i,2u)!=PORT_DQ_IOC_OK||
-               port_dq_ioc_enqueue(&executive_dq_private_ioc,0xd100u+i)
+               port_dq_ioc_enqueue(&executive_dq_native_ioc,0xd100u+i)
                     !=PORT_DQ_IOC_OK)
                 return PORT_SYS_EXEC_BAD_PARAMETERS;
         }
-        if(port_dq_ioc_validate(&executive_dq_private_ioc)!=PORT_DQ_IOC_OK)
+        if(port_dq_ioc_validate(&executive_dq_native_ioc)!=PORT_DQ_IOC_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         /* M169-M176: bounded RETRYERR -> FUNCXT -> IOCIOPOST.
          * Device reads still use actual ATA callback, not a public DDT.
          * The host injection tests exercise transient and permanent faults;
          * this guest path must not manufacture an ATA error. */
         struct port_dq_ioc_report iocreport={0};
-        if(port_dq_ioc_run(&executive_dq_private_ioc,&iocreport)
+        if(port_dq_ioc_run(&executive_dq_native_ioc,&iocreport)
               !=PORT_DQ_IOC_OK||iocreport.processed!=3u||
            iocreport.succeeded!=3u||iocreport.failed||iocreport.reads!=3u)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -1737,12 +1736,12 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
                       ((const uint8_t *)(uintptr_t)(text_va+i*512u))[j])
                     return PORT_SYS_EXEC_BAD_PARAMETERS;
         }
-        if(port_dq_ioc_validate(&executive_dq_private_ioc)!=PORT_DQ_IOC_OK||
-           executive_dq_private_ioc.completed!=3u||
-           executive_dq_private_ioc.failed!=0u||
-           executive_dq_private_ioc.reads!=3u||iocctx.reads!=3u||
-           executive_dq_private_ioc.posted!=3u||
-           executive_dq_private_ioc.active!=PORT_DQ_IOC_DEPTH)
+        if(port_dq_ioc_validate(&executive_dq_native_ioc)!=PORT_DQ_IOC_OK||
+           executive_dq_native_ioc.completed!=3u||
+           executive_dq_native_ioc.failed!=0u||
+           executive_dq_native_ioc.reads!=3u||iocctx.reads!=3u||
+           executive_dq_native_ioc.posted!=3u||
+           executive_dq_native_ioc.active!=PORT_DQ_IOC_DEPTH)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         completed+=iocctx.reads;
         /* M177-M184: private FILE -> IOC -> native ATA -> IOCIOPOST

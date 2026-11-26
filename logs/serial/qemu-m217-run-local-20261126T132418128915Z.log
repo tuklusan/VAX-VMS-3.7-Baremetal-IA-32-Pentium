@@ -1,0 +1,11 @@
+IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.
+SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.
+SYSBOOT: Files-11 SYS.EXE native image loaded.
+INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.
+INIT: resident SYS.EXE PAGEDYN allocated and returned a 32-byte block.
+SYSBOOT: Files-11 SYSLOA386.EXE native image loaded.
+INIT: SYS.EXE linked live SYSLOA386 processor vectors.
+SYSBOOT: Files-11 INILOA.EXE native image loaded.
+INIT: INILOA IOMAP executed on real IA-32 boot adapter.
+INIT: loaded SYS.EXE built lock ID, resource hash and deadlock bitmap tables.
+INIT: resident SYS.EXE scheduler queues failed.

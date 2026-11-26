@@ -65,7 +65,7 @@ int main(void){
     struct fixture f={0};
     f.lef.forward=f.lef.backward=WQ_VA;f.lef.state=PORT_V37_SCH_LEF;
     const struct port_v37_sched_ops ops={&f,address,resolve,0,0,
-        enter_synchronization,leave_synchronization};
+        enter_synchronization,leave_synchronization,0,0};
     if(port_v37_sched_init(&f.scheduler,&ops)!=PORT_V37_SCHED_OK)
         return fail("scheduler initialization");
     const struct port_v37_pcb_seed seed={.address=PCB_VA,.pid=0x00010000u,

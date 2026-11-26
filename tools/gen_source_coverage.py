@@ -488,16 +488,21 @@ result['files'].append({'original_file':'DCL/SRC/INTIMAGES.MAR',
 def append_source_ranges(original, count, native, spec, unresolved):
     ranges=[]
     next_line=1
-    for last, state, symbol, explanation in spec:
+    for row in spec:
+        if len(row)==4:
+            last,state,symbol,explanation=row
+            native_file=native
+        else:
+            last,state,native_file,symbol,explanation=row
         assert next_line <= last <= count, (original,next_line,last)
         sec={'original_lines':[next_line,last], 'status':state}
         if state in ('partial','mapped'):
-            line=line_for_symbol(native,symbol)
+            line=line_for_symbol(native_file,symbol)
             if line is None:
                 global missing
                 missing+=1
                 sec['status']='missing'
-            sec.update({'pc_file':native,'pc_symbol':symbol,'pc_line':line,
+            sec.update({'pc_file':native_file,'pc_symbol':symbol,'pc_line':line,
                 'function':explanation})
         else:
             sec['reason']=explanation
@@ -518,7 +523,7 @@ append_source_ranges('SYS/SRC/ASTDEL.MAR',671,'src/vms_astdel.c',[
   (426,'unresolved',None,'Normal executive/supervisor/user AST user-stack frame and VAX CHMK return paths are not implemented'),
   (454,'partial','port_astdel_queue_ipast','IPAST vector and special piggyback kernel AST enqueue'),
   (496,'excluded',None,'AST queue argument and condition descriptions'),
-  (586,'partial','port_astdel_queue','Queue AST requests with eligibility; VAX interlocks/multiprocessor handoffs not yet available'),
+  (586,'partial','src/vms_v37_sched.c','port_v37_sched_queue_ast','Resolve target PID and insert source ACB/IRP by KAST/access mode, maintain PHD ASTLVL and notify current/noncurrent AST arrival; AST dispatcher and process wake binding remain incomplete'),
   (602,'excluded',None,'New AST level call contract and explanatory comments'),
   (626,'partial','port_astdel_new_level','Compute AST eligibility from per-mode queues'),
   (661,'excluded',None,'Swap and remove AST interface descriptions'),

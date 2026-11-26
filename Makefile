@@ -241,7 +241,7 @@ portdisk.img: build/make_f11_disk build/install_sys_image build/sys.exe build/in
 vms37lab.ima: build/boot.bin build/kernel.bin
 	python3 build_image.py
 
-test: inisysparamscheck sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37eventwaitcheck v37phdcheck v37ia32ctxcheck booparamcheck pktlayoutcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck iocmapvblkcheck sysqioargscheck sysirpqueuecheck irpalloccheck exenppoolcheck exepagedpoolcheck swapinithashcheck execreprccheck
+test: inisysparamscheck sysqioresidentcheck v37ccbcheck vmbargscheck initindexcheck initbitmapcheck initmfdcheck f11homecheck bootiocheck sysinitnamescheck initveccheck v37pcbcheck v37schedcheck v37qastcheck v37eventwaitcheck v37phdcheck v37ia32ctxcheck booparamcheck pktlayoutcheck bootreadpromptcheck vms37lab.ima portdisk.img dclexitcheck dclstatuscheck dclifcheck dclinquirecheck dcloncheck dclimagescheck dclgotocheck dcldescrcheck dclreadcheck dclinitialcheck dclcommandcheck remprotocolcheck hpwdcheck v37uafcheck validatecheck logintimecheck fileiocheck logincmdcheck interactcheck dqcrbcheck dqprivateioccheck dqwriteioccheck iocmapvblkcheck sysqioargscheck sysirpqueuecheck irpalloccheck exenppoolcheck exepagedpoolcheck swapinithashcheck execreprccheck
 	python3 tools/gen_source_coverage.py
 	python3 tests/test_image.py
 
@@ -534,6 +534,11 @@ v37pcbcheck: | build
 v37schedcheck: | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c src/vms_v37_phd.c src/vms_v37_sched.c src/vms_v37_ia32_context.c tests/test_v37_sched_host.c -o build/v37schedcheck
 	./build/v37schedcheck
+
+.PHONY: v37qastcheck
+v37qastcheck: | build
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c src/vms_v37_sched.c src/vms_v37_phd.c src/vms_v37_ia32_context.c tests/test_v37_qast_host.c -o build/v37qastcheck
+	./build/v37qastcheck
 
 .PHONY: v37eventwaitcheck
 v37eventwaitcheck: | build
