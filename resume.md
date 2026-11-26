@@ -2199,3 +2199,13 @@ Verification: `make execreprccheck` PASS; full `make -j2 all test exeportbatchch
 M419 implementation and QEMU evidence commit: `686354c376fd4205ac1a69342a65bd4207224af8`.
 
 Remaining: implement PQB/JIB allocation and source CREPRC initialization/rollback, then connect actual INIT NULL/SWAPPER creation and scheduling; public SYS$QIO, Files-11 ACP and process AST integration; process image activation; SYSTEM login/DCL; DECnet Phase IV and genuine SET HOST 0/second session/LOGOUT.
+
+## M420 - Allocate and clear source PQB from nonpaged pool, 26 November 2026
+
+Ported the SYSCREPRC.MAR `EXE$ALLOCPQB` allocation stage and lines 315-316 clear: allocate the source 496-byte process quota block from nonpaged pool, set DYN size/type, clear its fixed body, validate release metadata, and return it safely for rollback. The regression verifies the source length/header, all zeroed body bytes, IPL restoration, release/coalescing and prior PCB behavior. It does not initialize PQB defaults, parse/create quotas, allocate JIB, wait via SSRWAIT, charge/release quota, or connect `$CREPRC` service dispatch.
+
+Verification: `make execreprccheck exeportbatchcheck build/sys.exe` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,169 ranges, 453/4,566 indexed files, zero validation errors; 17,230 mapped, 30,484 partial, 58,941 unresolved, 8,032 missing, 26,710 excluded, 917 hardware-excluded). `nm` confirms the PQB allocator helper is resident; ELF RW end remains `0x0037f200` <= `0x00380000`. `make qemu-sysboot-m217` PASS: real 700-byte Files-11 chain read via two IOC-selected DQA0 sectors and IRQ14; guest still stops at incomplete INIT without NULL/SWAPPER PHD contexts. Capture `logs/serial/qemu-m217-run-local-20261126T012449883096Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; manifest validates 364 logs. No login, DCL, DECnet or SET HOST 0 observed. No DEC source or binary image added.
+
+M420 implementation and QEMU evidence commit: `ffaf290412007be05322c418108fe9eb8ee92604`.
+
+Remaining: actual JIB/PQB defaults and quotas, process-state initialization, resource waits/rollback, INIT NULL/SWAPPER contexts and activation; public SYS$QIO/ACP/process AST; image activation; SYSTEM login/DCL; DECnet Phase IV and genuine SET HOST 0 two-session/LOGOUT verification. M419/M420 commits are local; publishing is pending because GitHub HTTPS push timed out in this environment.
