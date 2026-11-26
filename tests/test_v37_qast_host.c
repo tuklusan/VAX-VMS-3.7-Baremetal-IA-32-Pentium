@@ -129,6 +129,16 @@ int main(void){
        f.arrivals!=2u||f.current_levels!=2u)
         return fail("PID mismatch rejected without changing queues");
 
+    make_acb(&f,4u,2u,seed.pid);
+    f.acb[4][10]=PORT_V37_DYN_UCB;
+    memcpy(candidate_links,f.acb[4],sizeof candidate_links);
+    const uint32_t wrong_type=port_v37_sched_queue_ast(&f.scheduler,
+        0x1000u,0x3400u);
+    if(wrong_type!=PORT_V37_SCHED_CORRUPT||
+       memcmp(candidate_links,f.acb[4],sizeof candidate_links)||
+       f.arrivals!=2u||f.current_levels!=2u)
+        return fail("non-ACB/IRP candidate rejected atomically");
+
     put32(f.acb[2]+4u,0xdeadbeefu);
     make_acb(&f,4u,2u,seed.pid);
     memcpy(candidate_links,f.acb[4],sizeof candidate_links);

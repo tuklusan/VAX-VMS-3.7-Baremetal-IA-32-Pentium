@@ -107,9 +107,12 @@ static uint32_t queue_ast_synchronized(struct port_v37_scheduler *s,
     if(!pcb||!acb)return PORT_V37_SCHED_UNRESOLVED;
     const uint32_t pid=get32(pcb+PORT_V37_PCB_PID);
     const uint32_t head=pcb_address+PORT_V37_PCB_ASTQFL;
+    const uint8_t acb_type=acb[Q_TYPE];
     if(get16(pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
        pcb[Q_TYPE]!=PORT_V37_DYN_PCB||!pid||
-       get16(acb+ACB_SIZE)<ACB_BYTES||get32(acb+ACB_PID)!=pid||
+       get16(acb+ACB_SIZE)<ACB_BYTES||
+       (acb_type!=PORT_V37_DYN_ACB&&acb_type!=PORT_V37_DYN_IRP)||
+       get32(acb+ACB_PID)!=pid||
        acb_address==head)
         return PORT_V37_SCHED_CORRUPT;
 
@@ -122,7 +125,10 @@ static uint32_t queue_ast_synchronized(struct port_v37_scheduler *s,
     while(cursor!=head){
         if(seen++>=8192u)return PORT_V37_SCHED_CORRUPT;
         uint8_t *node=resolve(s,cursor,ACB_BYTES);
-        if(!node||get32(node+ACB_LINK_BL)!=previous)
+        if(!node||(node[Q_TYPE]!=PORT_V37_DYN_ACB&&
+                   node[Q_TYPE]!=PORT_V37_DYN_IRP)||
+           get16(node+ACB_SIZE)<ACB_BYTES||
+           get32(node+ACB_LINK_BL)!=previous)
             return PORT_V37_SCHED_CORRUPT;
         const uint8_t old_rmod=node[ACB_RMOD];
         const uint8_t old_kast=(uint8_t)((old_rmod&ACB_KAST)!=0u);
