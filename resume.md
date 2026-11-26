@@ -2529,3 +2529,9 @@ M454 implementation commit: `8a563766a28bbf7cdd5e567e205558648b297f38`.
 M454 QEMU evidence commit: `ba7059e42d9ed503ea2fbb55cc6086c64ac9c87c`.
 
 Remaining: resume source-order INIT and process activation; implement TT0 `$CREPRC` and SYSINIT; make public SYS$QIO, DQA0 IOC/CRB/IRQ, ACP and process AST completion live; activate SYSTEM/login/DCL; initialize DECnet Phase IV and verify genuine SET HOST 0 second-session plus LOGOUT back to the first DCL. The final acceptance sequence has not been reached.
+
+## M455 — Reverify the M454 recovery point, 26 November 2026
+
+No native source changed in this verification checkpoint. A clean repeated host/build/layout/coverage run passed: `wsl make -j2 test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck` (exit 0). Coverage validation reports 2,200 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,764 partial, 59,465 unresolved, 8,032 missing, 26,805 excluded and 917 hardware-excluded.
+
+`wsl make qemu-sysboot-m217` passed. The fresh captured serial output repeats actual ACP access through DQA0 DDT/IRQ14 and the M454 SWAPPER/NULL selection messages. Capture `logs/serial/qemu-m217-run-local-20261126T153544108296Z.log`, 6,476 bytes, SHA-256 `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`; it matches the previous M454 trace exactly. QEMU runner exited; no QEMU process remains. This rerun adds no evidence for live public SYS$QIO, INIT completion, SYSTEM login/DCL, DECnet Phase IV, or SET HOST 0; those acceptance conditions remain incomplete.
