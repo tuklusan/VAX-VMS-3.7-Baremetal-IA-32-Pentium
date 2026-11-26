@@ -2790,10 +2790,10 @@ swapinit_line=line_for_symbol('src/vms_exe_swapinit_hash.c',
 swapinit_sections=[]
 for first,last,status,reason in [
     (1,248,'unresolved','Source module documentation and paged pool base/size setup; pool backing is initialized earlier by INIT but this SWAPINIT step is not called'),
-    (249,257,'partial','Round SYSTEM, GROUP and PROCESS hash entry counts up to powers of two and retain each exponent'),
-    (258,272,'partial','Allocate zeroed SYSTEM and GROUP hash table records from PAGEDYN; PROCESS geometry is retained for per-process tables'),
+    (249,257,'partial','At boot, round loaded INIT SYSTEM, GROUP and PROCESS hash entry counts up to powers of two and retain each exponent; invocation remains outside a SWAPPER process'),
+    (258,272,'partial','At boot, allocate zeroed SYSTEM and GROUP hash table records from PAGEDYN and validate their DYN headers; PROCESS geometry is retained without a process context'),
  (273,275,'unresolved','Prepare original SYSTEM logical-name insertion arguments'),
- (276,283,'partial','Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent'),
+ (276,283,'partial','Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT during boot; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent'),
  (284,316,'unresolved','Create TT0 with $CREPRC; source process creation remains unported'),
     (317,323,'partial','Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved'),
     (324,1683,'unresolved','SWAPPER main loop, balancing, page-file I/O and process swap-in/out remain unported')]:
@@ -2806,15 +2806,15 @@ for first,last,status,reason in [
         swapinit_sections.append({'original_lines':[first,last],
             'status':'partial','pc_file':'src/vms_exe_swapinit_hash.c',
             'pc_symbol':'port_exe_swapinit_insert_system_record','pc_line':insert_line,
-            'function':reason+'; SYS.EXE wrapper prepares records, but SWAPPER process context is absent'})
+            'function':reason+'; SYS.EXE wrapper invokes and validates records from bootstrap context, but SWAPPER process context is absent'})
     else:
         swapinit_sections.append({'original_lines':[first,last],
             'status':'partial','pc_file':'src/vms_exe_swapinit_hash.c',
             'pc_symbol':'port_exe_swapinit_hash_init','pc_line':swapinit_line,
-            'function':reason+'; SYS.EXE exports the routine but no SWAPPER context calls it yet'})
+            'function':reason+'; SYS.EXE invokes and validates the routine during boot, but it does not yet run in SWAPPER context'})
 result['files'].append({'original_file':'SYS/SRC/SWAPPER.MAR',
     'original_lines':1683,'sections':swapinit_sections,
-    'unresolved_integration':'Native SYS.EXE exports the callable SWAPINIT hash initializer and sorted insertion helper, and its wrapper copies/links the two boot SYSTEM records into allocated PAGEDYN storage. INIT still cannot invoke it in SWAPPER process context; TT0 creation, swapper loop, paging and process activation remain unresolved.'})
+    'unresolved_integration':'Boot invokes and validates the partial SWAPINIT SYSTEM/GROUP RSHT and initial logical insertion through the SYS.EXE callback. It still runs in bootstrap context rather than SWAPPER; TT0 creation, the SWAPPER loop, paging, SYSINIT activation and process activation remain unresolved.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')

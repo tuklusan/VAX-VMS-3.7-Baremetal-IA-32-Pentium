@@ -4591,7 +4591,67 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: loaded SYS.EXE resident entry executed and verified.");
-    bootstrap_message("INIT: resident SWAPPER hash-table entry is available; SWAPPER has not been activated.");
+    /* SWAPPER.MAR EXE$SWAPINIT's live SYS/GROUP RSHT construction.  The
+     * operation is called from this bootstrap context until native process
+     * activation can enter it through the SWAPPER PCB. */
+    const uint32_t swapinit_hash_sizes[PORT_EXE_SWAPINIT_HASH_TABLES]={
+        init_params.system_log_hash_entries,
+        init_params.group_log_hash_entries,
+        init_params.process_log_hash_entries};
+    const struct port_exe_swapinit_hash_set *swapinit_hashes=0;
+    if(sys_result.swapinit_log_tables(swapinit_hash_sizes,&swapinit_hashes)!=
+           PORT_EXE_SWAPINIT_HASH_OK||!swapinit_hashes||
+       swapinit_hashes->table[0].requested_entries!=swapinit_hash_sizes[0]||
+       swapinit_hashes->table[1].requested_entries!=swapinit_hash_sizes[1]||
+       swapinit_hashes->table[2].requested_entries!=swapinit_hash_sizes[2]||
+       swapinit_hashes->table[0].entry_count<swapinit_hash_sizes[0]||
+       swapinit_hashes->table[1].entry_count<swapinit_hash_sizes[1]||
+       swapinit_hashes->table[0].linked_count!=
+           PORT_EXE_SWAPINIT_INITIAL_NAMES||
+       !swapinit_hashes->table[0].record||
+       !swapinit_hashes->table[1].record||
+       swapinit_hashes->table[2].record||
+       swapinit_hashes->table[0].record_address!=
+           (uint32_t)(uintptr_t)swapinit_hashes->table[0].record||
+       swapinit_hashes->table[1].record_address!=
+           (uint32_t)(uintptr_t)swapinit_hashes->table[1].record||
+       swapinit_hashes->table[0].buckets!=
+           swapinit_hashes->table[0].record+
+               PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES||
+       swapinit_hashes->table[1].buckets!=
+           swapinit_hashes->table[1].record+
+               PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES){
+        bootstrap_message("INIT: SWAPPER EXE$SWAPINIT logical hash setup failed.");
+        bootstrap_halt();
+    }
+    const uintptr_t swap_paged_begin=packet_result.paged_pool_base;
+    const uintptr_t swap_paged_bytes=packet_result.paged_pool_bytes;
+    if(swap_paged_begin>UINT32_MAX||
+       swap_paged_bytes>UINT32_MAX-swap_paged_begin){
+        bootstrap_message("INIT: SWAPPER PAGEDYN range overflowed.");
+        bootstrap_halt();
+    }
+    const uintptr_t swap_paged_end=swap_paged_begin+swap_paged_bytes;
+    for(unsigned i=0u;i<2u;i++){
+        const struct port_exe_swapinit_hash_table *const table=
+            &swapinit_hashes->table[i];
+        const uintptr_t address=(uintptr_t)table->record;
+        if(address<swap_paged_begin||address>swap_paged_end||
+           table->allocated_bytes>swap_paged_end-address||
+           table->allocated_bytes<PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES||
+           table->record[10u]!=PORT_V37_DYN_RSHT||table->record[11u]!=0u||
+           ((uint32_t)table->record[8u]|
+             ((uint32_t)table->record[9u]<<8))!=table->allocated_bytes||
+           table->buckets!=table->record+
+               PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES||
+           table->allocated_bytes!=
+             ((PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES+
+               table->entry_count*sizeof(uint32_t)+15u)&~15u)){
+            bootstrap_message("INIT: SWAPPER RSHT record failed PAGEDYN validation.");
+            bootstrap_halt();
+        }
+    }
+    bootstrap_message("INIT: SWAPPER EXE$SWAPINIT built SYS/GROUP RSHTs and linked SYS$DISK/SYS$SYSDEVICE; process startup pending.");
     bootstrap_message("INIT: linked SYSLOA386 read real IDT, CR0, CR3, TSS, PIT and Files-11 boot home.");
     /* The original resident SYS.EXE owns system time after INIT, not the
      * earlier boot clock. Verify actual IRQ0 interrupts change resident bytes. */

@@ -23996,7 +23996,7 @@
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_hash_init",
           "pc_line": 39,
-          "function": "Round SYSTEM, GROUP and PROCESS hash entry counts up to powers of two and retain each exponent; SYS.EXE exports the routine but no SWAPPER context calls it yet"
+          "function": "At boot, round loaded INIT SYSTEM, GROUP and PROCESS hash entry counts up to powers of two and retain each exponent; invocation remains outside a SWAPPER process; SYS.EXE invokes and validates the routine during boot, but it does not yet run in SWAPPER context"
         },
         {
           "original_lines": [
@@ -24007,7 +24007,7 @@
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_hash_init",
           "pc_line": 39,
-          "function": "Allocate zeroed SYSTEM and GROUP hash table records from PAGEDYN; PROCESS geometry is retained for per-process tables; SYS.EXE exports the routine but no SWAPPER context calls it yet"
+          "function": "At boot, allocate zeroed SYSTEM and GROUP hash table records from PAGEDYN and validate their DYN headers; PROCESS geometry is retained without a process context; SYS.EXE invokes and validates the routine during boot, but it does not yet run in SWAPPER context"
         },
         {
           "original_lines": [
@@ -24026,7 +24026,7 @@
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_insert_system_record",
           "pc_line": 95,
-          "function": "Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent; SYS.EXE wrapper prepares records, but SWAPPER process context is absent"
+          "function": "Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT during boot; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent; SYS.EXE wrapper invokes and validates records from bootstrap context, but SWAPPER process context is absent"
         },
         {
           "original_lines": [
@@ -24045,7 +24045,7 @@
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_hash_init",
           "pc_line": 39,
-          "function": "Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved; SYS.EXE exports the routine but no SWAPPER context calls it yet"
+          "function": "Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved; SYS.EXE invokes and validates the routine during boot, but it does not yet run in SWAPPER context"
         },
         {
           "original_lines": [
@@ -24056,7 +24056,7 @@
           "reason": "SWAPPER main loop, balancing, page-file I/O and process swap-in/out remain unported"
         }
       ],
-      "unresolved_integration": "Native SYS.EXE exports the callable SWAPINIT hash initializer and sorted insertion helper, and its wrapper copies/links the two boot SYSTEM records into allocated PAGEDYN storage. INIT still cannot invoke it in SWAPPER process context; TT0 creation, swapper loop, paging and process activation remain unresolved."
+      "unresolved_integration": "Boot invokes and validates the partial SWAPINIT SYSTEM/GROUP RSHT and initial logical insertion through the SYS.EXE callback. It still runs in bootstrap context rather than SWAPPER; TT0 creation, the SWAPPER loop, paging, SYSINIT activation and process activation remain unresolved."
     }
   ]
 }
