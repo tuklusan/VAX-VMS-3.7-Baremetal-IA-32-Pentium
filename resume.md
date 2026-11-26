@@ -2267,3 +2267,13 @@ Verification: full `make -j2 all test exeportbatchcheck` PASS; `make sourcerange
 M427 implementation and QEMU evidence commit: `f788b8eb5e160a713e535fae6b0941727676fe89`.
 
 Remaining: complete CREPRC policy, JIB ownership/accounting, resource wait/rollback and guest-safe descriptor integration, then wire the native service into INIT and construct NULL/SWAPPER contexts; integrate public SYS$QIO with Files-11 ACP and process AST completion; activate images; verify SYSTEM login/DCL, DECnet Phase IV, SET HOST 0 second session and LOGOUT end-to-end.
+
+## M428 - Resolve source scheduler records in NPAGEDYN, 26 November 2026
+
+Extended the resident SYS.EXE scheduler resolver to resolve bounded addresses wholly inside the actual INIT-carved NPAGEDYN allocation. This is required for future PHD and saved native-frame records to be owned by the VMS nonpaged allocator; checked arithmetic prevents a wrapped end from escaping the allocation. Existing scheduler-head and static PCB resolution is unchanged. No PHD/frame allocation or process activation was added, and NULL/SWAPPER remain contextless.
+
+Verification: full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,178 ranges; 453/4,566 source files indexed; zero errors; 17,230 mapped, 30,533 partial, 58,868 unresolved, 8,032 missing, 26,734 excluded, 917 hardware-excluded); `git diff --check` PASS. QEMU `make qemu-sysboot-m217` PASS through the live 700-byte Files-11 read across two IOC-selected DQA0 DDT sectors via IRQ14, then stops at the known incomplete INIT boundary. Capture `logs/serial/qemu-m217-run-local-20261126T015402097343Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; runner exited. No SYSTEM login, DCL, DECnet or SET HOST 0 observed. No restricted source or binary image added.
+
+M428 implementation and QEMU evidence commit: `e52dc8bfdba951e7e0e6c17578e38de9e45656c5`.
+
+Remaining: allocate/initialize PHD and native stack/frame records from NPAGEDYN, establish the runnable INIT/SYSTEM context before scheduling NULL/SWAPPER, then continue source-ordered INIT, public SYS$QIO/ACP/process AST, image activation, login/DCL and DECnet verification.
