@@ -2526,6 +2526,6 @@ The native boot image grew to 143,528 bytes (281 sectors), so the bounded BIOS l
 Verification: `make -j2 test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck` PASS (exit 0); this included image, boot-sector, scheduler/privilege layout and M40 counted CHS/DMA checks. `make qemu-sysboot-m217` PASS with actual guest serial order through `INIT: bound source NULL/SWAPPER PHDs...`, `SWAPPER: scheduled native context resolved SYS$DISK and SYS$SYSDEVICE.`, and `SCH$WAITK blocked SWAPPER; SCH$SCHED selected NULL.` Capture `logs/serial/qemu-m217-run-local-20261126T152928286502Z.log`, 6,476 bytes, SHA-256 `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`; runner exited and no QEMU process remains. Coverage: 2,200 ranges; 455/4,566 indexed; zero errors; 17,230 mapped, 30,764 partial, 59,465 unresolved, 8,032 missing, 26,805 excluded, 917 hardware-excluded. No DEC source or disk image was added.
 
 M454 implementation commit: `8a563766a28bbf7cdd5e567e205558648b297f38`.
-M454 QEMU evidence commit: `c9b7338e646d4b198ae6b647487fd5787419bdab`.
+M454 QEMU evidence commit: `ba7059e42d9ed503ea2fbb55cc6086c64ac9c87c`.
 
 Remaining: resume source-order INIT and process activation; implement TT0 `$CREPRC` and SYSINIT; make public SYS$QIO, DQA0 IOC/CRB/IRQ, ACP and process AST completion live; activate SYSTEM/login/DCL; initialize DECnet Phase IV and verify genuine SET HOST 0 second-session plus LOGOUT back to the first DCL. The final acceptance sequence has not been reached.
