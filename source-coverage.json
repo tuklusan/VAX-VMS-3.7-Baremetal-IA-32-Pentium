@@ -1924,6 +1924,48 @@
       "unresolved_integration": "Preflight plus partial source ACTIVATE and native scheduler integration. Live SYSINIT uses this activation boundary with source-generated PIX/PID and verifies the resulting process-vector entry under executive synchronization; this is not a public $CREPRC call. The native operation still requires preallocated PCB/PHD/frame resources and does not load or map an image. Caller memory probes remain accessibility inputs; full PCB/PQB/JIB allocation, swap allocation, service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout."
     },
     {
+      "original_file": "SYS/SRC/SYSCVRTIM.MAR",
+      "original_lines": 774,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            314
+          ],
+          "status": "unresolved",
+          "reason": "EXE$ASCTIM output conversion is not implemented"
+        },
+        {
+          "original_lines": [
+            315,
+            578
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_bintim.c",
+          "pc_symbol": "port_vms_bintim",
+          "pc_line": 205,
+          "function": "Native absolute/delta syntax conversion, defaults, range checks and hundredth rounding; descriptor validation, public SYS$BINTIM dispatch and current-time service binding remain absent"
+        },
+        {
+          "original_lines": [
+            579,
+            773
+          ],
+          "status": "unresolved",
+          "reason": "EXE$NUMTIM binary-to-numeric conversion and live system clock snapshot are not implemented"
+        },
+        {
+          "original_lines": [
+            774,
+            774
+          ],
+          "status": "excluded",
+          "reason": "Original assembler END directive"
+        }
+      ],
+      "unresolved_integration": "Only the host-tested/native-resident BINTIM conversion core exists; service dispatcher, caller descriptors and EXE$NUMTIM remain incomplete."
+    },
+    {
       "original_file": "DCL/SRC/GOTO.MAR",
       "original_lines": 161,
       "sections": [

@@ -565,6 +565,12 @@ append_source_ranges('SYS/SRC/SYSCREPRC.MAR',805,'src/vms_exe_creprc.c',[
   (680,'partial','port_exe_creprc_activate_native','Publish the source-selected PIX/PID before installing the native PHD/restore frame and scheduler CHSE; rollback on rejection. Live SYSINIT activation verifies the PID/vector pair; general public $CREPRC allocation/dispatch remains absent'),
   (805,'unresolved',None,'Post-publication JIB/process accounting, image activation, caller PID store and public service exit remain absent')
 ], 'Preflight plus partial source ACTIVATE and native scheduler integration. Live SYSINIT uses this activation boundary with source-generated PIX/PID and verifies the resulting process-vector entry under executive synchronization; this is not a public $CREPRC call. The native operation still requires preallocated PCB/PHD/frame resources and does not load or map an image. Caller memory probes remain accessibility inputs; full PCB/PQB/JIB allocation, swap allocation, service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout.')
+append_source_ranges('SYS/SRC/SYSCVRTIM.MAR',774,'src/vms_bintim.c',[
+  (314,'unresolved',None,'EXE$ASCTIM output conversion is not implemented'),
+  (578,'partial','port_vms_bintim','Native absolute/delta syntax conversion, defaults, range checks and hundredth rounding; descriptor validation, public SYS$BINTIM dispatch and current-time service binding remain absent'),
+  (773,'unresolved',None,'EXE$NUMTIM binary-to-numeric conversion and live system clock snapshot are not implemented'),
+  (774,'excluded',None,'Original assembler END directive')
+], 'Only the host-tested/native-resident BINTIM conversion core exists; service dispatcher, caller descriptors and EXE$NUMTIM remain incomplete.')
 goto_sections=[
     (1, 85, None, None, 'source banner, VAX declarations and calling convention'),
     (86, 94, 'src/vms_dcl_goto.c', 'port_dcl_goto',
