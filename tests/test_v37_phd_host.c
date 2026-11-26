@@ -46,6 +46,10 @@ int main(void){
     if(port_v37_phd_init_genphd(phd,sizeof phd-1u,&seed)!=PORT_V37_PHD_BADPARAM||
        memcmp(before,phd,sizeof phd))
         return fail("short destination was not rejected transactionally");
+    bad=seed;bad.ast_level=PORT_V37_PHD_ASTLVL_DISABLED+1u;
+    if(port_v37_phd_init_genphd(phd,sizeof phd,&bad)!=PORT_V37_PHD_BADPARAM||
+       memcmp(before,phd,sizeof phd))
+        return fail("reserved SYSDEFMP ASTLVL rejected transactionally");
     puts("SYSDEFMP.MDL PHD layout and PDAT.MAR GENPHD initialization PASS");
     return 0;
 }

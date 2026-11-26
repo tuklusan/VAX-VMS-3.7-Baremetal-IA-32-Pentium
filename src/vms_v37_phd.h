@@ -10,6 +10,7 @@ enum {
     PORT_V37_PHD_BYTES=376u,
     /* SYSDEFMP.MDL PHD$L_PCB precedes the embedded hardware context. */
     PORT_V37_PHD_PCB=112u,
+    PORT_V37_PHD_ASTLVL_DISABLED=4u,
     PORT_V37_PHD_PRIVMSK=0u,
     PORT_V37_PHD_PRIVMSK_BYTES=8u,
     /* PRVDEF positions tested by SHRLIB/SYSMAR.MAR IFPRIV. */

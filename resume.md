@@ -2124,3 +2124,14 @@ Verification: `make v37phdcheck v37schedcheck` PASS; full `make -j2 all test` ex
 Local M412 implementation commit: `962aba2fda51237d8b4ef71027e888636a40c590`. Published main before M412: `b712191b2019d80c7b50bb52f2e7ee22b4b3dc8c`; M412 verification checkpoint `2da6d99` is pushed.
 
 Remaining work: allocate source-ordered NULL/SWAPPER PHDs and stacks with actual IA-32 mappings/contexts; port SWAPINIT and its TT0 creation and SWAPPER loop; connect public SYS$QIO, Files-11 ACP and process AST completion; then image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0/second login/LOGOUT.
+
+
+## M413 - Reject reserved native PHD AST levels, 26 November 2026
+
+GENPHD now rejects ASTLVL values above 4 before mutating a PHD. SYSDEFMP.MDL allocates a three-bit field, and PDAT.MAR uses level 4 to mean no pending ASTs; levels 5-7 are not valid source access or disabled levels. The host test checks rejection transactionally. This tightens the source ABI boundary but does not add native AST delivery or initial process activation.
+
+Verification: full `make -j2 all test` exited 0 (`/tmp/m413-test.log`, no compiler errors, test failures, or make errors); coverage generation, source-range regression and source validator PASS (2,156 ranges; 452/4,566 original files indexed; zero validation errors; 17,230 mapped, 30,396 partial, 58,471 unresolved, 8,032 missing, 26,463 excluded, 917 hardware-excluded). `make qemu-sysboot-m217` PASS; real boot still stops at INIT with NULL/SWAPPER PHD contexts absent. Capture `logs/serial/qemu-m217-run-local-20261126T004418626917Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; QEMU exited.
+
+Local M413 changes: pending commit. Published main M412: `c1504a2746e2585d5c4a0dab2159e562d4b591e6`.
+
+Remaining work: construct source-ordered NULL/SWAPPER PHD and stack mappings, initial IA-32 contexts, and the SWAPPER startup/TT0 process path; integrate live public SYS$QIO, process AST delivery, and ACP requests; then native image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 second-session/LOGOUT verification.

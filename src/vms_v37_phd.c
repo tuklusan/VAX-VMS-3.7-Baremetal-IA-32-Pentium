@@ -24,7 +24,8 @@ uint32_t port_v37_phd_init_genphd(uint8_t *record,size_t capacity,
        !s->p0_page_table||(s->p0_page_table&4095u)||
        !s->p1_page_table||(s->p1_page_table&4095u)||
        s->p0_limit>0x00ffffffu||s->p1_limit>0x00ffffffu||
-       s->priority>31u)return PORT_V37_PHD_BADPARAM;
+       s->priority>31u||s->ast_level>PORT_V37_PHD_ASTLVL_DISABLED)
+        return PORT_V37_PHD_BADPARAM;
     uint8_t candidate[PORT_V37_PHD_BYTES]={0};
     /* PDAT.MAR GENPHD initializes Q_PRIVMSK only. AUTHPRIV remains zero
      * from the source BLKB; granting it here would widen process authority. */
