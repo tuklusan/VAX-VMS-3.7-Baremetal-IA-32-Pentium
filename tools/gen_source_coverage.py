@@ -2596,8 +2596,10 @@ iopost_rows=[
  (972,975,'src/vms_iopost_account.c','port_v37_iopost_account_phd','DIRPOST selects PHD$L_DIOCNT or BIOCNT from the IRP buffered bit and increments the source 32-bit accounting counter; the caller must resolve SCH$GL_CURPCB PHD','partial'),
  (976,989,None,None,'Optional I/O measurement and diagnostic-buffer move/probe/free path remain unresolved','unresolved'),
  (990,1000,'src/vms_iopost_ccb.c','port_v37_iopost_ccb_complete','DIRPOST sign-extends the IRP negative CCB byte offset, decrements CCB$W_IOC, and on idle transfers the queued deaccess IRP to an IOC$WAKACP callback; live SYS$QIO completion is not connected','partial'),
- (1001,1015,'src/vms_iopost_dirpost.c','port_v37_iopost_dirpost','DIRPOST process I/O accounting and ordered completion; PID/IRP pending registry validates ownership before accounting, then copies IOSB through retained pages and releases pins before SCH$POSTEF; scheduler-backed PID-vector SCH$QAST/RSE callback is implemented but live IOC binding remains absent','partial'),
- (1016,1035,'src/vms_iopost_irpe.c','port_v37_iopost_irpe_plan','Bounded source-ordered IRPE chain preflight and post-POSTEF deallocation callback; live IRPE resolver/lookaside is not bound','partial'),
+ (1001,1015,'src/vms_iopost_dirpost.c','port_v37_iopost_dirpost','DIRPOST process I/O accounting, CCB completion and ordered IOSB/POSTEF steps; PID/IRP pending registry validates ownership before accounting, then copies IOSB through retained pages; live IOC binding remains absent','partial'),
+ (1016,1018,'src/vms_iopost_sched_ast.c','port_v37_iopost_sched_queue_ast','Quota-eligible completed IRPs resolve the source PID vector, enter SCH$QAST, and apply SCH$RSE AST wake routing; dispatch from live IOC completion and AST execution remain absent','partial'),
+ (1019,1020,'src/vms_iopost_dirpost.c','port_v37_iopost_dirpost','DIRPOST selects IRP lookaside return when no AST quota is charged; live SYS$QIO/IOC dispatch remains absent','partial'),
+ (1021,1035,'src/vms_iopost_irpe.c','port_v37_iopost_irpe_plan','Bounded source-ordered IRPE chain preflight and post-POSTEF deallocation callback; live IRPE resolver/lookaside is not bound','partial'),
  (1036,1113,None,None,'System-buffer move/PROBEW, IOSB access-fault path, and remaining paging/segmented I/O completion unported','unresolved')]
 rows=[]
 for lo,hi,pc,sym,desc,status in iopost_rows:
@@ -2609,7 +2611,7 @@ for lo,hi,pc,sym,desc,status in iopost_rows:
     else:rows.append({'original_lines':[lo,hi],'status':status,'reason':desc})
 result['files'].append({'original_file':'SYS/SRC/IOCIOPOST.MAR',
     'original_lines':1113,'sections':rows,
-    'unresolved_integration':'Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. Host integration tests connect DIRPOST to a bounded PID/IRP SYSQIO pending registry for IOSB copy and pinned-page release. This is not yet called by a live DQA0 user request, does not bind a running process scheduler or event/AST queues, and is not a VAX IPL implementation.'})
+    'unresolved_integration':'Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. Host integration tests connect DIRPOST to a bounded PID/IRP SYSQIO pending registry for IOSB copy and pinned-page release, and exercise the source-PID-vector SCH$QAST/RSE callback. These helpers are not yet called by live DQA0 user requests; actual event/AST delivery and VAX IPL behavior remain incomplete.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M125/M193: DQ FUNCTAB masks and native primary ATA IRQ14 transfer completion.

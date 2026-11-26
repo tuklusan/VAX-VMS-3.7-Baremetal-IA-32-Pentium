@@ -22936,11 +22936,33 @@
           "pc_file": "src/vms_iopost_dirpost.c",
           "pc_symbol": "port_v37_iopost_dirpost",
           "pc_line": 12,
-          "function": "DIRPOST process I/O accounting and ordered completion; PID/IRP pending registry validates ownership before accounting, then copies IOSB through retained pages and releases pins before SCH$POSTEF; scheduler-backed PID-vector SCH$QAST/RSE callback is implemented but live IOC binding remains absent"
+          "function": "DIRPOST process I/O accounting, CCB completion and ordered IOSB/POSTEF steps; PID/IRP pending registry validates ownership before accounting, then copies IOSB through retained pages; live IOC binding remains absent"
         },
         {
           "original_lines": [
             1016,
+            1018
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_sched_ast.c",
+          "pc_symbol": "port_v37_iopost_sched_queue_ast",
+          "pc_line": 20,
+          "function": "Quota-eligible completed IRPs resolve the source PID vector, enter SCH$QAST, and apply SCH$RSE AST wake routing; dispatch from live IOC completion and AST execution remain absent"
+        },
+        {
+          "original_lines": [
+            1019,
+            1020
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_iopost_dirpost.c",
+          "pc_symbol": "port_v37_iopost_dirpost",
+          "pc_line": 12,
+          "function": "DIRPOST selects IRP lookaside return when no AST quota is charged; live SYS$QIO/IOC dispatch remains absent"
+        },
+        {
+          "original_lines": [
+            1021,
             1035
           ],
           "status": "partial",
@@ -22958,7 +22980,7 @@
           "reason": "System-buffer move/PROBEW, IOSB access-fault path, and remaining paging/segmented I/O completion unported"
         }
       ],
-      "unresolved_integration": "Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. Host integration tests connect DIRPOST to a bounded PID/IRP SYSQIO pending registry for IOSB copy and pinned-page release. This is not yet called by a live DQA0 user request, does not bind a running process scheduler or event/AST queues, and is not a VAX IPL implementation."
+      "unresolved_integration": "Actual x86 software INT 0x90 dispatches the resident privileged NLA end-action subset. Host integration tests connect DIRPOST to a bounded PID/IRP SYSQIO pending registry for IOSB copy and pinned-page release, and exercise the source-PID-vector SCH$QAST/RSE callback. These helpers are not yet called by live DQA0 user requests; actual event/AST delivery and VAX IPL behavior remain incomplete."
     },
     {
       "original_file": "DRIVER/SRC/DQDRIVER.MAR",
