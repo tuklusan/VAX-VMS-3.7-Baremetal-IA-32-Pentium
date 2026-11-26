@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "vms_log_system.h"
+#include "vms_sysinit_names.h"
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"LOGNAMSUB failed line %d: %s\n",__LINE__,#x);return 1;}}while(0)
 struct fixture {
     uint32_t storage[PORT_V37_DEVICE_BYTES/4u];
@@ -58,12 +59,12 @@ static int direct(void){
     CHECK(!prepare(&f));
     CHECK(port_log_system_validate(&f.table,f.disk,f.sys,sizeof f.disk)==PORT_LOG_OK);
     CHECK(port_log_system_init(&f.table,f.disk,f.sys,sizeof f.disk,4u)==PORT_LOG_OK);
-    make_log(f.sysnames[0],"SYS$SYSTEM","DQA0:[TOPSYS.SYSEXE]");
-    make_log(f.sysnames[1],"SYS$SHARE","DQA0:[TOPSYS.SYSLIB]");
-    make_log(f.sysnames[2],"SYS$MESSAGE","DQA0:[TOPSYS.SYSMSG]");
-    for(unsigned i=0;i<3u;i++)
-        CHECK(port_log_system_add(&f.table,f.sysnames[i],
-          (uint32_t)(uintptr_t)f.sysnames[i],sizeof f.sysnames[i])==PORT_LOG_OK);
+    const uint32_t addresses[3]={(uint32_t)(uintptr_t)f.sysnames[0],
+        (uint32_t)(uintptr_t)f.sysnames[1],
+        (uint32_t)(uintptr_t)f.sysnames[2]};
+    const uint8_t topsys[10]={6u,'T','O','P','S','Y','S'};
+    CHECK(port_sip_create_system_names_in_table(&f.table,f.sysnames,
+          addresses,topsys)==PORT_SIP_OK);
     CHECK(f.table.count==5u&&port_log_system_check(&f.table)==PORT_LOG_OK);
     uint32_t system_address=0u;
     CHECK(port_log_system_lookup(&f.table,(const uint8_t *)"SYS$MESSAGE",11u,
@@ -73,8 +74,8 @@ static int direct(void){
     struct port_log_result result={0};
     CHECK(port_log_translate(&f.table,"SYS$SYSTEM",10u,0u,created_value,
           sizeof created_value,&result)==PORT_LOG_OK);
-    CHECK(result.bytes==20u&&!memcmp(created_value,
-          "DQA0:[TOPSYS.SYSEXE]",20u));
+    CHECK(result.bytes==21u&&!memcmp(created_value,
+          "_DQA0:[TOPSYS.SYSEXE]",21u));
     CHECK(port_log_system_add(&f.table,f.sysnames[0],
           (uint32_t)(uintptr_t)f.sysnames[0],sizeof f.sysnames[0])==PORT_LOG_BAD);
     uint8_t duplicate[PORT_LOG_MAX_REC_LEN];

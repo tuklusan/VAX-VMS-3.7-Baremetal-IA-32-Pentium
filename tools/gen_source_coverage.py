@@ -1028,11 +1028,11 @@ result['files'].append({'original_file':'SYS/SRC/FILEREAD.MAR',
 # logical names and translation loop have a native implementation.
 sysinit_sections = [
     (1,311,None,None,'SYSINIT other storage and service definitions are missing','missing'),
-    (312,332,'src/vms_sysinit_names.c','port_sip_create_system_names','system logical name table and directory strings','mapped'),
+    (312,332,'src/vms_sysinit_names.c','port_sip_create_system_names','source SYSTEM logical names and directory strings','partial'),
     (333,528,None,None,'other startup process and disk descriptors remain missing','missing'),
     (529,562,None,None,'entry and service description','excluded'),
     (563,577,None,None,'process entry and lockdown are not implemented','missing'),
-    (578,628,'src/vms_sysinit_names.c','port_sip_create_system_names','TRNLOG SYS$SYSDEVICE, strip underscore, append directory, CRELOG system table','mapped'),
+    (578,628,'src/vms_sysinit_log_table.c','port_sip_create_system_names_in_table','TRNLOG through resident SYSTEM table, source underscore handling, directory composition, and bounded CRELOG record insertion; not yet called by a live SYSINIT process','partial'),
     (629,1905,None,None,'time setup, paging/swap, RMS, F11ACP, SYSMSG and STARTUP not implemented','missing')
 ]
 sections=[]
@@ -1043,11 +1043,11 @@ for first,last,path,symbol,reason,status in sysinit_sections:
         line=line_for_symbol(path,symbol)
         if line is None:missing+=1
         sections.append({'original_lines':[first,last],
-                         'status':'mapped' if line else 'missing','pc_file':path,
+                         'status':status if line else 'missing','pc_file':path,
                          'pc_symbol':symbol,'pc_line':line,'function':reason})
 result['files'].append({'original_file':'SYSINI/SRC/SYSINIT.MAR',
                        'original_lines':1905,'sections':sections,
-                       'unresolved_integration':'No complete native SYSINIT process, no login until required services run.'})
+                       'unresolved_integration':'The source system-name creation loop is host-tested against the bounded resident SYSTEM hash table but is not invoked by a live SYSINIT process. Time, paging/swap, RMS, F11 ACP and STARTUP remain unimplemented.'})
 
 # Original INIT disk creation modules. One full original source file per
 # section group, with source line ranges mapped by actual PC function names.

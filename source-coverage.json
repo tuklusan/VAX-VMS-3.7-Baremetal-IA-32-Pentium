@@ -3921,11 +3921,11 @@
             312,
             332
           ],
-          "status": "mapped",
+          "status": "partial",
           "pc_file": "src/vms_sysinit_names.c",
           "pc_symbol": "port_sip_create_system_names",
           "pc_line": 10,
-          "function": "system logical name table and directory strings"
+          "function": "source SYSTEM logical names and directory strings"
         },
         {
           "original_lines": [
@@ -3956,11 +3956,11 @@
             578,
             628
           ],
-          "status": "mapped",
-          "pc_file": "src/vms_sysinit_names.c",
-          "pc_symbol": "port_sip_create_system_names",
-          "pc_line": 10,
-          "function": "TRNLOG SYS$SYSDEVICE, strip underscore, append directory, CRELOG system table"
+          "status": "partial",
+          "pc_file": "src/vms_sysinit_log_table.c",
+          "pc_symbol": "port_sip_create_system_names_in_table",
+          "pc_line": 39,
+          "function": "TRNLOG through resident SYSTEM table, source underscore handling, directory composition, and bounded CRELOG record insertion; not yet called by a live SYSINIT process"
         },
         {
           "original_lines": [
@@ -3971,7 +3971,7 @@
           "reason": "time setup, paging/swap, RMS, F11ACP, SYSMSG and STARTUP not implemented"
         }
       ],
-      "unresolved_integration": "No complete native SYSINIT process, no login until required services run."
+      "unresolved_integration": "The source system-name creation loop is host-tested against the bounded resident SYSTEM hash table but is not invoked by a live SYSINIT process. Time, paging/swap, RMS, F11 ACP and STARTUP remain unimplemented."
     },
     {
       "original_file": "INIT/SRC/INIMFD.B32",
@@ -23537,7 +23537,7 @@
           "status": "partial",
           "pc_file": "src/vms_log_translate.c",
           "pc_symbol": "port_log_translate",
-          "pc_line": 5,
+          "pc_line": 6,
           "function": "Source leading underscore escape, NOTRAN fallback and bounded resident SYSTEM resolution; no PROCESS/GROUP tables or live public service binding"
         },
         {
