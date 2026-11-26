@@ -298,7 +298,10 @@ uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *vector,
     uint16_t *process_count,uint16_t process_limit,uint32_t *pid){
     if(!vector||!vector->pcb_vector||!vector->sequence_vector||
        !null_pcb_address||!new_pcb_address||(new_pcb_address&3u)||
-       !new_pcb||new_pcb_bytes<160u||
+       !new_pcb||new_pcb_bytes<PORT_V37_PCB_BYTES||
+       read16(new_pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+       new_pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
+       read32(new_pcb)!=new_pcb_address||
        !process_count||!pid||vector->max_pix<1u||
        vector->system_pix!=vector->max_pix+1u||
        vector->allocated_slots!=vector->system_pix+1u)

@@ -338,6 +338,19 @@ int main(void){
           activation_pcbs[4],sizeof activation_pcbs[4],
           &process_count,5u,&pid)!=PORT_EXE_CREPRC_SLOT_BAD)
         return fail("reject malformed source PIX/system/slot geometry");
+    struct port_ini_procvec mismatched_pcb_vector=vector;
+    const uint16_t unchanged_count=process_count;
+    const uint32_t unchanged_pid=pid;
+    const uint32_t unchanged_pcb_pid=test_get32(activation_pcbs[4]+
+                                                 PORT_V37_PCB_PID);
+    if(port_exe_creprc_activate_slot(&mismatched_pcb_vector,0x1000u,
+          0x9000u,activation_pcbs[4],sizeof activation_pcbs[4],
+          &process_count,5u,&pid)!=PORT_EXE_CREPRC_SLOT_BAD||
+       port_ini_procvec_ptr(&mismatched_pcb_vector,3u)!=
+          port_ini_procvec_ptr(&vector,3u)||process_count!=unchanged_count||
+       pid!=unchanged_pid||test_get32(activation_pcbs[4]+PORT_V37_PCB_PID)!=
+          unchanged_pcb_pid)
+        return fail("reject PCB/address mismatch before activation mutation");
     puts("SYSCREPRC preflight, PCB/PQB allocation, PIX/PID activation semantics PASS");
     return 0;
 }
