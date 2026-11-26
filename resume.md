@@ -2297,3 +2297,13 @@ Verification: `make v37phdcheck sourcerangecheck` PASS; full `make -j2 all test 
 M430 implementation and QEMU evidence commit: `382553063066c1d2d495bcc17b4943ae930ae635`.
 
 Remaining: integrate PROCSTRT quota normalization into process PHD window setup, port its remaining identity/JIB/logical-name/channel/page-table/image startup, and establish a runnable INIT/SYSTEM context before scheduling NULL/SWAPPER; public SYS$QIO/ACP/process AST and final interactive DECnet verification remain outstanding.
+
+## M431 - Port PROCSTRT PHD CPU, AST and privilege setup, 26 November 2026
+
+Extended native PROCSTRT coverage for source lines 258-259 and 290-293: write PQB CPU limit and narrowed AST limit, copy the PCB base priority to PHD AUTHPRI, and copy the selected 64-bit privilege mask into both PHD current and authorized masks. Verified PHD offsets against SYSDEFMP.MDL. The transformation is not yet called by public process startup; HIBER state, process context/window setup, JIB/account/logical names, channel/page-table creation and image activation remain unresolved.
+
+Verification: `make v37phdcheck sourcerangecheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make qemu-sysboot-m217` PASS through the DQA0/IRQ14/Files-11 test, then stops at incomplete INIT. Coverage validator: 2,184 ranges; 454/4,566 original files indexed; zero errors; 17,230 mapped, 30,567 partial, 59,460 unresolved, 8,032 missing, 26,734 excluded and 917 hardware-excluded. Host checks verify the source CPU/AST narrowing, mask bytes and AUTHPRI value alongside working-set quota rules. Capture `logs/serial/qemu-m217-run-local-20261126T020238567414Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; QEMU runner exited. No login, DCL, DECnet or SET HOST 0 observed.
+
+M431 implementation and QEMU evidence commit: `a55bb2706f804548b49b17635904074b557a66b3`.
+
+Remaining: invoke the PHD setup helpers from an actual SYS$CREPRC/PROCSTRT path with mapped PHD/JIB and rollback; create and schedule real INIT/SYSTEM, NULL and SWAPPER contexts; integrate public SYS$QIO/ACP/process AST completion; activate images and verify SYSTEM login/DCL plus DECnet SET HOST 0 second-session/LOGOUT.
