@@ -2121,6 +2121,6 @@ Corrected a native PHD privilege initialization mismatch against PDAT.MAR GENPHD
 
 Verification: `make v37phdcheck v37schedcheck` PASS; full `make -j2 all test` exited 0 (`/tmp/m412-test.log`, no error/FAIL/make-failure matches); coverage generation, source-range regression and source validator PASS (2,156 ranges; 452/4,566 original files indexed; zero errors; 17,230 mapped, 30,396 partial, 58,471 unresolved, 8,032 missing, 26,463 excluded, 917 hardware-excluded). `make qemu-sysboot-m217` PASS; real guest still stops at INIT because NULL/SWAPPER PHD contexts are absent. Capture `logs/serial/qemu-m217-run-local-20261126T004057248251Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; QEMU exited.
 
-Local M412 changes: pending commit. Published main: `b712191b2019d80c7b50bb52f2e7ee22b4b3dc8c`.
+Local M412 implementation commit: `962aba2fda51237d8b4ef71027e888636a40c590`. Published main before M412: `b712191b2019d80c7b50bb52f2e7ee22b4b3dc8c`.
 
 Remaining work: allocate source-ordered NULL/SWAPPER PHDs and stacks with actual IA-32 mappings/contexts; port SWAPINIT and its TT0 creation and SWAPPER loop; connect public SYS$QIO, Files-11 ACP and process AST completion; then image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0/second login/LOGOUT.
