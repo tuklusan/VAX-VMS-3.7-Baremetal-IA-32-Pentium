@@ -2738,3 +2738,9 @@ Failed diagnostic captures are retained: `...224411178685Z.log` and `...22443376
 No DEC source, binary image, credential, or new dependency was committed. Implementation commit: `33cc3a56d4a18fd5b44c5abe95d0da05e9e35a4d`.
 
 Remaining: bind public SYS$BINTIM and SYS$SETIMR/$WAITFR to process services; consume SYSINIT's startup descriptor to open and activate STARTUP.COM; finish Files-11 ACP/SYSMSG and process-aware I/O/AST, image activation, SYSTEM login/DCL, DECnet Phase IV, and the SET HOST 0/second-session/LOGOUT sequence. Final acceptance remains incomplete.
+
+## M477 — Reverify current SYSINIT boot boundary, 26 November 2026
+
+Rebuilt/tested the current clean `main` worktree with `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck`; all targets PASS. Source-range validation reports 2,209 ranges, 456/4,566 originals indexed and zero errors (17,158 mapped, 31,217 partial, 59,963 unresolved, 7,926 missing, 26,806 excluded, 917 hardware-excluded). A new sequential `wsl make qemu-sysboot-m217` PASS again reaches only the genuine RTC update and then blocks SYSINIT on its HIB wait; it does not continue into SYSINIT file opening, STARTUP process creation, login, DCL or DECnet. Capture `logs/serial/qemu-m217-run-local-20261126T230012382995Z.log`: 6,898 bytes, SHA-256 `ae40ddf02c804546dca14fcc7f29e529df94838eb15a232e1ca21803ba72568e`. Serial manifest verification PASS (478 raw logs); the runner exited and no `qemu-system-i386` process remained. No source or binary image was changed in this verification-only checkpoint.
+
+M477 evidence commit: pending.
