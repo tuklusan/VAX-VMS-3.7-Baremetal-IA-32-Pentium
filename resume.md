@@ -2570,3 +2570,13 @@ Remaining: SYSINIT and public `$CRELNM` do not yet call the new insertion bounda
 Extended the LOGNAMSUB host regression to translate the newly inserted SYS$SYSTEM record to its source-formatted equivalence, reject a distinct duplicate-name record, and confirm the resident table remains intact at its five-record bound. `wsl make logsystemcheck` PASS under AddressSanitizer and UndefinedBehaviorSanitizer. This is host-only validation; the insertion callback is still not part of live SYSINIT or public `$CRELNM`.
 
 M459 test commit: `da1a52321de90d6b0c8294584775c10c9748de77`.
+
+## M460 — Compose SYSINIT name creation with resident SYSTEM table, 26 November 2026
+
+Added a native adapter that runs the existing SYSINIT source-name loop against the bounded resident SYSTEM hash table: it translates SYS$SYSDEVICE, builds source-layout DYN$C_LOG records, and inserts SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE. The adapter is linked into SYS.EXE and is host-tested against the actual hash/translate/add helpers. Source coverage now marks the SYSINIT name-creation ranges partial, with the exact remaining gap recorded: this adapter is not yet invoked by a live SYSINIT process, and executive allocation/locking/public $CRELNM are absent.
+
+Verification: `wsl make sysinitnamescheck logsystemcheck` PASS; full `wsl make -j2 all test exeportbatchcheck sourcerangecheck` PASS; source coverage validator PASS at 2,200 ranges, 455/4,566 indexed, zero errors; 17,158 mapped, 30,836 partial, 59,465 unresolved, 8,032 missing, 26,805 excluded, 917 hardware-excluded. `wsl make qemu-sysboot-m217` PASS through the unchanged real Files-11/DQA0 IRQ14 and SWAPPER/NULL checkpoint; this run does not execute the new SYSINIT adapter. COM1 capture `logs/serial/qemu-m217-run-local-20261126T160253820412Z.log`, SHA-256 `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`. Serial manifest validation PASS (404 logs); QEMU runner exited.
+
+M460 implementation/evidence commit: `21070d00cd29af963767d16f2f5064c2a1e5a58a`.
+
+Remaining: invoke this sequence from real source-ordered SYSINIT using the discovered TOPSYS directory, implement SYSINIT continuation and process activation, live public SYS$QIO/ACP/AST completion, SYSTEM login/DCL and DECnet Phase IV/SET HOST 0 end-to-end. No acceptance condition is complete.
