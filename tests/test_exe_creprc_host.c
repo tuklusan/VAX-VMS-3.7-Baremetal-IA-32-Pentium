@@ -103,6 +103,22 @@ int main(void){
           PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
        port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)
         return fail("PCB allocation rollback returns/coalesces NP pool");
+    struct port_exe_np_allocation pqb_allocation={0};
+    if(port_exe_creprc_allocate_pqb(&pcb_allocator,&pqb_allocation)!=
+          PORT_EXE_CREPRC_ALLOC_OK||!pqb_allocation.address||
+       pqb_allocation.bytes!=PORT_V37_PQB_BYTES||pool_ipl!=0u)
+        return fail("EXE$ALLOCPQB source pool allocation and IPL");
+    const uint8_t *const pqb_bytes=pqb_allocation.address;
+    if(pqb_bytes[PORT_V37_PQB_SIZE]!=0xf0u||
+       pqb_bytes[PORT_V37_PQB_SIZE+1u]!=0x01u||
+       pqb_bytes[PORT_V37_PQB_TYPE]!=PORT_V37_DYN_PQB||
+       pqb_bytes[11u])return fail("DYN PQB header");
+    for(unsigned i=PORT_V37_PQB_BODY;i<PORT_V37_PQB_BYTES;i++)
+        if(pqb_bytes[i])return fail("SYSCREPRC zeroes fixed PQB body");
+    if(port_exe_creprc_release_pqb(&pcb_allocator,&pqb_allocation)!=
+          PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
+       port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)
+        return fail("PQB allocation rollback returns/coalesces NP pool");
     _Alignas(8) uint8_t small_pool_memory[152];
     struct port_exe_np_pool small_pool={0};
     struct port_exe_np_allocation untouched={
@@ -162,6 +178,6 @@ int main(void){
     if(port_exe_creprc_activate_slot(&malformed_vector,0x1000u,0x8000u,
           &process_count,5u,&pid)!=PORT_EXE_CREPRC_SLOT_BAD)
         return fail("reject malformed source PIX/system/slot geometry");
-    puts("SYSCREPRC preflight, PCB allocation, PIX/PID activation semantics PASS");
+    puts("SYSCREPRC preflight, PCB/PQB allocation, PIX/PID activation semantics PASS");
     return 0;
 }

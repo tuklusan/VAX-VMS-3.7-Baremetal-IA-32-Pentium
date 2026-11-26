@@ -113,6 +113,46 @@ uint32_t port_exe_creprc_release_pcb(struct port_exe_np_allocator *allocator,
          PORT_EXE_CREPRC_ALLOC_CORRUPT:PORT_EXE_CREPRC_ALLOC_BAD);
 }
 
+uint32_t port_exe_creprc_allocate_pqb(struct port_exe_np_allocator *allocator,
+    struct port_exe_np_allocation *out){
+    if(!allocator||!out)return PORT_EXE_CREPRC_ALLOC_BAD;
+    struct port_exe_np_allocation candidate={0};
+    const uint32_t status=port_exe_np_allocate(allocator,PORT_V37_PQB_BYTES,
+        PORT_V37_DYN_PQB,&candidate);
+    if(status==PORT_EXE_NP_POOL_EMPTY)return PORT_EXE_CREPRC_ALLOC_NOMEM;
+    if(status!=PORT_EXE_NP_POOL_OK)
+        return status==PORT_EXE_NP_POOL_CORRUPT?
+            PORT_EXE_CREPRC_ALLOC_CORRUPT:PORT_EXE_CREPRC_ALLOC_BAD;
+    if(!candidate.address||candidate.bytes<PORT_V37_PQB_BYTES||
+       ((uintptr_t)candidate.address&7u)||candidate.tag!=PORT_V37_DYN_PQB){
+        if(port_exe_np_release(allocator,&candidate)!=PORT_EXE_NP_POOL_OK)
+            return PORT_EXE_CREPRC_ALLOC_CORRUPT;
+        return PORT_EXE_CREPRC_ALLOC_BAD;
+    }
+    uint8_t *const pqb=candidate.address;
+    for(uint32_t i=PORT_V37_PQB_BODY;i<PORT_V37_PQB_BYTES;i++)pqb[i]=0u;
+    write16(pqb+PORT_V37_PQB_SIZE,PORT_V37_PQB_BYTES);
+    pqb[PORT_V37_PQB_TYPE]=PORT_V37_DYN_PQB;
+    *out=candidate;
+    return PORT_EXE_CREPRC_ALLOC_OK;
+}
+
+uint32_t port_exe_creprc_release_pqb(struct port_exe_np_allocator *allocator,
+    const struct port_exe_np_allocation *allocation){
+    if(!allocator||!allocation||!allocation->address||
+       allocation->bytes<PORT_V37_PQB_BYTES||
+       allocation->tag!=PORT_V37_DYN_PQB)
+        return PORT_EXE_CREPRC_ALLOC_BAD;
+    const uint8_t *const pqb=allocation->address;
+    if(read16(pqb+PORT_V37_PQB_SIZE)!=PORT_V37_PQB_BYTES||
+       pqb[PORT_V37_PQB_TYPE]!=PORT_V37_DYN_PQB)
+        return PORT_EXE_CREPRC_ALLOC_BAD;
+    const uint32_t status=port_exe_np_release(allocator,allocation);
+    return status==PORT_EXE_NP_POOL_OK?PORT_EXE_CREPRC_ALLOC_OK:
+        (status==PORT_EXE_NP_POOL_CORRUPT||status==PORT_EXE_NP_POOL_DUP?
+         PORT_EXE_CREPRC_ALLOC_CORRUPT:PORT_EXE_CREPRC_ALLOC_BAD);
+}
+
 uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *vector,
     uint32_t null_pcb_address,uint32_t new_pcb_address,
     uint16_t *process_count,uint16_t process_limit,uint32_t *pid){

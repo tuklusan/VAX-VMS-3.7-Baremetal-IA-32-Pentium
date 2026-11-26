@@ -44,11 +44,18 @@ enum {PORT_EXE_CREPRC_SLOT_OK=1u,PORT_EXE_CREPRC_SLOT_BAD=2u,
       PORT_EXE_CREPRC_SLOT_EXHAUSTED=4u};
 enum {PORT_EXE_CREPRC_ALLOC_OK=1u,PORT_EXE_CREPRC_ALLOC_BAD=2u,
       PORT_EXE_CREPRC_ALLOC_NOMEM=4u,PORT_EXE_CREPRC_ALLOC_CORRUPT=8u};
+enum {PORT_V37_PQB_BYTES=496u,PORT_V37_PQB_SIZE=8u,
+      PORT_V37_PQB_TYPE=10u,PORT_V37_PQB_BODY=12u};
 /* SYSCREPRC.MAR EXE$ALLOCPCB and PCB clear: allocation only. Conditional
  * SSRWAIT resource waiting and the rest of process initialization are later. */
 uint32_t port_exe_creprc_allocate_pcb(struct port_exe_np_allocator *,
     struct port_exe_np_allocation *);
 uint32_t port_exe_creprc_release_pcb(struct port_exe_np_allocator *,
+    const struct port_exe_np_allocation *);
+/* SYSCREPRC.MAR EXE$ALLOCPQB: allocate and clear the source-sized PQB. */
+uint32_t port_exe_creprc_allocate_pqb(struct port_exe_np_allocator *,
+    struct port_exe_np_allocation *);
+uint32_t port_exe_creprc_release_pqb(struct port_exe_np_allocator *,
     const struct port_exe_np_allocation *);
 /* SYSCREPRC.MAR ACTIVATE 660-680: caller invokes only after resource
  * allocation, while holding the source SYNCHIPL exclusion. */
