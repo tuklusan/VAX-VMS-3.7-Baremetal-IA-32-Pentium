@@ -2110,6 +2110,6 @@ Added the source-defined PHD base offset (112 bytes) and compile-time assertion 
 
 Verification: make v37schedcheck v37phdcheck PASS; make -j2 all PASS and rebuilt/installed SYS.EXE (208,820 bytes) into the local Files-11 test image; coverage generation, source-range regression and source validator PASS (2,156 ranges; 452/4,566 original files indexed; 17,230 mapped, 30,396 partial, 58,471 unresolved, 8,032 missing, 26,463 excluded, 917 hardware-excluded; zero validation errors). make qemu-sysboot-m217 PASS; guest still reaches the known INIT stop with NULL/SWAPPER PHD contexts absent. Capture logs/serial/qemu-m217-run-local-20261126T003751288510Z.log, 6,309 bytes, SHA-256 cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53; QEMU exited.
 
-Local M411 changes: pending commit. Published main is M410 checkpoint 753861851fd1c76769292dae785eddd526400aec.
+Local M411 implementation commit: 3fda2d8b0d850a1226d79e323f02c99841a71e2b. Published main before M411 was M410 checkpoint 753861851fd1c76769292dae785eddd526400aec.
 
 Remaining work: allocate and map original NULL/SWAPPER PHDs and stacks with valid IA-32 contexts, port SWAPINIT continuation including TT0 creation and SWAPPER work loop, integrate public SYS/Files-11 ACP/process ASTs, then image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0/second login/LOGOUT.
