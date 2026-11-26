@@ -2189,3 +2189,13 @@ Verification: full `make -j2 all test exeportbatchcheck` PASS (exit 0; host/layo
 M418 implementation and boot-evidence commit: `8e9d33a0e14f596039aee7462870cb5a7fc5ff8b`.
 
 Remaining: integrate actual PCB/PQB/JIB and pagefile allocators, status state and rollback around this activation point; schedule activated processes and build NULL/SWAPPER PHD/native contexts; port SWAPPER/TT0 and system service dispatch; connect public SYS$QIO to DQA0/ACP/process AST; finish and verify SYSTEM login, DCL, DECnet Phase IV, SET HOST 0, second login/DCL and LOGOUT.
+
+## M419 - Allocate and clear source PCB from nonpaged pool, 26 November 2026
+
+Extended SYSCREPRC.MAR `EXE$ALLOCPCB` lines 271-282: allocate the 160-byte PCB from the native nonpaged allocator with the DYN PCB tag, validate alignment and capacity, initialize DYN size/type, and clear the source-defined fixed PCB body beginning at PCB$B_TYPE. Added guarded release for CREPRC rollback and host regressions for exact header/body bytes, IPL restoration, pool coalescing, and exhaustion without output mutation. Updated SYSCREPRC source coverage; PQB/JIB allocation, conditional resource waiting, defaults, quotas, and rollback remain unresolved. This helper is resident but is not called by public `$CREPRC` dispatch.
+
+Verification: `make execreprccheck` PASS; full `make -j2 all test exeportbatchcheck` PASS (first run exposed a missing host-batch link dependency, which was added; rerun exited 0); `make sourcerangecheck` PASS; coverage validator reports 2,168 ranges across 453/4,566 original files, zero errors, 17,230 mapped, 30,484 partial, 58,941 unresolved, 8,032 missing, 26,710 excluded, 917 hardware-excluded; `git diff --check` PASS. `nm build/sys.exe` contains `port_exe_creprc_allocate_pcb`; current linked RW segment ends at `0x0037f200`, under the `0x00380000` aperture. One `make qemu-sysboot-m217` PASS: 700-byte Files-11 read traverses two IOC-selected DQA0 DDT sectors through IRQ14; guest continues to stop at incomplete INIT because NULL/SWAPPER PHD contexts are absent. Capture `logs/serial/qemu-m217-run-local-20261126T012045333568Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; serial manifest validates 363 logs. No login, DCL, DECnet, or SET HOST 0 observed. No DEC source or binary image added.
+
+M419 implementation and QEMU evidence commit: `686354c376fd4205ac1a69342a65bd4207224af8`.
+
+Remaining: implement PQB/JIB allocation and source CREPRC initialization/rollback, then connect actual INIT NULL/SWAPPER creation and scheduling; public SYS$QIO, Files-11 ACP and process AST integration; process image activation; SYSTEM login/DCL; DECnet Phase IV and genuine SET HOST 0/second session/LOGOUT.
