@@ -729,6 +729,17 @@ static uint32_t executive_vms_address(void *unused,const void *p){
 }
 static uint8_t *executive_vms_resolve(void *unused,uint32_t a,size_t n){
     (void)unused;
+    /* SCH$CHSE/SCH$SCHED and their PHD/native-frame binding operate on VMS
+     * records allocated from NPAGEDYN.  Resolve that source-owned allocation
+     * span with strict subtraction bounds so an overflowed end cannot escape
+     * into adjacent SYS.EXE globals or the page pool. */
+    const uintptr_t np_start=(uintptr_t)executive_np_base;
+    if(np_start && np_start<=UINT32_MAX && executive_free_npages &&
+       executive_free_npages<=UINT32_MAX-np_start){
+        const uintptr_t np_limit=np_start+executive_free_npages;
+        if(a>=np_start && a<=np_limit && n<=np_limit-a)
+            return (uint8_t *)(uintptr_t)a;
+    }
     const uintptr_t start=(uintptr_t)&executive_vms_scheduler.heads[0];
     const uintptr_t limit=(uintptr_t)&executive_vms_scheduler.heads[64];
     if(a>=start&&a<=limit&&n<=limit-a)return (uint8_t *)(uintptr_t)a;
