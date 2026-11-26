@@ -2327,3 +2327,11 @@ Verification: `make execreprccheck` PASS; full `make -j2 all test exeportbatchch
 M433 implementation and QEMU evidence commit: `41bd8ba63ff1e3fafd65f4c103114ca62ed77a81`.
 
 Remaining: create/activate actual INIT, NULL and SWAPPER process contexts and invoke source PROCSTRT/CREPRC paths; finish live public SYS$QIO process delivery and AST completion; resume initialization; activate/login SYSTEM and DCL; initialize DECnet Phase IV and verify genuine SET HOST 0 second-session login and LOGOUT end-to-end.
+
+## M434 - Validate the PCB record before ACTIVATE publication, 26 November 2026
+
+Tightened the SYSCREPRC ACTIVATE primitive: before changing the process sequence, PCB PID, vector or count, it now validates the exact source PCB size and DYN tag and verifies the PCB's self-address matches the address being published. Host regression confirms an address mismatch is rejected without changing activation state.
+
+Verification: `make execreprccheck sourcerangecheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make qemu-sysboot-m217` PASS through live DQA0 DDT/IRQ14 and Files-11 ACP probes, then stops at the same incomplete INIT boundary. Actual capture `logs/serial/qemu-m217-run-local-20261126T021419502939Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; NULL/SWAPPER contexts, login, DCL, DECnet and SET HOST 0 remain unverified/not reached.
+
+M434 implementation and QEMU evidence commit: `2f078a12f70fa067e37255cb6a2e671868a92138`.
