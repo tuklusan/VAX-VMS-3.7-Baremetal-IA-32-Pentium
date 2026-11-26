@@ -18,6 +18,7 @@ assert 'vms_sched_chse=executive_vms_sched_chse' in executive
 kernel = (root / 'src/kernel.c').read_text()
 assert 'proc_result.vms_sched_chse(proc_result.vms_scheduler' in kernel
 assert 'source SCH$CHSE reached resident IA-32 vector 0x91' in kernel
+assert 'native_no_context_count<' in kernel and 'context_misses_before+1u' in kernel
 assert 'outb(0x21,0xfa)' in arch and 'outb(0xA1,0xbf)' in arch
 assert 'f->vector == 46' in arch and 'outb(0xa0,0x20)' in arch
 assert 'port_ata_x86_irq' in ata and 'ATA_STATUS' in ata

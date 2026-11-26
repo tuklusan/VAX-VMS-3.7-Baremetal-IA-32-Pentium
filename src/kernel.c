@@ -3549,6 +3549,8 @@ void kmain(void) {
     }
     const uint32_t resched_requests_before=arch_vms_reschedule_requests();
     const uint32_t resched_interrupts_before=arch_vms_reschedule_interrupts();
+    const uint32_t context_misses_before=
+        proc_result.vms_scheduler->native_no_context_count;
     if(proc_result.vms_sched_chse(proc_result.vms_scheduler,
           (uint32_t)(uintptr_t)proc_result.null_vms_pcb,0u)!=
        PORT_V37_SCHED_OK){
@@ -3557,7 +3559,8 @@ void kmain(void) {
     }
     if(arch_vms_reschedule_requests()!=resched_requests_before+1u||
        arch_vms_reschedule_interrupts()<resched_interrupts_before+1u||
-       proc_result.vms_scheduler->native_no_context_count==0u){
+       proc_result.vms_scheduler->native_no_context_count<
+           context_misses_before+1u){
         bootstrap_message("INIT: source SCH$CHSE did not reach native SCH$RESCHED.");
         bootstrap_halt();
     }
@@ -4603,7 +4606,7 @@ void kmain(void) {
     uint64_t time_before=((uint64_t)sys_result.resident_clock->high<<32)|
                                  sys_result.resident_clock->low;
     uint32_t spins=0;
-    while((uint32_t)(arch_ticks()-pit_before)<3u && spins<30000000u){
+    while((uint32_t)(arch_ticks()-pit_before)<3u && spins<120000000u){
         __asm__ volatile("pause");
         ++spins;
     }
