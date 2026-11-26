@@ -2505,3 +2505,14 @@ Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` PASS; after
 M452 implementation commit: `986d30e48c1b32a6eaf9d416f692c7f8c92cbbcf`.
 
 Remaining: use the queued-context transaction in source-ordered native INIT/SWAPPER activation with real IA-32 page mappings; start SWAPPER/SYSINIT and continue process image activation; integrate public SYS$QIO with DQA0 IOC/Files-11 ACP/AST completion; implement SYSTEM login/DCL and DECnet Phase IV, then verify the genuine two-session SET HOST 0/LOGOUT sequence end-to-end in QEMU. No acceptance condition is complete.
+
+## M453 — Build native supervisor entry frames and scheduler wait dispatch, 26 November 2026
+
+Fixed the IA-32 CPL0 initial context ABI: because same-privilege IRET does not pop ESP/SS, the initialized stack now places a null return address and the source R4 argument above the 76-byte restore frame. The host context regression checks both words. Added the resident scheduler's wait-current callback handoff from SYS.EXE into the architecture trap path and a preliminary per-process page-directory constructor. These are integration primitives only: boot still does not create or bind INIT/NULL/SWAPPER contexts, and the page-directory constructor and wait transition have not been exercised by the guest.
+
+Verification: `make -j2 all test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck` PASS; `make qemu-sysboot-m217` PASS on the existing live IRQ14/Files-11 regression, then the actual guest reaches the known contextless INIT stop. The guest did not enter SWAPPER/NULL and no login or DCL occurred. Raw COM1 capture `logs/serial/qemu-m217-run-local-20261126T151332704185Z.log`, 6,429 bytes, SHA-256 `f7d632210616a4d0f033036cf84a25a35db3b049049724c889e33e8ed7f1ff6d`; QEMU exited. Coverage validation: 2,194 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,716 partial, 59,540 unresolved, 8,032 missing, 26,778 excluded, 917 hardware-excluded. No original DEC source or binary image was added.
+
+M453 implementation commit: `07effdd9b98b925cd188d75d53b22cd3d7c78fe0`.
+M453 QEMU evidence commit: `7fdd91afc3abef07135dbb031490aa8d2f884b41`.
+
+Remaining: create and bind authentic process PHDs and usable contexts in source INIT order; execute SWAPPER startup and create SYSINIT; complete live public SYS$QIO, DQA0 IOC, ACP and process AST delivery; continue activation through SYSTEM login/DCL and DECnet Phase IV, then verify the SET HOST 0 second-session/LOGOUT sequence. No acceptance condition is complete.

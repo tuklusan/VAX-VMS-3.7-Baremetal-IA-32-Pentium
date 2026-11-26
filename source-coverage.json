@@ -6145,7 +6145,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_ia32_context.c",
           "pc_symbol": "port_v37_ia32_context_validate",
-          "pc_line": 69,
+          "pc_line": 80,
           "function": "Validate mode-matched selectors; same-CPL kernel IRET ignores unsaved ESP/SS stack words while lower-mode returns validate their user stack; port_v37_ia32_context_stack_top bounds the 32-bit extent before arch_prepare_vms_restore_frame installs TSS ESP0 for access modes 1-3"
         },
         {
@@ -10730,7 +10730,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3118,
+          "pc_line": 3119,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10787,7 +10787,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3118,
+          "pc_line": 3119,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
