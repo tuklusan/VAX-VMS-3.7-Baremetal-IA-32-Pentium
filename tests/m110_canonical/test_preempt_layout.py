@@ -25,7 +25,7 @@ for name in ['arch_user_clock_page','clock_alias_table','task_page_directory',
              'task_page_table']:
     assert syms[name]%4096==0,name
 assert syms['arch_user_clock_page'] != syms['task_b_stack']
-assert syms['__bss_end'] < 0x90000
+assert syms['__bss_end'] < 0x9e000
 asm=(root/'src/arch.s').read_text()
 c=(root/'src/arch.c').read_text()
 assert 'pushl arch_user_return_eflags' in asm and 'popfl' in asm

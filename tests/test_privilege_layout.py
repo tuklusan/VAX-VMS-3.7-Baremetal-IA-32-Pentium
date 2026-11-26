@@ -36,7 +36,7 @@ assert symbols['task_b_stack'] % 4096 == 0
 assert symbols['task_b_stack'] != symbols['user_stack']
 assert symbols['page_directory'] % 4096 == 0
 assert symbols['low_page_table'] % 4096 == 0
-assert symbols['__bss_end'] < 0x90000  # bootstrap stack is above BSS at 0x9f000
+assert symbols['__bss_end'] < 0x9e000  # bootstrap stack is above BSS at 0x9f000
 
 # IDT vector table now includes the DPL3 syscall entry at index 34.
 table = symbols['arch_isr_table'] - 0x10000

@@ -103,8 +103,9 @@ def main():
         b'INIT: DQA0 UCB busy serialized two retained DDT READPBLK IRPs through IRQ14 and deferred IOC post.',
         b'INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
-        b'INIT: live IRQ0 called SCH$RESCHED/SCH$SCHED; NULL/SWAPPER PHD contexts are still absent.',
-        b'INIT stopped: remaining original initialization dependencies incomplete.']
+        b'INIT: bound source NULL/SWAPPER PHDs to native IA-32 frames and process page tables.',
+        b'SWAPPER: scheduled native context resolved SYS$DISK and SYS$SYSDEVICE.',
+        b'SCH$WAITK blocked SWAPPER; SCH$SCHED selected NULL.']
     failures=[
         b'*** x86 fault:',
         b'SYSBOOT: SYS.EXE retrieval map invalid.',
@@ -150,6 +151,7 @@ def main():
         b'INIT: SYS.EXE PIT clock handoff failed.',
         b'INIT: primary ATA IRQ14 did not complete a sector read.',
         b'INIT: live SYS.EXE PIT clock did not advance.',
+        b'INIT: native NULL/SWAPPER PHD or context binding failed.',
         b'INIT: marked QEMU ATA PIO write/readback/restore regression failed.',
         b'INIT: asynchronous ATA scratch write failed.',
         b'INIT: asynchronous ATA write readback failed.',
@@ -169,14 +171,22 @@ def main():
         b'INIT: IA-32 privilege transition stack is unprotected.',
         b'PORTLAB> ',b'Login successful',b'Login: ',b'\n$ ']
     passed=False
+    success_deadline=None
     try:
         until=time.monotonic()+80
         while time.monotonic()<until:
             if any(x in observed for x in failures):break
             if all(x in observed for x in expected):
                 positions=[observed.index(x) for x in expected]
-                passed=positions==sorted(positions)
-                break
+                if positions!=sorted(positions):break
+                if success_deadline is None:
+                    # Keep the sole QEMU runner alive briefly after NULL is
+                    # selected so a bad IRET/process mapping can report a
+                    # real guest fault before the harness declares success.
+                    success_deadline=time.monotonic()+1.0
+                if time.monotonic()>=success_deadline:
+                    passed=True
+                    break
             if p.poll() is not None:break
             ready,_,_=select.select([p.stdout],[],[],0.25)
             if ready:

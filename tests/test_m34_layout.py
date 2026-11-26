@@ -8,5 +8,5 @@ assert 'port_user_copy_to(&m,arch_io_dst' not in c
 assert '(uint32_t)PORT_QIO_INVALID' in c
 s=subprocess.check_output(['nm',str(r/'build/kernel.elf')],text=True)
 assert 'port_user_copyv_to' in s
-assert len((r/'build/kernel.bin').read_bytes())<=273*512
+assert len((r/'build/kernel.bin').read_bytes())<=512*512
 print('M34 data+IOSB transactional syscall output linked PASS')

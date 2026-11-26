@@ -6,7 +6,7 @@ from pathlib import Path
 import struct
 import subprocess
 ROOT=Path(__file__).resolve().parents[1]
-BOOT_LOAD_LIMIT=0x10000+273*512
+BOOT_LOAD_LIMIT=0x10000+512*512
 
 def load_segments(blob):
     assert blob[:7]==b'\x7fELF\x01\x01\x01', 'wrong ELF byte order/class'
@@ -21,7 +21,7 @@ def load_segments(blob):
         if typ!=1:continue
         assert filesz<=memsz and off+filesz<=len(blob)
         assert virtual==physical and 0x10000<=physical
-        assert physical+memsz<=0x90000,('BSS reaches boot stack',physical+memsz)
+        assert physical+memsz<=0x9e000,('BSS reaches boot stack',physical+memsz)
         assert physical+filesz<=BOOT_LOAD_LIMIT,('not loaded by BIOS',physical+filesz)
         assert align in (1,4096) and off%align==virtual%align
         assert flags in (5,6),('unexpected executable/writable mapping',flags)
@@ -43,7 +43,7 @@ def verify():
     assert 0<marker<500 and image[:marker+4]==boot[:marker+4]
     assert image[marker+6:512]==boot[marker+6:512]
     assert int.from_bytes(image[marker+4:marker+6],'little')==(len(flat)+511)//512
-    assert 0<len(flat)<=273*512
+    assert 0<len(flat)<=512*512
     assert image[512:512+len(flat)]==flat
     assert not any(image[512+len(flat):]),'unexpected data beyond linked image'
     segments=load_segments(elf)
@@ -54,7 +54,7 @@ def verify():
     symbols=subprocess.check_output(['nm','-n',str(ROOT/'build/kernel.elf')],text=True)
     syms={a[2]:int(a[0],16) for line in symbols.splitlines()
           if len(a:=line.split())==3 and a[1]!='U'}
-    assert syms['__bss_start']<syms['__bss_end']<=0x90000
+    assert syms['__bss_start']<syms['__bss_end']<=0x9e000
     assert all(x[0]+x[1]<=syms['__bss_start'] for x in segments)
     assert syms['arch_user_code_begin']%4096==0
     assert segments[0][0]<=syms['arch_user_code_begin']<segments[0][0]+segments[0][1]

@@ -1,7 +1,8 @@
 #include "vms_exe_image_end85.h"
 
-/* DEBUGDATA.MAR: 512-byte page-aligned bugcheck and panic register store. */
-struct port_bugcheck_debugdata port_bug_debug __attribute__((aligned(4096)));
+/* DEBUGDATA.MAR: 512-byte VMS-page-aligned bugcheck and panic register store.
+ * IA-32 hardware pages are 4 KiB, but this source record is not a page table. */
+struct port_bugcheck_debugdata port_bug_debug __attribute__((aligned(512)));
 _Static_assert(sizeof(struct port_bugcheck_debugdata)==PORT_BUG_WORDS*4u,
                "Original DEBUGDATA.MAR occupies one 512-byte VMS page");
 _Static_assert(offsetof(struct port_bugcheck_debugdata,cpu_registers)==94u*4u,

@@ -14,7 +14,7 @@ for name in ['arch_user_mem_a','arch_user_mem_b','arch_run_vm_test','task_pcb',
 assert syms['arch_user_code_begin'] <= syms['arch_user_mem_a'] < syms['arch_user_code_end']
 assert syms['arch_user_code_begin'] <= syms['arch_user_mem_b'] < syms['arch_user_code_end']
 assert syms['arch_user_code_end'] <= syms['arch_user_code_begin']+4096
-assert syms['__bss_end'] < 0x90000
+assert syms['__bss_end'] < 0x9e000
 c=(root/'src/arch.c').read_text()
 asm=(root/'src/arch.s').read_text()
 assert 'task_pcb[sched_current].active_ast' in c

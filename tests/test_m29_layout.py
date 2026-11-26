@@ -16,5 +16,5 @@ nm=subprocess.check_output(['nm',str(root/'build/kernel.elf')],text=True)
 for t in ('arch_run_user_qio_test','arch_user_qio_probe',
           'port_channel_qio_submit','port_user_range_valid'):
  assert t in nm,t
-assert len((root/'build/kernel.bin').read_bytes())<=273*512
+assert len((root/'build/kernel.bin').read_bytes())<=512*512
 print('M29 CPL3 QIO submit/poll with user-buffer checks linked PASS')

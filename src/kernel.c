@@ -79,8 +79,11 @@ extern int arch_adopt_executive_clock(const struct port_exe_systime *,
                                      void (*tick)(void));
 extern int arch_adopt_vms_scheduler(struct port_v37_scheduler *,
     port_v37_sched_interrupt_fn,uint32_t (*)(struct port_v37_scheduler *,
-    uint32_t,uint32_t,uint32_t *,uint32_t *));
+    uint32_t,uint32_t,uint32_t *,uint32_t *),uint32_t,
+    void (*)(const char *));
 extern void arch_request_vms_reschedule(void);
+extern uint32_t arch_vms_make_process_cr3(uint32_t *,uint32_t *,uint32_t *);
+extern uint32_t arch_vms_wait_current(uint32_t);
 extern void arch_run_pending_vms_reschedule(void);
 extern uint32_t arch_vms_reschedule_requests(void);
 extern uint32_t arch_vms_reschedule_interrupts(void);
@@ -3547,7 +3550,9 @@ void kmain(void) {
        (uintptr_t)proc_result.vms_sched_chse>=PORT_SYS_ELF_LIMIT||
        !arch_adopt_vms_scheduler(proc_result.vms_scheduler,
                                  proc_result.vms_sched_interrupt,
-                                 proc_result.vms_sched_wait)){
+                                 proc_result.vms_sched_wait,
+                                 (uint32_t)(uintptr_t)proc_result.null_vms_pcb,
+                                 bootstrap_message)){
         bootstrap_message("INIT: IA-32 IRQ0 scheduler binding failed.");
         bootstrap_halt();
     }
@@ -4825,11 +4830,27 @@ void kmain(void) {
         bootstrap_message("INIT: live IRQ0 did not defer contextless VMS PCBs through SCH$SCHED.");
         bootstrap_halt();
     }
-    bootstrap_message("INIT: live IRQ0 called SCH$RESCHED/SCH$SCHED; NULL/SWAPPER PHD contexts are still absent.");
-
-    /* INIT.MAR's remaining SYSLOA, SYSPARAM, SPT, ACP and process-image
-     * prerequisites have not been ported. Stop before login or DCL. */
-    bootstrap_message("INIT stopped: remaining original initialization dependencies incomplete.");
+    static struct port_sys_exec_result contexts_result;
+    const struct port_sys_exec_context_settings contexts_settings={
+        .make_process_cr3=arch_vms_make_process_cr3,
+        .wait_current=arch_vms_wait_current,
+        .process_message=bootstrap_message};
+    const struct port_sys_exec_start contexts_request={
+        .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
+        .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&contexts_result,
+        .phase=PORT_SYS_EXEC_INIT_CONTEXTS,
+        .vms_context_settings=&contexts_settings};
+    if(loaded_sys(&contexts_request)!=PORT_SYS_EXEC_NORMAL||
+       contexts_result.signature!=PORT_SYS_EXEC_CONTEXTS_TAG||
+       contexts_result.vms_contexts_ready!=1u||
+       m202_get32(proc_result.null_vms_pcb+PORT_V37_PCB_PHD)==0u||
+       m202_get32(proc_result.swapper_vms_pcb+PORT_V37_PCB_PHD)==0u){
+        bootstrap_message("INIT: native NULL/SWAPPER PHD or context binding failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: bound source NULL/SWAPPER PHDs to native IA-32 frames and process page tables.");
+    arch_request_vms_reschedule();
+    bootstrap_message("INIT: native process scheduler returned unexpectedly.");
     bootstrap_halt();
 
 

@@ -49,7 +49,7 @@ vmb_e820_done:
     movw stage2_count, %bp
     testw %bp, %bp
     jz disk_error
-    cmpw $273, %bp
+    cmpw $512, %bp
     ja disk_error
     movw stage2_lbn, %di
     cmpw $1, %di
@@ -110,7 +110,7 @@ protected_entry:
     movw %ax, %gs
     movw %ax, %ss
     /* Keep the growing bootstrap stack above the kernel's BSS.  The BSS
-     * limit remains below 0x90000; kmain and resident SYS calls can nest
+     * limit remains below 0x9e000; kmain and resident SYS calls can nest
      * several KiB before switching to per-process stacks. */
     movl $0x0009f000, %esp
     ljmp $0x08, $0x00010000

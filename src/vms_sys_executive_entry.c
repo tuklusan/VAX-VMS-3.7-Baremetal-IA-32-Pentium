@@ -33,6 +33,7 @@
 #include "vms_f11_channel.h"
 #include "vms_qio_post.h"
 #include "vms_qio_irp_pool.h"
+#include "vms_exe_nullproc.h"
 #include "vms_exe_np_pool.h"
 #include "vms_exe_paged_pool.h"
 #include "vms_nl_ddt.h"
@@ -708,6 +709,15 @@ static struct port_exe_sched_process executive_null_pcb;
 _Alignas(8) static uint8_t executive_vms_system_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_null_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_swapper_pcb[PORT_V37_PCB_BYTES];
+struct executive_vms_initial_contexts {
+    uint32_t *p0[2],*p1[2];
+    uint8_t *stack[2],*phd[2];
+    void *allocation;
+    uint32_t ready;
+};
+static struct executive_vms_initial_contexts executive_vms_contexts;
+static uint32_t (*executive_vms_wait_current)(uint32_t);
+static void (*executive_vms_process_message)(const char *);
 static struct port_v37_scheduler executive_vms_scheduler;
 static uint32_t *executive_vms_native_cr3_by_pix;
 static uint32_t executive_vms_native_cr3_slots;
@@ -795,6 +805,30 @@ static uint8_t *executive_vms_resolve(void *unused,uint32_t a,size_t n){
         if(a>=pcbs[i]&&a<=pcbs[i]+PORT_V37_PCB_BYTES&&
            n<=pcbs[i]+PORT_V37_PCB_BYTES-a)return (uint8_t *)(uintptr_t)a;
     return 0;
+}
+
+static void executive_swapper_start(void *argument){
+    (void)argument;
+    static const uint8_t sysdisk[]={'S','Y','S','$','D','I','S','K'};
+    static const uint8_t sysdevice[]={'S','Y','S','$','S','Y','S','D','E','V','I','C','E'};
+    uint32_t disk=0u,device=0u;
+    if(!executive_swapinit_hash_ready||
+       port_exe_swapinit_search_system(&executive_swapinit_hash_tables,
+           sysdisk,sizeof sysdisk,&disk)!=PORT_LOG_OK||
+       port_exe_swapinit_search_system(&executive_swapinit_hash_tables,
+           sysdevice,sizeof sysdevice,&device)!=PORT_LOG_OK||
+       !disk||!device||disk==device)
+        for(;;)__asm__ volatile("pause":::"memory");
+    if(executive_vms_process_message)
+        executive_vms_process_message(
+            "SWAPPER: scheduled native context resolved SYS$DISK and SYS$SYSDEVICE.");
+    const uint32_t wait=executive_vms_address(0,
+        &executive_vms_scheduler.wait_headers[PORT_V37_SCH_HIB]);
+    for(;;){
+        if(!wait||!executive_vms_wait_current||
+           executive_vms_wait_current(wait)!=PORT_V37_SCHED_OK)
+            for(;;)__asm__ volatile("pause":::"memory");
+    }
 }
 
 
@@ -897,6 +931,118 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
        p->version!=PORT_SYS_EXEC_VERSION || !p->result || p->reserved ||
        p->pcb_type!=PORT_SYS_EXEC_PCB_KIND)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
+    if(p->phase==PORT_SYS_EXEC_INIT_CONTEXTS){
+        if(!executive_procvec_ready||!executive_swapinit_hash_ready||
+           executive_vms_contexts.ready||!executive_np_pool_ready||
+           !p->vms_context_settings||
+           !p->vms_context_settings->make_process_cr3||
+           !p->vms_context_settings->wait_current||
+           !p->vms_context_settings->process_message)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        void *raw=0;uint32_t allocated=0u;
+        const uint32_t need=4u*4096u+4095u+128u+640u+
+                            2u*PORT_V37_PHD_BYTES;
+        if(port_exe_np_pool_alloc(&executive_np_pool,need,&raw,&allocated)!=
+              PORT_EXE_NP_POOL_OK||!raw)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        const uintptr_t raw_address=(uintptr_t)raw;
+        if(raw_address>UINT32_MAX-4095u){
+            (void)port_exe_np_pool_free(&executive_np_pool,raw,allocated);
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        }
+        const uintptr_t aligned=(raw_address+4095u)&~(uintptr_t)4095u;
+        const uintptr_t allocation_end=raw_address+allocated;
+        const uintptr_t required_end=aligned+4u*4096u+128u+640u+
+                                     2u*PORT_V37_PHD_BYTES;
+        if(allocation_end<raw_address||allocation_end>UINT32_MAX||
+           required_end>allocation_end){
+            (void)port_exe_np_pool_free(&executive_np_pool,raw,allocated);
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        }
+        executive_vms_contexts.allocation=raw;
+        executive_vms_contexts.p0[0]=(uint32_t *)aligned;
+        executive_vms_contexts.p0[1]=executive_vms_contexts.p0[0]+1024u;
+        executive_vms_contexts.p1[0]=executive_vms_contexts.p0[1]+1024u;
+        executive_vms_contexts.p1[1]=executive_vms_contexts.p1[0]+1024u;
+        executive_vms_contexts.stack[0]=(uint8_t *)
+            (executive_vms_contexts.p1[1]+1024u);
+        executive_vms_contexts.stack[1]=
+            executive_vms_contexts.stack[0]+128u;
+        executive_vms_contexts.phd[0]=
+            executive_vms_contexts.stack[1]+640u;
+        executive_vms_contexts.phd[1]=executive_vms_contexts.phd[0]+
+                                      PORT_V37_PHD_BYTES;
+        for(uintptr_t at=aligned;at<required_end;at++)
+            *(uint8_t *)at=0u;
+        executive_vms_wait_current=p->vms_context_settings->wait_current;
+        executive_vms_process_message=p->vms_context_settings->process_message;
+        const uintptr_t null_pc=(uintptr_t)port_exe_nullproc;
+        const uintptr_t swapper_pc=(uintptr_t)executive_swapper_start;
+        if(null_pc>UINT32_MAX||swapper_pc>UINT32_MAX)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        uint32_t cr3[2]={0u,0u};
+        if(!p->vms_context_settings->make_process_cr3(
+               executive_vms_contexts.p0[0],
+               executive_vms_contexts.p1[0],&cr3[0])||
+           !p->vms_context_settings->make_process_cr3(
+               executive_vms_contexts.p0[1],
+               executive_vms_contexts.p1[1],&cr3[1]))
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        struct port_v37_ia32_restore_frame *frame[2]={0,0};
+        const struct port_v37_ia32_context_seed seed[2]={
+            {.cr3=cr3[0],.entry_pc=(uint32_t)null_pc,.eflags=0x202u,
+             .code_selector=0x08u,.data_selector=0x10u,.access_mode=0u},
+            {.cr3=cr3[1],.entry_pc=(uint32_t)swapper_pc,
+             .initial_kernel_argument=(uint32_t)(uintptr_t)executive_vms_swapper_pcb,
+             .eflags=0x202u,.code_selector=0x08u,.data_selector=0x10u,
+             .access_mode=0u}
+        };
+        if(port_v37_ia32_context_init(executive_vms_contexts.stack[0],
+               128u,&seed[0],&frame[0])!=PORT_V37_IA32_CONTEXT_OK||
+           port_v37_ia32_context_init(executive_vms_contexts.stack[1],
+               640u,&seed[1],&frame[1])!=
+               PORT_V37_IA32_CONTEXT_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        const struct port_v37_phd_seed phd_seed[2]={
+            {.entry_pc=(uint32_t)null_pc,.initial_r4=0u,
+             .p0_page_table=(uint32_t)(uintptr_t)executive_vms_contexts.p0[0],
+             .p0_limit=1024u,
+             .p1_page_table=(uint32_t)(uintptr_t)executive_vms_contexts.p1[0],
+             .p1_limit=1024u,.native_cr3=cr3[0],.priority=0u,
+             .ast_level=PORT_V37_PHD_ASTLVL_DISABLED},
+            {.entry_pc=(uint32_t)swapper_pc,
+             .initial_r4=(uint32_t)(uintptr_t)executive_vms_swapper_pcb,
+             .p0_page_table=(uint32_t)(uintptr_t)executive_vms_contexts.p0[1],
+             .p0_limit=1024u,
+             .p1_page_table=(uint32_t)(uintptr_t)executive_vms_contexts.p1[1],
+             .p1_limit=1024u,.native_cr3=cr3[1],.priority=16u,
+             .ast_level=PORT_V37_PHD_ASTLVL_DISABLED}
+        };
+        uint8_t *const pcb[2]={executive_vms_null_pcb,
+                                executive_vms_swapper_pcb};
+        for(unsigned i=0u;i<2u;i++){
+            const uint32_t pcb_address=(uint32_t)(uintptr_t)pcb[i];
+            const uint32_t phd_address=(uint32_t)(uintptr_t)
+                executive_vms_contexts.phd[i];
+            const uint32_t frame_address=(uint32_t)(uintptr_t)frame[i];
+            if(!frame_address||!pcb_address||!phd_address||
+               port_v37_sched_bind_queued_context(&executive_vms_scheduler,
+                   pcb_address,phd_address,frame_address,frame_address,
+                   &phd_seed[i])!=PORT_V37_SCHED_OK)
+                return PORT_SYS_EXEC_BAD_PARAMETERS;
+        }
+        if(port_v37_sched_check(&executive_vms_scheduler)!=
+              PORT_V37_SCHED_OK)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        executive_vms_contexts.ready=1u;
+        p->result->vms_contexts_ready=1u;
+        p->result->vms_swapper_p0_table=
+            (uint32_t)(uintptr_t)executive_vms_contexts.p0[1];
+        p->result->vms_swapper_p1_table=
+            (uint32_t)(uintptr_t)executive_vms_contexts.p1[1];
+        p->result->signature=PORT_SYS_EXEC_CONTEXTS_TAG;
+        return PORT_SYS_EXEC_NORMAL;
+    }
     if(p->phase==PORT_SYS_EXEC_INIT_IOQUEUES)
         return port_exe_initialize_lookaside(p);
     if(p->phase==PORT_SYS_EXEC_INIT_LOCKDB){

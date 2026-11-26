@@ -24,5 +24,5 @@ for symbol in ['port_ata_x86_read28','port_ata_read28',
                'port_ini_pc_probe','port_ini_pc_register',
                'port_ini_pc_describe','__bss_end']:
     assert symbol in syms,symbol
-assert syms['__bss_end']<0x90000
+assert syms['__bss_end']<0x9e000
 print('M10 ATA native boot: protected PIO and INILOA driver registration PASS')

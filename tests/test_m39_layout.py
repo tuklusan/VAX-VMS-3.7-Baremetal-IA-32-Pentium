@@ -14,11 +14,11 @@ assert '    movw $36, %bx' in s and '    movb $18, %bl' in s
 assert '    movb $1, %al' in s and '    cmpw $2880, %ax' in s
 assert '    ljmp $0x08, $0x00010000' in s
 assert len(boot)==512 and boot[-2:]==b'\x55\xaa'
-assert len(kernel)<=273*512
+assert len(kernel)<=512*512
 assert len(image)==1474560
 position=boot.find(b'VMSB')
 assert 0 <= position <= 500
 count,lbn=struct.unpack_from('<HH', image, position+4)
-assert 1 <= count <= 273 and 1 <= lbn and lbn+count <= 2880
+assert 1 <= count <= 512 and 1 <= lbn and lbn+count <= 2880
 assert count*512 >= len(kernel)
 print('M39/M40 counted stage-2 disk allocation, 1.44MB CHS bounds and 0x10000 entry PASS')

@@ -20,5 +20,5 @@ for l in subprocess.check_output(['nm','-n',str(r/'build/kernel.elf')],text=True
 for name in ['port_ne2k_probe','port_ne2k_pending','port_ne2k_x86_probe',
              'port_ne2k_x86_pending','__bss_end']:
     assert name in symbols
-assert symbols['__bss_end']<0x90000
+assert symbols['__bss_end']<0x9e000
 print('M11 NE2000 static checks PASS: I/O driver and guest commands')

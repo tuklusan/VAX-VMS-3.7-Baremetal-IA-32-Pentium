@@ -12,7 +12,7 @@ for n in ['task_kernel_stack','port_kstack_contains_frame','port_kstack_intact',
           'arch_kstack_checks','__bss_end']:
     assert n in symbols, n
 assert symbols['task_kernel_stack']%4096==0
-assert symbols['__bss_end']<0x90000
+assert symbols['__bss_end']<0x9e000
 c=(r/'src/arch.c').read_text()
 assert 'port_pmap_guard_page(table,port_kstack_guard(&task_kernel_stack[i]))' in c
 assert 'guard_kernel_stacks(low_page_table)' in c

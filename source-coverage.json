@@ -8837,7 +8837,7 @@
           "status": "mapped",
           "pc_file": "src/vms_exe_image_end85.c",
           "pc_symbol": "port_bug_debug",
-          "pc_line": 4,
+          "pc_line": 5,
           "function": "512-byte bugcheck register store and IA-32 alignment"
         },
         {
@@ -8871,7 +8871,7 @@
           "status": "mapped",
           "pc_file": "src/vms_exe_image_end85.c",
           "pc_symbol": "port_mmg_pfn_patch",
-          "pc_line": 15,
+          "pc_line": 16,
           "function": "16 six-byte PFN opcode patch slots and zero termination"
         },
         {
@@ -8882,7 +8882,7 @@
           "status": "mapped",
           "pc_file": "src/vms_exe_image_end85.c",
           "pc_symbol": "port_mmg_pfn_patch_desc",
-          "pc_line": 17,
+          "pc_line": 18,
           "function": "PFN fixup patch descriptor"
         },
         {
@@ -8893,7 +8893,7 @@
           "status": "mapped",
           "pc_file": "src/vms_exe_image_end85.c",
           "pc_symbol": "port_mmg_sys_end",
-          "pc_line": 27,
+          "pc_line": 28,
           "function": "page-aligned system image end marker"
         },
         {
@@ -10730,7 +10730,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3119,
+          "pc_line": 3122,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10749,7 +10749,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 802,
+          "pc_line": 836,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -10787,7 +10787,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3119,
+          "pc_line": 3122,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -10828,7 +10828,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_vms_sched_chse",
-          "pc_line": 764,
+          "pc_line": 774,
           "function": "Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; VAX PCB PHYPCB translation and native process contexts remain incomplete"
         },
         {
@@ -11034,7 +11034,7 @@
           "reason": "Legacy 386 port requires original driver controller setup and INIT teardown / scheduler / pool integration"
         }
       ],
-      "unresolved_integration": "A callable scheduler helper can initialize a supplied PHD/native frame, apply PROCSTRT quota/privilege fields before CHSE, and queue a source PCB, but INIT does not construct mapped NULL/SWAPPER contexts or invoke it. SYSWCB is not attached to process PHD/UCB/FCP access state; source FIN_DATABASE names are staged only after verified ATA Files-11 reads. SYS$DISK/SYS$SYSDEVICE translation remains confined to bootstrap; public channels, ACP file access, login/DCL and DECnet remain missing."
+      "unresolved_integration": "NULL and SWAPPER now have source PHD/PCB records and live native CPL0 frames selected through the resident scheduler, but the context bind is deferred to a late bootstrap phase and P0/P1 tables are flat supervisor identity maps. INIT source-order memory/paging, SYSWCB/FCP process integration, TT0 and SYSINIT creation, image activation, public process I/O/ASTs, login/DCL and DECnet remain missing."
     },
     {
       "original_file": "SYS/SRC/PDAT.MAR",
@@ -11073,10 +11073,40 @@
         {
           "original_lines": [
             221,
+            241
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sys_executive_entry.c",
+          "pc_symbol": "port_sys_executive_entry",
+          "pc_line": 929,
+          "function": "Allocate source-sized 128-byte NULL and 640-byte SWAPPER kernel stacks plus separate native P0/P1 tables and PHDs in NPAGEDYN; process tables are currently flat supervisor identity maps, not VAX P0/P1 translations"
+        },
+        {
+          "original_lines": [
+            242,
+            249
+          ],
+          "status": "excluded",
+          "reason": "PSECT, PAGE, SBTTL and comments carry no executable process behavior"
+        },
+        {
+          "original_lines": [
+            250,
+            250
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_phd.c",
+          "pc_symbol": "port_v37_phd_init_genphd",
+          "pc_line": 30,
+          "function": "Initialize the source NULL PHD fields and attach its real IA-32 stack frame through the queued-context bind"
+        },
+        {
+          "original_lines": [
+            251,
             254
           ],
-          "status": "unresolved",
-          "reason": "NULL/SWAPPER stack and PHD source construction unresolved"
+          "status": "excluded",
+          "reason": "Comments and source layout separators"
         },
         {
           "original_lines": [
@@ -11084,18 +11114,37 @@
             256
           ],
           "status": "partial",
-          "pc_file": "src/vms_v37_pcb.c",
-          "pc_symbol": "port_v37_pcb_init_genpcb",
-          "pc_line": 30,
-          "function": "Create the source-layout NULL GENPCB record and PID; VMS PHD and native context remain absent"
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_bind_queued_context",
+          "pc_line": 467,
+          "function": "Bind the queued source NULL PCB to its initialized PHD, native context frame and per-process IA-32 CR3 without changing queue order"
         },
         {
           "original_lines": [
             257,
+            262
+          ],
+          "status": "excluded",
+          "reason": "PAGE, SBTTL and comments separating the SWAPPER declarations"
+        },
+        {
+          "original_lines": [
+            263,
+            265
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_phd.c",
+          "pc_symbol": "port_v37_phd_init_genphd",
+          "pc_line": 30,
+          "function": "Initialize the SWAPPER PHD PC, KSP, source PCB R4 and priority; native page tables currently provide supervisor identity mappings only"
+        },
+        {
+          "original_lines": [
+            266,
             268
           ],
-          "status": "unresolved",
-          "reason": "SWAPPER PHD and stack initialization unresolved"
+          "status": "excluded",
+          "reason": "Comments and source layout separators"
         },
         {
           "original_lines": [
@@ -11106,15 +11155,15 @@
           "pc_file": "src/vms_v37_pcb.c",
           "pc_symbol": "port_v37_pcb_init_genpcb",
           "pc_line": 30,
-          "function": "Create the source-layout SWAPPER GENPCB record and PID; VMS PHD and native context remain absent"
+          "function": "Create the source-layout SWAPPER GENPCB/PID and preserve SCH$GL_SWPPID as the PID-field alias"
         },
         {
           "original_lines": [
             273,
             278
           ],
-          "status": "unresolved",
-          "reason": "Remaining SWAPPER source PHD/context setup unresolved"
+          "status": "excluded",
+          "reason": "PAGE, SBTTL, comments and blank source separators"
         },
         {
           "original_lines": [
@@ -11136,7 +11185,7 @@
           "pc_file": "src/vms_ini_procvec.c",
           "pc_symbol": "port_ini_procvec_init",
           "pc_line": 14,
-          "function": "Initialize source PCB/sequence vectors; native port installs NULL, SWAPPER and SYSTEM PCB pointers and queues resident COM entries; port_v37_sched_start_context_quotas now prepares PHD and quota state before a caller invokes CHSE, but INIT context creation remains unresolved"
+          "function": "Initialize source PCB/sequence vectors; native port installs NULL, SWAPPER and SYSTEM PCB pointers and queues resident COM entries. A later bootstrap phase binds NULL/SWAPPER PHD/frame/CR3 state without altering those queues; full original INIT sequencing and SYSTEM activation remain incomplete"
         },
         {
           "original_lines": [
@@ -22831,7 +22880,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 682,
+          "pc_line": 683,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -23552,7 +23601,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_alopaged",
-          "pc_line": 96,
+          "pc_line": 97,
           "function": "EXE$ALOPAGED entry uses the resident PAGEDYN free list; QEMU verifies a 17-byte request rounds to 32 bytes and is returned; no process I/O or runtime VMS caller, SCH$LOCKW wait, extension or resource wake is wired"
         },
         {
@@ -23601,7 +23650,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_deapaged",
-          "pc_line": 102,
+          "pc_line": 103,
           "function": "EXE$DEAPAGED returns aligned blocks to the SYSBOOT-carved resident PAGEDYN free list; QEMU verifies completion and duplicate-free rejection; IRP header decoding, SCH$LOCKW, PGDYN resource wake and process caller wiring remain unresolved"
         },
         {
@@ -24017,7 +24066,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_swapinit_log_tables",
-          "pc_line": 63,
+          "pc_line": 64,
           "function": "Prepare the two original SYSTEM logical-name records from initialized SYSLOG templates during boot; SWAPPER context remains absent; native bootstrap wrapper copies the original records into PAGEDYN"
         },
         {
@@ -24053,10 +24102,21 @@
         {
           "original_lines": [
             324,
+            346
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_sys_executive_entry.c",
+          "pc_symbol": "executive_swapper_start",
+          "pc_line": 810,
+          "function": "The scheduled SWAPPER entry searches the live SYS/GROUP logical state and uses the source resident HIB wait queue; free-page balancing, modified-page writeback, power-fail AST work and SWAPPER restart logic remain absent; live HIB queue block and selection of NULL are observed, but SWAPPER balance/swap functions remain unimplemented"
+        },
+        {
+          "original_lines": [
+            347,
             1126
           ],
           "status": "unresolved",
-          "reason": "SWAPPER main loop and process swap-in PHD/page-table mapping remain unported"
+          "reason": "SWAPPER balancing, swap scheduling, process image paging and page-file I/O remain unported"
         },
         {
           "original_lines": [
@@ -24067,7 +24127,7 @@
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_bind_queued_context",
           "pc_line": 467,
-          "function": "Bind a validated native PHD and IA-32 restore frame to a source COM PCB while retaining its scheduler queue order; VAX page-table/PFN translation is not implemented; process activation is host-tested but not integrated into live INIT"
+          "function": "Guest INIT binds validated native PHDs and IA-32 restore frames to source COM PCBs without queue reordering; VAX P0/P1 translation and PFN mapping remain unimplemented; process activation is host-tested but not integrated into live INIT"
         },
         {
           "original_lines": [
@@ -24078,7 +24138,7 @@
           "reason": "Process page-table population, SWAPPER loop, balancing and page-file I/O remain unported"
         }
       ],
-      "unresolved_integration": "Boot invokes and validates the partial SWAPINIT SYSTEM/GROUP RSHT and initial logical insertion through the SYS.EXE callback. It still runs in bootstrap context rather than SWAPPER; TT0 creation, the SWAPPER loop, paging, SYSINIT activation and process activation remain unresolved."
+      "unresolved_integration": "The partial SYSTEM/GROUP RSHT setup still runs before process activation, while a scheduled native SWAPPER entry now resolves SYS$DISK/SYS$SYSDEVICE and blocks through the HIB wait queue, after which SCH$SCHED selects NULL. Original TT0 $CREPRC, SYSINIT activation, the complete balancing/swap loop, paging and image activation remain unported."
     }
   ]
 }

@@ -1880,20 +1880,25 @@ for first,last,path,symbol,purpose,status in init_parts:
             'pc_file':path,'pc_symbol':symbol,'pc_line':line,'function':purpose})
 result['files'].append({'original_file':'SYS/SRC/INIT.MAR',
     'original_lines':1906,'sections':parts,
-    'unresolved_integration':'A callable scheduler helper can initialize a supplied PHD/native frame, apply PROCSTRT quota/privilege fields before CHSE, and queue a source PCB, but INIT does not construct mapped NULL/SWAPPER contexts or invoke it. SYSWCB is not attached to process PHD/UCB/FCP access state; source FIN_DATABASE names are staged only after verified ATA Files-11 reads. SYS$DISK/SYS$SYSDEVICE translation remains confined to bootstrap; public channels, ACP file access, login/DCL and DECnet remain missing.'})
+    'unresolved_integration':'NULL and SWAPPER now have source PHD/PCB records and live native CPL0 frames selected through the resident scheduler, but the context bind is deferred to a late bootstrap phase and P0/P1 tables are flat supervisor identity maps. INIT source-order memory/paging, SYSWCB/FCP process integration, TT0 and SYSINIT creation, image activation, public process I/O/ASTs, login/DCL and DECnet remain missing.'})
 
 # M238: PDAT.MAR GENPCB source layout and the static system PCB template.
 pdat_rows=[
  (1,90,None,None,'Original PCB/PHD declarations and VAX PHD generation dependencies unresolved','unresolved'),
  (91,170,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb',"Emit SYSDEF.MDL's 156-byte PCB layout and source GENPCB queue heads, DYN type, state, privileges, PID/PHD and lock queue fields; native PHD creation and process activation remain missing",'partial'),
     (171,220,'src/vms_v37_phd.c','port_v37_phd_init_genphd',"Encode PDAT.MAR GENPHD fields in the 376-byte PHD; set Q_PRIVMSK to all ones, preserve zero-initialized AUTHPRIV, reject reserved ASTLVL values above the source disabled value 4, and map the embedded hardware PCB at offset 112. For CPL0 initial processes, the IA-32 frame maps source R4 to the first native C argument with valid entry stack alignment; process page mappings and INIT activation remain missing",'partial'),
- (221,254,None,None,'NULL/SWAPPER stack and PHD source construction unresolved','unresolved'),
- (255,256,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb','Create the source-layout NULL GENPCB record and PID; VMS PHD and native context remain absent','partial'),
- (257,268,None,None,'SWAPPER PHD and stack initialization unresolved','unresolved'),
- (269,272,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb','Create the source-layout SWAPPER GENPCB record and PID; VMS PHD and native context remain absent','partial'),
- (273,278,None,None,'Remaining SWAPPER source PHD/context setup unresolved','unresolved'),
+ (221,241,'src/vms_sys_executive_entry.c','port_sys_executive_entry','Allocate source-sized 128-byte NULL and 640-byte SWAPPER kernel stacks plus separate native P0/P1 tables and PHDs in NPAGEDYN; process tables are currently flat supervisor identity maps, not VAX P0/P1 translations','partial'),
+ (242,249,None,None,'PSECT, PAGE, SBTTL and comments carry no executable process behavior','excluded'),
+ (250,250,'src/vms_v37_phd.c','port_v37_phd_init_genphd','Initialize the source NULL PHD fields and attach its real IA-32 stack frame through the queued-context bind','partial'),
+ (251,254,None,None,'Comments and source layout separators','excluded'),
+ (255,256,'src/vms_v37_sched.c','port_v37_sched_bind_queued_context','Bind the queued source NULL PCB to its initialized PHD, native context frame and per-process IA-32 CR3 without changing queue order','partial'),
+ (257,262,None,None,'PAGE, SBTTL and comments separating the SWAPPER declarations','excluded'),
+ (263,265,'src/vms_v37_phd.c','port_v37_phd_init_genphd','Initialize the SWAPPER PHD PC, KSP, source PCB R4 and priority; native page tables currently provide supervisor identity mappings only','partial'),
+ (266,268,None,None,'Comments and source layout separators','excluded'),
+ (269,272,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb','Create the source-layout SWAPPER GENPCB/PID and preserve SCH$GL_SWPPID as the PID-field alias','partial'),
+ (273,278,None,None,'PAGE, SBTTL, comments and blank source separators','excluded'),
  (279,281,'src/vms_v37_pcb.c','port_v37_pcb_init_syspcb_template','Construct the unactivated MMG$AL_SYSPCB data template; SYS PHD and native PHYPCB have not been attached','partial'),
- (282,307,'src/vms_ini_procvec.c','port_ini_procvec_init','Initialize source PCB/sequence vectors; native port installs NULL, SWAPPER and SYSTEM PCB pointers and queues resident COM entries; port_v37_sched_start_context_quotas now prepares PHD and quota state before a caller invokes CHSE, but INIT context creation remains unresolved','partial'),
+ (282,307,'src/vms_ini_procvec.c','port_ini_procvec_init','Initialize source PCB/sequence vectors; native port installs NULL, SWAPPER and SYSTEM PCB pointers and queues resident COM entries. A later bootstrap phase binds NULL/SWAPPER PHD/frame/CR3 state without altering those queues; full original INIT sequencing and SYSTEM activation remain incomplete','partial'),
  (308,308,None,None,'Terminal MACRO END directive','excluded')]
 pdat_sections=[]
 for first,last,path,symbol,description,status in pdat_rows:
@@ -2796,8 +2801,9 @@ for first,last,status,reason in [
  (276,283,'partial','Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT during boot; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent'),
  (284,316,'unresolved','Create TT0 with $CREPRC; source process creation remains unported'),
     (317,323,'partial','Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved'),
-    (324,1126,'unresolved','SWAPPER main loop and process swap-in PHD/page-table mapping remain unported'),
-    (1127,1129,'partial','Bind a validated native PHD and IA-32 restore frame to a source COM PCB while retaining its scheduler queue order; VAX page-table/PFN translation is not implemented'),
+    (324,346,'partial','The scheduled SWAPPER entry searches the live SYS/GROUP logical state and uses the source resident HIB wait queue; free-page balancing, modified-page writeback, power-fail AST work and SWAPPER restart logic remain absent'),
+    (347,1126,'unresolved','SWAPPER balancing, swap scheduling, process image paging and page-file I/O remain unported'),
+    (1127,1129,'partial','Guest INIT binds validated native PHDs and IA-32 restore frames to source COM PCBs without queue reordering; VAX P0/P1 translation and PFN mapping remain unimplemented'),
     (1130,1683,'unresolved','Process page-table population, SWAPPER loop, balancing and page-file I/O remain unported')]:
     if status=='unresolved':
         swapinit_sections.append({'original_lines':[first,last],
@@ -2816,6 +2822,13 @@ for first,last,status,reason in [
             'status':'partial','pc_file':'src/vms_exe_swapinit_hash.c',
             'pc_symbol':'port_exe_swapinit_insert_system_record','pc_line':insert_line,
             'function':reason+'; SYS.EXE wrapper invokes and validates records from bootstrap context, but SWAPPER process context is absent'})
+    elif first==324:
+        entry_line=line_for_symbol('src/vms_sys_executive_entry.c',
+                                   'executive_swapper_start')
+        swapinit_sections.append({'original_lines':[first,last],
+            'status':'partial','pc_file':'src/vms_sys_executive_entry.c',
+            'pc_symbol':'executive_swapper_start','pc_line':entry_line,
+            'function':reason+'; live HIB queue block and selection of NULL are observed, but SWAPPER balance/swap functions remain unimplemented'})
     elif first==1127:
         queued_line=line_for_symbol('src/vms_v37_sched.c',
                                     'port_v37_sched_bind_queued_context')
@@ -2831,7 +2844,7 @@ for first,last,status,reason in [
             'function':reason+'; SYS.EXE invokes and validates the routine during boot, but it does not yet run in SWAPPER context'})
 result['files'].append({'original_file':'SYS/SRC/SWAPPER.MAR',
     'original_lines':1683,'sections':swapinit_sections,
-    'unresolved_integration':'Boot invokes and validates the partial SWAPINIT SYSTEM/GROUP RSHT and initial logical insertion through the SYS.EXE callback. It still runs in bootstrap context rather than SWAPPER; TT0 creation, the SWAPPER loop, paging, SYSINIT activation and process activation remain unresolved.'})
+    'unresolved_integration':'The partial SYSTEM/GROUP RSHT setup still runs before process activation, while a scheduled native SWAPPER entry now resolves SYS$DISK/SYS$SYSDEVICE and blocks through the HIB wait queue, after which SCH$SCHED selects NULL. Original TT0 $CREPRC, SYSINIT activation, the complete balancing/swap loop, paging and image activation remain unported.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')

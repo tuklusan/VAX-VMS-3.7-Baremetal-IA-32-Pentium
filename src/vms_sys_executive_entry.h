@@ -39,9 +39,11 @@
 #include "vms_sys85.h"
 #include "vms_dqddt_ioc_bind.h"
 #include "vms_v37_pcb.h"
+#include "vms_v37_phd.h"
+#include "vms_v37_ia32_context.h"
 /* The resident SYS.EXE entry carries INIT.MAR's CPU-code vector binding
  * and subsequent source-ordered initialization as separate phases. */
-enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=32u,
+enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=33u,
        PORT_SYS_EXEC_NORMAL=1u,PORT_SYS_EXEC_BAD_PARAMETERS=2u,
        PORT_SYS_EXEC_RESULT_TAG=0x58455359u,PORT_SYS_EXEC_PCB_KIND=1u,
        PORT_SYS_EXEC_LINK_SYSLOA=1u,PORT_SYS_EXEC_INIT_RESIDENT=2u,
@@ -75,7 +77,8 @@ enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=32u,
        PORT_SYS_EXEC_INIT_DDT_RELOC_PRIVATE=28u,
        PORT_SYS_EXEC_DDT_RELOC_PRIVATE_TAG=0x54524c44u,
        PORT_SYS_EXEC_INIT_DQ_CRB_READ=29u,PORT_SYS_EXEC_DQ_CRB_READ_TAG=0x42524344u,
-       PORT_SYS_EXEC_INIT_DQ_DDT_PUBLISH=30u,PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG=0x42515044u };
+       PORT_SYS_EXEC_INIT_DQ_DDT_PUBLISH=30u,PORT_SYS_EXEC_DQ_DDT_PUBLISH_TAG=0x42515044u,
+       PORT_SYS_EXEC_INIT_CONTEXTS=31u,PORT_SYS_EXEC_CONTEXTS_TAG=0x58544356u };
 /* This is an explicitly privileged early-boot disk path. Hardware is real
  * ATA PIO; the original DQ disk DDT and Files-11 ACP are NOT bound. */
 struct port_sys_exec_dq_boot_settings {
@@ -98,6 +101,11 @@ struct port_sys_exec_wcb_settings {
 };
 struct port_sys_exec_intstack_settings {
     uint32_t stack_high,stack_pages,lock_extra_bytes;
+};
+struct port_sys_exec_context_settings {
+    uint32_t (*make_process_cr3)(uint32_t *,uint32_t *,uint32_t *);
+    uint32_t (*wait_current)(uint32_t);
+    void (*process_message)(const char *);
 };
 struct port_sys_exec_result {
     uint32_t signature;
@@ -269,6 +277,7 @@ struct port_sys_exec_result {
     port_v37_sched_interrupt_fn vms_sched_interrupt;
     uint32_t (*vms_sched_wait)(struct port_v37_scheduler *,uint32_t,uint32_t,
                                uint32_t *,uint32_t *);
+    uint32_t vms_contexts_ready,vms_swapper_p0_table,vms_swapper_p1_table;
     /* SYSBOOT carved interval backing the source NPAGEDYN pool. */
     uint32_t npaged_pool_base,npaged_pool_bytes;
     /* SYSBOOT carved resident PAGEDYN interval; user/mapping consumers remain. */
@@ -302,6 +311,7 @@ struct port_sys_exec_start {
     void *vms_scheduler_arch_context;
     void (*vms_scheduler_request)(void *);
     void (*vms_scheduler_run_pending)(void *);
+    const struct port_sys_exec_context_settings *vms_context_settings;
 };
 uint32_t port_sys_executive_entry(const struct port_sys_exec_start *parameters);
 #endif

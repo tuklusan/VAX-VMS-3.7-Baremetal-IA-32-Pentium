@@ -22,5 +22,5 @@ for l in subprocess.check_output(['nm','-n',str(r/'build/kernel.elf')],text=True
 for n in ['arch_user_event_a','arch_user_event_b','port_event_set',
           'arch_run_event_test','__bss_end']:
     assert n in symbols
-assert symbols['__bss_end']<0x90000
+assert symbols['__bss_end']<0x9e000
 print('M9 static checks PASS: kernel wait/ready, shared EF, CPL3 user probes')

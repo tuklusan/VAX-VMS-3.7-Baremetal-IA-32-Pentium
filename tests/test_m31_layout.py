@@ -11,5 +11,5 @@ for marker in ('TEST USRCANCEL','SHOW USRCANCEL','arch_run_user_qio_cancel_test'
 nm=subprocess.check_output(['nm',str(r/'build/kernel.elf')],text=True)
 for symbol in ('arch_user_qio_cancel_probe','arch_run_user_qio_cancel_test','port_user_copy_to'):
  assert symbol in nm,symbol
-assert len((r/'build/kernel.bin').read_bytes()) <= 273*512
+assert len((r/'build/kernel.bin').read_bytes()) <= 512*512
 print('M31 CPL3 cancel+release guest path linked PASS')

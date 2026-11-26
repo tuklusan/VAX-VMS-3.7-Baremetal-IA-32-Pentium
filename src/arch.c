@@ -87,19 +87,23 @@ static struct port_v37_scheduler *resident_vms_scheduler;
 static port_v37_sched_interrupt_fn resident_vms_sched_interrupt;
 static uint32_t (*resident_vms_sched_wait)(struct port_v37_scheduler *,
     uint32_t,uint32_t,uint32_t *,uint32_t *);
+static uint32_t resident_vms_null_pcb;
+static void (*resident_vms_schedule_message)(const char *);
 static volatile uint32_t resident_vms_reschedule_pending;
 static volatile uint32_t resident_vms_reschedule_requests;
 static volatile uint32_t resident_vms_reschedule_interrupts;
 static volatile uint32_t resident_vms_wait_queue;
-static uint32_t vms_process_directories[2][1024]
-    __attribute__((aligned(4096)));
+static uint32_t vms_process_directories[2];
 static uint32_t vms_process_directory_count;
 
 int arch_adopt_vms_scheduler(struct port_v37_scheduler *scheduler,
                              port_v37_sched_interrupt_fn interrupt,
                              uint32_t (*wait_current)(struct port_v37_scheduler *,
-                                 uint32_t,uint32_t,uint32_t *,uint32_t *)){
-    if(!scheduler||!interrupt||!wait_current||resident_vms_scheduler||
+                                 uint32_t,uint32_t,uint32_t *,uint32_t *),
+                             uint32_t null_pcb,
+                             void (*schedule_message)(const char *)){
+    if(!scheduler||!interrupt||!wait_current||!null_pcb||
+       !schedule_message||resident_vms_scheduler||
        resident_vms_sched_interrupt)return 0;
     uint32_t flags;
     __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
@@ -110,6 +114,8 @@ int arch_adopt_vms_scheduler(struct port_v37_scheduler *scheduler,
     resident_vms_scheduler=scheduler;
     resident_vms_sched_interrupt=interrupt;
     resident_vms_sched_wait=wait_current;
+    resident_vms_null_pcb=null_pcb;
+    resident_vms_schedule_message=schedule_message;
     resident_vms_reschedule_pending=0u;
     __asm__ volatile("":::"memory");
     if(flags&0x200u)__asm__ volatile("sti":::"memory");
@@ -389,14 +395,19 @@ uint32_t arch_vms_make_process_cr3(uint32_t *p0_table,uint32_t *p1_table,
        (uintptr_t)p0_table>=UINT32_C(0x00400000)||
        (uintptr_t)p1_table>=UINT32_C(0x00400000)||
        vms_process_directory_count>=2u)return 0u;
-    const uint32_t slot=vms_process_directory_count++;
+    const uint32_t slot=vms_process_directory_count;
+    const uint32_t directory_physical=port_phys_alloc(&physical_pool);
+    if(!directory_physical)return 0u;
+    uint32_t *const directory=(uint32_t *)(uintptr_t)directory_physical;
     for(unsigned i=0u;i<1024u;i++){
         p0_table[i]=low_page_table[i];
         p1_table[i]=low_page_table[i];
-        vms_process_directories[slot][i]=page_directory[i];
+        directory[i]=page_directory[i];
     }
-    vms_process_directories[slot][0]=(uint32_t)(uintptr_t)p0_table|3u;
-    *cr3_out=(uint32_t)(uintptr_t)vms_process_directories[slot];
+    directory[0]=(uint32_t)(uintptr_t)p0_table|3u;
+    vms_process_directories[slot]=directory_physical;
+    vms_process_directory_count++;
+    *cr3_out=directory_physical;
     return *cr3_out?1u:0u;
 }
 
@@ -1053,8 +1064,13 @@ static int arch_vms_schedule_frame(struct port_trap_frame *f){
        (!resident_vms_scheduler->current_cr3||
         arch_vms_switch_cr3(resident_vms_scheduler->current_cr3))&&
        arch_prepare_vms_restore_frame(
-           (struct port_v37_ia32_restore_frame *)(uintptr_t)next))
+           (struct port_v37_ia32_restore_frame *)(uintptr_t)next)){
+        if(wait_queue&&pcb==resident_vms_null_pcb&&
+           resident_vms_schedule_message)
+            resident_vms_schedule_message(
+                "SCH$WAITK blocked SWAPPER; SCH$SCHED selected NULL.");
         return ARCH_TRAP_RESTORE_SELECTED_FRAME;
+    }
     arch_report_fault(f->vector,f->error,f->eip);
     for(;;)__asm__ volatile("cli; hlt");
 }

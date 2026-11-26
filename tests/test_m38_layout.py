@@ -7,5 +7,5 @@ assert 'port_channel_qio_submit' in s
 assert s.index('port_user_outputs_disjoint(&m,data_va') < s.index('port_channel_qio_submit(&arch_service_channels')
 sym=subprocess.check_output(['nm',str(r/'build/kernel.elf')],text=True)
 assert 'port_user_outputs_disjoint' in sym
-assert len((r/'build/kernel.bin').read_bytes())<=273*512
+assert len((r/'build/kernel.bin').read_bytes())<=512*512
 print('M38 physical overlap rejected before ring3 block I/O queue PASS')

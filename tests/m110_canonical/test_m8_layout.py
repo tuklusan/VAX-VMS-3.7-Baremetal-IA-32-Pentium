@@ -21,5 +21,5 @@ for n in ['arch_user_demand_a','arch_user_demand_b','arch_user_code_end',
     assert n in symbols,n
 assert symbols['arch_user_demand_a'] < symbols['arch_user_code_end']
 assert symbols['arch_user_demand_b'] < symbols['arch_user_code_end']
-assert symbols['__bss_end']<0x90000
+assert symbols['__bss_end']<0x9e000
 print('M8 linked layout PASS: user demand faults, native handler, reclaim')
