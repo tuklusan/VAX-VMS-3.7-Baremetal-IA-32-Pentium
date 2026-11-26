@@ -2356,3 +2356,4 @@ Verification: make v37qastcheck v37schedcheck sourcerangecheck PASS; 2,184 sourc
 M436 implementation commit: `67286f576017227d51e57572480e161df7cb8412`.
 
 Remaining: connect queued IRPs to actual IOC post completion, AST dispatch and process wakeup; create real INIT/NULL/SWAPPER PHD contexts; continue public SYS/ACP/image activation, login, DCL, DECnet and end-to-end SET HOST 0.
+M436 generated coverage refresh: `b6a76ec96bc05f32cdc5ffdcd1f64f273c82447c` (scheduler line locations regenerated after source validation).
