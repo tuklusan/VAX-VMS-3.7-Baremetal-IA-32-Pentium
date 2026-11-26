@@ -2307,3 +2307,13 @@ Verification: `make v37phdcheck sourcerangecheck` PASS; full `make -j2 all test 
 M431 implementation and QEMU evidence commit: `a55bb2706f804548b49b17635904074b557a66b3`.
 
 Remaining: invoke the PHD setup helpers from an actual SYS$CREPRC/PROCSTRT path with mapped PHD/JIB and rollback; create and schedule real INIT/SYSTEM, NULL and SWAPPER contexts; integrate public SYS$QIO/ACP/process AST completion; activate images and verify SYSTEM login/DCL plus DECnet SET HOST 0 second-session/LOGOUT.
+
+## M432 - Stage PROCSTRT quotas before scheduler activation, 26 November 2026
+
+Added `port_v37_sched_start_context_quotas`: it builds a candidate PHD, installs the caller's CPU/AST/working-set and privilege state (AUTHPRI comes from PCB$B_PRIB), then binds PCB/PHD/native frame and invokes source CHSE. Invalid PHD, frame or quota state returns before PCB/PHD/queue publication; host regression covers success and failure atomicity. This is now a callable native process-activation path, but INIT and public `$CREPRC` still do not supply mapped PHD/page-table/context data or invoke it.
+
+Verification: `make v37schedcheck sourcerangecheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make qemu-sysboot-m217` PASS through DQA0/IRQ14/Files-11, then stops at incomplete INIT. Coverage: 2,184 ranges; 454/4,566 original files indexed; zero errors; 17,230 mapped, 30,567 partial, 59,460 unresolved, 8,032 missing, 26,734 excluded and 917 hardware-excluded. Capture `logs/serial/qemu-m217-run-local-20261126T020604417341Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; QEMU runner exited. No SYSTEM login, DCL, DECnet or SET HOST 0 observed.
+
+M432 implementation and QEMU evidence commit: `317c08fe8ee49cf2dec3f921791bc598f61fccea`.
+
+Remaining: connect this activation path to real INIT/$CREPRC resource construction and process image startup; implement live public SYS$QIO, Files-11 ACP and process AST completion; then verify SYSTEM login/DCL and genuine DECnet Phase IV SET HOST 0 second-session/LOGOUT end-to-end.
