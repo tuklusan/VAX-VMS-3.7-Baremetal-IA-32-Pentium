@@ -2784,3 +2784,16 @@ Verification: full `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37
 Coverage entries for `SCHED.MAR` and `NULLPROC.MAR` now record the observed native NULL/SWAPPER/SYSINIT context scheduling and the remaining INIT/idle integration boundary. No original DEC sources, disk images, credentials, or external dependencies were added. STARTUP process creation, public SYS$QIO/process AST, login/DCL, DECnet Phase IV and SET HOST 0 remain incomplete. Acceptance remains incomplete.
 
 M481 implementation/evidence commit: `90c1177` (`90c1177865d2b2c1618d991423d3f31a17a7b2b9`).
+
+
+## M482 — Reverify M481 native boot checkpoint, 26 November 2026
+
+Repeated the full current-worktree build and host regression command: wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck sysexecentrycheck; all targets completed successfully. python3 tools/validate_source_ranges.py PASS (2,209 ranges; 456/4,566 originals indexed; zero errors; 17,158 mapped, 31,412 partial, 59,768 unresolved, 7,926 missing, 26,806 excluded, 917 hardware-excluded).
+
+Sequential real wsl make qemu-sysboot-m217 PASS. Raw COM1 output is logs/serial/qemu-m217-run-local-20261126T235537439772Z.log (6,898 bytes; SHA-256 e40ddf02c804546dca14fcc7f29e529df94838eb15a232e1ca21803ba72568e); python3 tools/checkpoint_serial_logs.py verify PASS (749 captures). Guest confirms the live scheduler selects NULL after SYSINIT sets RTC time and blocks in HIB. It does not enter page/swap/RMS bootstrap file opens, create STARTUP, log in, start DCL, or initialize DECnet. No qemu-system-i386 runner remains.
+
+No implementation or source-coverage status changed in this verification checkpoint. The generated coverage refresh from the host suite was reviewed and reverted because it discarded the M481 verified native context evidence; the committed coverage inventory remains unchanged and validates cleanly. The only public diff is this raw serial transcript and manifest entry; no restricted DEC source, image, credential, or dependency was added.
+
+M482 raw-evidence commit: 426bbab285d98b5e1e17420d5797aba8e82042ed.
+
+Acceptance remains incomplete. Immediate engineering boundary: continue native SYSINIT beyond SIP_SETTIME, beginning with source-ordered pagefile/swapfile/RMS bootstrap operations through the published DQA0/IOC/Files-11 path; then system ACP mount, SYSMSG, STARTUP process creation and image activation, public process SYS/AST completion, SYSTEM login/DCL, and DECnet Phase IV/SET HOST 0 with second login and LOGOUT.
