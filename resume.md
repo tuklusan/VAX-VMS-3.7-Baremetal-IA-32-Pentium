@@ -2159,3 +2159,13 @@ M415 implementation commit: `997e53df0ecda7609aece0e6a0b1392ce84bd6e9`.
 
 Remaining work: integrate genuine PCB/PQB/JIB allocation, source status-to-PCB translations and quota handling with rollback; activate processes through INIT and the native scheduler; connect public SYS$QIO to DQA0/ACP/AST; then SYSTEM login, DCL, DECnet Phase IV and end-to-end SET HOST 0/second login/LOGOUT. Acceptance remains incomplete.
 M415 verification/resume commit: `785de1a3b69817787781ef5a15dcdd34a1bbdcd6` (published to `main` with implementation commit `997e53df0ecda7609aece0e6a0b1392ce84bd6e9`).
+
+## M416 - Add CREPRC to executive batch build and rerun the real boot, 26 November 2026
+
+Added the new preflight module to the executive host batch compilation and retained its standalone semantic regression. A trial inclusion in the linked executive object caused SYS.EXE to exceed the reserved supervisor aperture; that link was reverted. Therefore CREPRC is compiled and tested in the host/native service batch, but is not resident or callable on the guest. No runtime service is claimed.
+
+Verification: `make -j2 all test exeportbatchcheck` PASS after removing the CREPRC object from the aperture-limited SYS.EXE link; full host and layout suite reached M49 with exit 0; CREPRC standalone check and M83 batch check PASS. The failed intermediate link emitted `ld: SYS.EXE exceeds the reserved supervisor aperture`; final SYS.EXE rebuild and Files-11 installation passed at 208,820 bytes. Real `make qemu-sysboot-m217` PASS through the DQA0 DDT/IRQ14/Files-11 ACP and scheduler checks, then stopped at the existing INIT boundary because NULL/SWAPPER PHD contexts are absent. No SYSTEM login, DCL, DECnet initialization, or SET HOST 0 was observed. Capture `logs/serial/qemu-m217-run-local-20261126T010509733106Z.log`: 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; runner exited. `git diff --check` PASS. No restricted source, binary image, or recognized secret was added.
+
+M416 implementation and boot-evidence commit: `1ba32cf10f8c4719ba4a712ed7920a637b69742b`.
+
+Remaining: fit CREPRC into resident SYS.EXE without exceeding the reserved aperture while integrating the actual process allocator/activation path; create source-correct NULL/SWAPPER contexts and complete SWAPPER/TT0 initialization; connect public SYS$QIO, DQA0 and Files-11 ACP to process AST completion; then verify the required SYSTEM/DCL/DECnet/SET HOST 0 second-session/logout sequence.
