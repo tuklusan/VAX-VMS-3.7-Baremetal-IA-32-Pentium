@@ -155,6 +155,20 @@ uint32_t port_exe_creprc_release_pqb(struct port_exe_np_allocator *allocator,
          PORT_EXE_CREPRC_ALLOC_CORRUPT:PORT_EXE_CREPRC_ALLOC_BAD);
 }
 
+uint32_t port_exe_creprc_set_pqb_system_username(uint8_t *pqb,
+    size_t pqb_bytes){
+    if(!pqb||pqb_bytes<PORT_V37_PQB_BYTES||
+       read16(pqb+PORT_V37_PQB_SIZE)!=PORT_V37_PQB_BYTES||
+       pqb[PORT_V37_PQB_TYPE]!=PORT_V37_DYN_PQB)
+        return PORT_SS_BADPARAM;
+    for(unsigned i=0u;i<PORT_V37_PQB_USERNAME_BYTES;i++)
+        pqb[PORT_V37_PQB_USERNAME+i]=0x20u;
+    static const uint8_t system_name[6]={'S','Y','S','T','E','M'};
+    for(unsigned i=0u;i<sizeof system_name;i++)
+        pqb[PORT_V37_PQB_USERNAME+i]=system_name[i];
+    return PORT_SS_NORMAL;
+}
+
 uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
     const struct port_exe_creprc_result *result){
     if(!pcb||!result||pcb_bytes<PORT_V37_PCB_BYTES||

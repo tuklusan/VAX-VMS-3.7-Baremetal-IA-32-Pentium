@@ -174,6 +174,10 @@ int main(void){
        pqb_bytes[11u])return fail("DYN PQB header");
     for(unsigned i=PORT_V37_PQB_BODY;i<PORT_V37_PQB_BYTES;i++)
         if(pqb_bytes[i])return fail("SYSCREPRC zeroes fixed PQB body");
+    if(port_exe_creprc_set_pqb_system_username(pqb_allocation.address,
+          pqb_allocation.bytes)!=PORT_SS_NORMAL||
+       memcmp(pqb_bytes+PORT_V37_PQB_USERNAME,"SYSTEM      ",12u))
+        return fail("SYSCREPRC fixed-width SYSTEM username default");
     if(port_exe_creprc_release_pqb(&pcb_allocator,&pqb_allocation)!=
           PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
        port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)
