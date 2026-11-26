@@ -87,5 +87,6 @@ uint32_t port_exe_creprc_init_pcb_queues(uint8_t *pcb,size_t pcb_bytes,
  * allocation, while holding the source SYNCHIPL exclusion. */
 uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *,
     uint32_t null_pcb_address,uint32_t new_pcb_address,
+    uint8_t *new_pcb,size_t new_pcb_bytes,
     uint16_t *process_count,uint16_t process_limit,uint32_t *pid);
 #endif

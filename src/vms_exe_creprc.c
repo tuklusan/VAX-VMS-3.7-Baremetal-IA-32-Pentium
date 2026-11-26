@@ -294,9 +294,11 @@ uint32_t port_exe_creprc_init_pcb_queues(uint8_t *pcb,size_t pcb_bytes,
 
 uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *vector,
     uint32_t null_pcb_address,uint32_t new_pcb_address,
+    uint8_t *new_pcb,size_t new_pcb_bytes,
     uint16_t *process_count,uint16_t process_limit,uint32_t *pid){
     if(!vector||!vector->pcb_vector||!vector->sequence_vector||
        !null_pcb_address||!new_pcb_address||(new_pcb_address&3u)||
+       !new_pcb||new_pcb_bytes<160u||
        !process_count||!pid||vector->max_pix<1u||
        vector->system_pix!=vector->max_pix+1u||
        vector->allocated_slots!=vector->system_pix+1u)
@@ -315,6 +317,7 @@ uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *vector,
     if(sequence&0x8000u)sequence=0u;
     const uint32_t candidate_pid=((uint32_t)sequence<<16)|pix;
     write16(vector->sequence_vector+pix*2u,sequence);
+    write32(new_pcb+PORT_V37_PCB_PID,candidate_pid);
     write32(vector->pcb_vector+pix*4u,new_pcb_address);
     ++*process_count;
     *pid=candidate_pid;

@@ -1910,7 +1910,7 @@
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_activate_slot",
           "pc_line": 295,
-          "function": "Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer"
+          "function": "Find a free PIX, enforce process limit, advance/wrap sequence, store PCB$L_PID, then publish PCB pointer"
         },
         {
           "original_lines": [

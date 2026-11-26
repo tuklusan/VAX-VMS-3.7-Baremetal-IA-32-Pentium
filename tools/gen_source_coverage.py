@@ -557,7 +557,7 @@ append_source_ranges('SYS/SRC/SYSCREPRC.MAR',805,'src/vms_exe_creprc.c',[
   (469,'partial','port_exe_creprc_apply_quota_list','Initialize PQB quotas from supplied source defaults, parse bounded PQL entries with last duplicate winning, enforce minima transactionally'),
   (638,'unresolved',None,'Per-quota privilege/owner policy, PCB counters, JIB charging, WS/CPU accounting and quota overrun handling remain absent'),
   (659,'unresolved',None,'Pagefile allocation, process flags and PCB setup before ACTIVATE are absent'),
-  (680,'partial','port_exe_creprc_activate_slot','Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer'),
+  (680,'partial','port_exe_creprc_activate_slot','Find a free PIX, enforce process limit, advance/wrap sequence, store PCB$L_PID, then publish PCB pointer'),
   (805,'unresolved',None,'Post-publication JIB/process accounting, scheduler CHSE, PID return, service exit and rollback are absent')
 ], 'Preflight plus the source ACTIVATE PIX/PID/vector publication stage. Caller memory probes are accessibility inputs; PCB/PQB/JIB allocation, swap allocation, scheduler CHSE, public service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout.')
 goto_sections=[
