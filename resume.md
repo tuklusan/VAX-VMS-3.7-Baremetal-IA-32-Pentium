@@ -2227,3 +2227,11 @@ Ported SYSCREPRC.MAR lines 304-311: initialize AST and lock queue headers as nat
 Verification: `make execreprccheck build/sys.exe` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,174 ranges; 453/4,566 files indexed; zero errors; 17,230 mapped, 30,487 partial, 58,935 unresolved, 8,032 missing, 26,713 excluded, 917 hardware-excluded). Host regressions check queue pointers, ASTEN, ARB, TMBU, PPGCNT, and rejection of guest address overflow atomically. `nm` and linked layout confirm resident helper remains in aperture. `make qemu-sysboot-m217` PASS through the DQA0/IRQ14/Files-11 test, then stops at incomplete INIT because NULL/SWAPPER PHD contexts remain absent. Capture `logs/serial/qemu-m217-run-local-20261126T013355927767Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; manifest validates 366 logs. No login, DCL, DECnet or SET HOST 0 observed. No DEC source or binary image added.
 
 M422 implementation and QEMU evidence commit: `db306d6520e20338850cb38696fafab472064fa2`.
+
+## M423 - Initialize CREPRC PQB SYSTEM username default, 26 November 2026
+
+Ported SYSCREPRC.MAR's fixed-width default username copy: write `SYSTEM` followed by six ASCII spaces into the 12-byte PQB username field after validating the DYN PQB header. Process name, account, directory, logical-name fields, supplied quota list, privilege/priority selection, defaults and public `$CREPRC` integration remain incomplete.
+
+Verification: `make execreprccheck build/sys.exe` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,175 ranges; 453/4,566 source files indexed; zero errors; 17,230 mapped, 30,488 partial, 58,934 unresolved, 8,032 missing, 26,713 excluded, 917 hardware-excluded). Host test asserts the exact twelve username bytes. `make qemu-sysboot-m217` PASS through DQA0/IRQ14/Files-11; still stops at incomplete INIT because initial NULL/SWAPPER contexts are missing. Capture `logs/serial/qemu-m217-run-local-20261126T013549989557Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; manifest validates 367 logs. No login, DCL, DECnet or SET HOST 0 observed.
+
+M423 implementation and QEMU evidence commit: `32828540368390464e1a7b8863ad02e49c4571cf`.
