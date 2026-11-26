@@ -2474,3 +2474,14 @@ Extended the scheduler host regression with a second executable process context 
 Verification: `make v37schedcheck` PASS. Host-only test; no QEMU run or coverage inventory change. No login, DCL, DECnet or SET HOST 0 observed.
 
 M449 test commit: `8da679a`.
+
+
+## M450 — Execute resident SWAPPER logical hash initialization, 26 November 2026
+
+INIT now calls the resident SYS.EXE SWAPINIT adapter with the configured INIT SYSTEM/GROUP/PROCESS logical hash sizes. It verifies the resulting power-of-two geometries, SYS/GROUP RSHT placement and DYN headers inside PAGEDYN, and the two linked boot logical records SYS$DISK and SYS$SYSDEVICE. QEMU observed this actual boot-time allocation and link operation. It currently runs in the bootstrap context, not a scheduled SWAPPER process; TT0 creation via $CREPRC, SYSINIT activation, the SWAPPER loop, paging and later process activation remain incomplete.
+
+Verification: `make -j2 all swapinithashcheck sysexecentrycheck sourcerangecheck` PASS; `make -j2 test exeportbatchcheck sourcerangecheck` PASS; `make qemu-sysboot-m217` PASS with the new SWAPINIT guest message, then the unchanged contextless INIT stop. Coverage validation: 2,192 ranges, 455/4,566 original files indexed, zero errors; 17,230 mapped, 30,710 partial, 59,546 unresolved, 8,032 missing, 26,778 excluded and 917 hardware-excluded. Capture `logs/serial/qemu-m217-run-local-20261126T144639137255Z.log`, 6,395 bytes, SHA-256 `367ab4bb6e5f0274a179df13ec3c610d311832ed0f996c439aa89c4835e0c6f0`; QEMU runner exited. No SYSTEM login, DCL, DECnet Phase IV or SET HOST 0 was observed.
+
+M450 implementation commit: `946da39`.
+
+Remaining: construct native VMS process address spaces and genuine INIT/NULL/SWAPPER contexts; run SWAPINIT in SWAPPER context and create SYSINIT; connect live public SYS$QIO completion to IOC/ACP/AST and process scheduling; implement image activation/login/DCL and verify DECnet SET HOST 0 second-session/LOGOUT in QEMU.
