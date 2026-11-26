@@ -55,7 +55,7 @@ static struct port_sysloa_table executive_sysloa;
 /* This memory is genuinely loaded and zeroed by the SYSBOOT ELF loader,
  * mapped supervisor-only in the guest. Replacing its provisional size
  * limits with SYSGEN-selected BOO$ offsets remains later integration. */
-static uint8_t executive_packet_pages[170u*1024u] __attribute__((aligned(512)));
+static uint8_t executive_packet_pages[167u*1024u] __attribute__((aligned(512)));
 static uint8_t *executive_np_base;
 static struct port_exe_paged_pool executive_paged_pool;
 static uint32_t executive_paged_pool_ready;
@@ -108,6 +108,10 @@ uint32_t port_exe_deapaged(void *address,uint32_t requested_bytes){
 }
 static struct port_ini_packet_list executive_irps,executive_lrps,executive_srps;
 static uint32_t executive_packet_ready;
+enum {EXECUTIVE_STARTUP_FIELD_BYTES=32u};
+struct executive_startup_input {uint32_t length,address;};
+_Static_assert(sizeof(struct executive_startup_input)==8u,
+    "SYSINIT CREPRC input descriptor size");
 /* INIT's later nonpaged records occupy only the free low end of the
  * actual SYS.EXE supervisor RAM; no boot monitor array stands in for it. */
 static uint32_t executive_free_npages;
@@ -925,9 +929,14 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
      * BOOTS/SRC/SYSBOOT.MAR allocation calculation defines these spans. */
     uintptr_t start=(uintptr_t)executive_packet_pages;
     uintptr_t top=start+sizeof executive_packet_pages;
-    if(start>UINT32_MAX || top>UINT32_MAX ||
+    if(start>UINT32_MAX || top>UINT32_MAX || !p->startup_file ||
+       (uintptr_t)p->startup_file>UINT32_MAX-EXECUTIVE_STARTUP_FIELD_BYTES ||
+       p->startup_file[0]>=EXECUTIVE_STARTUP_FIELD_BYTES ||
        !p->packet_settings || executive_packet_ready)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
+    uint8_t startup_candidate[EXECUTIVE_STARTUP_FIELD_BYTES];
+    for(unsigned i=0u;i<EXECUTIVE_STARTUP_FIELD_BYTES;i++)
+        startup_candidate[i]=p->startup_file[i];
     struct port_boo_packet_settings settings=*p->packet_settings;
     settings.top_address=(uint32_t)top;
     /* A future SYSBOOT page-table mapper must support virtual-count gaps;
@@ -977,7 +986,8 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
         return PORT_SYS_EXEC_BAD_PARAMETERS;
     const uint32_t resident_free=m.nonpaged_end-m.nonpaged_start;
     if(resident_free!=settings.nonpaged_dynamic_bytes ||
-       m.nonpaged_end>top || m.paged_dynamic_start<start ||
+       m.nonpaged_end>top || m.paged_dynamic_start<start+
+          (EXECUTIVE_STARTUP_FIELD_BYTES+sizeof(struct executive_startup_input)) ||
        m.paged_dynamic_start+(settings.paged_dynamic_bytes&~511u)!=
            m.nonpaged_start)
         return PORT_SYS_EXEC_BAD_PARAMETERS;
@@ -996,6 +1006,19 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
     executive_np_base=(uint8_t *)(uintptr_t)m.nonpaged_start;
     executive_free_npages=resident_free;
     executive_packet_ready=1u;
+    /* SYSBOOT's source pool calculation leaves the leading alignment gap
+     * below PAGEDYN free. Reserve the descriptor there so EXE$GT_STARTUP is
+     * resident in SYS.EXE without enlarging its fixed supervisor aperture. */
+    uint8_t *const startup_storage=(uint8_t *)start;
+    for(unsigned i=0u;i<EXECUTIVE_STARTUP_FIELD_BYTES;i++)
+        startup_storage[i]=startup_candidate[i];
+    struct executive_startup_input *const startup_input=
+        (struct executive_startup_input *)(void *)(startup_storage+
+             EXECUTIVE_STARTUP_FIELD_BYTES);
+    const uintptr_t startup_text=(uintptr_t)startup_storage+1u;
+    if(startup_text>UINT32_MAX)return PORT_SYS_EXEC_BAD_PARAMETERS;
+    startup_input->length=startup_storage[0];
+    startup_input->address=(uint32_t)startup_text;
     p->result->irp_queue=&executive_irps;
     p->result->lrp_queue=&executive_lrps;
     p->result->srp_queue=&executive_srps;
@@ -1008,6 +1031,9 @@ static uint32_t port_exe_initialize_lookaside(const struct port_sys_exec_start *
     p->result->paged_pool_bytes=paged_bytes;
     p->result->alopaged=port_exe_alopaged;
     p->result->deapaged=port_exe_deapaged;
+    p->result->startup_file=startup_storage;
+    p->result->startup_input_descriptor=(const uint32_t *)(const void *)
+        startup_input;
     p->result->signature=PORT_SYS_EXEC_PACKET_RESULT_TAG;
     return PORT_SYS_EXEC_NORMAL;
 }

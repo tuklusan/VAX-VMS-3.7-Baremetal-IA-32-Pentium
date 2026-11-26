@@ -54,6 +54,7 @@ def main():
         (b'SYSBOOT: Files-11 PARAMS.DAT applied before INIT allocation.'
          if params_fixture else
          b'SYSBOOT: PARAMS.DAT absent; source SYSPARAM defaults retained.'),
+        b'INIT: resident SYSINIT STARTUP input descriptor prepared; process creation pending.',
         b'INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.',
         *([b'INIT: SYSBOOT PARAMS.DAT IRPCOUNT override reached resident IRP queue.']
           if params_fixture else []),
@@ -119,10 +120,11 @@ def main():
         b'INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
         b'INIT: bound source NULL/SWAPPER/SYSINIT PHDs to native IA-32 frames and process page tables.',
-        b'SWAPPER: scheduled native context resolved SYS$DISK and SYS$SYSDEVICE.',
         b'SYSINIT: native scheduled context created and verified SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE.',
         b'SYSINIT: SIP_SETTIME set the resident VMS clock from the IA-32 RTC.',
         b'SCH$WAITK blocked the active process; SCH$SCHED selected NULL.']
+    interleaved=[
+        b'SWAPPER: scheduled native context resolved SYS$DISK and SYS$SYSDEVICE.']
     failures=[
         b'*** x86 fault:',
         b'SYSBOOT: SYS.EXE retrieval map invalid.',
@@ -202,9 +204,14 @@ def main():
         until=time.monotonic()+80
         while time.monotonic()<until:
             if any(x in observed for x in failures):break
-            if all(x in observed for x in expected):
+            if all(x in observed for x in expected+interleaved):
                 positions=[observed.index(x) for x in expected]
-                if positions!=sorted(positions):break
+                # SWAPPER and SYSINIT are independently scheduled contexts;
+                # their diagnostic messages may interleave, but both must run
+                # before the observed NULL selection.
+                independent=[observed.index(x) for x in interleaved]
+                if (positions!=sorted(positions) or
+                    any(pos>positions[-1] for pos in independent)):break
                 if success_deadline is None:
                     # Keep the sole QEMU runner alive after NULL is selected
                     # so a bad IRET/process mapping or repeated SYSINIT wait

@@ -3264,9 +3264,8 @@ void kmain(void) {
     /* SYSBOOT BOO$USEFILE: read the optional Files-11 parameter image before
      * deriving any INIT pool/queue settings from SYSPARAM. The bounded native
      * decoder commits the whole parameter set only after a valid terminator. */
-    static uint8_t sysboot_startup_file[PORT_VMS37_STARTUP_FILE_BYTES]={
-        22u,'S','Y','S','$','S','Y','S','T','E','M',':',
-        'S','T','A','R','T','U','P','.','C','O','M'};
+    static uint8_t sysboot_startup_file[PORT_VMS37_STARTUP_FILE_BYTES]=
+        PORT_VMS37_STARTUP_FILE_DEFAULT_INIT;
     static uint8_t sysboot_param_buffer[32768];
     uint32_t sysboot_param_count=0u;
     size_t sysboot_param_bytes=0u;
@@ -3302,7 +3301,8 @@ void kmain(void) {
     const struct port_sys_exec_start packet_request={
         .signature=PORT_SYS_EXEC_SIGNATURE,.version=PORT_SYS_EXEC_VERSION,
         .pcb_type=PORT_SYS_EXEC_PCB_KIND,.result=&packet_result,
-        .phase=PORT_SYS_EXEC_INIT_IOQUEUES,.packet_settings=&packet_profile};
+        .phase=PORT_SYS_EXEC_INIT_IOQUEUES,.packet_settings=&packet_profile,
+        .startup_file=sysboot_startup_file};
     uint32_t (*initial_loaded_sys)(const struct port_sys_exec_start *)=
         (uint32_t (*)(const struct port_sys_exec_start *))(uintptr_t)sys_entry;
     if(initial_loaded_sys(&packet_request)!=PORT_SYS_EXEC_NORMAL ||
@@ -3332,6 +3332,25 @@ void kmain(void) {
         bootstrap_message("INIT: SYS.EXE packet queue initialization failed.");
         bootstrap_halt();
     }
+    if(!packet_result.startup_file||!packet_result.startup_input_descriptor||
+       (uintptr_t)packet_result.startup_file<PORT_SYS_ELF_START||
+       (uintptr_t)packet_result.startup_file>
+          PORT_SYS_ELF_LIMIT-PORT_VMS37_STARTUP_FILE_BYTES||
+       (uintptr_t)packet_result.startup_input_descriptor<PORT_SYS_ELF_START||
+       (uintptr_t)packet_result.startup_input_descriptor>
+          PORT_SYS_ELF_LIMIT-8u||
+       packet_result.startup_input_descriptor[0]!=sysboot_startup_file[0]||
+       packet_result.startup_input_descriptor[1]!=
+          (uint32_t)(uintptr_t)(packet_result.startup_file+1u)){
+        bootstrap_message("INIT: SYSBOOT startup input descriptor handoff failed.");
+        bootstrap_halt();
+    }
+    for(unsigned i=0u;i<PORT_VMS37_STARTUP_FILE_BYTES;i++)
+        if(packet_result.startup_file[i]!=sysboot_startup_file[i]){
+            bootstrap_message("INIT: SYSBOOT startup filename copy failed.");
+            bootstrap_halt();
+        }
+    bootstrap_message("INIT: resident SYSINIT STARTUP input descriptor prepared; process creation pending.");
     bootstrap_message("INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.");
     if(param_status==PORT_SYSBOOT_USEFILE_OK&&
        init_params.irp_count!=PORT_VMS37_DEFAULT_IRPCOUNT)

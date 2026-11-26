@@ -43,7 +43,7 @@
 #include "vms_v37_ia32_context.h"
 /* The resident SYS.EXE entry carries INIT.MAR's CPU-code vector binding
  * and subsequent source-ordered initialization as separate phases. */
-enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=33u,
+enum { PORT_SYS_EXEC_SIGNATURE=0x37334d56u,PORT_SYS_EXEC_VERSION=34u,
        PORT_SYS_EXEC_NORMAL=1u,PORT_SYS_EXEC_BAD_PARAMETERS=2u,
        PORT_SYS_EXEC_RESULT_TAG=0x58455359u,PORT_SYS_EXEC_PCB_KIND=1u,
        PORT_SYS_EXEC_LINK_SYSLOA=1u,PORT_SYS_EXEC_INIT_RESIDENT=2u,
@@ -288,6 +288,10 @@ struct port_sys_exec_result {
     uint32_t paged_pool_base,paged_pool_bytes;
     uint32_t (*alopaged)(uint32_t,void **,uint32_t *);
     uint32_t (*deapaged)(void *,uint32_t);
+    /* SYSBOOT EXE$GT_STARTUP copied to resident SYSINIT process input
+     * descriptor. Process creation/reading the command file remain pending. */
+    const uint8_t *startup_file;
+    const uint32_t *startup_input_descriptor;
 };
 struct port_sys_exec_start {
     uint32_t signature,version;
@@ -316,6 +320,8 @@ struct port_sys_exec_start {
     void (*vms_scheduler_request)(void *);
     void (*vms_scheduler_run_pending)(void *);
     const struct port_sys_exec_context_settings *vms_context_settings;
+    /* SYSBOOT's 32-byte ASCIC EXE$GT_STARTUP parameter. */
+    const uint8_t *startup_file;
 };
 uint32_t port_sys_executive_entry(const struct port_sys_exec_start *parameters);
 #endif

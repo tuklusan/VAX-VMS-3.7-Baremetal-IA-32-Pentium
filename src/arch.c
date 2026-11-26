@@ -1110,8 +1110,11 @@ uint32_t arch_vms_wait_current(uint32_t wait_queue){
     }
     resident_vms_wait_queue=wait_queue;
     __asm__ volatile("":::"memory");
-    if(flags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
+    /* Keep the wait-list request and SCH$RESCHED trap indivisible. Enabling
+     * IRQ0 between publishing this single-CPU bridge slot and INT 0x91 lets
+     * a second context overwrite it before the first wait is queued. */
     __asm__ volatile("int $0x91":::"memory");
+    __asm__ volatile("pushl %0; popfl"::"r"(flags):"memory","cc");
     return PORT_V37_SCHED_OK;
 }
 

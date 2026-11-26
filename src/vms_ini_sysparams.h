@@ -21,6 +21,9 @@
 #define PORT_VMS37_DEFAULT_LOGGHASHTBL 32u
 #define PORT_VMS37_DEFAULT_LOGPHASHTBL 128u
 #define PORT_VMS37_STARTUP_FILE_BYTES 32u
+#define PORT_VMS37_STARTUP_FILE_DEFAULT_INIT \
+    {22u,'S','Y','S','$','S','Y','S','T','E','M',':', \
+     'S','T','A','R','T','U','P','.','C','O','M'}
 
 /* Native subset of SYSPARAM.MAR defaults consumed by INIT. SYSBOOT applies
  * the supported bounded PARAMS.DAT subset before allocating resident pools. */
@@ -51,9 +54,7 @@ uint32_t port_vms37_init_param_defaults(struct port_vms37_init_params *);
 static inline void port_vms37_startup_file_default(
     uint8_t startup_file[PORT_VMS37_STARTUP_FILE_BYTES]){
     if(!startup_file)return;
-    static const uint8_t value[]={
-        22u,'S','Y','S','$','S','Y','S','T','E','M',':',
-        'S','T','A','R','T','U','P','.','C','O','M'};
+    static const uint8_t value[]=PORT_VMS37_STARTUP_FILE_DEFAULT_INIT;
     for(unsigned i=0u;i<PORT_VMS37_STARTUP_FILE_BYTES;i++)
         startup_file[i]=i<sizeof value?value[i]:0u;
 }

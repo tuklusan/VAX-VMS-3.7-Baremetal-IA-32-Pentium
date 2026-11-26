@@ -3959,7 +3959,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_sysinit_start",
-          "pc_line": 848,
+          "pc_line": 852,
           "function": "Scheduled native SYSINIT translates SYS$SYSDEVICE, applies source underscore/TOPSYS rules, creates/verifies the three SYSTEM logicals, reads IA-32 CMOS RTC time, and updates the resident VMS clock; LOCKDOWN and full SETIME solicitation/parameter persistence remain absent"
         },
         {
@@ -3978,7 +3978,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_sysinit_start",
-          "pc_line": 848,
+          "pc_line": 852,
           "function": "scheduled SIP_SETTIME reads IA-32 RTC and updates the resident VMS clock; operator prompt/TPWAIT, SYS$SETIME, TODR and persistent SYSPARAM writeback remain absent"
         }
       ],
@@ -10760,7 +10760,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 923,
+          "pc_line": 927,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -10839,7 +10839,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_vms_sched_chse",
-          "pc_line": 785,
+          "pc_line": 789,
           "function": "Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; VAX PCB PHYPCB translation and native process contexts remain incomplete"
         },
         {
@@ -11089,7 +11089,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_sys_executive_entry",
-          "pc_line": 1016,
+          "pc_line": 1042,
           "function": "Allocate source-sized 128-byte NULL and 640-byte SWAPPER kernel stacks plus separate native P0/P1 tables and PHDs in NPAGEDYN; process tables are currently flat supervisor identity maps, not VAX P0/P1 translations"
         },
         {
@@ -22891,7 +22891,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 685,
+          "pc_line": 689,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -24060,7 +24060,7 @@
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
           "pc_line": 3132,
-          "function": "EXE$GT_STARTUP default SYS$SYSTEM:STARTUP.COM stored as a 32-byte ASCIC field; SYSBOOT PARAMS.DAT replaces it when present, but SYSINIT does not yet consume the field for STARTUP process input copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
+          "function": "EXE$GT_STARTUP default SYS$SYSTEM:STARTUP.COM stored as a 32-byte ASCIC field; SYSBOOT PARAMS.DAT replaces it when present and INIT copies it to the resident SYSINIT input descriptor; STARTUP process creation/input remains missing copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
           "original_lines": [
@@ -24156,7 +24156,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_swapper_start",
-          "pc_line": 822,
+          "pc_line": 826,
           "function": "The scheduled SWAPPER entry searches the live SYS/GROUP logical state and uses the source resident HIB wait queue; free-page balancing, modified-page writeback, power-fail AST work and SWAPPER restart logic remain absent; live HIB queue block and selection of NULL are observed, but SWAPPER balance/swap functions remain unimplemented"
         },
         {

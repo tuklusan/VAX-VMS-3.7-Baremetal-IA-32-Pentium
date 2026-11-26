@@ -2771,7 +2771,7 @@ sysparam_defaults=[
     (1794,1806,'LOGGHASHTBL default 32 GROUP hash entries'),
     (1807,1819,'LOGPHASHTBL default 128 PROCESS hash entries')]
 sysparam_defaults.append((2948,2952,
-    'EXE$GT_STARTUP default SYS$SYSTEM:STARTUP.COM stored as a 32-byte ASCIC field; SYSBOOT PARAMS.DAT replaces it when present, but SYSINIT does not yet consume the field for STARTUP process input'))
+    'EXE$GT_STARTUP default SYS$SYSTEM:STARTUP.COM stored as a 32-byte ASCIC field; SYSBOOT PARAMS.DAT replaces it when present and INIT copies it to the resident SYSINIT input descriptor; STARTUP process creation/input remains missing'))
 sysparam_sections=[]
 cursor=1
 for first,last,label in sysparam_defaults:
