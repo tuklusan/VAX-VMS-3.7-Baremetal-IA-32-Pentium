@@ -2209,3 +2209,13 @@ Verification: `make execreprccheck exeportbatchcheck build/sys.exe` PASS; full `
 M420 implementation and QEMU evidence commit: `ffaf290412007be05322c418108fe9eb8ee92604`.
 
 Remaining: actual JIB/PQB defaults and quotas, process-state initialization, resource waits/rollback, INIT NULL/SWAPPER contexts and activation; public SYS$QIO/ACP/process AST; image activation; SYSTEM login/DCL; DECnet Phase IV and genuine SET HOST 0 two-session/LOGOUT verification. M419/M420 commits are local; publishing is pending because GitHub HTTPS push timed out in this environment.
+
+## M421 - Translate CREPRC status flags into source PCB state, 26 November 2026
+
+Ported SYSCREPRC.MAR status handling (STSFLGTBL and lines 392-408) using the original PCB status bit positions from SYSDEFMP.MDL. The native helper applies SSRWAIT, SSFEXCU, PSWAPM, NOACNT, BATCH, HIBER, LOGIN, NETWRK and DISAWS to PCB$L_STS, rejects reserved input bits and missing required privileges before changing PCB state, and is idempotent. Also corrected the PCB/PQB DYN miscellaneous-byte initialization to zero, matching MEMORYALC.MAR's DYN header setup; tests now check those bytes.
+
+Verification: `make execreprccheck build/sys.exe` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,170 ranges; 453/4,566 files indexed; zero validation errors; 17,230 mapped, 30,484 partial, 58,941 unresolved, 8,032 missing, 26,710 excluded, 917 hardware-excluded); `git diff --check` PASS. Host regressions cover all nine status-to-PCB bits, idempotence, reserved bits, privilege failure atomicity and DYN misc-byte clearing. `nm` confirms `port_exe_creprc_apply_status_flags` is resident; ELF RW end remains `0x0037f200` under `0x00380000`. `make qemu-sysboot-m217` PASS through the DQA0/IRQ14/Files-11 test; guest still reaches incomplete INIT stop without NULL/SWAPPER contexts. Capture `logs/serial/qemu-m217-run-local-20261126T012950238952Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; manifest validates 365 logs. No SYSTEM login, DCL, DECnet or SET HOST 0 observed. No restricted source or binary image added.
+
+M421 implementation and boot-evidence commit: `b9eba69288440f30e11e5e99f260e3f2df872e24`.
+
+Remaining: CREPRC defaults/JIB/PQL quotas, process flags and resource rollback; real INIT NULL/SWAPPER PHD contexts and scheduling; public SYS$QIO/Files-11 ACP/process AST integration; image activation; SYSTEM login/DCL and DECnet Phase IV; genuine SET HOST 0 second session and LOGOUT.
