@@ -125,6 +125,8 @@ struct port_sys_exec_result {
     /* SWAPPER.MAR hash-table stage, callable after INIT activates SWAPPER. */
     uint32_t (*swapinit_log_tables)(const uint32_t [3],
         const struct port_exe_swapinit_hash_set **);
+    /* Source CHSE transition under the resident IPL_SYNCH adapter. */
+    uint32_t (*vms_sched_chse)(struct port_v37_scheduler *,uint32_t,uint8_t);
     const struct port_ini_syswcb *system_wcb;
     const struct port_ini_syslog_result *syslog;
     /* Original MB/NL/OP 56-byte DPT prologues only: not linked to IOC. */

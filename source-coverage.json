@@ -10749,7 +10749,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 773,
+          "pc_line": 780,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -10826,10 +10826,10 @@
             1026
           ],
           "status": "partial",
-          "pc_file": "src/vms_v37_sched.c",
-          "pc_symbol": "port_v37_sched_start_context_quotas",
-          "pc_line": 433,
-          "function": "Bind the candidate PHD, native restore frame and PROCSTRT quota/privilege fields into a source PCB before CHSE; INIT does not yet provide mapped initial process contexts"
+          "pc_file": "src/vms_sys_executive_entry.c",
+          "pc_symbol": "executive_vms_sched_chse",
+          "pc_line": 742,
+          "function": "Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; source PCB PHYPCB translation and NULL/SWAPPER PHD/context setup remain absent"
         },
         {
           "original_lines": [

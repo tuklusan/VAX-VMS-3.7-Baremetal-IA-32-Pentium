@@ -48,7 +48,7 @@ def main():
         b'INIT: INILOA IOMAP executed on real IA-32 boot adapter.',
         b'INIT: loaded SYS.EXE built lock ID, resource hash and deadlock bitmap tables.',
         b'INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.',
-        b'INIT: SCH$RESCHED entered resident IA-32 vector 0x91; process contexts pending.',
+        b'INIT: source SCH$CHSE reached resident IA-32 vector 0x91; process contexts pending.',
         b'INIT: loaded SYS.EXE initialized process header vector and swapper PTE records.',
         b'INIT: loaded SYS.EXE initialized modified-page writer PTE/index map.',
         b'INIT: loaded SYS.EXE allocated unbound pagefile pointer vector.',

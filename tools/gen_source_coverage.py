@@ -1847,7 +1847,7 @@ init_parts=[
     (838,859,None,None,'INILOA code deallocation requires full nonpaged pool','unresolved'),
     (860,992,'src/vms_ini_lockdb.c','port_ini_lockdb_init','Realtime SPT bitmap, lock ID chain, power-of-two resource hash and optional process bitmap structures (DYNDEF and consumers unresolved)','partial'),
     (993,1020,'src/vms_ini_procvec.c','port_ini_procvec_init','Resident source PCB pointer/sequence arrays; SYSTEM and NULL entries now point at SYSDEF-layout PCB templates','partial'),
-    (1021,1026,'src/vms_v37_sched.c','port_v37_sched_start_context_quotas','Bind the candidate PHD, native restore frame and PROCSTRT quota/privilege fields into a source PCB before CHSE; INIT does not yet provide mapped initial process contexts','partial'),
+    (1021,1026,'src/vms_sys_executive_entry.c','executive_vms_sched_chse','Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; source PCB PHYPCB translation and NULL/SWAPPER PHD/context setup remain absent','partial'),
     (1027,1030,None,None,'Source comments separating INI_PSTATE from INI_PHV','excluded'),
     (1031,1068,'src/vms_ini_phv_swap.c','port_ini_phvswap_init','Native PHV/system slot and swapper PTE map DYN record construction; pager and swapper process are not running','partial'),
     (1069,1089,'src/vms_ini_mpw.c','port_ini_mpw_init','Modified-page-writer PTE and PHV index record allocation, no pager consumer','partial'),

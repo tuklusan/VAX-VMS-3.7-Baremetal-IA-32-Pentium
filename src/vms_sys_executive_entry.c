@@ -739,6 +739,13 @@ static void executive_vms_request_reschedule(void *unused){
         executive_vms_scheduler_arch.request(
             executive_vms_scheduler_arch.context);
 }
+static uint32_t executive_vms_sched_chse(
+    struct port_v37_scheduler *scheduler,uint32_t pcb,uint8_t priority_class){
+    const uint32_t flags=executive_vms_enter_synchronization(0);
+    const uint32_t status=port_v37_sched_chse(scheduler,pcb,priority_class);
+    executive_vms_leave_synchronization(0,flags);
+    return status;
+}
 static uint32_t executive_vms_address(void *unused,const void *p){
     (void)unused;
     return (uintptr_t)p<=UINT32_MAX?(uint32_t)(uintptr_t)p:0u;
@@ -979,6 +986,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->swapper_vms_pcb=executive_vms_swapper_pcb;
         p->result->vms_scheduler=&executive_vms_scheduler;
         p->result->vms_sched_interrupt=port_v37_sched_interrupt;
+        p->result->vms_sched_chse=executive_vms_sched_chse;
         p->result->signature=PORT_SYS_EXEC_PV_RESULT_TAG;
         return PORT_SYS_EXEC_NORMAL;
     }

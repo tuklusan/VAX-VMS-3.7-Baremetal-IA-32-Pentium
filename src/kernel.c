@@ -3534,12 +3534,14 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.");
-    if(!proc_result.vms_sched_interrupt||
+    if(!proc_result.vms_sched_interrupt||!proc_result.vms_sched_chse||
        (uintptr_t)proc_result.vms_scheduler<PORT_SYS_ELF_START||
        (uintptr_t)proc_result.vms_scheduler>
            PORT_SYS_ELF_LIMIT-sizeof(*proc_result.vms_scheduler)||
        (uintptr_t)proc_result.vms_sched_interrupt<PORT_SYS_ELF_START||
        (uintptr_t)proc_result.vms_sched_interrupt>=PORT_SYS_ELF_LIMIT||
+       (uintptr_t)proc_result.vms_sched_chse<PORT_SYS_ELF_START||
+       (uintptr_t)proc_result.vms_sched_chse>=PORT_SYS_ELF_LIMIT||
        !arch_adopt_vms_scheduler(proc_result.vms_scheduler,
                                  proc_result.vms_sched_interrupt)){
         bootstrap_message("INIT: IA-32 IRQ0 scheduler binding failed.");
@@ -3547,14 +3549,19 @@ void kmain(void) {
     }
     const uint32_t resched_requests_before=arch_vms_reschedule_requests();
     const uint32_t resched_interrupts_before=arch_vms_reschedule_interrupts();
-    arch_request_vms_reschedule();
-    if(arch_vms_reschedule_requests()!=resched_requests_before+1u||
-       arch_vms_reschedule_interrupts()!=resched_interrupts_before+1u||
-       proc_result.vms_scheduler->native_no_context_count==0u){
-        bootstrap_message("INIT: native SCH$RESCHED software gate failed.");
+    if(proc_result.vms_sched_chse(proc_result.vms_scheduler,
+          (uint32_t)(uintptr_t)proc_result.null_vms_pcb,0u)!=
+       PORT_V37_SCHED_OK){
+        bootstrap_message("INIT: source SCH$CHSE resident queue transition failed.");
         bootstrap_halt();
     }
-    bootstrap_message("INIT: SCH$RESCHED entered resident IA-32 vector 0x91; process contexts pending.");
+    if(arch_vms_reschedule_requests()!=resched_requests_before+1u||
+       arch_vms_reschedule_interrupts()<resched_interrupts_before+1u||
+       proc_result.vms_scheduler->native_no_context_count==0u){
+        bootstrap_message("INIT: source SCH$CHSE did not reach native SCH$RESCHED.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: source SCH$CHSE reached resident IA-32 vector 0x91; process contexts pending.");
     bootstrap_message("INIT: IA-32 IRQ0 bound resident VMS scheduler; PHD/context activation pending.");
 
     /* Original INIT.MAR INI_PHV and INI_SWAP reserve the process header
