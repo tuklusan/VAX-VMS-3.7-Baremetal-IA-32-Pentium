@@ -69,8 +69,19 @@ static int direct(void){
     CHECK(port_log_system_lookup(&f.table,(const uint8_t *)"SYS$MESSAGE",11u,
           &system_address)==PORT_LOG_OK);
     CHECK(system_address==(uint32_t)(uintptr_t)f.sysnames[2]);
+    uint8_t created_value[PORT_LOG_MAX_REC_LEN]={0};
+    struct port_log_result result={0};
+    CHECK(port_log_translate(&f.table,"SYS$SYSTEM",10u,0u,created_value,
+          sizeof created_value,&result)==PORT_LOG_OK);
+    CHECK(result.bytes==20u&&!memcmp(created_value,
+          "DQA0:[TOPSYS.SYSEXE]",20u));
     CHECK(port_log_system_add(&f.table,f.sysnames[0],
           (uint32_t)(uintptr_t)f.sysnames[0],sizeof f.sysnames[0])==PORT_LOG_BAD);
+    uint8_t duplicate[PORT_LOG_MAX_REC_LEN];
+    make_log(duplicate,"SYS$SYSTEM","DQA0:[OTHER.SYSEXE]");
+    CHECK(port_log_system_add(&f.table,duplicate,
+          (uint32_t)(uintptr_t)duplicate,sizeof duplicate)==PORT_LOG_BAD);
+    CHECK(f.table.count==5u&&port_log_system_check(&f.table)==PORT_LOG_OK);
     CHECK(port_log_system_check(&f.table)==PORT_LOG_OK);
     CHECK(f.table.head[12u]==(uint32_t)(uintptr_t)f.disk);
     CHECK(f.table.head[13u]==(uint32_t)(uintptr_t)f.sys);
@@ -82,7 +93,7 @@ static int direct(void){
     CHECK(address==(uint32_t)(uintptr_t)f.disk);
     CHECK(port_log_system_lookup(&f.table,(const uint8_t *)"SYS$MISSING",11u,&address)==PORT_LOG_NOTRAN);
     CHECK(address==(uint32_t)(uintptr_t)f.disk);
-    uint8_t output[32]={0};struct port_log_result result={0};
+    uint8_t output[32]={0};
     CHECK(port_log_translate(&f.table,"SYS$DISK",8u,0u,output,sizeof output,&result)==PORT_LOG_OK);
     CHECK(result.bytes==6u&&result.table==0u&&result.record_address==(uint32_t)(uintptr_t)f.disk);
     CHECK(!memcmp(output,"_DQA0:",6u));
