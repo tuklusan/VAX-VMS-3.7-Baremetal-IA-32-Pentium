@@ -2616,3 +2616,13 @@ Two QEMU attempts failed at SCH$WAITK with scheduler status 4 after SYSINIT SETI
 M464 implementation/evidence commit: `ce113c9bfa2e054da871a7f32e529f9d9a446f23`.
 
 Remaining: source-order SYSINIT continuation (time solicitation/persistence, volume-derived names, mount and ACP setup), public SYS$QIO/IOC/ACP process completion and ASTs, process image activation, genuine SYSTEM login and DCL, DECnet Phase IV, then end-to-end SET HOST 0/second SYSTEM login/LOGOUT. Acceptance remains incomplete.
+
+## M465 — Make SYSINIT's scheduler wait result truthful, 26 November 2026
+
+Changed the native wait diagnostic from claiming SWAPPER blocked to reporting the active process, since the observed NULL selection is the SYSINIT wait after SWAPPER has already blocked. The QEMU harness now rejects a reported SCH$WAITK scheduler failure and keeps the single runner alive for three seconds after the final NULL selection before passing. This checks the scheduler after SYSINIT's SETIME and repeated wait boundary rather than stopping at an earlier matching SWAPPER transition.
+
+Verification: `wsl make -j2 all` PASS; `wsl make qemu-sysboot-m217` PASS with actual order through SYSINIT RTC update and `SCH$WAITK blocked the active process; SCH$SCHED selected NULL.` QEMU runner exited. Capture `logs/serial/qemu-m217-run-local-20261126T211120075030Z.log`: 6,661 bytes, SHA-256 `a1c30e8f1aa138b01969e59130082905cab95c0068cfd08e423092ed74acc6fe`. The two runs appended to the manifest include one before and one after the more explicit wait check; the latter passed. No scheduler failure was observed during the three-second post-selection interval.
+
+M465 implementation/evidence commit: `23c74b028b9c7f178b7888cad709ec22bdb7a1a6`.
+
+Remaining: complete SYSINIT's source time solicitation/persistence, startup-file access, Files-11 system mount and ACP interlock; implement live public SYS$QIO and process-aware AST completion; continue process image activation through SYSTEM login/DCL; initialize DECnet Phase IV and verify SET HOST 0/second login/LOGOUT. Final acceptance remains incomplete.
