@@ -2158,3 +2158,4 @@ Verification: full `make -j2 all test` PASS (exit 0); current `make execreprcche
 M415 implementation commit: `997e53df0ecda7609aece0e6a0b1392ce84bd6e9`.
 
 Remaining work: integrate genuine PCB/PQB/JIB allocation, source status-to-PCB translations and quota handling with rollback; activate processes through INIT and the native scheduler; connect public SYS$QIO to DQA0/ACP/AST; then SYSTEM login, DCL, DECnet Phase IV and end-to-end SET HOST 0/second login/LOGOUT. Acceptance remains incomplete.
+M415 verification/resume commit: `785de1a3b69817787781ef5a15dcdd34a1bbdcd6` (published to `main` with implementation commit `997e53df0ecda7609aece0e6a0b1392ce84bd6e9`).
