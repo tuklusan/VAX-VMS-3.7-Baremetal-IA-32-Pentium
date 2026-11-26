@@ -92,6 +92,11 @@ uint32_t port_v37_sched_start_context(struct port_v37_scheduler *,
     uint32_t pcb_address,uint32_t phd_address,uint32_t native_phy_pcb_address,
     uint32_t restore_frame_address,const struct port_v37_phd_seed *,
     uint8_t priority_increment_class);
+/* Attach the same validated native PHD/frame to a source COM PCB that INIT
+ * has already queued with SCH$CHSE. Queue order and state remain unchanged. */
+uint32_t port_v37_sched_bind_queued_context(struct port_v37_scheduler *,
+    uint32_t pcb_address,uint32_t phd_address,uint32_t native_phy_pcb_address,
+    uint32_t restore_frame_address,const struct port_v37_phd_seed *);
 /* PROCSTRT-ready variant: install source quota/privilege state in a candidate
  * PHD before binding it to the PCB and making the process COM via CHSE. */
 uint32_t port_v37_sched_start_context_quotas(struct port_v37_scheduler *,

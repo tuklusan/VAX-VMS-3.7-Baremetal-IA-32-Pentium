@@ -1644,7 +1644,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 1037,
+          "pc_line": 1057,
           "function": "Set a source-layout local event bit and wake a satisfied LEF waiter; PID lookup and live SETEF dispatch remain absent"
         },
         {
@@ -1655,7 +1655,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_post_event",
-          "pc_line": 1037,
+          "pc_line": 1057,
           "function": "Set a source-layout normal/master CEF bit and scan its WQH for satisfied resident waiters; nonresident CEF waiters use source EVENTE/CHSE to COMO without completing saved result; slave CEB replication remains unsupported"
         },
         {
@@ -1674,7 +1674,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "event_condition",
-          "pc_line": 899,
+          "pc_line": 919,
           "function": "Evaluate the source EFWM and WALL wait-any/wait-all predicate for a resident PCB"
         },
         {
@@ -6104,7 +6104,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_save_current",
-          "pc_line": 596,
+          "pc_line": 616,
           "function": "Validate and save the outgoing IA-32 IRET frame through PHD KSP/PC, preserve PCB$L_PHYPCB as the hardware PCB physical address, then requeue through SCH$RESCHED; IRQ0 and deferred software-vector entry bind the native scheduler while source IPL edge cases remain incomplete"
         },
         {
@@ -6115,7 +6115,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_resched_current",
-          "pc_line": 573,
+          "pc_line": 593,
           "function": "Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction"
         },
         {
@@ -6134,7 +6134,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_select",
-          "pc_line": 511,
+          "pc_line": 531,
           "function": "Highest resident COM queue selection resolves the saved IA-32 IRET frame through PHD KSP while retaining PCB$L_PHYPCB for the source hardware PCB; returns its address with selected PCB. IRQ0 invokes this transaction, but contextless NULL/SWAPPER remain unactivated and process page-table construction remains incomplete"
         },
         {
@@ -6307,7 +6307,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_event",
-          "pc_line": 1023,
+          "pc_line": 1043,
           "function": "native functional counterpart to original section"
         },
         {
@@ -6318,7 +6318,7 @@
           "status": "mapped",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_wait_current",
-          "pc_line": 688,
+          "pc_line": 708,
           "function": "native functional counterpart to original section"
         },
         {
@@ -10829,7 +10829,7 @@
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_vms_sched_chse",
           "pc_line": 764,
-          "function": "Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; source PCB PHYPCB translation and NULL/SWAPPER PHD/context setup remain absent"
+          "function": "Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; VAX PCB PHYPCB translation and native process contexts remain incomplete"
         },
         {
           "original_lines": [
@@ -11369,7 +11369,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_sched.c",
           "pc_symbol": "port_v37_sched_set_priority",
-          "pc_line": 465,
+          "pc_line": 485,
           "function": "Partial precomputed-priority COM/COMO CHSEP removal, COMQS/ready accounting, queue insertion and reschedule/swapper callbacks; IPL bugcheck semantics remain unresolved"
         },
         {
@@ -24053,10 +24053,29 @@
         {
           "original_lines": [
             324,
+            1126
+          ],
+          "status": "unresolved",
+          "reason": "SWAPPER main loop and process swap-in PHD/page-table mapping remain unported"
+        },
+        {
+          "original_lines": [
+            1127,
+            1129
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_sched.c",
+          "pc_symbol": "port_v37_sched_bind_queued_context",
+          "pc_line": 467,
+          "function": "Bind a validated native PHD and IA-32 restore frame to a source COM PCB while retaining its scheduler queue order; VAX page-table/PFN translation is not implemented; process activation is host-tested but not integrated into live INIT"
+        },
+        {
+          "original_lines": [
+            1130,
             1683
           ],
           "status": "unresolved",
-          "reason": "SWAPPER main loop, balancing, page-file I/O and process swap-in/out remain unported"
+          "reason": "Process page-table population, SWAPPER loop, balancing and page-file I/O remain unported"
         }
       ],
       "unresolved_integration": "Boot invokes and validates the partial SWAPINIT SYSTEM/GROUP RSHT and initial logical insertion through the SYS.EXE callback. It still runs in bootstrap context rather than SWAPPER; TT0 creation, the SWAPPER loop, paging, SYSINIT activation and process activation remain unresolved."

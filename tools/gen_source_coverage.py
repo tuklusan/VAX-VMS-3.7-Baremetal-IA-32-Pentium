@@ -1847,7 +1847,7 @@ init_parts=[
     (838,859,None,None,'INILOA code deallocation requires full nonpaged pool','unresolved'),
     (860,992,'src/vms_ini_lockdb.c','port_ini_lockdb_init','Realtime SPT bitmap, lock ID chain, power-of-two resource hash and optional process bitmap structures (DYNDEF and consumers unresolved)','partial'),
     (993,1020,'src/vms_ini_procvec.c','port_ini_procvec_init','Resident source PCB pointer/sequence arrays; SYSTEM and NULL entries now point at SYSDEF-layout PCB templates','partial'),
-    (1021,1026,'src/vms_sys_executive_entry.c','executive_vms_sched_chse','Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; source PCB PHYPCB translation and NULL/SWAPPER PHD/context setup remain absent','partial'),
+    (1021,1026,'src/vms_sys_executive_entry.c','executive_vms_sched_chse','Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; VAX PCB PHYPCB translation and native process contexts remain incomplete','partial'),
     (1027,1030,None,None,'Source comments separating INI_PSTATE from INI_PHV','excluded'),
     (1031,1068,'src/vms_ini_phv_swap.c','port_ini_phvswap_init','Native PHV/system slot and swapper PTE map DYN record construction; pager and swapper process are not running','partial'),
     (1069,1089,'src/vms_ini_mpw.c','port_ini_mpw_init','Modified-page-writer PTE and PHV index record allocation, no pager consumer','partial'),
@@ -2796,7 +2796,9 @@ for first,last,status,reason in [
  (276,283,'partial','Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT during boot; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent'),
  (284,316,'unresolved','Create TT0 with $CREPRC; source process creation remains unported'),
     (317,323,'partial','Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved'),
-    (324,1683,'unresolved','SWAPPER main loop, balancing, page-file I/O and process swap-in/out remain unported')]:
+    (324,1126,'unresolved','SWAPPER main loop and process swap-in PHD/page-table mapping remain unported'),
+    (1127,1129,'partial','Bind a validated native PHD and IA-32 restore frame to a source COM PCB while retaining its scheduler queue order; VAX page-table/PFN translation is not implemented'),
+    (1130,1683,'unresolved','Process page-table population, SWAPPER loop, balancing and page-file I/O remain unported')]:
     if status=='unresolved':
         swapinit_sections.append({'original_lines':[first,last],
             'status':'unresolved','reason':reason})
@@ -2814,6 +2816,14 @@ for first,last,status,reason in [
             'status':'partial','pc_file':'src/vms_exe_swapinit_hash.c',
             'pc_symbol':'port_exe_swapinit_insert_system_record','pc_line':insert_line,
             'function':reason+'; SYS.EXE wrapper invokes and validates records from bootstrap context, but SWAPPER process context is absent'})
+    elif first==1127:
+        queued_line=line_for_symbol('src/vms_v37_sched.c',
+                                    'port_v37_sched_bind_queued_context')
+        swapinit_sections.append({'original_lines':[first,last],
+            'status':'partial','pc_file':'src/vms_v37_sched.c',
+            'pc_symbol':'port_v37_sched_bind_queued_context',
+            'pc_line':queued_line,
+            'function':reason+'; process activation is host-tested but not integrated into live INIT'})
     else:
         swapinit_sections.append({'original_lines':[first,last],
             'status':'partial','pc_file':'src/vms_exe_swapinit_hash.c',

@@ -364,7 +364,7 @@ static uint32_t sched_start_context(struct port_v37_scheduler *s,
     uint16_t wsl_offset,
     const struct port_v37_phd_process_quotas *process_quotas,
     const struct port_v37_phd_ws_quotas *ws_quotas,
-    uint8_t priority_class){
+    uint8_t priority_class,int already_queued){
     if(!s||!s->initialized||!pcb_address||!phd_address||
        !native_phy_pcb_address||!frame_address||
        !seed||priority_class>=PORT_V37_SCH_INCREMENT_CLASSES||
@@ -379,12 +379,24 @@ static uint32_t sched_start_context(struct port_v37_scheduler *s,
             sizeof(struct port_v37_ia32_restore_frame));
     if(!pcb||!phd||!frame)return PORT_V37_SCHED_UNRESOLVED;
     const uint16_t old_state=get16(pcb+PORT_V37_PCB_STATE);
+    int was_queued=0;
+    if(already_queued){
+        const uint8_t priority=pcb[PCBPRI];
+        if(priority>=PORT_V37_SCH_PRIORITIES||
+           !(get32(pcb+PCBSTS)&PORT_V37_SCH_RESIDENT)||
+           old_state!=PORT_V37_SCH_COM||!s->ready_count[priority]||
+           list_contains(s,priority,pcb_address,&was_queued)!=
+               PORT_V37_SCHED_OK||!was_queued)
+            return PORT_V37_SCHED_CORRUPT;
+    }
     if(get16(pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
        pcb[Q_TYPE]!=PORT_V37_DYN_PCB||pcb[PCBPRI]>=32u||
        pcb[PCBPRIB]>=32u||
        get32(pcb+PORT_V37_PCB_PHD)||get32(pcb+PORT_V37_PCB_PHYPCB)||
-       old_state!=PORT_V37_PCB_STATE_CURRENT||
-       get32(pcb+SQFL)!=pcb_address||get32(pcb+SQBL)!=pcb_address)
+       (already_queued?old_state!=PORT_V37_SCH_COM:
+                       old_state!=PORT_V37_PCB_STATE_CURRENT)||
+       (!already_queued&&(get32(pcb+SQFL)!=pcb_address||
+                          get32(pcb+SQBL)!=pcb_address)))
         return PORT_V37_SCHED_CORRUPT;
     if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK||
        frame->registers.eip!=seed->entry_pc||
@@ -429,6 +441,7 @@ static uint32_t sched_start_context(struct port_v37_scheduler *s,
     for(unsigned i=0u;i<PORT_V37_PHD_BYTES;i++)phd[i]=candidate_phd[i];
     if(s->ops.native_cr3_by_pix)
         s->ops.native_cr3_by_pix[pix]=native_cr3;
+    if(already_queued)return PORT_V37_SCHED_OK;
     const uint32_t status=port_v37_sched_chse(s,pcb_address,priority_class);
     if(status!=PORT_V37_SCHED_OK){
         if(s->ops.native_cr3_by_pix)
@@ -448,7 +461,14 @@ uint32_t port_v37_sched_start_context(struct port_v37_scheduler *s,
     uint32_t frame_address,const struct port_v37_phd_seed *seed,
     uint8_t priority_class){
     return sched_start_context(s,pcb_address,phd_address,
-        native_phy_pcb_address,frame_address,seed,0u,0,0,priority_class);
+        native_phy_pcb_address,frame_address,seed,0u,0,0,priority_class,0);
+}
+
+uint32_t port_v37_sched_bind_queued_context(struct port_v37_scheduler *s,
+    uint32_t pcb_address,uint32_t phd_address,uint32_t native_phy_pcb_address,
+    uint32_t frame_address,const struct port_v37_phd_seed *seed){
+    return sched_start_context(s,pcb_address,phd_address,
+        native_phy_pcb_address,frame_address,seed,0u,0,0,0u,1);
 }
 
 uint32_t port_v37_sched_start_context_quotas(struct port_v37_scheduler *s,
@@ -459,7 +479,7 @@ uint32_t port_v37_sched_start_context_quotas(struct port_v37_scheduler *s,
     if(!process_quotas||!ws_quotas)return PORT_V37_SCHED_BADPARAM;
     return sched_start_context(s,pcb_address,phd_address,
         native_phy_pcb_address,frame_address,seed,wsl_offset,process_quotas,
-        ws_quotas,priority_class);
+        ws_quotas,priority_class,0);
 }
 
 uint32_t port_v37_sched_set_priority(struct port_v37_scheduler *s,

@@ -495,6 +495,69 @@ int main(void){
        start.cr3_by_pix[8u]!=start.live_cr3||
        port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
         return fail("INIT PHD/native-frame binding and executable CHSE activation");
+    const struct port_v37_pcb_seed queued_seed_pcb={
+        .address=start.pcb_va[3],.pid=0x0001000bu,.priority=20u,
+        .name="SWAPPER",.name_bytes=7u};
+    if(port_v37_pcb_init_genpcb(start.pcbs[3],sizeof start.pcbs[3],
+           &queued_seed_pcb)!=PORT_V37_PCB_OK||
+       port_v37_sched_chse(&start_scheduler,start.pcb_va[3],0u)!=
+           PORT_V37_SCHED_OK)
+        return fail("source INIT queues SWAPPER before context installation");
+    start.frames[3]=(struct port_v37_ia32_restore_frame){
+        .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
+        .registers={.cs=0x08u,.eflags=0x202u,.eip=0x00123500u,
+                    .user_ss=start.pcb_va[3]}};
+    struct port_v37_phd_seed queued_seed=start_phd;
+    queued_seed.entry_pc=0x00123500u;
+    queued_seed.initial_r4=start.pcb_va[3];
+    queued_seed.priority=20u;
+    struct port_v37_phd_seed invalid_queued_seed=queued_seed;
+    invalid_queued_seed.p0_page_table|=1u;
+    if(port_v37_sched_bind_queued_context(&start_scheduler,
+           start.pcb_va[3],start.phd_va[3],
+           start.phd_va[3]+PORT_V37_PHD_PCB,start.frame_va[3],
+           &invalid_queued_seed)!=PORT_V37_SCHED_BADPARAM||
+       get32(start.pcbs[3]+PORT_V37_PCB_PHD)||
+       get32(start.pcbs[3]+PORT_V37_PCB_PHYPCB)||
+       get16(start.pcbs[3]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       count(&start,11u)!=1u||
+       memcmp(start.phds[3],(uint8_t[PORT_V37_PHD_BYTES]){0},
+              PORT_V37_PHD_BYTES)||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("invalid queued PHD leaves source COM queue and PCB unpublished");
+    if(port_v37_sched_bind_queued_context(&start_scheduler,
+           start.pcb_va[3],start.phd_va[3],
+           start.phd_va[3]+PORT_V37_PHD_PCB,start.frame_va[3],
+           &queued_seed)!=PORT_V37_SCHED_OK||
+       get16(start.pcbs[3]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       count(&start,11u)!=1u||
+       get32(start.pcbs[3]+PORT_V37_PCB_PHD)!=start.phd_va[3]||
+       get32(start.phds[3]+PORT_V37_PHD_KSP)!=start.frame_va[3]||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK||
+       port_v37_sched_set_priority(&start_scheduler,start.pcb_va[3],21u)!=
+           PORT_V37_SCHED_OK||count(&start,21u)!=1u||
+       port_v37_sched_resched_current(&start_scheduler,start.pcb_va[0])!=
+           PORT_V37_SCHED_OK||
+       port_v37_sched_select(&start_scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||selected!=start.pcb_va[0]||
+       restore_frame!=start.frame_va[0]||
+       start.cr3_by_pix[11u]!=start.live_cr3||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("bind PHD/context to queued SWAPPER without changing COM queue order");
+    start.wait_queue.state=PORT_V37_SCH_HIB;
+    if(port_v37_sched_wait_current(&start_scheduler,start.wait_queue_va,
+           start.frame_va[0],&selected,&restore_frame)!=PORT_V37_SCHED_OK||
+       selected!=start.pcb_va[3]||restore_frame!=start.frame_va[3]||
+       port_v37_sched_wake_waiter(&start_scheduler,start.wait_queue_va,
+           start.pcb_va[0],0u)!=PORT_V37_SCHED_OK||
+       port_v37_sched_resched_current(&start_scheduler,start.pcb_va[3])!=
+           PORT_V37_SCHED_OK||
+       port_v37_sched_select(&start_scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||selected!=start.pcb_va[0]||
+       restore_frame!=start.frame_va[0]||
+       start.cr3_by_pix[11u]!=start.live_cr3||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("queued native process context returns scheduler selection");
     const struct port_v37_pcb_seed quota_pcb={.address=start.pcb_va[1],
         .pid=0x00010009u,.priority=20u,.name="USER",.name_bytes=4u};
     if(port_v37_pcb_init_genpcb(start.pcbs[1],sizeof start.pcbs[1],
