@@ -2454,3 +2454,14 @@ Extended the QAST regression to exercise the direct-I/O scheduler adapter. A sta
 Verification: `make v37qastcheck` PASS. No source coverage changes or QEMU run; M446's QEMU evidence remains the latest runtime test and still stops at contextless INIT.
 
 M447 test commit: `1295822d27c944f75d0241a272ccdacb22862876`.
+
+
+## M448 — Preserve native IA-32 CR3 across VMS scheduling, 26 November 2026
+
+Added a PIX-indexed port-side CR3 table alongside the source process vector. Context activation records an aligned IA-32 root per source PIX and rolls the entry back if SCH$CHSE fails; source scheduler selection returns its process root, and the live interrupt restore path changes CR3 before IRET. NP allocation accounting now reserves the sidecar through subsequent INIT pool placements. Host coverage verifies PIX mapping and selected-root handoff. A host-only synchronization fallback keeps the sanitizer test from executing privileged x86 instructions; the bare-metal i386 path retains CLI/IF restoration and pending reschedule behavior. This is scheduler address-space plumbing only: VMS P0/P1 translation into IA-32 page tables, INIT/NULL/SWAPPER contexts and activation are still absent. QEMU therefore remains at the existing contextless INIT stop; no login, DCL, DECnet or SET HOST 0 was observed.
+
+Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` completed with all build, host/layout, executable-batch and source-range checks passing (2,192 ranges, 455/4,566 indexed, zero coverage errors; 17,230 mapped, 30,710 partial, 59,546 unresolved, 8,032 missing, 26,778 excluded, 917 hardware-excluded). Targeted `v37schedcheck`, `v37qastcheck`, `v37eventwaitcheck`, and `sysexecentrycheck` passed. `make qemu-sysboot-m217` passed the real IRQ14/Files-11/ACP/scheduler regression and stopped at the expected incomplete INIT boundary. Raw COM1 capture: `logs/serial/qemu-m217-run-local-20261126T143716126706Z.log`, 6,395 bytes, SHA-256 `4382c9e2fd033d0fadcd39651fd1aa3844bbb2fd579ff1d6d1531d7f6661b9de`; QEMU runner exited. Coverage descriptions now record CR3 selection while keeping process page-table construction partial.
+
+M448 implementation commit: `6823f1d`.
+
+Remaining: construct genuine IA-32 mappings and INIT/NULL/SWAPPER PHD contexts in source order; resume INIT; bind public SYS$QIO and ACP completion to IOC/AST/process scheduling; implement image activation, SYSTEM login/DCL, DECnet Phase IV and genuine SET HOST 0 second-session/LOGOUT validation.
