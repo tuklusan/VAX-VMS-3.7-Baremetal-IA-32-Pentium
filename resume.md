@@ -2419,3 +2419,13 @@ Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` PASS; `make
 M443 implementation and QEMU evidence commit: `4df0200fe95a9148a38832e44bd658b49859c061`.
 
 Remaining: source-order construction and scheduling of valid INIT/NULL/SWAPPER PHD and native contexts; public SYS$QIO dispatch and process-aware Files-11 ACP/AST completion; INIT continuation, image activation, SYSTEM login/DCL, DECnet Phase IV, and the genuine two-session SET HOST 0/LOGOUT QEMU sequence.
+
+## M444 - Verify CHSE context-miss accounting and bound the resident PIT probe, 26 November 2026
+
+The live CHSE-to-vector probe now verifies a new scheduler context-miss counter increment in addition to the source reschedule request and IA-32 interrupt. Increased the INIT clock probe's finite spin allowance from 30M to 120M iterations so a slow QEMU TCG run can observe the required three PIT ticks without waiting indefinitely. This does not alter scheduler behavior or claim that missing contexts are resolved.
+
+Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` PASS; source coverage validation PASS (2,190 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,710 partial, 59,546 unresolved, 8,032 missing, 26,778 excluded, 917 hardware-excluded). QEMU attempt `local-20261126T140911921309Z` failed the 30M PIT clock probe after reaching the resident SYS.EXE clock; its actual 5,183-byte log is retained with SHA-256 `558862f9883cbdb71e03f703043f3223270b5af3d136ccbc1dbdd0f0e819e002`. A rerun before changing the spin limit passed, and the post-change `make qemu-sysboot-m217` passed. Latest capture `logs/serial/qemu-m217-run-local-20261126T141114014205Z.log`, 6,395 bytes, SHA-256 `4382c9e2fd033d0fadcd39651fd1aa3844bbb2fd579ff1d6d1531d7f6661b9de`; the guest reached the existing incomplete INIT stop, and QEMU exited. No QEMU process remains. No login, DCL, DECnet Phase IV or SET HOST 0 observed.
+
+M444 implementation and QEMU evidence commit: `cb79991e389f4f8cb56417a7dce6d8e17d1b730d`.
+
+Remaining: provide valid source-order INIT/NULL/SWAPPER PHDs and IA-32 contexts; implement the absent SWAPPER entry and remaining INIT dependencies; connect real public SYS$QIO, ACP, AST dispatch and process activation; then verify the requested SYSTEM/DCL and DECnet two-session SET HOST 0/LOGOUT sequence end-to-end.
