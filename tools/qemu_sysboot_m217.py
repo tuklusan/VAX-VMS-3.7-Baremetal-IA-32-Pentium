@@ -92,7 +92,7 @@ def main():
         b'INIT: SYS.EXE NLDRIVER completed two IRPs via linked DDT/FDT and EXE$FINISHIOC (IPL4 requested).',
         b'INIT: SYS.EXE IOCIOPOST serviced two NLA IRPs through IA-32 CPL0 software INT 0x90 (no process AST).',
         b'INIT: loaded SYS.EXE resident entry executed and verified.',
-        b'INIT: SWAPPER EXE$SWAPINIT built SYS/GROUP RSHTs and linked SYS$DISK/SYS$SYSDEVICE; process startup pending.',
+        b'INIT: SWAPPER EXE$SWAPINIT built/searched SYS/GROUP RSHTs; SYS$DISK and SYS$SYSDEVICE resolve, process startup pending.',
         b'INIT: linked SYSLOA386 read real IDT, CR0, CR3, TSS, PIT and Files-11 boot home.',
         b'INIT: actual IRQ0 advanced resident SYS.EXE VMS clock.',
         b'INIT: SYS.EXE published native DQA0 DDT in DDB/UCB; IOC$SEARCHDEV found bound DQA0 (partial driver).',

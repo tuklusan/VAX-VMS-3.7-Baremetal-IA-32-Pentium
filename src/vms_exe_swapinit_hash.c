@@ -1,6 +1,6 @@
 #include "vms_exe_swapinit_hash.h"
-#include "vms_v37_dyn_tags.h"
 #include "vms_log_system.h"
+#include "vms_v37_dyn_tags.h"
 
 static void put16(uint8_t *p,uint16_t x){
     p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
@@ -91,6 +91,13 @@ static struct port_exe_swapinit_name_record *find_name(
             return &table->linked_names[i];
     return 0;
 }
+static const struct port_exe_swapinit_name_record *find_name_const(
+    const struct port_exe_swapinit_hash_table *table,uint32_t address){
+    for(unsigned i=0u;i<table->linked_count;i++)
+        if(table->linked_names[i].address==address)
+            return &table->linked_names[i];
+    return 0;
+}
 
 uint32_t port_exe_swapinit_insert_system_record(
     struct port_exe_swapinit_hash_set *set,uint8_t *record,uint32_t address){
@@ -153,6 +160,46 @@ uint32_t port_exe_swapinit_insert_system_record(
     table->linked_names[table->linked_count++]=
         (struct port_exe_swapinit_name_record){record,address};
     return PORT_EXE_SWAPINIT_HASH_OK;
+}
+
+uint32_t port_exe_swapinit_search_system(
+    const struct port_exe_swapinit_hash_set *set,const uint8_t *name,
+    size_t name_bytes,uint32_t *record_address){
+    if(!set||!name||!name_bytes||name_bytes>PORT_LOG_MAX_NAME||
+       !record_address)return PORT_LOG_BAD;
+    const struct port_exe_swapinit_hash_table *const table=&set->table[0];
+    if(!table->record||!table->buckets||!table->record_address||
+       table->entry_log2>PORT_LOG_MAX_BITS||
+       table->entry_count!=(UINT32_C(1)<<table->entry_log2)||
+       table->buckets!=table->record+PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES||
+       table->linked_count>PORT_EXE_SWAPINIT_INITIAL_NAMES)
+        return PORT_LOG_BAD;
+    const uint32_t bucket=port_log_hash(name,name_bytes,table->entry_log2);
+    if(bucket>=table->entry_count)return PORT_LOG_BAD;
+    uint32_t address=get32(table->buckets+bucket*4u);
+    uint32_t previous=table->record_address+
+        PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES+bucket*4u;
+    for(unsigned walked=0u;address;walked++){
+        if(walked>=table->linked_count)return PORT_LOG_CYCLE;
+        const struct port_exe_swapinit_name_record *const node=
+            find_name_const(table,address);
+        if(!node||!node->bytes||get32(node->bytes+4u)!=previous)
+            return PORT_LOG_CYCLE;
+        const uint8_t record_name_bytes=node->bytes[20u];
+        if(!record_name_bytes||record_name_bytes>PORT_LOG_MAX_NAME||
+           port_log_record_valid(node->bytes,PORT_LOG_REC_LEN,
+               (const char *)node->bytes+21u,record_name_bytes)!=PORT_LOG_OK||
+           port_log_hash(node->bytes+21u,record_name_bytes,
+                         table->entry_log2)!=bucket)
+            return PORT_LOG_CYCLE;
+        const uint32_t order=port_log_name_compare(node->bytes+21u,
+            record_name_bytes,name,name_bytes);
+        if(order==1u){*record_address=address;return PORT_LOG_OK;}
+        if(order==2u)return PORT_LOG_NOTRAN;
+        previous=address;
+        address=get32(node->bytes);
+    }
+    return PORT_LOG_NOTRAN;
 }
 
 uint32_t port_exe_swapinit_hash_release(struct port_exe_paged_pool *pool,

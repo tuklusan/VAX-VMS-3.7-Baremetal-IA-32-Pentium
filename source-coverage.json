@@ -10730,7 +10730,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3117,
+          "pc_line": 3118,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10787,7 +10787,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3117,
+          "pc_line": 3118,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -23431,7 +23431,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_insert_system_record",
-          "pc_line": 95,
+          "pc_line": 102,
           "function": "SWAPINIT links only the original SYS$DISK and SYS$SYSDEVICE records into its SYSTEM table with source hash buckets and sorted back-links; locking, supersession and runtime insertion remain unimplemented"
         },
         {
@@ -23448,10 +23448,10 @@
             276
           ],
           "status": "partial",
-          "pc_file": "src/vms_log_system_lookup.c",
-          "pc_symbol": "port_log_system_lookup",
-          "pc_line": 4,
-          "function": "Source LOG$SEARCHLOG bucket search limited to two resident SYSTEM boot names; no PCB access mode"
+          "pc_file": "src/vms_exe_swapinit_hash.c",
+          "pc_symbol": "port_exe_swapinit_search_system",
+          "pc_line": 165,
+          "function": "Source LOG$SEARCHLOG hash-chain search over the live SWAPPER SYSTEM RSHT for the two boot names; no PCB access mode"
         },
         {
           "original_lines": [
@@ -24014,8 +24014,11 @@
             273,
             275
           ],
-          "status": "unresolved",
-          "reason": "Prepare original SYSTEM logical-name insertion arguments"
+          "status": "partial",
+          "pc_file": "src/vms_sys_executive_entry.c",
+          "pc_symbol": "port_exe_swapinit_log_tables",
+          "pc_line": 63,
+          "function": "Prepare the two original SYSTEM logical-name records from initialized SYSLOG templates during boot; SWAPPER context remains absent; native bootstrap wrapper copies the original records into PAGEDYN"
         },
         {
           "original_lines": [
@@ -24025,7 +24028,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_insert_system_record",
-          "pc_line": 95,
+          "pc_line": 102,
           "function": "Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT during boot; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent; SYS.EXE wrapper invokes and validates records from bootstrap context, but SWAPPER process context is absent"
         },
         {

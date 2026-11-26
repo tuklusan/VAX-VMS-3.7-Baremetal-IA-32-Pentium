@@ -2699,7 +2699,7 @@ for first,last,path,sym,why in [
  (1,128,None,None,'Original module prologue, LOG$DELETE, supersession and deallocation unresolved'),
  (129,162,'src/vms_exe_swapinit_hash.c','port_exe_swapinit_insert_system_record','SWAPINIT links only the original SYS$DISK and SYS$SYSDEVICE records into its SYSTEM table with source hash buckets and sorted back-links; locking, supersession and runtime insertion remain unimplemented'),
  (163,243,None,None,'Original LOG$LOCKR/LOCKW/UNLOCK mutex and GROUP/PROCESS table synchronization unimplemented'),
- (244,276,'src/vms_log_system_lookup.c','port_log_system_lookup','Source LOG$SEARCHLOG bucket search limited to two resident SYSTEM boot names; no PCB access mode'),
+ (244,276,'src/vms_exe_swapinit_hash.c','port_exe_swapinit_search_system','Source LOG$SEARCHLOG hash-chain search over the live SWAPPER SYSTEM RSHT for the two boot names; no PCB access mode'),
  (277,295,None,None,'Remaining SEARCHLOG status and hash calling convention require later full service binding'),
  (296,320,'src/vms_log_hash.c','port_log_hash','Original little-endian XOR, ROTL and MULL hash high bits with caller-selected short table exponent'),
  (321,372,None,None,'Original descriptor probing, access-mode and caller output protocol not fully implemented'),
@@ -2792,7 +2792,7 @@ for first,last,status,reason in [
     (1,248,'unresolved','Source module documentation and paged pool base/size setup; pool backing is initialized earlier by INIT but this SWAPINIT step is not called'),
     (249,257,'partial','At boot, round loaded INIT SYSTEM, GROUP and PROCESS hash entry counts up to powers of two and retain each exponent; invocation remains outside a SWAPPER process'),
     (258,272,'partial','At boot, allocate zeroed SYSTEM and GROUP hash table records from PAGEDYN and validate their DYN headers; PROCESS geometry is retained without a process context'),
- (273,275,'unresolved','Prepare original SYSTEM logical-name insertion arguments'),
+ (273,275,'partial','Prepare the two original SYSTEM logical-name records from initialized SYSLOG templates during boot; SWAPPER context remains absent'),
  (276,283,'partial','Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT during boot; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent'),
  (284,316,'unresolved','Create TT0 with $CREPRC; source process creation remains unported'),
     (317,323,'partial','Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved'),
@@ -2800,6 +2800,13 @@ for first,last,status,reason in [
     if status=='unresolved':
         swapinit_sections.append({'original_lines':[first,last],
             'status':'unresolved','reason':reason})
+    elif first==273:
+        wrapper_line=line_for_symbol('src/vms_sys_executive_entry.c',
+                                     'port_exe_swapinit_log_tables')
+        swapinit_sections.append({'original_lines':[first,last],
+            'status':'partial','pc_file':'src/vms_sys_executive_entry.c',
+            'pc_symbol':'port_exe_swapinit_log_tables','pc_line':wrapper_line,
+            'function':reason+'; native bootstrap wrapper copies the original records into PAGEDYN'})
     elif first==276:
         insert_line=line_for_symbol('src/vms_exe_swapinit_hash.c',
                                     'port_exe_swapinit_insert_system_record')

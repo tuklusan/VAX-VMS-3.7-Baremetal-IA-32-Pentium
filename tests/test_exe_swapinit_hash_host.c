@@ -1,5 +1,6 @@
 #include "vms_exe_swapinit_hash.h"
 #include "vms_ini_log_templates.h"
+#include "vms_log_system.h"
 #include "vms_v37_dyn_tags.h"
 #include <assert.h>
 #include <stdint.h>
@@ -9,6 +10,9 @@ static uint32_t get16(const uint8_t *p){return (uint32_t)p[0]|((uint32_t)p[1]<<8
 static uint32_t get32(const uint8_t *p){
     return (uint32_t)p[0]|((uint32_t)p[1]<<8)|
            ((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
+}
+static void put32(uint8_t *p,uint32_t v){
+    for(unsigned i=0u;i<4u;i++)p[i]=(uint8_t)(v>>(8u*i));
 }
 static uint32_t held_ipl;
 static uint32_t raise_sync(void *unused){(void)unused;return held_ipl++;}
@@ -81,6 +85,27 @@ int main(void){
            get32(disk+4u)==bucket_address&&get32(sysdev)==0u&&
            get32(sysdev+4u)==source_names[1].address&&
            tables.table[0].linked_count==2u);
+    uint32_t found=0u;
+    static const uint8_t sysdisk_name[8]={
+        'S','Y','S','$','D','I','S','K'};
+    static const uint8_t sysdevice_name[13]={
+        'S','Y','S','$','S','Y','S','D','E','V','I','C','E'};
+    static const uint8_t missing_name[12]={
+        'S','Y','S','$','N','O','T','F','O','U','N','D'};
+    assert(port_exe_swapinit_search_system(&tables,sysdisk_name,
+        sizeof sysdisk_name,&found)==PORT_LOG_OK&&
+        found==source_names[1].address);
+    assert(port_exe_swapinit_search_system(&tables,sysdevice_name,
+        sizeof sysdevice_name,&found)==PORT_LOG_OK&&
+        found==source_names[0].address);
+    found=0xdeadbeefu;
+    assert(port_exe_swapinit_search_system(&tables,missing_name,
+        sizeof missing_name,&found)==PORT_LOG_NOTRAN&&found==0xdeadbeefu);
+    const uint32_t first_bucket=get32(tables.table[0].buckets);
+    put32(tables.table[0].buckets,0x00ffffffu);
+    assert(port_exe_swapinit_search_system(&tables,sysdisk_name,
+        sizeof sysdisk_name,&found)==PORT_LOG_CYCLE&&found==0xdeadbeefu);
+    put32(tables.table[0].buckets,first_bucket);
     assert(port_exe_swapinit_insert_system_record(&tables,disk,
         source_names[1].address)==PORT_EXE_SWAPINIT_HASH_DUP);
     assert(port_exe_swapinit_hash_release(&pool,&tables)==
@@ -113,6 +138,6 @@ int main(void){
     const uint32_t invalid[3]={1u,0u,2u};
     assert(port_exe_swapinit_hash_init(&pool,invalid,&tables)==
            PORT_EXE_SWAPINIT_HASH_BAD);
-    puts("SWAPPER EXE$SWAPINIT RSHT geometry, zeroed buckets, DYN headers, rollback/coalescing PASS");
+    puts("SWAPPER EXE$SWAPINIT RSHT build, bounded LOG$SEARCHLOG and rollback PASS");
     return 0;
 }

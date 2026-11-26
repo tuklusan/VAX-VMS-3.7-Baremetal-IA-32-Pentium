@@ -122,9 +122,13 @@ struct port_sys_exec_result {
     const struct port_ini_mpw *modified_page_writer_map;
     const struct port_ini_interrupt_stack *interrupt_stack;
     const struct port_ini_pflvec *pagefile_vector;
-    /* SWAPPER.MAR hash-table stage, callable after INIT activates SWAPPER. */
+    /* Partial SWAPINIT table construction/search callbacks; boot currently
+     * calls these outside a scheduled SWAPPER process. */
     uint32_t (*swapinit_log_tables)(const uint32_t [3],
         const struct port_exe_swapinit_hash_set **);
+    uint32_t (*swapinit_search_system)(
+        const struct port_exe_swapinit_hash_set *,const uint8_t *,size_t,
+        uint32_t *);
     /* Source CHSE transition under the resident IPL_SYNCH adapter. */
     uint32_t (*vms_sched_chse)(struct port_v37_scheduler *,uint32_t,uint8_t);
     const struct port_ini_syswcb *system_wcb;

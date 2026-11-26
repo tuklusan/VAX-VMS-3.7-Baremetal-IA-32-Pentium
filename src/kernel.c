@@ -3,6 +3,7 @@
 #include "vms_ini_pc_bus.h"
 #include "vms_sys_executive_entry.h"
 #include "vms_exe_paged_pool.h"
+#include "vms_log_system.h"
 #include "vms_v37_dyn_tags.h"
 #include "vms_sysboot_map.h"
 #include "vms_sysloa386.h"
@@ -4586,6 +4587,9 @@ void kmain(void) {
        !sys_result.swapinit_log_tables ||
        (uintptr_t)sys_result.swapinit_log_tables<PORT_SYS_ELF_START ||
        (uintptr_t)sys_result.swapinit_log_tables>=PORT_SYS_ELF_LIMIT ||
+       !sys_result.swapinit_search_system ||
+       (uintptr_t)sys_result.swapinit_search_system<PORT_SYS_ELF_START ||
+       (uintptr_t)sys_result.swapinit_search_system>=PORT_SYS_ELF_LIMIT ||
        (sys_result.resident_clock->sequence&1u)){
         bootstrap_message("INIT: SYS.EXE resident initialization failed.");
         bootstrap_halt();
@@ -4651,7 +4655,27 @@ void kmain(void) {
             bootstrap_halt();
         }
     }
-    bootstrap_message("INIT: SWAPPER EXE$SWAPINIT built SYS/GROUP RSHTs and linked SYS$DISK/SYS$SYSDEVICE; process startup pending.");
+    static const uint8_t sysdisk_logical[8]={
+        'S','Y','S','$','D','I','S','K'};
+    static const uint8_t sysdevice_logical[13]={
+        'S','Y','S','$','S','Y','S','D','E','V','I','C','E'};
+    static const uint8_t absent_logical[12]={
+        'S','Y','S','$','N','O','T','F','O','U','N','D'};
+    uint32_t sysdisk_record=0u,sysdevice_record=0u,absent_record=UINT32_C(0xa55aa55a);
+    if(sys_result.swapinit_search_system(swapinit_hashes,sysdisk_logical,
+           sizeof sysdisk_logical,&sysdisk_record)!=PORT_LOG_OK||
+       sys_result.swapinit_search_system(swapinit_hashes,sysdevice_logical,
+           sizeof sysdevice_logical,&sysdevice_record)!=PORT_LOG_OK||
+       sysdisk_record!=swapinit_hashes->table[0].linked_names[0].address||
+       sysdevice_record!=swapinit_hashes->table[0].linked_names[1].address||
+       sysdisk_record==sysdevice_record||
+       sys_result.swapinit_search_system(swapinit_hashes,absent_logical,
+           sizeof absent_logical,&absent_record)!=PORT_LOG_NOTRAN||
+       absent_record!=UINT32_C(0xa55aa55a)){
+        bootstrap_message("INIT: SWAPPER LOG$SEARCHLOG hash-chain check failed.");
+        bootstrap_halt();
+    }
+    bootstrap_message("INIT: SWAPPER EXE$SWAPINIT built/searched SYS/GROUP RSHTs; SYS$DISK and SYS$SYSDEVICE resolve, process startup pending.");
     bootstrap_message("INIT: linked SYSLOA386 read real IDT, CR0, CR3, TSS, PIT and Files-11 boot home.");
     /* The original resident SYS.EXE owns system time after INIT, not the
      * earlier boot clock. Verify actual IRQ0 interrupts change resident bytes. */

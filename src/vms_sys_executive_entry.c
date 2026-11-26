@@ -2820,6 +2820,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
     p->result->system_time_high=executive_clock.high;
     p->result->resident_clock=&executive_clock;
     p->result->swapinit_log_tables=port_exe_swapinit_log_tables;
+    p->result->swapinit_search_system=port_exe_swapinit_search_system;
     p->result->pit_tick=executive_pit_clock_tick;
     p->result->sysloa_linked=1u;
     p->result->sysloa_idtr_base=cpu_info.idt_base;

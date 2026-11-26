@@ -2,6 +2,7 @@
 #define VMS_EXE_SWAPINIT_HASH_H
 #include <stdint.h>
 #include "vms_exe_paged_pool.h"
+#include "vms_log_system.h"
 
 enum {
     PORT_EXE_SWAPINIT_HASH_OK=1u,
@@ -46,4 +47,10 @@ uint32_t port_exe_swapinit_hash_release(struct port_exe_paged_pool *,
  * table locks, access modes and supersession remain outside this entry. */
 uint32_t port_exe_swapinit_insert_system_record(
     struct port_exe_swapinit_hash_set *,uint8_t *,uint32_t);
+/* Bounded LOG$SEARCHLOG walk over the live SWAPPER SYSTEM RSHT. This table
+ * contains the two initial SYS$DISK/SYS$SYSDEVICE records only; returns the
+ * PORT_LOG_* status family. */
+uint32_t port_exe_swapinit_search_system(
+    const struct port_exe_swapinit_hash_set *,const uint8_t *,size_t,
+    uint32_t *record_address);
 #endif
