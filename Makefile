@@ -656,8 +656,8 @@ execanevtcheck: | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_canevt.c src/vms_exe_schevt.c src/vms_exe_event.c tests/test_exe_canevt_host.c -o build/exe_canevt_hosttest
 	./build/exe_canevt_hosttest
 
-# VMS 3.7 executive services from seven complete original source modules.
-EXE_M83_SERVICES=src/vms_exe_setstk.c src/vms_exe_setprv.c src/vms_exe_setpri.c src/vms_exe_setpra.c src/vms_exe_adjstk.c src/vms_exe_derlmb.c src/vms_exe_getpti.c
+# VMS 3.7 executive service modules included in the M83 host batch build.
+EXE_M83_SERVICES=src/vms_exe_setstk.c src/vms_exe_setprv.c src/vms_exe_creprc.c src/vms_exe_setpri.c src/vms_exe_setpra.c src/vms_exe_adjstk.c src/vms_exe_derlmb.c src/vms_exe_getpti.c
 .PHONY: exeportbatchcheck
 exeportbatchcheck: | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $(EXE_M83_SERVICES) tests/test_exe_portbatch_host.c -o build/exe_portbatch_hosttest
