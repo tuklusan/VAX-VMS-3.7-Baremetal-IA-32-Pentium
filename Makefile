@@ -1136,6 +1136,8 @@ build/sysloa386.exe: build/vms_sysloa386_vectors.o build/vms_sysloa386_entry.o b
 	$(LD) -m elf_i386 -T sysloa386_native.ld -o $@ build/vms_sysloa386_vectors.o build/vms_sysloa386_entry.o build/vms_sysloa386_cpu.o build/vms_sysloa386_boot.o
 build/install_sysloa386_image: tools/install_sysloa386_image.c src/vms_boot_files11.c src/vms_bootio.c src/vms_f11_home.c | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $^ -o $@
+build/install_params_fixture: tools/install_params_fixture.c src/vms_boot_files11.c src/vms_bootio.c src/vms_f11_home.c src/vms_sysboot_usefile.c src/vms_sysboot_read.c src/vms_sysboot_map.c src/vms_sysboot_paramfile.c src/vms_ini_sysparams.c | build
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $^ -o $@
 .PHONY: sysloa386check
 sysloa386check: | build
 	$(CC) -std=c11 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Werror -Isrc src/vms_sysloa386_cpu.c src/vms_sysloa386_boot.c tests/test_sysloa386_host.c -o build/sysloa386check
@@ -1622,6 +1624,10 @@ qemu-sysboot-m216: vms37lab.ima portdisk.img
 
 qemu-sysboot-m217: vms37lab.ima portdisk.img
 	python3 tools/qemu_sysboot_m217.py
+
+.PHONY: qemu-sysboot-params-check
+qemu-sysboot-params-check: vms37lab.ima portdisk.img build/install_params_fixture
+	python3 tools/qemu_sysboot_m217.py --params-fixture
 
 # Native INIT consumes the original SYSPARAM.MAR defaults pending SYSBOOT PARAMS.DAT overrides.
 .PHONY: inisysparamscheck

@@ -16,6 +16,10 @@ from checkpoint_serial_logs import capture
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
+    params_fixture=(len(sys.argv)==2 and sys.argv[1]=='--params-fixture')
+    if len(sys.argv)>1 and not params_fixture:
+        print('usage: qemu_sysboot_m217.py [--params-fixture]',file=sys.stderr)
+        return 2
     scratch_disk=ROOT/'build/portdisk-m217.img'
     shutil.copyfile(ROOT/'portdisk.img',scratch_disk)
     marker=bytearray()
@@ -25,6 +29,12 @@ def main():
     with scratch_disk.open('r+b') as image:
         image.seek(8063*512)
         image.write(marker)
+    if params_fixture:
+        installer=ROOT/'build/install_params_fixture'
+        result=subprocess.run([str(installer),str(scratch_disk)],check=False)
+        if result.returncode:
+            scratch_disk.unlink(missing_ok=True)
+            return result.returncode
     machine=shutil.which('qemu-system-i386') or shutil.which('qemu-system-x86_64')
     if not machine:
         scratch_disk.unlink(missing_ok=True)
@@ -41,8 +51,12 @@ def main():
         b'IA-32 VMS CPL1-to-CPL2 frame dispatch and interrupt return passed.',
         b'SYSBOOT: Files-11 SYS.EXE normalized 32-bit retrieval map stored.',
         b'SYSBOOT: Files-11 SYS.EXE native image loaded.',
-        b'SYSBOOT: PARAMS.DAT absent; source SYSPARAM defaults retained.',
+        (b'SYSBOOT: Files-11 PARAMS.DAT applied before INIT allocation.'
+         if params_fixture else
+         b'SYSBOOT: PARAMS.DAT absent; source SYSPARAM defaults retained.'),
         b'INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.',
+        *([b'INIT: SYSBOOT PARAMS.DAT IRPCOUNT override reached resident IRP queue.']
+          if params_fixture else []),
         b'SYSBOOT: Files-11 SYSLOA386.EXE native image loaded.',
         b'INIT: SYS.EXE linked live SYSLOA386 processor vectors.',
         b'SYSBOOT: Files-11 INILOA.EXE native image loaded.',
@@ -112,6 +126,7 @@ def main():
     failures=[
         b'*** x86 fault:',
         b'SYSBOOT: SYS.EXE retrieval map invalid.',
+        b'SYSBOOT: PARAMS.DAT read or decode failed.',
         b'-F-Unable to locate SYS.EXE',
         b'-F-Unable to locate usable SYSLOA386.EXE',
         b'-F-Unable to locate INILOA.EXE',

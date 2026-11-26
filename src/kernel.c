@@ -3307,16 +3307,16 @@ void kmain(void) {
        packet_result.signature!=PORT_SYS_EXEC_PACKET_RESULT_TAG ||
        !packet_result.irp_queue || !packet_result.lrp_queue ||
        !packet_result.srp_queue ||
-       packet_result.irp_count!=PORT_VMS37_DEFAULT_IRPCOUNT ||
-       packet_result.lrp_count!=PORT_VMS37_DEFAULT_LRPCOUNT ||
-       packet_result.srp_count!=PORT_VMS37_DEFAULT_SRPCOUNT ||
+       packet_result.irp_count!=init_params.irp_count ||
+       packet_result.lrp_count!=init_params.lrp_count ||
+       packet_result.srp_count!=init_params.srp_count ||
        packet_result.irp_queue->next==0u ||
        packet_result.lrp_queue->next==0u ||
        packet_result.srp_queue->next==0u ||
        packet_result.irp_queue->packet_bytes!=PORT_V37_IRP_POOL_STRIDE ||
        packet_result.lrp_queue->packet_bytes!=
-           PORT_VMS37_DEFAULT_LRPSIZE+64u ||
-       packet_result.srp_queue->packet_bytes!=PORT_VMS37_DEFAULT_SRPSIZE ||
+           init_params.lrp_size+64u ||
+       packet_result.srp_queue->packet_bytes!=init_params.srp_size ||
        packet_result.lrp_queue->minimum_bytes!=512u ||
        packet_result.npaged_pool_bytes!=init_params.nonpaged_dynamic_bytes ||
        packet_result.npaged_pool_base<PORT_SYS_ELF_START ||
@@ -3331,6 +3331,9 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: loaded SYS.EXE initialized real IRP/LRP/SRP lookaside headers.");
+    if(param_status==PORT_SYSBOOT_USEFILE_OK&&
+       init_params.irp_count!=PORT_VMS37_DEFAULT_IRPCOUNT)
+        bootstrap_message("INIT: SYSBOOT PARAMS.DAT IRPCOUNT override reached resident IRP queue.");
     void *paged_probe=0;
     uint32_t paged_probe_bytes=0u;
     if(!packet_result.alopaged||!packet_result.deapaged||
