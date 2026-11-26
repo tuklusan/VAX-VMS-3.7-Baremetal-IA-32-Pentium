@@ -2580,3 +2580,13 @@ Verification: `wsl make sysinitnamescheck logsystemcheck` PASS; full `wsl make -
 M460 implementation/evidence commit: `21070d00cd29af963767d16f2f5064c2a1e5a58a`.
 
 Remaining: invoke this sequence from real source-ordered SYSINIT using the discovered TOPSYS directory, implement SYSINIT continuation and process activation, live public SYS$QIO/ACP/AST completion, SYSTEM login/DCL and DECnet Phase IV/SET HOST 0 end-to-end. No acceptance condition is complete.
+
+## M461 — Schedule the SYSINIT system-name boundary, 26 November 2026
+
+Bound a third native process context to the resident SYS.EXE scheduler using source-layout SYSINIT PCB/PHD/CR3/stack records. After SWAPPER resolves the boot logical names and waits, SYSINIT executes the existing name-creation adapter against the resident LOGNAMSUB SYSTEM table, then verifies SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE translations before entering the source HIB wait. SYSINIT uses an empty TOPSYS prefix for this recovered test volume, whose directories are at the root; dynamic SYS$SYSDEVICE TOPSYS discovery, SYSINIT continuation, public $CRELNM, allocation/locking, and process image activation remain unimplemented. Variable-sized source DYN$C_LOG records are now accepted within bounded record limits. A three-context page-directory limit replaces the former two-context ceiling.
+
+Two real QEMU attempts captured interleaved SWAPPER/SYSINIT lines, and one captured an IA-32 fault after the line was truncated. The shared bootstrap console and output buffer were therefore made atomic against IRQ0 preemption by preserving IF while emitting a complete line. After this fix, `wsl make -j2 all test exeportbatchcheck sourcerangecheck` PASS; `wsl make logsystemcheck` PASS with ASan/UBSan; `wsl make qemu-sysboot-m217` PASS. Serial validator PASS (413 raw logs). QEMU real output includes SYSINIT creation/verification and subsequent SWAPPER block with NULL selected. The passing 6,580-byte capture is `logs/serial/qemu-m217-run-local-20261126T162556158019Z.log`, SHA-256 `8b22d881a73529c4be05be8d1d896a311c9288ddbc6771a154029d797fe31a75`. QEMU exited; no runner remains. Source coverage validator: 2,200 ranges; 455/4,566 original files indexed, zero errors; 17,158 mapped, 30,836 partial, 59,465 unresolved, 8,032 missing, 26,805 excluded, 917 hardware-excluded.
+
+M461 implementation commit: `232850bfd8b130a650958dd704122b7c86529453` (pushed to `main`).
+
+Remaining: general volume-derived SYSINIT names and source-order continuation; real SYS$QIO dispatch through DQA0 DDT/ACP with process AST completion; scheduler-backed process creation/image activation; genuine SYSTEM login/DCL; DECnet Phase IV and end-to-end SET HOST 0/second-session/LOGOUT. No acceptance condition is complete.
