@@ -2365,3 +2365,11 @@ Added explicit uild/kernel.o dependencies on the source scheduler, IA-32 contex
 Verification: make -j2 all test exeportbatchcheck PASS; make sourcerangecheck PASS (2,184 ranges, zero errors). No QEMU run; this is a dependency-only build correction and M435's clean QEMU run remains the latest runtime evidence.
 
 M437 implementation commit: `bde77cb1a672822147a909505bd2b7674585318d`.
+## M438 - Wake resident AST waiters through source RSE, 26 November 2026
+
+Added `port_v37_sched_queue_ast_rse`: within one IPL_SYNCH critical section it commits a validated source ACB/IRP through SCH$QAST, then applies the AST state mask through SCH$RSE and removes an eligible resident waiter from its supplied source WQH via CHSE. Nonwaiting states keep the queued AST and complete normally. If wake routing fails after QAST, the ACB remains committed, as documented. Host coverage verifies an MWAIT target becomes executable and its WQH count returns to zero. State-to-WQH lookup, live IOC/PID binding, actual AST dispatch and native process contexts remain unimplemented.
+
+Verification: `make v37qastcheck v37schedcheck sourcerangecheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; full source coverage check PASS (2,184 ranges; 454/4,566 original files indexed; zero errors; 17,230 mapped, 30,567 partial, 59,460 unresolved, 8,032 missing, 26,734 excluded and 917 hardware-excluded). `make qemu-sysboot-m217` PASS through the real DQA0 DDT/IRQ14, Files-11 ACP and scheduler interrupt probes, then stops at the unchanged INIT boundary because NULL/SWAPPER PHD contexts are absent. Actual capture `logs/serial/qemu-m217-run-local-20261126T133532232556Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; runner exited. No login, DCL, DECnet Phase IV or SET HOST 0 observed.
+
+Remaining: bind QAST/RSE to actual IOC process completions and derive wait WQHs from live process state; create/schedule INIT, NULL and SWAPPER contexts; finish public SYS$QIO/ACP, image activation, SYSTEM login/DCL and the genuine DECnet SET HOST 0 second-session/LOGOUT sequence.
+M438 implementation/evidence commit: `d89c806e75688f8584bbdf2dbaa1806148e0b201`. Serial SHA-256 verified: `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`.
