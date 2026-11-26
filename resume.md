@@ -2287,3 +2287,13 @@ Verification: full `make -j2 all test exeportbatchcheck` PASS; `make sourcerange
 M429 implementation and QEMU evidence commit: `0b744ba7cbf289edd36d733c487920a7f3ab3d41`.
 
 Remaining: dynamically allocate and initialize PHD plus native saved-frame/stack records, bind them to source PCBs, and integrate a runnable INIT/SYSTEM context before NULL/SWAPPER scheduling; continue public SYS$QIO, Files-11 ACP, process AST, image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0 second-session/LOGOUT.
+
+## M430 - Apply PROCSTRT working-set quota rules, 26 November 2026
+
+Ported PROCSTRT.MAR SETQUOTAS lines 261-287 as a native PHD transformation: compute available pages after the source free-page reserve, cap working-set extent by both available pages and WSMAX, enforce extent >= quota >= default, apply the source WSLIST bias, and store WSQUOTA/WSAUTH, WSEXTENT/WSAUTHEXT and DFWSCNT. Invalid PHD size, zero WSLIST or impossible physical/free-page counts fail without mutation. The helper is not yet connected to public `$CREPRC` or image activation; creator quota enforcement and other JIB/PHD setup remain incomplete. Added the previously unindexed PROCSTRT source file to coverage, with unrelated process-start paths explicitly unresolved.
+
+Verification: `make v37phdcheck sourcerangecheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make qemu-sysboot-m217` PASS through DQA0/IRQ14/Files-11, then reaches the unchanged incomplete INIT boundary. Coverage validation: 2,181 ranges; 454/4,566 original files indexed; zero errors; 17,230 mapped, 30,560 partial, 59,467 unresolved, 8,032 missing, 26,734 excluded and 917 hardware-excluded. Host tests cover source offset/bias math, available-page/WSMAX limits, default<=quota<=extent, and atomic rejection. Capture `logs/serial/qemu-m217-run-local-20261126T015955558699Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; runner exited. No login, DCL, DECnet or SET HOST 0 observed.
+
+M430 implementation and QEMU evidence commit: `382553063066c1d2d495bcc17b4943ae930ae635`.
+
+Remaining: integrate PROCSTRT quota normalization into process PHD window setup, port its remaining identity/JIB/logical-name/channel/page-table/image startup, and establish a runnable INIT/SYSTEM context before scheduling NULL/SWAPPER; public SYS$QIO/ACP/process AST and final interactive DECnet verification remain outstanding.
