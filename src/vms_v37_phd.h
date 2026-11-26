@@ -13,6 +13,8 @@ enum {
     PORT_V37_PHD_WSLIST=8u,PORT_V37_PHD_WSAUTH=10u,
     PORT_V37_PHD_WSAUTHEXT=20u,PORT_V37_PHD_WSEXTENT=22u,
     PORT_V37_PHD_WSQUOTA=24u,PORT_V37_PHD_DFWSCNT=26u,
+    PORT_V37_PHD_CPUTIM=56u,PORT_V37_PHD_ASTLM=64u,
+    PORT_V37_PHD_CPULIM=88u,
     PORT_V37_PHD_ASTLVL_DISABLED=4u,
     PORT_V37_PHD_PRIVMSK=0u,
     PORT_V37_PHD_PRIVMSK_BYTES=8u,
@@ -51,6 +53,11 @@ struct port_v37_phd_ws_quotas {
     uint32_t physical_pages,free_page_limit,max_working_set;
     uint32_t extent,quota,default_size;
 };
+struct port_v37_phd_process_quotas {
+    uint32_t cpu_limit,ast_limit;
+    uint64_t privileges;
+    uint8_t base_priority;
+};
 enum {PORT_V37_PHD_QUOTA_OK=1u,PORT_V37_PHD_QUOTA_BADPARAM=2u};
 
 /* Encode only the fields assigned by PDAT.MAR GENPHD.  Remaining fixed PHD
@@ -61,4 +68,7 @@ uint32_t port_v37_phd_init_genphd(uint8_t *,size_t,
  * and WSLIST-relative PHD limits. All five stores occur transactionally. */
 uint32_t port_v37_phd_apply_ws_quotas(uint8_t *,size_t,
     const struct port_v37_phd_ws_quotas *);
+/* PROCSTRT.MAR CPU/AST limits and PQB privilege masks in PHD/authorized PHD. */
+uint32_t port_v37_phd_apply_process_quotas(uint8_t *,size_t,
+    const struct port_v37_phd_process_quotas *);
 #endif

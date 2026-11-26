@@ -38,6 +38,21 @@ int main(void){
         return fail("GENPHD source fields or native page-table values");
     for(unsigned i=PORT_V37_PHD_AUTHPRI+1u;i<PORT_V37_PHD_BYTES;i++)
         if(phd[i]!=0u)return fail("GENPHD untouched fixed-area bytes not zero");
+    const struct port_v37_phd_process_quotas process_quotas={
+        .cpu_limit=0xa1b2c3d4u,.ast_limit=0x12345u,
+        .privileges=UINT64_C(0x0123456789abcdef),.base_priority=23u};
+    if(port_v37_phd_apply_process_quotas(phd,sizeof phd,&process_quotas)!=
+           PORT_V37_PHD_QUOTA_OK||
+       get32(phd+PORT_V37_PHD_CPULIM)!=process_quotas.cpu_limit||
+       get16(phd+PORT_V37_PHD_ASTLM)!=0x2345u||
+       phd[PORT_V37_PHD_AUTHPRI]!=process_quotas.base_priority)
+        return fail("PROCSTRT CPU/AST limit and authorized priority");
+    for(unsigned i=0u;i<8u;i++){
+        const uint8_t expected=(uint8_t)(process_quotas.privileges>>(8u*i));
+        if(phd[PORT_V37_PHD_PRIVMSK+i]!=expected||
+           phd[PORT_V37_PHD_AUTHPRIV+i]!=expected)
+            return fail("PROCSTRT active and authorized privilege masks");
+    }
     phd[PORT_V37_PHD_WSLIST]=64u;phd[PORT_V37_PHD_WSLIST+1u]=0u;
     const struct port_v37_phd_ws_quotas quotas={
         .physical_pages=300u,.free_page_limit=20u,.max_working_set=256u,
@@ -69,6 +84,6 @@ int main(void){
     if(port_v37_phd_init_genphd(phd,sizeof phd,&bad)!=PORT_V37_PHD_BADPARAM||
        memcmp(before,phd,sizeof phd))
         return fail("reserved SYSDEFMP ASTLVL rejected transactionally");
-    puts("SYSDEFMP.MDL PHD layout, PDAT GENPHD and PROCSTRT WS quotas PASS");
+    puts("PHD GENPHD, PROCSTRT CPU/AST/privileges and WS quota setup PASS");
     return 0;
 }

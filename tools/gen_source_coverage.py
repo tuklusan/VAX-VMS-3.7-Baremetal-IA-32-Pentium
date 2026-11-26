@@ -1908,10 +1908,13 @@ result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
 # and mapped process state already exist; the working-set normalization is
 # portable as a bounded record transformation, but process startup is not.
 append_source_ranges('SYS/SRC/PROCSTRT.MAR',626,'src/vms_v37_phd.c',[
- (260,'unresolved',None,'PHD window establishment, PQB/JIB identity and process startup dispatch remain unported'),
+ (257,'unresolved',None,'PHD window establishment, PQB/JIB identity and process startup dispatch remain unported'),
+ (259,'partial','port_v37_phd_apply_process_quotas','Store PQB CPU/AST limits into the process PHD'),
  (287,'partial','port_v37_phd_apply_ws_quotas','Apply PROCSTRT SETQUOTAS available-page cap and WSLIST-relative extent, quota and default calculations transactionally'),
- (626,'unresolved',None,'PHD privilege and account setup, process logical names, page-table/channel creation, image activation and startup continuation remain unported')
-], 'Working-set quota normalization helper only; no public process-start service or mapped PHD window is connected.')
+ (289,'unresolved',None,'HIBER startup state transfer remains unported'),
+ (293,'partial','port_v37_phd_apply_process_quotas','Store source PCB base priority and PQB current/authorized privilege masks in the process PHD'),
+ (626,'unresolved',None,'PHD account setup, process logical names, page-table/channel creation, image activation and startup continuation remain unported')
+], 'Working-set and initial PHD quota/mask helpers only; no public process-start service or mapped PHD window is connected.')
 
 # M241: source RSE.MAR executable queue insertion and priority selection.
 rse_lines=735 # pinned original SYS/SRC/RSE.MAR line count at REVISION

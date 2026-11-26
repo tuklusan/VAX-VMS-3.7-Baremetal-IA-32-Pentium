@@ -11067,7 +11067,7 @@
           "status": "partial",
           "pc_file": "src/vms_v37_phd.c",
           "pc_symbol": "port_v37_phd_init_genphd",
-          "pc_line": 25,
+          "pc_line": 30,
           "function": "Encode PDAT.MAR GENPHD fields in the 376-byte PHD; set Q_PRIVMSK to all ones, preserve zero-initialized AUTHPRIV, reject reserved ASTLVL values above the source disabled value 4, and map the embedded hardware PCB at offset 112. For CPL0 initial processes, the IA-32 frame maps source R4 to the first native C argument with valid entry stack alignment; process page mappings and INIT activation remain missing"
         },
         {
@@ -11156,32 +11156,62 @@
         {
           "original_lines": [
             1,
-            260
+            257
           ],
           "status": "unresolved",
           "reason": "PHD window establishment, PQB/JIB identity and process startup dispatch remain unported"
         },
         {
           "original_lines": [
-            261,
+            258,
+            259
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_phd.c",
+          "pc_symbol": "port_v37_phd_apply_process_quotas",
+          "pc_line": 90,
+          "function": "Store PQB CPU/AST limits into the process PHD"
+        },
+        {
+          "original_lines": [
+            260,
             287
           ],
           "status": "partial",
           "pc_file": "src/vms_v37_phd.c",
           "pc_symbol": "port_v37_phd_apply_ws_quotas",
-          "pc_line": 55,
+          "pc_line": 60,
           "function": "Apply PROCSTRT SETQUOTAS available-page cap and WSLIST-relative extent, quota and default calculations transactionally"
         },
         {
           "original_lines": [
             288,
+            289
+          ],
+          "status": "unresolved",
+          "reason": "HIBER startup state transfer remains unported"
+        },
+        {
+          "original_lines": [
+            290,
+            293
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_v37_phd.c",
+          "pc_symbol": "port_v37_phd_apply_process_quotas",
+          "pc_line": 90,
+          "function": "Store source PCB base priority and PQB current/authorized privilege masks in the process PHD"
+        },
+        {
+          "original_lines": [
+            294,
             626
           ],
           "status": "unresolved",
-          "reason": "PHD privilege and account setup, process logical names, page-table/channel creation, image activation and startup continuation remain unported"
+          "reason": "PHD account setup, process logical names, page-table/channel creation, image activation and startup continuation remain unported"
         }
       ],
-      "unresolved_integration": "Working-set quota normalization helper only; no public process-start service or mapped PHD window is connected."
+      "unresolved_integration": "Working-set and initial PHD quota/mask helpers only; no public process-start service or mapped PHD window is connected."
     },
     {
       "original_file": "SYS/SRC/RSE.MAR",

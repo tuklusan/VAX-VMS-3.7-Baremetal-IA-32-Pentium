@@ -10,6 +10,8 @@ _Static_assert(PORT_V37_PHD_PC==PORT_V37_PHD_KSP+18u*4u,
                "PHD saved PC slot");
 _Static_assert(PORT_V37_PHD_WSLIST==PORT_V37_PHD_PRIVMSK_BYTES,
                "SYSDEFMP.MDL PHD working-set list offset");
+_Static_assert(PORT_V37_PHD_CPULIM==PORT_V37_PHD_DIOCNT+8u,
+               "SYSDEFMP.MDL PHD CPU limit offset");
 
 static void put16(uint8_t *p,uint16_t x){
     p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
@@ -20,6 +22,9 @@ static uint16_t get16(const uint8_t *p){
 static void put32(uint8_t *p,uint32_t x){
     p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
     p[2]=(uint8_t)(x>>16);p[3]=(uint8_t)(x>>24);
+}
+static void put64(uint8_t *p,uint64_t x){
+    for(unsigned i=0u;i<8u;i++)p[i]=(uint8_t)(x>>(8u*i));
 }
 
 uint32_t port_v37_phd_init_genphd(uint8_t *record,size_t capacity,
@@ -79,5 +84,17 @@ uint32_t port_v37_phd_apply_ws_quotas(uint8_t *record,size_t capacity,
     put16(record+PORT_V37_PHD_WSQUOTA,phd_quota);
     put16(record+PORT_V37_PHD_WSAUTH,phd_quota);
     put16(record+PORT_V37_PHD_DFWSCNT,phd_default);
+    return PORT_V37_PHD_QUOTA_OK;
+}
+
+uint32_t port_v37_phd_apply_process_quotas(uint8_t *record,size_t capacity,
+    const struct port_v37_phd_process_quotas *q){
+    if(!record||!q||capacity<PORT_V37_PHD_BYTES||q->base_priority>31u)
+        return PORT_V37_PHD_QUOTA_BADPARAM;
+    put32(record+PORT_V37_PHD_CPULIM,q->cpu_limit);
+    put16(record+PORT_V37_PHD_ASTLM,(uint16_t)q->ast_limit);
+    put64(record+PORT_V37_PHD_PRIVMSK,q->privileges);
+    put64(record+PORT_V37_PHD_AUTHPRIV,q->privileges);
+    record[PORT_V37_PHD_AUTHPRI]=q->base_priority;
     return PORT_V37_PHD_QUOTA_OK;
 }
