@@ -87,6 +87,7 @@ extern void arch_vms_scheduler_defer_dispatch(uint32_t);
 extern uint32_t arch_vms_make_process_cr3(uint32_t *,uint32_t *,uint32_t *);
 extern uint32_t arch_vms_wait_current(uint32_t);
 extern void arch_run_pending_vms_reschedule(void);
+extern void arch_dispatch_pending_vms_reschedule(void);
 extern uint32_t arch_vms_reschedule_requests(void);
 extern uint32_t arch_vms_reschedule_interrupts(void);
 extern uint32_t arch_iopost_bind(uint32_t (*)(void));
@@ -3618,6 +3619,7 @@ void kmain(void) {
         bootstrap_message("INIT: source SCH$CHSE resident queue transition failed.");
         bootstrap_halt();
     }
+    arch_dispatch_pending_vms_reschedule();
     if(arch_vms_reschedule_requests()!=resched_requests_before+1u){
         bootstrap_message("INIT: source SCH$CHSE reschedule request callback did not run.");
         bootstrap_halt();

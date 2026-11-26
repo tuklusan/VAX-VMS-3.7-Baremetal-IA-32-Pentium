@@ -167,6 +167,18 @@ void arch_run_pending_vms_reschedule(void){
     __asm__ volatile("int $0x91":::"memory");
 }
 
+/* INIT can request the first contextless SCH$CHSE while it is deliberately
+ * running with IF clear.  Once CHSE has returned (and its synchronization
+ * level is restored), deliver that software reschedule without waiting for
+ * a hardware interrupt; INT remains legal with IF clear and IRET preserves
+ * the bootstrap caller's interrupt state. */
+void arch_dispatch_pending_vms_reschedule(void){
+    if(resident_vms_dispatch_deferred||!resident_vms_reschedule_pending||
+       !resident_vms_scheduler||!resident_vms_sched_interrupt)return;
+    resident_vms_reschedule_pending=0u;
+    __asm__ volatile("int $0x91":::"memory");
+}
+
 /* Prepare the common interrupt-return path for a scheduler-selected VMS
  * context. The trap dispatcher must still explicitly return
  * ARCH_TRAP_RESTORE_SELECTED_FRAME before assembly consumes this frame. */

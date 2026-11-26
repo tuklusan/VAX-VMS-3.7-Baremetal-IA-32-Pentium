@@ -10741,7 +10741,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3132,
+          "pc_line": 3133,
           "function": "Physical-memory/bootstrap setup and source-dependent resident entry"
         },
         {
@@ -10798,7 +10798,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3132,
+          "pc_line": 3133,
           "function": "Source-ordered SYS.EXE, SYSLOA386, INILOA Files-11 loads and live SYSLOAVEC link; SCSLOA and remaining runtime initialization not complete"
         },
         {
@@ -24059,7 +24059,7 @@
           "status": "partial",
           "pc_file": "src/kernel.c",
           "pc_symbol": "kmain",
-          "pc_line": 3132,
+          "pc_line": 3133,
           "function": "EXE$GT_STARTUP default SYS$SYSTEM:STARTUP.COM stored as a 32-byte ASCIC field; SYSBOOT PARAMS.DAT replaces it when present and INIT copies it to the resident SYSINIT input descriptor; STARTUP process creation/input remains missing copied as a native default and accepted by the bounded SYSBOOT PARAMS.DAT decoder; SYSBOOT applies it if the optional Files-11 file is present"
         },
         {
