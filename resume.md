@@ -2626,3 +2626,13 @@ Verification: `wsl make -j2 all` PASS; `wsl make qemu-sysboot-m217` PASS with ac
 M465 implementation/evidence commit: `23c74b028b9c7f178b7888cad709ec22bdb7a1a6`.
 
 Remaining: complete SYSINIT's source time solicitation/persistence, startup-file access, Files-11 system mount and ACP interlock; implement live public SYS$QIO and process-aware AST completion; continue process image activation through SYSTEM login/DCL; initialize DECnet Phase IV and verify SET HOST 0/second login/LOGOUT. Final acceptance remains incomplete.
+
+## M466 — Decode TIMEPROMPTWAIT from SYSBOOT parameters, 26 November 2026
+
+Added the source TIMEPROMPTWAIT default (`-1`) to the native INIT parameter model and the bounded BOO$USEFILE decoder, including the signed-word maximum. Host coverage verifies the negative default and a positive override. SYSBOOT PARAMS.DAT discovery/application is still not wired into native boot, so this does not claim live TPWAIT-driven startup prompting or timeout behavior. Source coverage now identifies the original SYSPARAM declaration as partially represented and retains the boot-time integration gap.
+
+Verification: `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck` PASS; `wsl make qemu-sysboot-m217` PASS through actual SYSINIT RTC setup and scheduler wait. The guest uses its current default parameter set; no PARAMS.DAT override or terminal time prompt was exercised. Capture `logs/serial/qemu-m217-run-local-20261126T211632863553Z.log`: 6,661 bytes, SHA-256 `a1c30e8f1aa138b01969e59130082905cab95c0068cfd08e423092ed74acc6fe`. Coverage validation: 2,202 ranges; 455/4,566 original files indexed, zero errors; 17,158 mapped, 30,842 partial, 59,459 unresolved, 8,032 missing, 26,805 excluded, 917 hardware-excluded. Serial manifest validation PASS (430 logs). No DEC source or binary image was added.
+
+M466 implementation/evidence commit: `0725c7e`.
+
+Remaining: load and apply SYSBOOT parameter files in boot; make SIP_SETTIME follow actual TPWAIT and SETIME persistence semantics; continue SYSINIT startup-file opens, Files-11 mount/ACP and SYSMSG mapping; integrate process SYS$QIO/AST completion, image activation, SYSTEM login/DCL, DECnet Phase IV and the SET HOST 0/second-session/LOGOUT sequence. Final acceptance remains incomplete.
