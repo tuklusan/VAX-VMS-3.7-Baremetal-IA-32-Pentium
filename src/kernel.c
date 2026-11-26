@@ -4852,8 +4852,15 @@ void kmain(void) {
        (uintptr_t)contexts_result.sysinit_vms_pcb<PORT_SYS_ELF_START||
        (uintptr_t)contexts_result.sysinit_vms_pcb>
            PORT_SYS_ELF_LIMIT-PORT_V37_PCB_BYTES||
-       m202_get32(contexts_result.sysinit_vms_pcb+PORT_V37_PCB_PID)!=
-           UINT32_C(0x00010002)||
+       !proc_result.process_vector||
+       (uint16_t)m202_get32(contexts_result.sysinit_vms_pcb+
+           PORT_V37_PCB_PID)<2u||
+       (uint16_t)m202_get32(contexts_result.sysinit_vms_pcb+
+           PORT_V37_PCB_PID)>=proc_result.process_vector->allocated_slots||
+       m202_get32(proc_result.process_vector->pcb_vector+
+           (uint16_t)m202_get32(contexts_result.sysinit_vms_pcb+
+               PORT_V37_PCB_PID)*4u)!=(uint32_t)(uintptr_t)
+                   contexts_result.sysinit_vms_pcb||
        m202_get32(contexts_result.sysinit_vms_pcb+PORT_V37_PCB_PHD)==0u||
        m202_get32(contexts_result.sysinit_vms_pcb+PORT_V37_PCB_PHYPCB)==0u||
        ((uint16_t)contexts_result.sysinit_vms_pcb[PORT_V37_PCB_STATE]|
@@ -4867,6 +4874,7 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: bound source NULL/SWAPPER/SYSINIT PHDs to native IA-32 frames and process page tables.");
+    bootstrap_message("INIT: SYSCREPRC published dynamic SYSINIT PID/PIX and activated its native context.");
     arch_request_vms_reschedule();
     bootstrap_message("INIT: native process scheduler returned unexpectedly.");
     bootstrap_halt();

@@ -1,5 +1,6 @@
 #include "vms_sys_executive_entry.h"
 #include "vms_exe_sched.h"
+#include "vms_exe_creprc.h"
 #include "vms_exe_scbvector.h"
 #include "vms_exe_gettim.h"
 #include "vms_sysloavec.h"
@@ -726,6 +727,7 @@ static struct executive_vms_initial_contexts executive_vms_contexts;
 static uint32_t (*executive_vms_wait_current)(uint32_t);
 static void (*executive_vms_process_message)(const char *);
 static struct port_v37_scheduler executive_vms_scheduler;
+static uint16_t executive_vms_process_count;
 static uint32_t *executive_vms_native_cr3_by_pix;
 static uint32_t executive_vms_native_cr3_slots;
 static uint32_t executive_vms_native_cr3_bytes;
@@ -1111,21 +1113,13 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->vms_context_error=5u;
         const struct port_v37_pcb_seed sysinit_seed={
             .address=(uint32_t)(uintptr_t)executive_vms_sysinit_pcb,
-            .pid=UINT32_C(0x00010002),.priority=16u,.name="SYSINIT",
+            .pid=UINT32_C(0x00010000),.priority=16u,.name="SYSINIT",
             .name_bytes=7u};
         if(port_v37_pcb_init_genpcb(executive_vms_sysinit_pcb,
                sizeof executive_vms_sysinit_pcb,&sysinit_seed)!=
-                   PORT_V37_PCB_OK||
-           port_v37_pcb_set_pix(executive_vms_sysinit_pcb,
-               sizeof executive_vms_sysinit_pcb,2u)!=PORT_V37_PCB_OK||
-           port_ini_procvec_set_pcb(&executive_procvec,2u,
-               (uint32_t)(uintptr_t)executive_vms_sysinit_pcb)!=
-                   PORT_INI_PROC_OK||
-           port_v37_sched_chse(&executive_vms_scheduler,
-               (uint32_t)(uintptr_t)executive_vms_sysinit_pcb,0u)!=
-                   PORT_V37_SCHED_OK)
+                   PORT_V37_PCB_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        for(unsigned i=0u;i<3u;i++){
+        for(unsigned i=0u;i<2u;i++){
             p->result->vms_context_error=6u;
             const uint32_t pcb_address=(uint32_t)(uintptr_t)pcb[i];
             const uint32_t phd_address=(uint32_t)(uintptr_t)
@@ -1137,6 +1131,37 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
                    &phd_seed[i])!=PORT_V37_SCHED_OK)
                 return PORT_SYS_EXEC_BAD_PARAMETERS;
         }
+        /* Use SYSCREPRC's source PIX/PID publication and native-context
+         * activation for SYSINIT instead of assigning a fixed PID/PIX. */
+        executive_vms_process_count=1u; /* SWAPPER is already active. */
+        uint32_t sysinit_pid=0u,scheduler_status=0u;
+        p->result->vms_context_error=7u;
+        /* This SYS.EXE call still runs on the unregistered bootstrap
+         * context; defer CREPRC's normal preemption until it yields. */
+        executive_vms_scheduler_arch.request=0;
+        const uint32_t activation_sync=executive_vms_enter_synchronization(0);
+        const uint32_t activation_status=port_exe_creprc_activate_native(
+               &executive_vms_scheduler,
+               &executive_procvec,
+               (uint32_t)(uintptr_t)executive_vms_null_pcb,
+               (uint32_t)(uintptr_t)executive_vms_sysinit_pcb,
+               executive_vms_sysinit_pcb,sizeof executive_vms_sysinit_pcb,
+               (uint32_t)(uintptr_t)executive_vms_contexts.phd[2],
+               (uint32_t)(uintptr_t)frame[2],&phd_seed[2],0u,
+               &executive_vms_process_count,
+               (uint16_t)executive_procvec.max_pix,&sysinit_pid,
+               &scheduler_status);
+        executive_vms_leave_synchronization(0,activation_sync);
+        if(activation_status!=PORT_EXE_CREPRC_RUN_OK||
+           scheduler_status!=PORT_V37_SCHED_OK||
+           (uint16_t)sysinit_pid<2u||
+           (uint16_t)sysinit_pid!=executive_procvec.max_pix||
+           (sysinit_pid>>16)!=1u||executive_vms_process_count!=2u||
+           port_ini_procvec_ptr(&executive_procvec,
+               (uint16_t)sysinit_pid)!=(uint32_t)(uintptr_t)
+                   executive_vms_sysinit_pcb)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        executive_vms_scheduler_arch.request=p->vms_scheduler_request;
         p->result->vms_context_error=7u;
         if(port_v37_sched_check(&executive_vms_scheduler)!=
               PORT_V37_SCHED_OK)

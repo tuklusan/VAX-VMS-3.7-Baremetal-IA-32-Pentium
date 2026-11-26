@@ -104,6 +104,7 @@ def main():
         b'INIT: DQA0 DDT asynchronous WRITEPBLK completed by IRQ14; scratch restored.',
         b'INIT: SYS.EXE DQA0 source-priority queue completed two ordered DDT WRITEPBLK IRPs; read queue posted two READPBLK IRPs via IRQ14, readback and restore verified.',
         b'INIT: bound source NULL/SWAPPER/SYSINIT PHDs to native IA-32 frames and process page tables.',
+        b'INIT: SYSCREPRC published dynamic SYSINIT PID/PIX and activated its native context.',
         b'SWAPPER: scheduled native context resolved SYS$DISK and SYS$SYSDEVICE.',
         b'SYSINIT: native scheduled context created and verified SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE.',
         b'SCH$WAITK blocked SWAPPER; SCH$SCHED selected NULL.']

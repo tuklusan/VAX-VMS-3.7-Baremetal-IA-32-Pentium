@@ -1910,7 +1910,7 @@
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_activate_native",
           "pc_line": 330,
-          "function": "Publish source PIX/PID before installing the native PHD/restore frame and scheduler CHSE; rollback the vector/PID/count when context activation is rejected"
+          "function": "Publish the source-selected PIX/PID before installing the native PHD/restore frame and scheduler CHSE; rollback on rejection. Live SYSINIT activation verifies the PID/vector pair; general public $CREPRC allocation/dispatch remains absent"
         },
         {
           "original_lines": [
@@ -1921,7 +1921,7 @@
           "reason": "Post-publication JIB/process accounting, image activation, caller PID store and public service exit remain absent"
         }
       ],
-      "unresolved_integration": "Preflight plus partial source ACTIVATE and native scheduler integration. The native activation operation requires preallocated PCB/PHD/frame resources and caller-held executive synchronization; it does not load or map an image. Caller memory probes remain accessibility inputs; PCB/PQB/JIB allocation integration, swap allocation, complete public service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout."
+      "unresolved_integration": "Preflight plus partial source ACTIVATE and native scheduler integration. Live SYSINIT uses this activation boundary with source-generated PIX/PID and verifies the resulting process-vector entry under executive synchronization; this is not a public $CREPRC call. The native operation still requires preallocated PCB/PHD/frame resources and does not load or map an image. Caller memory probes remain accessibility inputs; full PCB/PQB/JIB allocation, swap allocation, service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout."
     },
     {
       "original_file": "DCL/SRC/GOTO.MAR",
@@ -10749,7 +10749,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 902,
+          "pc_line": 904,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -10828,7 +10828,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_vms_sched_chse",
-          "pc_line": 781,
+          "pc_line": 783,
           "function": "Run the source CHSE queue transition under the resident IPL_SYNCH adapter and deliver its deferred reschedule request through IA-32 vector 0x91; VAX PCB PHYPCB translation and native process contexts remain incomplete"
         },
         {
@@ -22880,7 +22880,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 684,
+          "pc_line": 685,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -23601,7 +23601,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_alopaged",
-          "pc_line": 98,
+          "pc_line": 99,
           "function": "EXE$ALOPAGED entry uses the resident PAGEDYN free list; QEMU verifies a 17-byte request rounds to 32 bytes and is returned; no process I/O or runtime VMS caller, SCH$LOCKW wait, extension or resource wake is wired"
         },
         {
@@ -23650,7 +23650,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_deapaged",
-          "pc_line": 104,
+          "pc_line": 105,
           "function": "EXE$DEAPAGED returns aligned blocks to the SYSBOOT-carved resident PAGEDYN free list; QEMU verifies completion and duplicate-free rejection; IRP header decoding, SCH$LOCKW, PGDYN resource wake and process caller wiring remain unresolved"
         },
         {
@@ -24066,7 +24066,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_swapinit_log_tables",
-          "pc_line": 65,
+          "pc_line": 66,
           "function": "Prepare the two original SYSTEM logical-name records from initialized SYSLOG templates during boot; SWAPPER context remains absent; native bootstrap wrapper copies the original records into PAGEDYN"
         },
         {
@@ -24107,7 +24107,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_swapper_start",
-          "pc_line": 818,
+          "pc_line": 820,
           "function": "The scheduled SWAPPER entry searches the live SYS/GROUP logical state and uses the source resident HIB wait queue; free-page balancing, modified-page writeback, power-fail AST work and SWAPPER restart logic remain absent; live HIB queue block and selection of NULL are observed, but SWAPPER balance/swap functions remain unimplemented"
         },
         {
