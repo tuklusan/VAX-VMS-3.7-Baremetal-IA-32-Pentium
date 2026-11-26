@@ -2409,3 +2409,13 @@ Verification: `make qemu-sysboot-m217` PASS; guest output includes native vector
 M442 QEMU assertion/evidence commit: `c68995446893b8719925cd2e578b4308b84ad8d8`.
 
 Remaining work is unchanged: create real INIT/NULL/SWAPPER PHD and IA-32 contexts in source order, connect live public SYS$QIO/ACP completion and AST wake/delivery, resume native INIT, activate SYSTEM and DCL, and validate DECnet Phase IV `SET HOST 0` with a second SYSTEM session and return by LOGOUT.
+
+## M443 - Exercise source SCH$CHSE through deferred IA-32 rescheduling, 26 November 2026
+
+Replaced the direct architecture-only scheduler probe with the resident SYS.EXE `SCH$CHSE` operation on the already queued source NULL PCB. SYS.EXE now exports an IPL_SYNCH-wrapped CHSE adapter; its source scheduler reschedule callback sets the native pending request, and the restored interrupt state dispatches IA-32 vector 0x91. The QEMU regression requires this source-to-vector diagnostic in order. Coverage for INIT.MAR 1021-1026 now maps to the executed CHSE adapter and explicitly leaves source PHYPCB translation and initial process contexts partial. This validates queue transition and callback integration, not process activation.
+
+Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` PASS; `make qemu-sysboot-m217` PASS with `INIT: source SCH$CHSE reached resident IA-32 vector 0x91; process contexts pending.` and the unchanged incomplete INIT stop; `make sourcerangecheck` PASS. Coverage: 2,190 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,710 partial, 59,546 unresolved, 8,032 missing, 26,778 excluded and 917 hardware-excluded. Capture `logs/serial/qemu-m217-run-local-20261126T140354704481Z.log`, 6,395 bytes, SHA-256 `4382c9e2fd033d0fadcd39651fd1aa3844bbb2fd579ff1d6d1531d7f6661b9de`; runner exited and no QEMU process remains. No SYSTEM login, DCL, DECnet Phase IV or SET HOST 0 observed.
+
+M443 implementation and QEMU evidence commit: `4df0200fe95a9148a38832e44bd658b49859c061`.
+
+Remaining: source-order construction and scheduling of valid INIT/NULL/SWAPPER PHD and native contexts; public SYS$QIO dispatch and process-aware Files-11 ACP/AST completion; INIT continuation, image activation, SYSTEM login/DCL, DECnet Phase IV, and the genuine two-session SET HOST 0/LOGOUT QEMU sequence.
