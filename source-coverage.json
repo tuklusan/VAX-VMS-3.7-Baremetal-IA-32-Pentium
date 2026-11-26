@@ -10849,7 +10849,7 @@
           "pc_file": "src/vms_v37_phd.c",
           "pc_symbol": "port_v37_phd_init_genphd",
           "pc_line": 20,
-          "function": "Encode GENPHD in the 376-byte SYSDEFMP.MDL fixed PHD record, including the embedded hardware PCB base at offset 112; native P0/P1 mappings and process activation remain missing"
+          "function": "Encode PDAT.MAR GENPHD fields in the 376-byte PHD; set Q_PRIVMSK to all ones while preserving zero-initialized AUTHPRIV, and map the embedded hardware PCB at offset 112; native P0/P1 mappings and activation remain missing"
         },
         {
           "original_lines": [

@@ -1857,7 +1857,7 @@ result['files'].append({'original_file':'SYS/SRC/INIT.MAR',
 pdat_rows=[
  (1,90,None,None,'Original PCB/PHD declarations and VAX PHD generation dependencies unresolved','unresolved'),
  (91,170,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb',"Emit SYSDEF.MDL's 156-byte PCB layout and source GENPCB queue heads, DYN type, state, privileges, PID/PHD and lock queue fields; native PHD creation and process activation remain missing",'partial'),
-    (171,220,'src/vms_v37_phd.c','port_v37_phd_init_genphd',"Encode GENPHD in the 376-byte SYSDEFMP.MDL fixed PHD record, including the embedded hardware PCB base at offset 112; native P0/P1 mappings and process activation remain missing",'partial'),
+    (171,220,'src/vms_v37_phd.c','port_v37_phd_init_genphd',"Encode PDAT.MAR GENPHD fields in the 376-byte PHD; set Q_PRIVMSK to all ones while preserving zero-initialized AUTHPRIV, and map the embedded hardware PCB at offset 112; native P0/P1 mappings and activation remain missing",'partial'),
  (221,254,None,None,'NULL/SWAPPER stack and PHD source construction unresolved','unresolved'),
  (255,256,'src/vms_v37_pcb.c','port_v37_pcb_init_genpcb','Create the source-layout NULL GENPCB record and PID; VMS PHD and native context remain absent','partial'),
  (257,268,None,None,'SWAPPER PHD and stack initialization unresolved','unresolved'),

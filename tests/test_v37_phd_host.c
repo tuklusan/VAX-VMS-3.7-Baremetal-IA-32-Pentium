@@ -23,8 +23,8 @@ int main(void){
         return fail("valid native PHD seed rejected");
     for(unsigned i=0;i<8u;i++)
         if(phd[PORT_V37_PHD_PRIVMSK+i]!=0xffu||
-           phd[PORT_V37_PHD_AUTHPRIV+i]!=0xffu)
-            return fail("GENPHD privilege masks");
+           phd[PORT_V37_PHD_AUTHPRIV+i]!=0u)
+            return fail("GENPHD privilege mask and zero AUTHPRIV");
     if(get16(phd+PORT_V37_PHD_PHVINDEX)!=UINT16_MAX||
        get32(phd+PORT_V37_PHD_KSP)!=seed.native_ksp||
        get32(phd+PORT_V37_PHD_R4)!=seed.initial_r4||
