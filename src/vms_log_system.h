@@ -9,12 +9,14 @@
 enum { PORT_LOG_OK=1u,PORT_LOG_BAD=2u,PORT_LOG_NOTRAN=3u,
        PORT_LOG_OVERFLOW=4u,PORT_LOG_CYCLE=6u,
        PORT_LOG_SLOTS=16u,PORT_LOG_BITS=4u,PORT_LOG_MAX_BITS=14u,
+       PORT_LOG_RECORDS=5u,
        PORT_LOG_SYSTEM=0u,PORT_LOG_MAX_NAME=63u,
-       PORT_LOG_REC_LEN=PORT_INI_LOG_TEMPLATE_BYTES };
+       PORT_LOG_REC_LEN=PORT_INI_LOG_TEMPLATE_BYTES,
+       PORT_LOG_MAX_REC_LEN=64u };
 struct port_log_system_table {
     uint32_t head[PORT_LOG_SLOTS]; /* resident native bucket heads */
-    uint32_t record_addr[2]; /* original 32-bit LOG$L_LTFL addresses */
-    uint8_t *records[2]; /* host/guest native addresses for bounded walking */
+    uint32_t record_addr[PORT_LOG_RECORDS]; /* LOG$L_LTFL addresses */
+    uint8_t *records[PORT_LOG_RECORDS]; /* bounded native record map */
     uint8_t hash_bits,ready;
     uint16_t count;
 };
@@ -32,6 +34,10 @@ uint32_t port_log_source_address(const struct port_log_system_table *,
     const uint8_t *,uint32_t *);
 uint8_t *port_log_source_record(const struct port_log_system_table *,uint32_t);
 uint32_t port_log_system_insert(struct port_log_system_table *,unsigned);
+/* Bounded SYSINIT SYSTEM-table insertion of an already source-formatted
+ * LOG record. Caller owns storage and serializes table mutation. */
+uint32_t port_log_system_add(struct port_log_system_table *,uint8_t *,
+    uint32_t,size_t);
 uint32_t port_log_system_init(struct port_log_system_table *,
     uint8_t *,uint8_t *,size_t,unsigned);
 uint32_t port_log_system_lookup(const struct port_log_system_table *,

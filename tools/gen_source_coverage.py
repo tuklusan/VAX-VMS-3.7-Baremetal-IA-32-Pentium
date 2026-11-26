@@ -2696,19 +2696,19 @@ result['files'].append({'original_file':'SYS/SRC/RELOCDRV.MAR',
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 # M128: LOGNAMSUB.MAR source pin, not a claim of a full logical-name service.
-# Only the two FIN_DATABASE bootstrap SYSTEM entries have bound native list
-# records. PROCESS/GROUP tables, LOG$LOCKR, SYSLOGNAM and supercession remain
-# unresolved; original LOG$HASH and bounded SYSTEM search/translate are partial.
+# SWAPINIT's two bootstrap records and a bounded caller-built SYSTEM insertion
+# helper are present. PROCESS/GROUP tables, LOG$LOCKR, SYSLOGNAM and
+# supersession remain unresolved; the insertion helper is not live $CRELNM.
 lognam_sections=[]
 for first,last,path,sym,why in [
  (1,128,None,None,'Original module prologue, LOG$DELETE, supersession and deallocation unresolved'),
- (129,162,'src/vms_exe_swapinit_hash.c','port_exe_swapinit_insert_system_record','SWAPINIT links only the original SYS$DISK and SYS$SYSDEVICE records into its SYSTEM table with source hash buckets and sorted back-links; locking, supersession and runtime insertion remain unimplemented'),
+ (129,162,'src/vms_log_system_add.c','port_log_system_add','Bounded source DYN$C_LOG SYSTEM insertion validates record geometry, rejects duplicate names, and links sorted hash chains; caller allocation, access checks, synchronization and public $CRELNM binding remain absent'),
  (163,243,None,None,'Original LOG$LOCKR/LOCKW/UNLOCK mutex and GROUP/PROCESS table synchronization unimplemented'),
  (244,276,'src/vms_exe_swapinit_hash.c','port_exe_swapinit_search_system','Source LOG$SEARCHLOG hash-chain search over the live SWAPPER SYSTEM RSHT for the two boot names; no PCB access mode'),
  (277,295,None,None,'Remaining SEARCHLOG status and hash calling convention require later full service binding'),
  (296,320,'src/vms_log_hash.c','port_log_hash','Original little-endian XOR, ROTL and MULL hash high bits with caller-selected short table exponent'),
  (321,372,None,None,'Original descriptor probing, access-mode and caller output protocol not fully implemented'),
- (373,411,'src/vms_log_translate.c','port_log_translate','Source leading underscore escape, NOTRAN fallback and bounded two-record SYSTEM resolution; no PROCESS/GROUP tables'),
+ (373,411,'src/vms_log_translate.c','port_log_translate','Source leading underscore escape, NOTRAN fallback and bounded resident SYSTEM resolution; no PROCESS/GROUP tables or live public service binding'),
  (412,424,None,None,'Original LOG$UNLOCK, measurement and native return convention remain unresolved')]:
     if path is None:lognam_sections.append({'original_lines':[first,last],'status':'unresolved','reason':why})
     else:
@@ -2718,7 +2718,7 @@ for first,last,path,sym,why in [
            'pc_file':path,'pc_symbol':sym,'pc_line':ln,'function':why})
 result['files'].append({'original_file':'SYS/SRC/LOGNAMSUB.MAR',
     'original_lines':424,'sections':lognam_sections,
-    'unresolved_integration':'Private bounded two-entry resident SYSTEM bootstrap table can resolve SYS$DISK/SYS$SYSDEVICE. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic create/delete, access control, public channel I/O and Files-11 ACP are absent; published DQA DDT supports physical PBLK only.'})
+    'unresolved_integration':'Private bounded resident SYSTEM table can resolve boot names and accept caller-built records through a host-tested helper, but helper is not wired to SYSINIT or public $CRELNM. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic delete, access control, public channel I/O and Files-11 ACP are absent; published DQA DDT supports physical PBLK only.'})
 
 # M234: source MEMORYALC IRP allocation from and return to the lookaside list.
 memalc_sections=[]

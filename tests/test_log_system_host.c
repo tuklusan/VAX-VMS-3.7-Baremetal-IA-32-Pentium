@@ -8,9 +8,19 @@ struct fixture {
     struct port_v37_device_result device;
     uint8_t disk[PORT_INI_LOG_TEMPLATE_BYTES];
     uint8_t sys[PORT_INI_LOG_TEMPLATE_BYTES];
+    uint8_t sysnames[3][PORT_LOG_MAX_REC_LEN];
     struct port_ini_fin_result fin;
     struct port_log_system_table table;
 };
+static void make_log(uint8_t *r,const char *name,const char *value){
+    const size_t nn=strlen(name),vn=strlen(value),len=23u+nn+vn;
+    memset(r,0,PORT_LOG_MAX_REC_LEN);
+    port_v37_write16(r+8u,(uint16_t)len);r[10u]=PORT_V37_DYN_LOG;
+    r[11u]=PORT_LOG_SYSTEM;port_v37_write16(r+12u,1u);
+    port_v37_write16(r+14u,1u);r[20u]=(uint8_t)nn;
+    memcpy(r+21u,name,nn);r[21u+nn]=(uint8_t)vn;
+    memcpy(r+22u+nn,value,vn);
+}
 static int prepare(struct fixture *f){
     memset(f,0,sizeof *f);
     const uint32_t base=(uint32_t)(uintptr_t)f->storage;
@@ -48,6 +58,19 @@ static int direct(void){
     CHECK(!prepare(&f));
     CHECK(port_log_system_validate(&f.table,f.disk,f.sys,sizeof f.disk)==PORT_LOG_OK);
     CHECK(port_log_system_init(&f.table,f.disk,f.sys,sizeof f.disk,4u)==PORT_LOG_OK);
+    make_log(f.sysnames[0],"SYS$SYSTEM","DQA0:[TOPSYS.SYSEXE]");
+    make_log(f.sysnames[1],"SYS$SHARE","DQA0:[TOPSYS.SYSLIB]");
+    make_log(f.sysnames[2],"SYS$MESSAGE","DQA0:[TOPSYS.SYSMSG]");
+    for(unsigned i=0;i<3u;i++)
+        CHECK(port_log_system_add(&f.table,f.sysnames[i],
+          (uint32_t)(uintptr_t)f.sysnames[i],sizeof f.sysnames[i])==PORT_LOG_OK);
+    CHECK(f.table.count==5u&&port_log_system_check(&f.table)==PORT_LOG_OK);
+    uint32_t system_address=0u;
+    CHECK(port_log_system_lookup(&f.table,(const uint8_t *)"SYS$MESSAGE",11u,
+          &system_address)==PORT_LOG_OK);
+    CHECK(system_address==(uint32_t)(uintptr_t)f.sysnames[2]);
+    CHECK(port_log_system_add(&f.table,f.sysnames[0],
+          (uint32_t)(uintptr_t)f.sysnames[0],sizeof f.sysnames[0])==PORT_LOG_BAD);
     CHECK(port_log_system_check(&f.table)==PORT_LOG_OK);
     CHECK(f.table.head[12u]==(uint32_t)(uintptr_t)f.disk);
     CHECK(f.table.head[13u]==(uint32_t)(uintptr_t)f.sys);

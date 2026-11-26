@@ -20,9 +20,11 @@ uint32_t port_log_system_init(struct port_log_system_table *t,
     t->record_addr[0]=a;t->record_addr[1]=b;
     t->records[0]=disk;t->records[1]=sysdev;
     t->hash_bits=(uint8_t)hash_bits;
+    /* Publish the bounded address map before collision insertion walks it. */
+    t->count=2u;
     if(port_log_system_insert(t,0u)!=PORT_LOG_OK||
-       port_log_system_insert(t,1u)!=PORT_LOG_OK)return PORT_LOG_CYCLE;
-    t->count=2u;t->ready=1u;
+       port_log_system_insert(t,1u)!=PORT_LOG_OK){t->count=0u;return PORT_LOG_CYCLE;}
+    t->ready=1u;
     if(port_log_system_check(t)!=PORT_LOG_OK){
         t->ready=0u;return PORT_LOG_CYCLE;
     }

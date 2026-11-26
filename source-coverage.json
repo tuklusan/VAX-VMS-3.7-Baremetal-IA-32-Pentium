@@ -23478,10 +23478,10 @@
             162
           ],
           "status": "partial",
-          "pc_file": "src/vms_exe_swapinit_hash.c",
-          "pc_symbol": "port_exe_swapinit_insert_system_record",
-          "pc_line": 102,
-          "function": "SWAPINIT links only the original SYS$DISK and SYS$SYSDEVICE records into its SYSTEM table with source hash buckets and sorted back-links; locking, supersession and runtime insertion remain unimplemented"
+          "pc_file": "src/vms_log_system_add.c",
+          "pc_symbol": "port_log_system_add",
+          "pc_line": 7,
+          "function": "Bounded source DYN$C_LOG SYSTEM insertion validates record geometry, rejects duplicate names, and links sorted hash chains; caller allocation, access checks, synchronization and public $CRELNM binding remain absent"
         },
         {
           "original_lines": [
@@ -23538,7 +23538,7 @@
           "pc_file": "src/vms_log_translate.c",
           "pc_symbol": "port_log_translate",
           "pc_line": 5,
-          "function": "Source leading underscore escape, NOTRAN fallback and bounded two-record SYSTEM resolution; no PROCESS/GROUP tables"
+          "function": "Source leading underscore escape, NOTRAN fallback and bounded resident SYSTEM resolution; no PROCESS/GROUP tables or live public service binding"
         },
         {
           "original_lines": [
@@ -23549,7 +23549,7 @@
           "reason": "Original LOG$UNLOCK, measurement and native return convention remain unresolved"
         }
       ],
-      "unresolved_integration": "Private bounded two-entry resident SYSTEM bootstrap table can resolve SYS$DISK/SYS$SYSDEVICE. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic create/delete, access control, public channel I/O and Files-11 ACP are absent; published DQA DDT supports physical PBLK only."
+      "unresolved_integration": "Private bounded resident SYSTEM table can resolve boot names and accept caller-built records through a host-tested helper, but helper is not wired to SYSINIT or public $CRELNM. Original LOG$LOCKR, SYSLOGNAM, PROCESS/GROUP tables, dynamic delete, access control, public channel I/O and Files-11 ACP are absent; published DQA DDT supports physical PBLK only."
     },
     {
       "original_file": "SYS/SRC/MEMORYALC.MAR",

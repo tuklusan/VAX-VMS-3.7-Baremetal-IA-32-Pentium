@@ -3,7 +3,7 @@
  * unsigned lexical order. LOG$L_LTFL and LOG$L_LTBL are original 32-bit
  * physical native links; no process or group lock is fabricated. */
 uint32_t port_log_system_insert(struct port_log_system_table *t,unsigned idx){
-    if(!t||idx>=2u||!t->records[idx]||!t->record_addr[idx]||
+    if(!t||idx>=5u||!t->records[idx]||!t->record_addr[idx]||
        t->hash_bits>PORT_LOG_BITS)return PORT_LOG_BAD;
     uint8_t *const rec=t->records[idx];const size_t len=rec[20u];
     const uint32_t bucket=port_log_hash(rec+21u,len,t->hash_bits);
@@ -12,7 +12,7 @@ uint32_t port_log_system_insert(struct port_log_system_table *t,unsigned idx){
     uint32_t prev_addr=(uint32_t)(uintptr_t)prev;
     uint32_t next=*prev;
     for(unsigned count=0u;next;count++){
-        if(count>=2u)return PORT_LOG_CYCLE;
+        if(count>=PORT_LOG_RECORDS)return PORT_LOG_CYCLE;
         uint8_t *other=port_log_source_record(t,next);
         if(!other || other==rec)return PORT_LOG_CYCLE;
         if(port_log_name_compare(other+21u,other[20u],rec+21u,len)!=0u)
