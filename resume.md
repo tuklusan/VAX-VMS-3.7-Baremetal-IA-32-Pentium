@@ -2357,3 +2357,11 @@ M436 implementation commit: `67286f576017227d51e57572480e161df7cb8412`.
 
 Remaining: connect queued IRPs to actual IOC post completion, AST dispatch and process wakeup; create real INIT/NULL/SWAPPER PHD contexts; continue public SYS/ACP/image activation, login, DCL, DECnet and end-to-end SET HOST 0.
 M436 generated coverage refresh: `b6a76ec96bc05f32cdc5ffdcd1f64f273c82447c` (scheduler line locations regenerated after source validation).
+
+## M437 - Rebuild kernel when VMS scheduler ABI changes, 26 November 2026
+
+Added explicit uild/kernel.o dependencies on the source scheduler, IA-32 context, PCB, PHD and dynamic-tag headers included through the resident executive interface. This fixes a demonstrated stale-object failure: after the scheduler ops structure changed, the incremental build did not rebuild kernel.o and QEMU rejected scheduler initialization. Verified by touching src/vms_v37_sched.h; Make rebuilt kernel.o, arch.o, resident SYS scheduler objects, and linked a fresh boot image.
+
+Verification: make -j2 all test exeportbatchcheck PASS; make sourcerangecheck PASS (2,184 ranges, zero errors). No QEMU run; this is a dependency-only build correction and M435's clean QEMU run remains the latest runtime evidence.
+
+M437 implementation commit: `bde77cb1a672822147a909505bd2b7674585318d`.
