@@ -14,6 +14,7 @@ struct fixture {
     uint32_t pcb_va[4];
     uint32_t frame_va[4];
     uint32_t phd_va[4];
+    uint32_t cr3_by_pix[16],live_cr3;
     unsigned reschedules,swapper_wakes;
 };
 static uint32_t addr(void *context,const void *p){
@@ -50,6 +51,9 @@ static void wake(void *context,uint32_t pcb){
 }
 static void reschedule(void *context){
     struct fixture *f=context;f->reschedules++;
+}
+static uint32_t current_cr3(void *context){
+    return ((struct fixture *)context)->live_cr3;
 }
 static int fail(const char *what){fprintf(stderr,"VMS SCHED FAIL: %s\n",what);return 1;}
 static unsigned count(struct fixture *f,unsigned q){
@@ -96,7 +100,8 @@ int main(void){
         .wait_queue_va=0x00600000u};
     f.wait_queue.forward=f.wait_queue.backward=f.wait_queue_va;
     f.wait_queue.state=7u;
-    const struct port_v37_sched_ops ops={&f,addr,resolve,wake,reschedule,0,0,0,0};
+    const struct port_v37_sched_ops ops={.context=&f,.address=addr,
+        .resolve=resolve,.wake_swapper=wake,.request_reschedule=reschedule};
     if(port_v37_sched_init(&scheduler,&ops)!=PORT_V37_SCHED_OK||
        port_v37_sched_check(&scheduler)!=PORT_V37_SCHED_OK)
         return fail("empty 64-queue initialization");
@@ -432,10 +437,14 @@ int main(void){
         .pcb_va={0x00800000u,0x00801000u,0x00802000u,0x00803000u},
         .frame_va={0x00900000u,0x00901000u,0x00902000u,0x00903000u},
         .phd_va={0x00a00000u,0x00a01000u,0x00a02000u,0x00a03000u},
-        .wait_queue_va=0x00b00000u};
+        .wait_queue_va=0x00b00000u,.live_cr3=0x00d00000u};
     start.wait_queue.forward=start.wait_queue.backward=start.wait_queue_va;
-    if(port_v37_sched_init(&start_scheduler,&(struct port_v37_sched_ops){
-           &start,addr,resolve,wake,reschedule,0,0,0,0})!=PORT_V37_SCHED_OK)
+    const struct port_v37_sched_ops start_ops={
+        .context=&start,.address=addr,.resolve=resolve,
+        .wake_swapper=wake,.request_reschedule=reschedule,
+        .native_cr3_by_pix=start.cr3_by_pix,.native_cr3_slots=16u,
+        .current_cr3=current_cr3};
+    if(port_v37_sched_init(&start_scheduler,&start_ops)!=PORT_V37_SCHED_OK)
         return fail("initial process activation scheduler setup");
     const struct port_v37_pcb_seed start_pcb={.address=start.pcb_va[0],
         .pid=0x00010008u,.priority=16u,.name="SYSTEM",.name_bytes=6u};
@@ -482,6 +491,8 @@ int main(void){
        port_v37_sched_select(&start_scheduler,&selected,&restore_frame)!=
            PORT_V37_SCHED_OK||selected!=start.pcb_va[0]||
        restore_frame!=start.frame_va[0]||
+       start_scheduler.current_cr3!=start.live_cr3||
+       start.cr3_by_pix[8u]!=start.live_cr3||
        port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
         return fail("INIT PHD/native-frame binding and executable CHSE activation");
     const struct port_v37_pcb_seed quota_pcb={.address=start.pcb_va[1],

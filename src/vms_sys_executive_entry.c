@@ -709,6 +709,9 @@ _Alignas(8) static uint8_t executive_vms_system_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_null_pcb[PORT_V37_PCB_BYTES];
 _Alignas(8) static uint8_t executive_vms_swapper_pcb[PORT_V37_PCB_BYTES];
 static struct port_v37_scheduler executive_vms_scheduler;
+static uint32_t *executive_vms_native_cr3_by_pix;
+static uint32_t executive_vms_native_cr3_slots;
+static uint32_t executive_vms_native_cr3_bytes;
 struct executive_vms_scheduler_arch {
     void *context;
     void (*request)(void *);
@@ -719,12 +722,18 @@ static struct executive_vms_scheduler_arch executive_vms_scheduler_arch;
  * while the original IPL_SYNCH scheduler/event transaction mutates shared
  * PCB, CEB and WQH records, then restore the caller's IF state exactly. */
 static uint32_t executive_vms_enter_synchronization(void *unused){
-    (void)unused;uint32_t flags;
+    (void)unused;
+#if defined(__i386__)
+    uint32_t flags;
     __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
     return flags;
+#else
+    return 0u;
+#endif
 }
 static void executive_vms_leave_synchronization(void *unused,uint32_t flags){
     (void)unused;__asm__ volatile("":::"memory");
+#if defined(__i386__)
     if(flags&UINT32_C(0x200)){
         __asm__ volatile("sti":::"memory");
         if(executive_vms_scheduler_arch.run_pending)
@@ -732,12 +741,25 @@ static void executive_vms_leave_synchronization(void *unused,uint32_t flags){
                 executive_vms_scheduler_arch.context);
     }
     else __asm__ volatile("cli":::"memory");
+#else
+    (void)flags;
+#endif
 }
 static void executive_vms_request_reschedule(void *unused){
     (void)unused;
     if(executive_vms_scheduler_arch.request)
         executive_vms_scheduler_arch.request(
             executive_vms_scheduler_arch.context);
+}
+static uint32_t executive_vms_current_cr3(void *unused){
+    (void)unused;
+#if defined(__i386__)
+    uint32_t cr3;
+    __asm__ volatile("movl %%cr3,%0":"=r"(cr3));
+    return cr3;
+#else
+    return 0u;
+#endif
 }
 static uint32_t executive_vms_sched_chse(
     struct port_v37_scheduler *scheduler,uint32_t pcb,uint8_t priority_class){
@@ -950,12 +972,32 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
                  executive_free_npages-used,&settings,
                  &executive_procvec)!=PORT_INI_PROC_OK)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
+        const uint32_t cr3_slots=executive_procvec.allocated_slots;
+        if(executive_procvec.allocated_bytes>UINT32_MAX-3u)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        const uint32_t procvec_bytes=(executive_procvec.allocated_bytes+3u)&~3u;
+        if(!cr3_slots||cr3_slots>UINT32_MAX/sizeof(uint32_t)||
+           procvec_bytes>
+              executive_free_npages-used||
+           cr3_slots*sizeof(uint32_t)>
+              executive_free_npages-used-procvec_bytes)
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        executive_vms_native_cr3_bytes=cr3_slots*sizeof(uint32_t);
+        executive_vms_native_cr3_by_pix=(uint32_t *)(void *)(
+            executive_np_base+used+procvec_bytes);
+        if((uintptr_t)executive_vms_native_cr3_by_pix>UINT32_MAX||
+           ((uintptr_t)executive_vms_native_cr3_by_pix&3u))
+            return PORT_SYS_EXEC_BAD_PARAMETERS;
+        executive_vms_native_cr3_slots=cr3_slots;
         const struct port_v37_sched_ops sched_ops={
             .context=0,.address=executive_vms_address,
             .resolve=executive_vms_resolve,
             .enter_synchronization=executive_vms_enter_synchronization,
             .leave_synchronization=executive_vms_leave_synchronization,
-            .request_reschedule=executive_vms_request_reschedule};
+            .request_reschedule=executive_vms_request_reschedule,
+            .native_cr3_by_pix=executive_vms_native_cr3_by_pix,
+            .native_cr3_slots=executive_vms_native_cr3_slots,
+            .current_cr3=executive_vms_current_cr3};
         executive_vms_scheduler_arch.context=p->vms_scheduler_arch_context;
         executive_vms_scheduler_arch.request=p->vms_scheduler_request;
         executive_vms_scheduler_arch.run_pending=p->vms_scheduler_run_pending;
@@ -1001,9 +1043,11 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         uint32_t lockused=(executive_lockdb.pool_bytes+3u)&~3u;
         uint32_t pvused=(executive_procvec.allocated_bytes+3u)&~3u;
         if(lockused>executive_free_npages ||
-           pvused>executive_free_npages-lockused)
+           pvused>executive_free_npages-lockused||
+           executive_vms_native_cr3_bytes>
+              executive_free_npages-lockused-pvused)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        uint32_t used=lockused+pvused;
+        uint32_t used=lockused+pvused+executive_vms_native_cr3_bytes;
         if(used>=executive_free_npages ||
            port_ini_phvswap_init(executive_np_base+used,
                  executive_free_npages-used,p->phv_settings,
@@ -1028,12 +1072,14 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         uint32_t lock=(executive_lockdb.pool_bytes+3u)&~3u;
         uint32_t proc=(executive_procvec.allocated_bytes+3u)&~3u;
+        uint32_t cr3=executive_vms_native_cr3_bytes;
         uint32_t phv=(executive_phvswap.pool_bytes+3u)&~3u;
         if(lock>executive_free_npages ||
            proc>executive_free_npages-lock ||
-           phv>executive_free_npages-lock-proc)
+           cr3>executive_free_npages-lock-proc||
+           phv>executive_free_npages-lock-proc-cr3)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        uint32_t used=lock+proc+phv;
+        uint32_t used=lock+proc+cr3+phv;
         if(used>=executive_free_npages ||
            port_ini_mpw_init(executive_np_base+used,
                executive_free_npages-used,p->mpw_settings,
@@ -1060,14 +1106,16 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         settings.null_pfl_address=(uint32_t)(uintptr_t)executive_nullpfl_uninitialized;
         uint32_t lock=(executive_lockdb.pool_bytes+3u)&~3u;
         uint32_t proc=(executive_procvec.allocated_bytes+3u)&~3u;
+        uint32_t cr3=executive_vms_native_cr3_bytes;
         uint32_t phv=(executive_phvswap.pool_bytes+3u)&~3u;
         uint32_t mpw=(executive_mpw.allocated_bytes+3u)&~3u;
         if(lock>executive_free_npages ||
            proc>executive_free_npages-lock ||
-           phv>executive_free_npages-lock-proc ||
-           mpw>executive_free_npages-lock-proc-phv)
+           cr3>executive_free_npages-lock-proc ||
+           phv>executive_free_npages-lock-proc-cr3 ||
+           mpw>executive_free_npages-lock-proc-cr3-phv)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
-        uint32_t used=lock+proc+phv+mpw;
+        uint32_t used=lock+proc+cr3+phv+mpw;
         if(used>=executive_free_npages ||
            port_ini_pflvec_init(executive_np_base+used,
                     executive_free_npages-used,&settings,
@@ -1213,13 +1261,14 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         const uint32_t size=executive_free_npages;
         uint32_t used=0u;
-        const uint32_t chunks[5]={
+        const uint32_t chunks[6]={
             executive_lockdb.pool_bytes,
             executive_procvec.allocated_bytes,
+            executive_vms_native_cr3_bytes,
             executive_phvswap.pool_bytes,
             executive_mpw.allocated_bytes,
             executive_pflvec.allocated_bytes};
-        for(unsigned i=0;i<5u;i++){
+        for(unsigned i=0;i<6u;i++){
             if(chunks[i]>UINT32_MAX-3u)return PORT_SYS_EXEC_BAD_PARAMETERS;
             uint32_t part=(chunks[i]+3u)&~3u;
             if(part>size-used)return PORT_SYS_EXEC_BAD_PARAMETERS;

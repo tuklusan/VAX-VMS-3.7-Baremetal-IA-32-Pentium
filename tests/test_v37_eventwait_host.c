@@ -64,8 +64,9 @@ static int start_current(struct fixture *f,uint32_t *pcb,uint32_t *frame){
 int main(void){
     struct fixture f={0};
     f.lef.forward=f.lef.backward=WQ_VA;f.lef.state=PORT_V37_SCH_LEF;
-    const struct port_v37_sched_ops ops={&f,address,resolve,0,0,
-        enter_synchronization,leave_synchronization,0,0};
+    const struct port_v37_sched_ops ops={.context=&f,.address=address,
+        .resolve=resolve,.enter_synchronization=enter_synchronization,
+        .leave_synchronization=leave_synchronization};
     if(port_v37_sched_init(&f.scheduler,&ops)!=PORT_V37_SCHED_OK)
         return fail("scheduler initialization");
     const struct port_v37_pcb_seed seed={.address=PCB_VA,.pid=0x00010000u,

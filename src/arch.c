@@ -988,6 +988,15 @@ static void gate_set(unsigned v, uint32_t handler, unsigned dpl) {
     idt[v].offset_hi = (uint16_t)(handler >> 16);
 }
 
+static int arch_vms_switch_cr3(uint32_t cr3){
+    if(!cr3||(cr3&UINT32_C(0x00000fff)))return 0;
+    uint32_t current;
+    __asm__ volatile("movl %%cr3,%0":"=r"(current));
+    if(current!=cr3)
+        __asm__ volatile("movl %0,%%cr3"::"r"(cr3):"memory");
+    return 1;
+}
+
 static int arch_vms_schedule_frame(struct port_trap_frame *f){
     if(!resident_vms_sched_interrupt)return 0;
     resident_vms_reschedule_pending=0u;
@@ -999,6 +1008,8 @@ static int arch_vms_schedule_frame(struct port_trap_frame *f){
     if(status==PORT_V37_SCHED_NO_CONTEXT||status==PORT_V37_SCHED_EMPTY)
         return 0;
     if(status==PORT_V37_SCHED_OK&&pcb&&next&&
+       (!resident_vms_scheduler->current_cr3||
+        arch_vms_switch_cr3(resident_vms_scheduler->current_cr3))&&
        arch_prepare_vms_restore_frame(
            (struct port_v37_ia32_restore_frame *)(uintptr_t)next))
         return ARCH_TRAP_RESTORE_SELECTED_FRAME;

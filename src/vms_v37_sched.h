@@ -57,6 +57,11 @@ struct port_v37_sched_ops {
      * receive the newly derived processor AST level. */
     void (*ast_arrival)(void *,uint32_t);
     void (*set_current_ast_level)(void *,uint8_t);
+    /* Native IA-32 roots indexed by source process PIX. Storage remains
+     * caller-owned and sized from INIT's source process-vector allocation. */
+    uint32_t *native_cr3_by_pix;
+    uint32_t native_cr3_slots;
+    uint32_t (*current_cr3)(void *);
 };
 struct port_v37_scheduler {
     struct port_v37_sched_head heads[PORT_V37_SCH_QUEUES];
@@ -69,6 +74,7 @@ struct port_v37_scheduler {
     struct port_v37_sched_ops ops;
     uint32_t initialized;
     uint32_t native_interrupt_count,native_no_context_count;
+    uint32_t current_cr3;
 };
 typedef uint32_t (*port_v37_sched_interrupt_fn)(struct port_v37_scheduler *,
     uint32_t,uint32_t *,uint32_t *);

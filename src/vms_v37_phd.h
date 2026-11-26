@@ -44,6 +44,9 @@ struct port_v37_phd_seed {
     uint32_t native_ksp,entry_pc,initial_r4;
     uint32_t p0_page_table,p0_limit,p1_page_table,p1_limit;
     uint32_t first_free_p1_va;
+    /* IA-32 address-space root is port-side scheduler state; it does not
+     * replace the source P0/P1 base and limit fields in the PHD. */
+    uint32_t native_cr3;
     uint8_t priority,ast_level;
 };
 
