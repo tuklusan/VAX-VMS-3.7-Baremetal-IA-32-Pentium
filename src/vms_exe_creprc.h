@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "vms_ini_procvec.h"
 #include "vms_exe_np_pool.h"
+#include "vms_v37_sched.h"
+#include "vms_v37_phd.h"
 
 enum {
     PORT_V37_PRC_STATUS_FLAGS=0x1ffu,
@@ -89,4 +91,18 @@ uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *,
     uint32_t null_pcb_address,uint32_t new_pcb_address,
     uint8_t *new_pcb,size_t new_pcb_bytes,
     uint16_t *process_count,uint16_t process_limit,uint32_t *pid);
+enum {PORT_EXE_CREPRC_RUN_OK=1u,PORT_EXE_CREPRC_RUN_BAD=2u,
+      PORT_EXE_CREPRC_RUN_SLOT=4u,PORT_EXE_CREPRC_RUN_SCHED=6u};
+/* Compose SYSCREPRC's final PIX/PID publication with native PHD/frame
+ * installation and SCH$CHSE. Caller holds the executive synchronization
+ * level used by both source activation and the scheduler. The supplied PCB,
+ * PHD and restore frame must already be allocated and initialized; image
+ * mapping, JIB/AST/quota construction and SYS$QIO activation remain separate. */
+uint32_t port_exe_creprc_activate_native(struct port_v37_scheduler *,
+    struct port_ini_procvec *,uint32_t null_pcb_address,
+    uint32_t new_pcb_address,uint8_t *new_pcb,size_t new_pcb_bytes,
+    uint32_t phd_address,uint32_t restore_frame_address,
+    const struct port_v37_phd_seed *,uint8_t priority_increment_class,
+    uint16_t *process_count,uint16_t process_limit,uint32_t *pid,
+    uint32_t *scheduler_status);
 #endif

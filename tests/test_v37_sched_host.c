@@ -1,19 +1,21 @@
 #include "vms_v37_sched.h"
 #include "vms_v37_ia32_context.h"
 #include "vms_v37_phd.h"
+#include "vms_exe_creprc.h"
+#include "vms_ini_procvec.h"
 #include <stdio.h>
 #include <string.h>
 
 struct fixture {
     struct port_v37_scheduler *scheduler;
-    uint8_t pcbs[4][PORT_V37_PCB_BYTES];
-    struct port_v37_ia32_restore_frame frames[4];
-    uint8_t phds[4][PORT_V37_PHD_BYTES];
+    uint8_t pcbs[5][PORT_V37_PCB_BYTES];
+    struct port_v37_ia32_restore_frame frames[5];
+    uint8_t phds[5][PORT_V37_PHD_BYTES];
     struct port_v37_wait_queue wait_queue;
     uint32_t wait_queue_va;
-    uint32_t pcb_va[4];
-    uint32_t frame_va[4];
-    uint32_t phd_va[4];
+    uint32_t pcb_va[5];
+    uint32_t frame_va[5];
+    uint32_t phd_va[5];
     uint32_t cr3_by_pix[16],live_cr3;
     unsigned reschedules,swapper_wakes;
 };
@@ -23,7 +25,7 @@ static uint32_t addr(void *context,const void *p){
     uintptr_t end=begin+sizeof *f->scheduler;
     uintptr_t value=(uintptr_t)p;
     if(value>=begin&&value<end)return 0x00100000u+(uint32_t)(value-begin);
-    for(unsigned i=0;i<4u;i++)if(p==f->pcbs[i])return f->pcb_va[i];
+    for(unsigned i=0;i<5u;i++)if(p==f->pcbs[i])return f->pcb_va[i];
     if(p==&f->wait_queue)return f->wait_queue_va;
     return 0u;
 }
@@ -33,13 +35,13 @@ static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
     const uint32_t he=hb+sizeof *f->scheduler;
     if(va>=hb&&va<=he&&bytes<=he-va)
         return (uint8_t *)f->scheduler+(va-hb);
-    for(unsigned i=0;i<4u;i++)
+    for(unsigned i=0;i<5u;i++)
         if(va==f->pcb_va[i]&&bytes<=PORT_V37_PCB_BYTES)return f->pcbs[i];
-    for(unsigned i=0;i<4u;i++)
+    for(unsigned i=0;i<5u;i++)
         if(va==f->frame_va[i]&&
            bytes<=sizeof(struct port_v37_ia32_restore_frame))
             return (uint8_t *)&f->frames[i];
-    for(unsigned i=0;i<4u;i++)
+    for(unsigned i=0;i<5u;i++)
         if(va==f->phd_va[i]&&bytes<=sizeof f->phds[i])
             return f->phds[i];
     if(va==f->wait_queue_va&&bytes<=sizeof f->wait_queue)
@@ -94,9 +96,11 @@ static void put32(uint8_t *p,uint32_t v){
 int main(void){
     struct port_v37_scheduler scheduler;struct fixture f={
         .scheduler=&scheduler,.pcb_va={0x00200000u,0x00201000u,
-                                       0x00202000u,0x00203000u},
-        .frame_va={0x00400000u,0x00401000u,0x00402000u,0x00403000u},
-        .phd_va={0x00500000u,0x00501000u,0x00502000u,0x00503000u},
+                                       0x00202000u,0x00203000u,0x00204000u},
+        .frame_va={0x00400000u,0x00401000u,0x00402000u,0x00403000u,
+                   0x00404000u},
+        .phd_va={0x00500000u,0x00501000u,0x00502000u,0x00503000u,
+                 0x00504000u},
         .wait_queue_va=0x00600000u};
     f.wait_queue.forward=f.wait_queue.backward=f.wait_queue_va;
     f.wait_queue.state=7u;
@@ -434,9 +438,12 @@ int main(void){
         return fail("RSE SETPRI nonresident COMO and swapper wake transition");
     struct port_v37_scheduler start_scheduler;
     struct fixture start={.scheduler=&start_scheduler,
-        .pcb_va={0x00800000u,0x00801000u,0x00802000u,0x00803000u},
-        .frame_va={0x00900000u,0x00901000u,0x00902000u,0x00903000u},
-        .phd_va={0x00a00000u,0x00a01000u,0x00a02000u,0x00a03000u},
+        .pcb_va={0x00800000u,0x00801000u,0x00802000u,0x00803000u,
+                 0x00804000u},
+        .frame_va={0x00900000u,0x00901000u,0x00902000u,0x00903000u,
+                   0x00904000u},
+        .phd_va={0x00a00000u,0x00a01000u,0x00a02000u,0x00a03000u,
+                 0x00a04000u},
         .wait_queue_va=0x00b00000u,.live_cr3=0x00d00000u};
     start.wait_queue.forward=start.wait_queue.backward=start.wait_queue_va;
     const struct port_v37_sched_ops start_ops={
@@ -624,6 +631,75 @@ int main(void){
               PORT_V37_PHD_BYTES)||
        port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
         return fail("invalid PROCSTRT quotas leave PCB/PHD/scheduler unpublished");
-    puts("SYSWAIT/SCHED/RSE plus transactional PROCSTRT PHD quota activation PASS");
+    const struct port_v37_pcb_seed create_seed={.address=start.pcb_va[2],
+        .pid=0x0001000au,.priority=20u,.name="STARTUP",.name_bytes=7u};
+    if(port_v37_pcb_init_genpcb(start.pcbs[2],sizeof start.pcbs[2],
+           &create_seed)!=PORT_V37_PCB_OK)
+        return fail("SYSCREPRC native activation PCB template");
+    start.frames[2]=(struct port_v37_ia32_restore_frame){
+        .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
+        .registers={.cs=0x08u,.eflags=0x202u,.eip=0x00123600u,
+                    .user_ss=start.pcb_va[2]}};
+    struct port_v37_phd_seed create_phd=start_phd;
+    create_phd.entry_pc=start.frames[2].registers.eip;
+    create_phd.initial_r4=start.pcb_va[2];
+    create_phd.native_cr3=0u;
+    uint32_t procvec_words[11]={0};
+    struct port_ini_procvec created_processes={0};
+    const struct port_ini_proc_settings proc_settings={
+        .max_processes=4u,.system_pcb_address=0x2000u,
+        .null_pcb_address=0x1000u,.dyn_pcbvec_type=0x1234u};
+    if(port_ini_procvec_init(procvec_words,sizeof procvec_words,
+           &proc_settings,&created_processes)!=PORT_INI_PROC_OK)
+        return fail("SYSCREPRC process-vector fixture");
+    uint16_t create_count=1u;uint32_t create_pid=0u,schedule_status=0u;
+    if(port_exe_creprc_activate_native(&start_scheduler,&created_processes,
+           proc_settings.null_pcb_address,start.pcb_va[2],start.pcbs[2],
+           sizeof start.pcbs[2],start.phd_va[2],start.frame_va[2],
+           &create_phd,0u,&create_count,4u,&create_pid,&schedule_status)!=
+              PORT_EXE_CREPRC_RUN_OK||schedule_status!=PORT_V37_SCHED_OK||
+       create_pid!=0x00010003u||create_count!=2u||
+       port_ini_procvec_ptr(&created_processes,3u)!=start.pcb_va[2]||
+       get32(start.pcbs[2]+PORT_V37_PCB_PHD)!=start.phd_va[2]||
+       get32(start.pcbs[2]+PORT_V37_PCB_PHYPCB)!=
+           start.phd_va[2]+PORT_V37_PHD_PCB||
+       get32(start.phds[2]+PORT_V37_PHD_KSP)!=start.frame_va[2]||
+       get16(start.pcbs[2]+PORT_V37_PCB_STATE)!=PORT_V37_SCH_COM||
+       start.cr3_by_pix[3]!=start.live_cr3||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("SYSCREPRC PID publication, native context and CHSE");
+    const struct port_v37_pcb_seed bad_create_seed={.address=start.pcb_va[4],
+        .pid=0x0001000bu,.priority=20u,.name="BADSTART",.name_bytes=8u};
+    if(port_v37_pcb_init_genpcb(start.pcbs[4],sizeof start.pcbs[4],
+           &bad_create_seed)!=PORT_V37_PCB_OK)
+        return fail("SYSCREPRC rejected activation PCB template");
+    start.frames[4]=(struct port_v37_ia32_restore_frame){
+        .gs=0x10u,.fs=0x10u,.es=0x10u,.ds=0x10u,
+        .registers={.cs=0x08u,.eflags=0x202u,.eip=0x00123600u,
+                    .user_ss=start.pcb_va[4]+4u}};
+    struct port_v37_phd_seed bad_create_phd=create_phd;
+    bad_create_phd.initial_r4=start.pcb_va[4];
+    const uint16_t rollback_count=create_count;
+    const uint32_t rollback_pid=get32(start.pcbs[4]+PORT_V37_PCB_PID);
+    uint32_t rejected_pid=0xdeadbeefu;
+    const uint32_t rollback_result=port_exe_creprc_activate_native(
+           &start_scheduler,&created_processes,
+           proc_settings.null_pcb_address,start.pcb_va[4],start.pcbs[4],
+           sizeof start.pcbs[4],start.phd_va[4],start.frame_va[4],
+           &bad_create_phd,0u,&create_count,4u,&rejected_pid,&schedule_status);
+    if(rollback_result!=PORT_EXE_CREPRC_RUN_SCHED||
+       schedule_status!=PORT_V37_SCHED_CORRUPT||create_count!=rollback_count||
+       rejected_pid!=0xdeadbeefu||
+       port_ini_procvec_ptr(&created_processes,2u)!=
+           proc_settings.null_pcb_address||
+       get32(start.pcbs[4]+PORT_V37_PCB_PID)!=rollback_pid||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK){
+        fprintf(stderr,"activation rollback result=%u sched=%u count=%u/%u pid=%08x/%08x pix2=%08x check=%u\n",
+            rollback_result,schedule_status,create_count,rollback_count,
+            rejected_pid,rollback_pid,port_ini_procvec_ptr(&created_processes,2u),
+            port_v37_sched_check(&start_scheduler));
+        return fail("SYSCREPRC failed native activation rolls back PIX/PID");
+    }
+    puts("SYSWAIT/SCHED/RSE plus native SYSCREPRC activation and rollback PASS");
     return 0;
 }

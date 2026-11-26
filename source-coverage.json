@@ -1908,9 +1908,9 @@
           ],
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
-          "pc_symbol": "port_exe_creprc_activate_slot",
-          "pc_line": 295,
-          "function": "Find a free PIX, enforce process limit, advance/wrap sequence, store PCB$L_PID, then publish PCB pointer"
+          "pc_symbol": "port_exe_creprc_activate_native",
+          "pc_line": 330,
+          "function": "Publish source PIX/PID before installing the native PHD/restore frame and scheduler CHSE; rollback the vector/PID/count when context activation is rejected"
         },
         {
           "original_lines": [
@@ -1918,10 +1918,10 @@
             805
           ],
           "status": "unresolved",
-          "reason": "Post-publication JIB/process accounting, scheduler CHSE, PID return, service exit and rollback are absent"
+          "reason": "Post-publication JIB/process accounting, image activation, caller PID store and public service exit remain absent"
         }
       ],
-      "unresolved_integration": "Preflight plus the source ACTIVATE PIX/PID/vector publication stage. Caller memory probes are accessibility inputs; PCB/PQB/JIB allocation, swap allocation, scheduler CHSE, public service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout."
+      "unresolved_integration": "Preflight plus partial source ACTIVATE and native scheduler integration. The native activation operation requires preallocated PCB/PHD/frame resources and caller-held executive synchronization; it does not load or map an image. Caller memory probes remain accessibility inputs; PCB/PQB/JIB allocation integration, swap allocation, complete public service dispatch and PID output store remain absent. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout."
     },
     {
       "original_file": "DCL/SRC/GOTO.MAR",

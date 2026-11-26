@@ -326,3 +326,54 @@ uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *vector,
     *pid=candidate_pid;
     return PORT_EXE_CREPRC_SLOT_OK;
 }
+
+uint32_t port_exe_creprc_activate_native(
+    struct port_v37_scheduler *scheduler,struct port_ini_procvec *vector,
+    uint32_t null_pcb_address,uint32_t new_pcb_address,uint8_t *new_pcb,
+    size_t new_pcb_bytes,uint32_t phd_address,uint32_t restore_frame_address,
+    const struct port_v37_phd_seed *seed,uint8_t priority_increment_class,
+    uint16_t *process_count,uint16_t process_limit,uint32_t *pid,
+    uint32_t *scheduler_status){
+    if(scheduler_status)*scheduler_status=PORT_V37_SCHED_BADPARAM;
+    if(!scheduler||!vector||!new_pcb||!seed||!process_count||!pid||
+       !phd_address||phd_address>UINT32_MAX-PORT_V37_PHD_PCB||
+       !restore_frame_address||priority_increment_class>=
+           PORT_V37_SCH_INCREMENT_CLASSES||
+       new_pcb_bytes<PORT_V37_PCB_BYTES||
+       read16(new_pcb+PORT_V37_PCB_SIZE)!=PORT_V37_PCB_BYTES||
+       new_pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
+       read32(new_pcb)!=new_pcb_address||
+       port_v37_sched_check(scheduler)!=PORT_V37_SCHED_OK)
+        return PORT_EXE_CREPRC_RUN_BAD;
+    const uint16_t old_count=*process_count;
+    const uint32_t old_pid=read32(new_pcb+PORT_V37_PCB_PID);
+    uint32_t candidate_pid=0u;
+    const uint32_t activated=port_exe_creprc_activate_slot(vector,
+        null_pcb_address,new_pcb_address,new_pcb,new_pcb_bytes,
+        process_count,process_limit,&candidate_pid);
+    if(activated!=PORT_EXE_CREPRC_SLOT_OK)return PORT_EXE_CREPRC_RUN_SLOT;
+
+    /* The process vector must publish the PID before CHSE can request a
+     * reschedule. Scheduler-start failure is limited to an invalid supplied
+     * PHD/frame or an inconsistent queue; restore the unpublished PCB slot,
+     * but retain the advanced sequence number to prevent PID reuse. */
+    const uint32_t started=port_v37_sched_start_context(scheduler,
+        new_pcb_address,phd_address,phd_address+PORT_V37_PHD_PCB,
+        restore_frame_address,seed,priority_increment_class);
+    if(started!=PORT_V37_SCHED_OK){
+        const uint16_t pix=(uint16_t)candidate_pid;
+        if(port_ini_procvec_ptr(vector,pix)!=new_pcb_address||
+           port_ini_procvec_set_pcb(vector,pix,null_pcb_address)!=
+               PORT_INI_PROC_OK||*process_count!=old_count+1u){
+            if(scheduler_status)*scheduler_status=PORT_V37_SCHED_CORRUPT;
+            return PORT_EXE_CREPRC_RUN_SCHED;
+        }
+        *process_count=old_count;
+        write32(new_pcb+PORT_V37_PCB_PID,old_pid);
+        if(scheduler_status)*scheduler_status=started;
+        return PORT_EXE_CREPRC_RUN_SCHED;
+    }
+    *pid=candidate_pid;
+    if(scheduler_status)*scheduler_status=PORT_V37_SCHED_OK;
+    return PORT_EXE_CREPRC_RUN_OK;
+}

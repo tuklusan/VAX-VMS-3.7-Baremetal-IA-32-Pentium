@@ -164,7 +164,7 @@ build/vms_exe_setstk.o: src/vms_exe_setstk.c src/vms_exe_setstk.h src/vms_exe_ac
 	$(CC) $(EXEFLAGS) -c $< -o $@
 build/vms_exe_setprv.o: src/vms_exe_setprv.c src/vms_exe_setprv.h src/vms_exe_access.h | build
 	$(CC) $(EXEFLAGS) -c $< -o $@
-build/vms_exe_creprc.o: src/vms_exe_creprc.c src/vms_exe_creprc.h src/vms_exe_gettim.h src/vms_exe_setprv.h | build
+build/vms_exe_creprc.o: src/vms_exe_creprc.c src/vms_exe_creprc.h src/vms_exe_gettim.h src/vms_exe_setprv.h src/vms_v37_sched.h src/vms_v37_phd.h | build
 	$(CC) $(EXEFLAGS) -c $< -o $@
 build/vms_exe_setpri.o: src/vms_exe_setpri.c src/vms_exe_setpri.h src/vms_exe_access.h | build
 	$(CC) $(EXEFLAGS) -c $< -o $@
@@ -532,7 +532,7 @@ v37pcbcheck: | build
 
 .PHONY: v37schedcheck
 v37schedcheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_v37_pcb.c src/vms_v37_phd.c src/vms_v37_sched.c src/vms_v37_ia32_context.c tests/test_v37_sched_host.c -o build/v37schedcheck
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_creprc.c src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_ini_procvec.c src/vms_v37_pcb.c src/vms_v37_phd.c src/vms_v37_sched.c src/vms_v37_ia32_context.c tests/test_v37_sched_host.c -o build/v37schedcheck
 	./build/v37schedcheck
 
 .PHONY: v37qastcheck
@@ -665,7 +665,7 @@ execanevtcheck: | build
 EXE_M83_SERVICES=src/vms_exe_setstk.c src/vms_exe_setprv.c src/vms_exe_creprc.c src/vms_exe_setpri.c src/vms_exe_setpra.c src/vms_exe_adjstk.c src/vms_exe_derlmb.c src/vms_exe_getpti.c
 .PHONY: exeportbatchcheck
 exeportbatchcheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $(EXE_M83_SERVICES) src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_ini_procvec.c tests/test_exe_portbatch_host.c -o build/exe_portbatch_hosttest
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc $(EXE_M83_SERVICES) src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_ini_procvec.c src/vms_v37_pcb.c src/vms_v37_phd.c src/vms_v37_sched.c src/vms_v37_ia32_context.c tests/test_exe_portbatch_host.c -o build/exe_portbatch_hosttest
 	./build/exe_portbatch_hosttest
 
 .PHONY: exeportcorecheck
@@ -1070,7 +1070,7 @@ swapinithashcheck: | build
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_swapinit_hash.c src/vms_exe_paged_pool.c src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_log_hash.c src/vms_log_name_compare.c src/vms_log_record_valid.c src/vms_ini_devicedb.c src/vms_ini_ddb_boot.c src/vms_ini_ddb_opa.c src/vms_ini_ddb_mb.c src/vms_ini_ddb_nl.c src/vms_ini_ucb_boot.c src/vms_ini_ucb_opa.c src/vms_ini_ucb_mb1.c src/vms_ini_ucb_mb2.c src/vms_ini_ucb_nl.c src/vms_ini_log_templates.c tests/test_exe_swapinit_hash_host.c -o build/swapinithashcheck
 	./build/swapinithashcheck
 execreprccheck: | build
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_creprc.c src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_ini_procvec.c src/vms_v37_pcb.c tests/test_exe_creprc_host.c -o build/execreprccheck
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Isrc src/vms_exe_creprc.c src/vms_exe_np_pool.c src/vms_qio_irp_pool.c src/vms_ini_packet_queues.c src/vms_ini_procvec.c src/vms_v37_pcb.c src/vms_v37_phd.c src/vms_v37_sched.c src/vms_v37_ia32_context.c tests/test_exe_creprc_host.c -o build/execreprccheck
 	./build/execreprccheck
 build/sys.exe: build/vms_sys_executive_entry.o build/vms_exe_np_pool.o build/vms_exe_paged_pool.o build/vms_exe_swapinit_hash.o build/vms_v37_pcb.o build/vms_v37_phd.o build/vms_v37_ia32_context.o build/vms_ini_syswcb.o build/vms_ini_pflvec.o build/vms_ini_mpw.o build/vms_ini_phv_swap.o build/vms_ini_procvec.o build/vms_ini_lockdb.o build/vms_sysboot_pktmem.o build/vms_ini_packet_queues.o build/vms_ini_sysparams.o build/vms_ini_log_templates.o build/vms_ini_syslog.o build/vms_ini_bootdev_scan.o build/vms_ini_dpt_templates.o build/vms_ini_dpt_mb.o build/vms_ini_dpt_nl.o build/vms_ini_dpt_op.o $(M118_DB_OBJS) $(M119_CON_OBJS) $(M120_IOC_OBJS) $(M121_QIO_OBJS) $(M218_SYSQIO_OBJS) build/vms_exe_creprc.o $(M272_SYSASSIGN_OBJS) $(M279_EXE_ACCESS_OBJS) $(M122_NL_DDT_OBJS) $(M123_IOPOST_OBJS) $(M125_DQ_OBJS) $(M126_DQ_READ_OBJS) $(M127_FIN_OBJS) $(M128_LOG_OBJS) $(M129_DEVLOG_OBJS) $(M130_DQDDT_OBJS) $(M131_RELOC_OBJS) $(M134_DDTRELOC_OBJS) $(M137_INDEX_OBJS) $(M138_MFD_OBJS) $(M139_DIR_OBJS) $(M140_IMAGE_OBJS) $(M144_AUX_OBJS) $(M146_RANGE_OBJS) $(M149_BOOTPATH_OBJS) $(M149_BOOTDIR_OBJS) $(M152_CHAIN_OBJS) $(M160_CURSOR_OBJS) $(M168_IOC_OBJS) $(M184_F11_IOC_OBJS) $(M192_CHAN_OBJS) $(M197_DQ_CRB_OBJS) build/vms_f11_acp86.o build/vms_f11_acp87.o build/vms_boot_files11.o build/vms_bootio.o build/executive-partial.o sys_native.ld
 
