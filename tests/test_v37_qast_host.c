@@ -10,7 +10,7 @@ struct fixture {
     uint8_t pcb[PORT_V37_PCB_BYTES];
     uint8_t phd[PORT_V37_PHD_BYTES];
     uint8_t ceb[PORT_V37_CEB_BYTES];
-    uint8_t acb[5][136];
+    uint8_t acb[6][136];
     struct port_v37_scheduler scheduler;
     unsigned arrivals,current_levels;
     uint8_t last_level;
@@ -35,10 +35,10 @@ static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
     if(va>=0x2000u&&va<=0x2000u+sizeof f->phd&&
        bytes<=0x2000u+sizeof f->phd-va)
         return f->phd+(va-0x2000u);
-    if(va>=0x3000u&&va<0x3500u){
+    if(va>=0x3000u&&va<0x3600u){
         const unsigned index=(va-0x3000u)/0x100u;
         const unsigned offset=(va-0x3000u)%0x100u;
-        if(index<5u&&offset<=sizeof f->acb[index]&&
+        if(index<6u&&offset<=sizeof f->acb[index]&&
            bytes<=sizeof f->acb[index]-offset)
             return f->acb[index]+offset;
     }
@@ -230,6 +230,16 @@ int main(void){
     const struct port_v37_iopost_sched_binding binding={
         .scheduler=&f.scheduler,.process_vector=&procvec,
         .priority_increment_class=0u};
+    const uint8_t ast_head_before[8]={f.pcb[PORT_V37_PCB_ASTQFL],
+        f.pcb[PORT_V37_PCB_ASTQFL+1u],f.pcb[PORT_V37_PCB_ASTQFL+2u],
+        f.pcb[PORT_V37_PCB_ASTQFL+3u],f.pcb[PORT_V37_PCB_ASTQBL],
+        f.pcb[PORT_V37_PCB_ASTQBL+1u],f.pcb[PORT_V37_PCB_ASTQBL+2u],
+        f.pcb[PORT_V37_PCB_ASTQBL+3u]};
+    if(port_v37_iopost_sched_queue_kast((void *)&binding,seed.pid,
+          0x2000u,0x3400u)!=PORT_V37_IOPOST_CORRUPT||
+       memcmp(ast_head_before,f.pcb+PORT_V37_PCB_ASTQFL,4u)||
+       memcmp(ast_head_before+4u,f.pcb+PORT_V37_PCB_ASTQBL,4u))
+        return fail("direct KAST adapter rejects stale resolved PCB");
     const uint32_t wake_status=port_v37_iopost_sched_queue_ast(
         (void *)&binding,seed.pid,0x3400u);
     if(wake_status!=PORT_V37_IOPOST_OK)
@@ -247,6 +257,18 @@ int main(void){
                 (uint16_t)f.pcb[PORT_V37_PCB_STATE+1u]<<8)),f.arrivals,
             port_v37_sched_check(&f.scheduler));
         return fail("SCH$QAST arrival wakes resident AST waiter through RSE");
+    }
+    make_acb(&f,5u,0x80u,seed.pid);
+    const uint32_t kast_bridge=port_v37_iopost_sched_queue_kast(
+        (void *)&binding,seed.pid,0x1000u,0x3500u);
+    if(kast_bridge!=PORT_V37_IOPOST_OK||
+       get32(f.pcb+PORT_V37_PCB_ASTQFL)!=0x3200u||
+       get32(f.acb[3])!=0x3500u||get32(f.acb[5])!=0x3100u||
+       f.arrivals!=4u){
+        fprintf(stderr,"KAST adapter status=%u head=%08x forward=%08x arrivals=%u\n",
+            kast_bridge,get32(f.pcb+PORT_V37_PCB_ASTQFL),
+            get32(f.acb[5]),f.arrivals);
+        return fail("direct KAST adapter enters native SCH$QAST");
     }
     static const unsigned indexed_ast_wait_states[]={
         PORT_V37_SCH_CEF,PORT_V37_SCH_COLPG,PORT_V37_SCH_MWAIT,PORT_V37_SCH_PFW,
