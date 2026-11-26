@@ -2399,3 +2399,13 @@ Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` PASS; `make
 M441 implementation and QEMU evidence commit: `119d087613e90fe6369629e82a025b9e7e1d7185`.
 
 Remaining: construct and activate genuine INIT/NULL/SWAPPER contexts using source INIT/PHD/process activation behavior; connect public SYS$QIO and Files-11 ACP completion to process AST/wake semantics; continue image activation and verify SYSTEM login/DCL and DECnet Phase IV SET HOST 0 second-session/LOGOUT end-to-end. No acceptance condition is complete.
+
+## M442 - Require native reschedule vector in the QEMU boot regression, 26 November 2026
+
+Strengthened `tools/qemu_sysboot_m217.py` to require the actual guest `SCH$RESCHED` vector `0x91` diagnostic in the expected source initialization order. This prevents the QEMU baseline from passing if the newly integrated software-vector path is absent. No process context or later initialization behavior is claimed.
+
+Verification: `make qemu-sysboot-m217` PASS; guest output includes native vector `0x91`, then the known incomplete INIT stop. Capture `logs/serial/qemu-m217-run-local-20261126T140036859800Z.log`, 6,391 bytes, SHA-256 `ab51326ac04f7a9496946668c8f9180bdd6ff08dbb7e58b296507dfb715c41ba`; QEMU exited and no QEMU process remains. M441 full build/host suite/coverage checks remain the latest broad suite. No SYSTEM login, DCL, DECnet or SET HOST 0 observed.
+
+M442 QEMU assertion/evidence commit: `c68995446893b8719925cd2e578b4308b84ad8d8`.
+
+Remaining work is unchanged: create real INIT/NULL/SWAPPER PHD and IA-32 contexts in source order, connect live public SYS$QIO/ACP completion and AST wake/delivery, resume native INIT, activate SYSTEM and DCL, and validate DECnet Phase IV `SET HOST 0` with a second SYSTEM session and return by LOGOUT.
