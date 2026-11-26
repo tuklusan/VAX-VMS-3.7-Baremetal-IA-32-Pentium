@@ -739,8 +739,8 @@ static uint8_t *executive_vms_resolve(void *unused,uint32_t a,size_t n){
         if(a>=np_start && a<=np_limit && n<=np_limit-a)
             return (uint8_t *)(uintptr_t)a;
     }
-    const uintptr_t start=(uintptr_t)&executive_vms_scheduler.heads[0];
-    const uintptr_t limit=(uintptr_t)&executive_vms_scheduler.heads[64];
+    const uintptr_t start=(uintptr_t)&executive_vms_scheduler;
+    const uintptr_t limit=start+sizeof executive_vms_scheduler;
     if(a>=start&&a<=limit&&n<=limit-a)return (uint8_t *)(uintptr_t)a;
     const uintptr_t pcbs[3]={(uintptr_t)executive_vms_null_pcb,
         (uintptr_t)executive_vms_swapper_pcb,

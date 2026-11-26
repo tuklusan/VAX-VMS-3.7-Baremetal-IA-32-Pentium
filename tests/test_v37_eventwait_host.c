@@ -17,16 +17,16 @@ enum {PCB_VA=0x00200000u,PHD_VA=0x00500000u,FRAME_VA=0x00400000u,
       CEB_VA=0x00700000u,WQ_VA=0x00600000u,HEAD_VA=0x00100000u};
 static uint32_t address(void *ctx,const void *p){
     struct fixture *f=ctx;const uintptr_t a=(uintptr_t)p;
-    const uintptr_t b=(uintptr_t)&f->scheduler.heads[0];
-    if(a>=b&&a<=b+sizeof f->scheduler.heads)
+    const uintptr_t b=(uintptr_t)&f->scheduler;
+    if(a>=b&&a<=b+sizeof f->scheduler)
         return HEAD_VA+(uint32_t)(a-b);
     return 0u;
 }
 static uint8_t *resolve(void *ctx,uint32_t va,size_t n){
     struct fixture *f=ctx;
-    const uint32_t h_end=HEAD_VA+sizeof f->scheduler.heads;
+    const uint32_t h_end=HEAD_VA+sizeof f->scheduler;
     if(va>=HEAD_VA&&va<=h_end&&n<=h_end-va)
-        return (uint8_t *)&f->scheduler.heads[0]+va-HEAD_VA;
+        return (uint8_t *)&f->scheduler+va-HEAD_VA;
     if(va>=PCB_VA&&va<=PCB_VA+sizeof f->pcb&&n<=PCB_VA+sizeof f->pcb-va)
         return f->pcb+va-PCB_VA;
     if(va>=PHD_VA&&va<=PHD_VA+sizeof f->phd&&n<=PHD_VA+sizeof f->phd-va)

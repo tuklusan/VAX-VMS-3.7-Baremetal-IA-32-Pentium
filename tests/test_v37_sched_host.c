@@ -18,8 +18,8 @@ struct fixture {
 };
 static uint32_t addr(void *context,const void *p){
     struct fixture *f=context;
-    uintptr_t begin=(uintptr_t)&f->scheduler->heads[0];
-    uintptr_t end=(uintptr_t)&f->scheduler->heads[64];
+    uintptr_t begin=(uintptr_t)f->scheduler;
+    uintptr_t end=begin+sizeof *f->scheduler;
     uintptr_t value=(uintptr_t)p;
     if(value>=begin&&value<end)return 0x00100000u+(uint32_t)(value-begin);
     for(unsigned i=0;i<4u;i++)if(p==f->pcbs[i])return f->pcb_va[i];
@@ -29,9 +29,9 @@ static uint32_t addr(void *context,const void *p){
 static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
     struct fixture *f=context;
     const uint32_t hb=0x00100000u;
-    const uint32_t he=hb+64u*sizeof(struct port_v37_sched_head);
+    const uint32_t he=hb+sizeof *f->scheduler;
     if(va>=hb&&va<=he&&bytes<=he-va)
-        return (uint8_t *)&f->scheduler->heads[0]+(va-hb);
+        return (uint8_t *)f->scheduler+(va-hb);
     for(unsigned i=0;i<4u;i++)
         if(va==f->pcb_va[i]&&bytes<=PORT_V37_PCB_BYTES)return f->pcbs[i];
     for(unsigned i=0;i<4u;i++)

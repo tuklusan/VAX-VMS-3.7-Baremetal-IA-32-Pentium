@@ -94,6 +94,8 @@ static uint32_t list_contains(const struct port_v37_scheduler *s,unsigned q,
 
 enum { ACB_LINK_FL=0u,ACB_LINK_BL=4u,ACB_SIZE=8u,ACB_RMOD=11u,
        ACB_PID=12u,ACB_BYTES=28u,ACB_MODE_MASK=3u,ACB_KAST=0x80u };
+static uint32_t event_records(struct port_v37_scheduler *,uint8_t *,
+    uint32_t,uint32_t,unsigned,uint32_t *,uint32_t *,uint16_t *,uint8_t **);
 
 static uint32_t queue_ast_synchronized(struct port_v37_scheduler *s,
     uint32_t pcb_address,uint32_t acb_address){
@@ -181,6 +183,35 @@ static uint32_t queue_ast_synchronized(struct port_v37_scheduler *s,
     return PORT_V37_SCHED_OK;
 }
 
+static uint32_t ast_wait_queue_address(struct port_v37_scheduler *s,
+    uint32_t pcb_address,uint32_t *address){
+    if(!s||!address)return PORT_V37_SCHED_BADPARAM;
+    uint8_t *pcb=resolve(s,pcb_address,PORT_V37_PCB_BYTES);
+    if(!pcb)return PORT_V37_SCHED_UNRESOLVED;
+    const uint16_t state=get16(pcb+PORT_V37_PCB_STATE);
+    const uint16_t mask=(uint16_t)((1u<<PORT_V37_SCH_CEF)|
+        (1u<<PORT_V37_SCH_COLPG)|(1u<<PORT_V37_SCH_FPG)|
+        (1u<<PORT_V37_SCH_HIB)|(1u<<PORT_V37_SCH_HIBO)|
+        (1u<<PORT_V37_SCH_LEF)|(1u<<PORT_V37_SCH_LEFO)|
+        (1u<<PORT_V37_SCH_MWAIT)|(1u<<PORT_V37_SCH_PFW));
+    if(state>=16u||!(mask&(uint16_t)(1u<<state)))
+        return PORT_V37_SCHED_IGNORED;
+    if(state==PORT_V37_SCH_CEF){
+        uint32_t flags=0u,wqh=0u;uint16_t wait_state=0u;uint8_t *ceb=0;
+        const unsigned cluster=pcb[PORT_V37_PCB_WEFC];
+        if(cluster<2u)return PORT_V37_SCHED_CORRUPT;
+        const uint32_t status=event_records(s,pcb,pcb_address,0u,cluster,
+            &flags,&wqh,&wait_state,&ceb);
+        if(status!=PORT_V37_SCHED_OK)return status;
+        if(wait_state!=PORT_V37_SCH_CEF||!ceb)
+            return PORT_V37_SCHED_CORRUPT;
+        *address=wqh;
+        return PORT_V37_SCHED_OK;
+    }
+    *address=s->ops.address(s->ops.context,&s->wait_headers[state]);
+    return *address?PORT_V37_SCHED_OK:PORT_V37_SCHED_UNRESOLVED;
+}
+
 uint32_t port_v37_sched_queue_ast(struct port_v37_scheduler *s,
     uint32_t pcb_address,uint32_t acb_address){
     if(!s||!s->ops.enter_synchronization||!s->ops.leave_synchronization)
@@ -194,14 +225,18 @@ uint32_t port_v37_sched_queue_ast(struct port_v37_scheduler *s,
 uint32_t port_v37_sched_queue_ast_rse(struct port_v37_scheduler *s,
     uint32_t pcb_address,uint32_t acb_address,uint32_t wait_queue_address,
     uint8_t priority_increment_class){
-    if(!s||!wait_queue_address||
+    if(!s||
        !s->ops.enter_synchronization||!s->ops.leave_synchronization)
         return PORT_V37_SCHED_BADPARAM;
     const uint32_t token=s->ops.enter_synchronization(s->ops.context);
     uint32_t status=queue_ast_synchronized(s,pcb_address,acb_address);
     if(status==PORT_V37_SCHED_OK){
-        status=port_v37_sched_rse_event(s,PORT_V37_RSE_AST,
-            wait_queue_address,pcb_address,priority_increment_class);
+        if(!wait_queue_address)
+            status=ast_wait_queue_address(s,pcb_address,
+                                           &wait_queue_address);
+        if(status==PORT_V37_SCHED_OK)
+            status=port_v37_sched_rse_event(s,PORT_V37_RSE_AST,
+                wait_queue_address,pcb_address,priority_increment_class);
         /* Processes outside SCH$RSE's AST wait-state mask retain the queued
          * AST and otherwise complete QAST normally. */
         if(status==PORT_V37_SCHED_IGNORED)status=PORT_V37_SCHED_OK;
@@ -254,6 +289,14 @@ uint32_t port_v37_sched_init(struct port_v37_scheduler *s,
         uint32_t h=ops->address(ops->context,&s->heads[q]);
         if(!h)return PORT_V37_SCHED_BADPARAM;
         candidate.heads[q].forward=h;candidate.heads[q].backward=h;
+    }
+    for(unsigned state=0;state<PORT_V37_SCH_WAIT_HEADER_COUNT;state++){
+        const uint32_t h=ops->address(ops->context,
+            &s->wait_headers[state]);
+        if(!h)return PORT_V37_SCHED_BADPARAM;
+        candidate.wait_headers[state].forward=h;
+        candidate.wait_headers[state].backward=h;
+        candidate.wait_headers[state].state=(uint16_t)state;
     }
     candidate.initialized=1u;*s=candidate;
     return PORT_V37_SCHED_OK;
@@ -1003,5 +1046,13 @@ uint32_t port_v37_sched_check(const struct port_v37_scheduler *s){
         return PORT_V37_SCHED_CORRUPT;
     for(unsigned i=0;i<32u;i++)if(ready[i]!=s->ready_count[i])
         return PORT_V37_SCHED_CORRUPT;
+    for(unsigned state=1u;state<PORT_V37_SCH_WAIT_HEADER_COUNT;state++){
+        uint8_t *queue=0;
+        const uint32_t address=s->ops.address(s->ops.context,
+            &s->wait_headers[state]);
+        if(!address||wait_queue_check(s,address,&queue)!=PORT_V37_SCHED_OK||
+           get16(queue+10u)!=state)
+            return PORT_V37_SCHED_CORRUPT;
+    }
     return PORT_V37_SCHED_OK;
 }

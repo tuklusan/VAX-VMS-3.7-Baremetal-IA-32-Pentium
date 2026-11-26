@@ -9,7 +9,6 @@ struct fixture {
     uint8_t pcb[PORT_V37_PCB_BYTES];
     uint8_t phd[PORT_V37_PHD_BYTES];
     uint8_t acb[5][136];
-    struct port_v37_wait_queue wait;
     struct port_v37_scheduler scheduler;
     unsigned arrivals,current_levels;
     uint8_t last_level;
@@ -19,8 +18,8 @@ struct fixture {
 static uint32_t address(void *context,const void *pointer){
     struct fixture *f=context;
     const uintptr_t p=(uintptr_t)pointer;
-    const uintptr_t first=(uintptr_t)&f->scheduler.heads[0];
-    const uintptr_t end=(uintptr_t)&f->scheduler.heads[PORT_V37_SCH_QUEUES];
+    const uintptr_t first=(uintptr_t)&f->scheduler;
+    const uintptr_t end=first+sizeof f->scheduler;
     if(p>=first&&p<end)return 0x5000u+(uint32_t)(p-first);
     return 0u;
 }
@@ -40,12 +39,9 @@ static uint8_t *resolve(void *context,uint32_t va,size_t bytes){
            bytes<=sizeof f->acb[index]-offset)
             return f->acb[index]+offset;
     }
-    if(va>=0x5000u&&va<=0x5000u+sizeof f->scheduler.heads&&
-       bytes<=0x5000u+sizeof f->scheduler.heads-va)
-        return (uint8_t *)&f->scheduler.heads[0]+(va-0x5000u);
-    if(va>=0x6000u&&va<=0x6000u+sizeof f->wait&&
-       bytes<=0x6000u+sizeof f->wait-va)
-        return (uint8_t *)&f->wait+(va-0x6000u);
+    if(va>=0x5000u&&va<=0x5000u+sizeof f->scheduler&&
+       bytes<=0x5000u+sizeof f->scheduler-va)
+        return (uint8_t *)&f->scheduler+(va-0x5000u);
     return 0;
 }
 
@@ -154,25 +150,28 @@ int main(void){
         return fail("corrupt existing AST queue rejected atomically");
 
     put32(f.acb[2]+4u,0x1010u);
-    f.wait.forward=f.wait.backward=0x1000u;
-    f.wait.count=1u;f.wait.state=PORT_V37_SCH_MWAIT;
+    const uint32_t wq_va=address(&f,
+        &f.scheduler.wait_headers[PORT_V37_SCH_MWAIT]);
+    struct port_v37_wait_queue *wait=
+        &f.scheduler.wait_headers[PORT_V37_SCH_MWAIT];
+    wait->forward=wait->backward=0x1000u;
+    wait->count=1u;
     f.scheduler.current_pcb=0u;
-    put32(f.pcb+PORT_V37_PCB_SQFL,0x6000u);
-    put32(f.pcb+PORT_V37_PCB_SQBL,0x6000u);
+    put32(f.pcb+PORT_V37_PCB_SQFL,wq_va);
+    put32(f.pcb+PORT_V37_PCB_SQBL,wq_va);
     put16(f.pcb+PORT_V37_PCB_STATE,PORT_V37_SCH_MWAIT);
     make_acb(&f,4u,1u,seed.pid);
     const uint32_t wake_status=port_v37_sched_queue_ast_rse(&f.scheduler,
-        0x1000u,0x3400u,0x6000u,0u);
+        0x1000u,0x3400u,0u,0u);
     if(wake_status!=PORT_V37_SCHED_OK||
-       f.wait.forward!=0x6000u||f.wait.backward!=0x6000u||
-       f.wait.count!=0u||
+       wait->forward!=wq_va||wait->backward!=wq_va||wait->count!=0u||
        (uint16_t)(f.pcb[PORT_V37_PCB_STATE]|
           ((uint16_t)f.pcb[PORT_V37_PCB_STATE+1u]<<8))!=
               PORT_V37_SCH_COM||f.arrivals!=3u||
        port_v37_sched_check(&f.scheduler)!=PORT_V37_SCHED_OK){
         fprintf(stderr,"wake status=%u wqh=%08x/%08x count=%u state=%u "
             "pcbstate=%u arrivals=%u sched=%u\n",wake_status,
-            f.wait.forward,f.wait.backward,f.wait.count,f.wait.state,
+            wait->forward,wait->backward,wait->count,wait->state,
             (unsigned)(f.pcb[PORT_V37_PCB_STATE]|(
                 (uint16_t)f.pcb[PORT_V37_PCB_STATE+1u]<<8)),f.arrivals,
             port_v37_sched_check(&f.scheduler));

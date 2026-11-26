@@ -1955,6 +1955,16 @@ result['files'].append({'original_file':'SYS/SRC/RSE.MAR',
     'original_lines':rse_lines,'sections':rse_sections,
     'unresolved_integration':'Host-tested SCH$QAST can trigger the RSE AST state mask when supplied the target wait WQH; AST dispatch, state-to-WQH lookup, event-flag actions, full IPL semantics, swapper execution and remaining scheduler routines are unresolved.'})
 
+# SDAT.MAR source scheduler ready queues and state-indexed WQH backing.
+append_source_ranges('SYS/SRC/SDAT.MAR',273,'src/vms_v37_sched.c',[
+  (43,'excluded',None,'Source ownership/history and comments'),
+  (88,'partial','port_v37_sched_init','Translate source scheduler state constants, queue-head macros and SCH$AQ_WQHDR state indexing into native IA-32 structures; global addresses and exact VAX PSECT packing differ'),
+  (168,'partial','port_v37_sched_init','Initialize 64 source priority queue sentinels; the VAX OSWPSCHED scan header and exact global block layout are not represented'),
+  (186,'partial','port_v37_sched_init','Initialize state-indexed WQH records with source state numbers; CEF uses process CEB WQH and gap-slot packing differs'),
+  (272,'unresolved',None,'Swapper synchronization flags, page counters, resident resource masks and remaining SDAT globals are not implemented'),
+  (273,'excluded',None,'Assembler END directive')
+], 'Native scheduler owns ready queues and indexed wait headers; source global layout, swapper globals and state-to-WQH integration beyond AST remain partial or unresolved.')
+
 # M107: per-source native assembly-free RTL routines, each saved as its own
 # source file with one callable symbol. These are host-tested and built into
 # an IA-32 relocatable RTL library, *not* an operational guest RTL or complete

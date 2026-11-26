@@ -18,6 +18,7 @@ enum {
     PORT_V37_SCH_COM=12u,
     PORT_V37_SCH_COMO=13u,
     PORT_V37_SCH_CUR=14u,
+    PORT_V37_SCH_WAIT_HEADER_COUNT=12u,
     PORT_V37_SCH_RESIDENT=1u,
     PORT_V37_SCH_INCREMENT_CLASSES=5u
 };
@@ -59,6 +60,9 @@ struct port_v37_sched_ops {
 };
 struct port_v37_scheduler {
     struct port_v37_sched_head heads[PORT_V37_SCH_QUEUES];
+    /* SDAT.MAR SCH$AQ_WQHDR indexed by source process state. CEF uses each
+     * process CEB's embedded WQH; slot 3 is a reserved initialized gap. */
+    struct port_v37_wait_queue wait_headers[PORT_V37_SCH_WAIT_HEADER_COUNT];
     uint32_t summary[2];
     uint32_t current_pcb,current_priority;
     uint32_t ready_count[PORT_V37_SCH_PRIORITIES];
@@ -95,9 +99,9 @@ uint32_t port_v37_sched_start_context_quotas(struct port_v37_scheduler *,
  * AST arrival for a noncurrent PCB. Caller must provide IPL_SYNCH callbacks. */
 uint32_t port_v37_sched_queue_ast(struct port_v37_scheduler *,
     uint32_t pcb_address,uint32_t acb_address);
-/* SCH$QAST followed by RPTEVT/SCH$RSE AST wake routing. `wait_queue_address`
- * is the source WQH selected for the target's current PCB state. If wake
- * routing fails, the AST remains committed to the target queue. */
+/* SCH$QAST followed by RPTEVT/SCH$RSE AST wake routing. A zero
+ * `wait_queue_address` selects SCH$AQ_WQHDR by PCB state or the process CEB
+ * for CEF. If wake routing fails, the AST remains committed to the target. */
 uint32_t port_v37_sched_queue_ast_rse(struct port_v37_scheduler *,
     uint32_t pcb_address,uint32_t acb_address,uint32_t wait_queue_address,
     uint8_t priority_increment_class);
