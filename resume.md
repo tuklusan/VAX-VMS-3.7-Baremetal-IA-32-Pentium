@@ -2335,3 +2335,14 @@ Tightened the SYSCREPRC ACTIVATE primitive: before changing the process sequence
 Verification: `make execreprccheck sourcerangecheck` PASS; full `make -j2 all test exeportbatchcheck` PASS; `make qemu-sysboot-m217` PASS through live DQA0 DDT/IRQ14 and Files-11 ACP probes, then stops at the same incomplete INIT boundary. Actual capture `logs/serial/qemu-m217-run-local-20261126T021419502939Z.log`, 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; NULL/SWAPPER contexts, login, DCL, DECnet and SET HOST 0 remain unverified/not reached.
 
 M434 implementation and QEMU evidence commit: `2f078a12f70fa067e37255cb6a2e671868a92138`.
+
+## M435 - Add source SCH$QAST process queue insertion, 26 November 2026
+
+Implemented an IPL_SYNCH-guarded source-PCB AST queue operation for ASTDEL.MAR SCH$QAST. It validates PCB/ACB bounds, source PCB size/type, matching PID, and existing bidirectional queue links before mutation; inserts KAST first and then ascending access mode with FIFO ordering; updates resident PHD ASTLVL; and reports current AST-level changes or noncurrent AST arrival through explicit architecture callbacks. Added host regression for ordering, ASTLVL, callbacks, PID mismatch and malformed-link atomic rejection. This helper is not yet connected to public SYS$QIO completion, AST dispatch, process wakeup or live process contexts.
+
+Reduced SYS.EXE resident storage by sharing the sequential pre-DDT three-sector private IOC queue with the later native DQA0 IOC queue; the DQA0 phase reinitializes it. This retains the configured 0x00380000 supervisor aperture.
+
+Verification: clean `make clean && make -j2 all test exeportbatchcheck` PASS; `make sourcerangecheck` PASS (2,184 ranges; 454/4,566 original files indexed; zero errors; 17,230 mapped, 30,567 partial, 59,460 unresolved, 8,032 missing, 26,734 excluded and 917 hardware-excluded). The first QEMU attempt after changing the scheduler ops structure failed at scheduler initialization due to stale `kernel.o`; that run is recorded as failed. After clean rebuild, `make qemu-sysboot-m217` PASS: real DQA0 DDT/IRQ14, Files-11 ACP, asynchronous IOC checks and scheduler interrupt reached the known INIT stop because NULL/SWAPPER PHD contexts are absent. Successful capture `logs/serial/qemu-m217-run-local-20261126T132610029719Z.log`, 6,306 bytes, SHA-256 `8bf639a8911d13869eebda4a5d425a40eb88b901c0e8c6016712eb7f89bb2eb7`; runner exited. No login, DCL, DECnet Phase IV or SET HOST 0 observed.
+
+Remaining: bind SCH$QAST to real SYS$QIO/IOC completion with process AST delivery and wake semantics; construct/schedule INIT, NULL and SWAPPER contexts; continue public I/O and image activation, then verify the required SYSTEM/DCL and DECnet SET HOST 0 sequence.
+M435 implementation/evidence commit: `2ac91e05c997b323375a663c35cc925f2eee9127`.
