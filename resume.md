@@ -2145,6 +2145,6 @@ Added missing `build/arch.o` dependencies on the shared IA-32 context/scheduler 
 
 Verification: `make v37ia32ctxcheck v37schedcheck` PASS; full `make -j2 all test` exited 0 (`/tmp/m414-final-test.log`); `make qemu-sysboot-m217` PASS after the required `arch.o` rebuild; coverage generation, source-range regression and source validator PASS (2,156 ranges; 452/4,566 original files indexed; zero errors; 17,230 mapped, 30,396 partial, 58,471 unresolved, 8,032 missing, 26,463 excluded, 917 hardware-excluded). Failed capture `logs/serial/qemu-m217-run-local-20261126T005140903404Z.log`: 57 bytes, SHA-256 `4f80a0ea65de11981c2e9ec5cdc7bdaa08cd57cb304c52f77e0ebae14f2b2cf4`. Passing capture `logs/serial/qemu-m217-run-local-20261126T005209373421Z.log`: 6,309 bytes, SHA-256 `cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53`; QEMU exited.
 
-Local M414 changes: pending commit. Published main M413: `6011d53ce6f46d846e5f4110fc4a526d3c0d6ae1`.
+Local M414 implementation commit: `8ec26ee3a590ee6a4b7bb3efdab10f2704406c47`. Published main M413: `6011d53ce6f46d846e5f4110fc4a526d3c0d6ae1`.
 
 Remaining work: allocate source-ordered NULL/SWAPPER PHDs, stacks and process mappings and invoke these contexts at the proper INIT point; port SWAPINIT/TT0/SWAPPER loop, live SYS$QIO, Files-11 ACP and process AST completion; then image activation, SYSTEM login/DCL, DECnet Phase IV and real SET HOST 0/second-session/LOGOUT.
