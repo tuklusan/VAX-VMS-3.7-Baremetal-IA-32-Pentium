@@ -2382,3 +2382,10 @@ Verification: targeted `make v37qastcheck v37schedcheck v37eventwaitcheck` PASS;
 
 Remaining: connect scheduler wake/AST posting to real IOC post completion and process structures; construct/activate INIT, NULL and SWAPPER contexts to continue boot; finish public SYS$QIO, image activation, SYSTEM login/DCL and DECnet SET HOST 0 second-session/LOGOUT acceptance. No end-to-end acceptance condition is complete.
 M439 implementation/evidence commit: `be7d50c39c3237b8393c25165765cf1ce7dd8872`.
+
+## M440 - Verify automatic AST wake routing across the source wait states, 26 November 2026
+
+Expanded the SCH$QAST host regression to exercise all nine source `SCH$RSE` AST wait states, including CEF lookup through the process CEB's embedded WQH and state-indexed `SCH$AQ_WQHDR` lookup for the other eight. Each case verifies queue removal, state transition to COM, AST arrival notification, synchronization pairing and scheduler consistency. This validates the M439 native routing paths at the scheduler boundary; it does not bind them to live IOPOST or native process completions.
+
+Verification: `make v37qastcheck v37schedcheck v37eventwaitcheck` PASS; full `make -j2 test` PASS. Source coverage remains 2,190 ranges, 455/4,566 original files indexed, zero mapped-function errors. No QEMU run; this host-only regression does not change runtime code. INIT remains incomplete; no SYSTEM login, DCL, DECnet Phase IV or SET HOST 0 was observed.
+M440 test commit: `4e2d77111232470d5f6eec363d9962fb7cc51acb`.
