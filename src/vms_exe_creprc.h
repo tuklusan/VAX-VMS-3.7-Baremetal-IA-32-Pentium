@@ -47,6 +47,7 @@ enum {PORT_EXE_CREPRC_ALLOC_OK=1u,PORT_EXE_CREPRC_ALLOC_BAD=2u,
       PORT_EXE_CREPRC_ALLOC_NOMEM=4u,PORT_EXE_CREPRC_ALLOC_CORRUPT=8u};
 enum {PORT_V37_PQB_BYTES=496u,PORT_V37_PQB_SIZE=8u,
       PORT_V37_PQB_TYPE=10u,PORT_V37_PQB_BODY=12u,
+      PORT_V37_PQB_PRIVILEGES=0u,
       PORT_V37_PQB_USERNAME=388u,PORT_V37_PQB_USERNAME_BYTES=12u};
 /* SYSCREPRC.MAR EXE$ALLOCPCB and PCB clear: allocation only. Conditional
  * SSRWAIT resource waiting and the rest of process initialization are later. */
@@ -62,6 +63,9 @@ uint32_t port_exe_creprc_release_pqb(struct port_exe_np_allocator *,
 /* SYSCREPRC.MAR default PQB username is fixed-width padded "SYSTEM". */
 uint32_t port_exe_creprc_set_pqb_system_username(uint8_t *pqb,
     size_t pqb_bytes);
+/* Apply the identity, granted privileges and priority selected by preflight. */
+uint32_t port_exe_creprc_apply_identity(uint8_t *pcb,size_t pcb_bytes,
+    uint8_t *pqb,size_t pqb_bytes,const struct port_exe_creprc_result *);
 /* SYSCREPRC.MAR status-flag translation after successful privilege checks. */
 uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
     const struct port_exe_creprc_result *);

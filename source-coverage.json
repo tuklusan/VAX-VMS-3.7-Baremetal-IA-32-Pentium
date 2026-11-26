@@ -1743,7 +1743,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_allocate_pcb",
-          "pc_line": 77,
+          "pc_line": 80,
           "function": "EXE$ALLOCPCB nonpaged allocation, DYN PCB header and source PCB body clear; conditional resource wait absent"
         },
         {
@@ -1754,7 +1754,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_allocate_pqb",
-          "pc_line": 117,
+          "pc_line": 120,
           "function": "EXE$ALLOCPQB nonpaged allocation and DYN PQB header; conditional resource wait absent"
         },
         {
@@ -1773,7 +1773,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_init_pcb_queues",
-          "pc_line": 199,
+          "pc_line": 219,
           "function": "Initialize source self-linked AST/lock queues, AST enable mask, ARB address, termination mailbox and shell page count"
         },
         {
@@ -1792,7 +1792,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_allocate_pqb",
-          "pc_line": 117,
+          "pc_line": 120,
           "function": "Clear the source-defined PQB body after its DYN header"
         },
         {
@@ -1803,7 +1803,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_set_pqb_system_username",
-          "pc_line": 158,
+          "pc_line": 161,
           "function": "Set the source 12-byte SYSTEM username default in the PQB"
         },
         {
@@ -1817,7 +1817,7 @@
         {
           "original_lines": [
             324,
-            337
+            336
           ],
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
@@ -1827,14 +1827,14 @@
         },
         {
           "original_lines": [
-            338,
+            337,
             349
           ],
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
-          "pc_symbol": "port_exe_creprc_preflight",
-          "pc_line": 11,
-          "function": "Priority privilege clamp and subprocess UIC/owner inheritance"
+          "pc_symbol": "port_exe_creprc_apply_identity",
+          "pc_line": 175,
+          "function": "Store the selected PQB privilege mask and PCB internal priority, UIC and owner PID"
         },
         {
           "original_lines": [
@@ -1852,7 +1852,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_apply_status_flags",
-          "pc_line": 172,
+          "pc_line": 192,
           "function": "Translate all nine validated $CREPRC status options to their SYSDEF PCB status bits, preserving privilege checks"
         },
         {
@@ -1879,7 +1879,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_activate_slot",
-          "pc_line": 222,
+          "pc_line": 242,
           "function": "Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer"
         },
         {

@@ -83,7 +83,7 @@ int main(void){
     struct port_exe_creprc_caller malformed=caller;malformed.base_priority=32u;
     if(port_exe_creprc_preflight(&malformed,&request,&result)!=PORT_SS_BADPARAM)
         return fail("source PCB priority validation");
-    _Alignas(8) uint8_t pcb_pool_memory[512];
+    _Alignas(8) uint8_t pcb_pool_memory[1024];
     uint32_t pool_ipl=0u;
     const struct port_v37_irp_pool_sync pool_sync={
         &pool_ipl,test_raise_ipl,test_restore_ipl};
@@ -103,6 +103,12 @@ int main(void){
         return fail("DYN PCB size and type fields");
     for(unsigned i=PORT_V37_PCB_TYPE;i<PORT_V37_PCB_BYTES;i++)
         if(pcb_bytes[i])return fail("SYSCREPRC zeroes the fixed PCB body");
+    struct port_exe_creprc_result identity_result={
+        .uic=0x12345678u,.owner_pid=0x00020023u,
+        .internal_priority=7u,.privilege_mask=UINT64_C(0x1122334455667788)};
+    if(port_exe_creprc_apply_identity(pcb_allocation.address,
+          pcb_allocation.bytes,NULL,0u,&identity_result)!=PORT_SS_BADPARAM)
+        return fail("identity application requires both allocated blocks");
     struct port_exe_creprc_result flag_result={
         .status_flags=PORT_V37_PRC_STATUS_FLAGS,
         .privilege_mask=(UINT64_C(1)<<PORT_V37_PRC_PRIV_PSWAPM)|
@@ -158,10 +164,6 @@ int main(void){
           pcb_allocation.bytes,UINT32_MAX-159u,0u,0u)!=PORT_SS_BADPARAM||
        memcmp(pcb_before,pcb_bytes,sizeof pcb_before))
         return fail("PCB queue initialization rejects address wrap atomically");
-    if(port_exe_creprc_release_pcb(&pcb_allocator,&pcb_allocation)!=
-          PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
-       port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)
-        return fail("PCB allocation rollback returns/coalesces NP pool");
     struct port_exe_np_allocation pqb_allocation={0};
     if(port_exe_creprc_allocate_pqb(&pcb_allocator,&pqb_allocation)!=
           PORT_EXE_CREPRC_ALLOC_OK||!pqb_allocation.address||
@@ -174,6 +176,18 @@ int main(void){
        pqb_bytes[11u])return fail("DYN PQB header");
     for(unsigned i=PORT_V37_PQB_BODY;i<PORT_V37_PQB_BYTES;i++)
         if(pqb_bytes[i])return fail("SYSCREPRC zeroes fixed PQB body");
+    if(port_exe_creprc_apply_identity(pcb_allocation.address,
+          pcb_allocation.bytes,pqb_allocation.address,pqb_allocation.bytes,
+          &identity_result)!=PORT_SS_NORMAL||
+       test_get32(pcb_bytes+PORT_V37_PCB_OWNER)!=identity_result.owner_pid||
+       test_get32(pcb_bytes+PORT_V37_PCB_UIC)!=identity_result.uic||
+       pcb_bytes[PORT_V37_PCB_PRI]!=identity_result.internal_priority||
+       pcb_bytes[PORT_V37_PCB_PRIB]!=identity_result.internal_priority||
+       test_get32(pqb_bytes+PORT_V37_PQB_PRIVILEGES)!=
+          (uint32_t)identity_result.privilege_mask||
+       test_get32(pqb_bytes+PORT_V37_PQB_PRIVILEGES+4u)!=
+          (uint32_t)(identity_result.privilege_mask>>32))
+        return fail("SYSCREPRC PQB grants, PCB priority, UIC and owner fields");
     if(port_exe_creprc_set_pqb_system_username(pqb_allocation.address,
           pqb_allocation.bytes)!=PORT_SS_NORMAL||
        memcmp(pqb_bytes+PORT_V37_PQB_USERNAME,"SYSTEM      ",12u))
@@ -182,6 +196,10 @@ int main(void){
           PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
        port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)
         return fail("PQB allocation rollback returns/coalesces NP pool");
+    if(port_exe_creprc_release_pcb(&pcb_allocator,&pcb_allocation)!=
+          PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
+       port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)
+        return fail("PCB allocation rollback returns/coalesces NP pool");
     _Alignas(8) uint8_t small_pool_memory[152];
     struct port_exe_np_pool small_pool={0};
     struct port_exe_np_allocation untouched={

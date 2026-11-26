@@ -73,6 +73,9 @@ static void write16(uint8_t *p,uint16_t x){
 static void write32(uint8_t *p,uint32_t x){
     for(unsigned i=0u;i<4u;i++)p[i]=(uint8_t)(x>>(8u*i));
 }
+static void write64(uint8_t *p,uint64_t x){
+    for(unsigned i=0u;i<8u;i++)p[i]=(uint8_t)(x>>(8u*i));
+}
 
 uint32_t port_exe_creprc_allocate_pcb(struct port_exe_np_allocator *allocator,
     struct port_exe_np_allocation *out){
@@ -166,6 +169,23 @@ uint32_t port_exe_creprc_set_pqb_system_username(uint8_t *pqb,
     static const uint8_t system_name[6]={'S','Y','S','T','E','M'};
     for(unsigned i=0u;i<sizeof system_name;i++)
         pqb[PORT_V37_PQB_USERNAME+i]=system_name[i];
+    return PORT_SS_NORMAL;
+}
+
+uint32_t port_exe_creprc_apply_identity(uint8_t *pcb,size_t pcb_bytes,
+    uint8_t *pqb,size_t pqb_bytes,const struct port_exe_creprc_result *result){
+    if(!pcb||!pqb||!result||pcb_bytes<160u||
+       pqb_bytes<PORT_V37_PQB_BYTES||result->internal_priority>=32u||
+       read16(pcb+PORT_V37_PCB_SIZE)!=160u||
+       pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB||
+       read16(pqb+PORT_V37_PQB_SIZE)!=PORT_V37_PQB_BYTES||
+       pqb[PORT_V37_PQB_TYPE]!=PORT_V37_DYN_PQB)
+        return PORT_SS_BADPARAM;
+    write64(pqb+PORT_V37_PQB_PRIVILEGES,result->privilege_mask);
+    pcb[PORT_V37_PCB_PRI]=result->internal_priority;
+    pcb[PORT_V37_PCB_PRIB]=result->internal_priority;
+    write32(pcb+PORT_V37_PCB_UIC,result->uic);
+    write32(pcb+PORT_V37_PCB_OWNER,result->owner_pid);
     return PORT_SS_NORMAL;
 }
 
