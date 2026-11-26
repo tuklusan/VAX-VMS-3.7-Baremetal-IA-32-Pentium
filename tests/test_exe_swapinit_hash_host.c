@@ -1,4 +1,5 @@
 #include "vms_exe_swapinit_hash.h"
+#include "vms_ini_log_templates.h"
 #include "vms_v37_dyn_tags.h"
 #include <assert.h>
 #include <stdint.h>
@@ -45,6 +46,43 @@ int main(void){
             for(uint32_t j=0u;j<counts[i]*4u;j++)assert(t->buckets[j]==0u);
         }else assert(!t->record&&!t->buckets&&!t->allocated_bytes);
     }
+    void *owned=0;uint32_t owned_bytes=0u;
+    assert(port_exe_paged_alloc(&pool,48u,&owned,&owned_bytes)==
+           PORT_EXE_PAGED_OK);
+    tables.owned_records[0]=owned;tables.owned_record_bytes[0]=owned_bytes;
+    assert(port_exe_swapinit_hash_release(&pool,&tables)==
+           PORT_EXE_SWAPINIT_HASH_OK);
+
+    uint8_t disk[PORT_INI_LOG_TEMPLATE_BYTES];
+    uint8_t sysdev[PORT_INI_LOG_TEMPLATE_BYTES];
+    port_ini_log_templates(disk,sysdev);
+    const uint32_t one_bucket[3]={1u,1u,1u};
+    assert(port_exe_swapinit_hash_init(&pool,one_bucket,&tables)==
+           PORT_EXE_SWAPINIT_HASH_OK);
+    tables.table[0].record_address=0x00100000u;
+    uint8_t bad_name[PORT_INI_LOG_TEMPLATE_BYTES];
+    for(unsigned i=0u;i<sizeof bad_name;i++)bad_name[i]=disk[i];
+    bad_name[21u]='X';
+    assert(port_exe_swapinit_insert_system_record(&tables,bad_name,
+        0x00200200u)==PORT_EXE_SWAPINIT_HASH_BAD);
+    struct port_exe_swapinit_name_record source_names[2]={
+        {sysdev,0x00200100u},{disk,0x00200000u}};
+    /* Source LOG$INSLOGN order is SYS$DISK then SYS$SYSDEVICE. Exercise the
+     * opposite order to verify the sorted insertion point and back-links. */
+    assert(port_exe_swapinit_insert_system_record(&tables,
+        source_names[0].bytes,source_names[0].address)==
+           PORT_EXE_SWAPINIT_HASH_OK);
+    assert(port_exe_swapinit_insert_system_record(&tables,
+        source_names[1].bytes,source_names[1].address)==
+           PORT_EXE_SWAPINIT_HASH_OK);
+    const uint32_t bucket_address=tables.table[0].record_address+12u;
+    assert(get32(tables.table[0].buckets)==source_names[1].address&&
+           get32(disk)==source_names[0].address&&
+           get32(disk+4u)==bucket_address&&get32(sysdev)==0u&&
+           get32(sysdev+4u)==source_names[1].address&&
+           tables.table[0].linked_count==2u);
+    assert(port_exe_swapinit_insert_system_record(&tables,disk,
+        source_names[1].address)==PORT_EXE_SWAPINIT_HASH_DUP);
     assert(port_exe_swapinit_hash_release(&pool,&tables)==
            PORT_EXE_SWAPINIT_HASH_OK);
     assert(!tables.table[0].record&&!tables.table[1].record&&

@@ -8,17 +8,28 @@ enum {
     PORT_EXE_SWAPINIT_HASH_BAD=2u,
     PORT_EXE_SWAPINIT_HASH_NOMEM=4u,
     PORT_EXE_SWAPINIT_HASH_CORRUPT=6u,
+    PORT_EXE_SWAPINIT_HASH_DUP=8u,
     PORT_EXE_SWAPINIT_HASH_TABLES=3u,
-    PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES=12u
+    PORT_EXE_SWAPINIT_RSHT_HEADER_BYTES=12u,
+    PORT_EXE_SWAPINIT_INITIAL_NAMES=2u
+};
+struct port_exe_swapinit_name_record {
+    uint8_t *bytes;
+    uint32_t address;
 };
 struct port_exe_swapinit_hash_table {
     uint8_t *record;
     uint8_t *buckets;
+    uint32_t record_address;
     uint32_t requested_entries,entry_count,allocated_bytes;
-    uint8_t entry_log2,reserved[3];
+    struct port_exe_swapinit_name_record linked_names[
+        PORT_EXE_SWAPINIT_INITIAL_NAMES];
+    uint8_t entry_log2,linked_count,reserved[2];
 };
 struct port_exe_swapinit_hash_set {
     struct port_exe_swapinit_hash_table table[PORT_EXE_SWAPINIT_HASH_TABLES];
+    void *owned_records[PORT_EXE_SWAPINIT_INITIAL_NAMES];
+    uint32_t owned_record_bytes[PORT_EXE_SWAPINIT_INITIAL_NAMES];
 };
 
 /* SWAPPER.MAR EXE$SWAPINIT table sizing and 30$ record allocation. Index 0
@@ -30,4 +41,9 @@ uint32_t port_exe_swapinit_hash_init(struct port_exe_paged_pool *,
     struct port_exe_swapinit_hash_set *);
 uint32_t port_exe_swapinit_hash_release(struct port_exe_paged_pool *,
     struct port_exe_swapinit_hash_set *);
+/* SWAPPER.MAR's two LOG$INSLOGN calls for the prebuilt SYSTEM records.
+ * Supports only SYS$DISK and SYS$SYSDEVICE; general logical-name services,
+ * table locks, access modes and supersession remain outside this entry. */
+uint32_t port_exe_swapinit_insert_system_record(
+    struct port_exe_swapinit_hash_set *,uint8_t *,uint32_t);
 #endif

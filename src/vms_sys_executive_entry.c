@@ -56,15 +56,39 @@ static uint8_t executive_packet_pages[170u*1024u] __attribute__((aligned(512)));
 static uint8_t *executive_np_base;
 static struct port_exe_paged_pool executive_paged_pool;
 static uint32_t executive_paged_pool_ready;
+static struct port_ini_syslog_result executive_syslog;
+static uint32_t executive_syslog_ready;
 static struct port_exe_swapinit_hash_set executive_swapinit_hash_tables;
 static uint32_t executive_swapinit_hash_ready;
 static uint32_t port_exe_swapinit_log_tables(const uint32_t requested[3],
     const struct port_exe_swapinit_hash_set **tables){
-    if(!executive_paged_pool_ready||executive_swapinit_hash_ready||
+    if(!executive_paged_pool_ready||!executive_syslog_ready||
+       executive_swapinit_hash_ready||
        !requested||!tables)return PORT_EXE_SWAPINIT_HASH_BAD;
     const uint32_t status=port_exe_swapinit_hash_init(&executive_paged_pool,
         requested,&executive_swapinit_hash_tables);
     if(status!=PORT_EXE_SWAPINIT_HASH_OK)return status;
+    uint32_t linked=PORT_EXE_SWAPINIT_HASH_OK;
+    for(unsigned i=0u;i<2u&&linked==PORT_EXE_SWAPINIT_HASH_OK;i++){
+        void *copy=0;uint32_t allocated=0u;
+        linked=port_exe_paged_alloc(&executive_paged_pool,
+            executive_syslog.sizes[i],&copy,&allocated);
+        if(linked!=PORT_EXE_PAGED_OK){linked=PORT_EXE_SWAPINIT_HASH_NOMEM;break;}
+        executive_swapinit_hash_tables.owned_records[i]=copy;
+        executive_swapinit_hash_tables.owned_record_bytes[i]=allocated;
+        uint8_t *record=(uint8_t *)(uintptr_t)executive_syslog.records[i];
+        for(uint32_t b=0u;b<executive_syslog.sizes[i];b++)
+            ((uint8_t *)copy)[b]=record[b];
+        if((uintptr_t)copy>UINT32_MAX){linked=PORT_EXE_SWAPINIT_HASH_BAD;break;}
+        linked=port_exe_swapinit_insert_system_record(
+            &executive_swapinit_hash_tables,(uint8_t *)copy,
+            (uint32_t)(uintptr_t)copy);
+    }
+    if(linked!=PORT_EXE_SWAPINIT_HASH_OK){
+        (void)port_exe_swapinit_hash_release(&executive_paged_pool,
+            &executive_swapinit_hash_tables);
+        return linked;
+    }
     executive_swapinit_hash_ready=1u;
     *tables=&executive_swapinit_hash_tables;
     return PORT_EXE_SWAPINIT_HASH_OK;
@@ -151,8 +175,6 @@ static uint32_t executive_system_wcb_ready;
  * original SYSLOGNAM, boot DDB/UCB and SWAPINIT translation. */
 static uint8_t executive_disklog[PORT_INI_LOG_TEMPLATE_BYTES];
 static uint8_t executive_sysdevlog[PORT_INI_LOG_TEMPLATE_BYTES];
-static struct port_ini_syslog_result executive_syslog;
-static uint32_t executive_syslog_ready;
 /* Source DPTAB prefix bytes live in the loaded native SYS.EXE. All
  * lengths are intentionally invalid for IOC DPT-list insertion; the
  * NLA DDT will bind separately after its native FDT compiles. */

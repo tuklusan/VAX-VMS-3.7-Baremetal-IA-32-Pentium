@@ -8,7 +8,7 @@
  * general service entry and system SYSLOGNAM are NOT implemented. */
 enum { PORT_LOG_OK=1u,PORT_LOG_BAD=2u,PORT_LOG_NOTRAN=3u,
        PORT_LOG_OVERFLOW=4u,PORT_LOG_CYCLE=6u,
-       PORT_LOG_SLOTS=16u,PORT_LOG_BITS=4u,
+       PORT_LOG_SLOTS=16u,PORT_LOG_BITS=4u,PORT_LOG_MAX_BITS=14u,
        PORT_LOG_SYSTEM=0u,PORT_LOG_MAX_NAME=63u,
        PORT_LOG_REC_LEN=PORT_INI_LOG_TEMPLATE_BYTES };
 struct port_log_system_table {

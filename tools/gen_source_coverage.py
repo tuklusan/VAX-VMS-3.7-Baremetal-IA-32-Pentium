@@ -2642,7 +2642,7 @@ assert len({f['original_file'] for f in result['files']})==len(result['files'])
 lognam_sections=[]
 for first,last,path,sym,why in [
  (1,128,None,None,'Original module prologue, LOG$DELETE, supersession and deallocation unresolved'),
- (129,162,'src/vms_log_system_insert.c','port_log_system_insert','Original LOG$INSLOGN_LCK link sorting for two boot SYSTEM LOG records only; no supersede or runtime insertion'),
+ (129,162,'src/vms_exe_swapinit_hash.c','port_exe_swapinit_insert_system_record','SWAPINIT links only the original SYS$DISK and SYS$SYSDEVICE records into its SYSTEM table with source hash buckets and sorted back-links; locking, supersession and runtime insertion remain unimplemented'),
  (163,243,None,None,'Original LOG$LOCKR/LOCKW/UNLOCK mutex and GROUP/PROCESS table synchronization unimplemented'),
  (244,276,'src/vms_log_system_lookup.c','port_log_system_lookup','Source LOG$SEARCHLOG bucket search limited to two resident SYSTEM boot names; no PCB access mode'),
  (277,295,None,None,'Remaining SEARCHLOG status and hash calling convention require later full service binding'),
@@ -2737,12 +2737,21 @@ for first,last,status,reason in [
     (1,248,'unresolved','Source module documentation and paged pool base/size setup; pool backing is initialized earlier by INIT but this SWAPINIT step is not called'),
     (249,257,'partial','Round SYSTEM, GROUP and PROCESS hash entry counts up to powers of two and retain each exponent'),
     (258,272,'partial','Allocate zeroed SYSTEM and GROUP hash table records from PAGEDYN; PROCESS geometry is retained for per-process tables'),
-    (273,316,'unresolved','Link SYS$DISK/SYS$SYSDISK through LOG$INSLOGN and create TT0 with $CREPRC; neither startup action is integrated'),
+ (273,275,'unresolved','Prepare original SYSTEM logical-name insertion arguments'),
+ (276,283,'partial','Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent'),
+ (284,316,'unresolved','Create TT0 with $CREPRC; source process creation remains unported'),
     (317,323,'partial','Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved'),
     (324,1683,'unresolved','SWAPPER main loop, balancing, page-file I/O and process swap-in/out remain unported')]:
     if status=='unresolved':
         swapinit_sections.append({'original_lines':[first,last],
             'status':'unresolved','reason':reason})
+    elif first==276:
+        insert_line=line_for_symbol('src/vms_exe_swapinit_hash.c',
+                                    'port_exe_swapinit_insert_system_record')
+        swapinit_sections.append({'original_lines':[first,last],
+            'status':'partial','pc_file':'src/vms_exe_swapinit_hash.c',
+            'pc_symbol':'port_exe_swapinit_insert_system_record','pc_line':insert_line,
+            'function':reason+'; SYS.EXE wrapper prepares records, but SWAPPER process context is absent'})
     else:
         swapinit_sections.append({'original_lines':[first,last],
             'status':'partial','pc_file':'src/vms_exe_swapinit_hash.c',
@@ -2750,7 +2759,7 @@ for first,last,status,reason in [
             'function':reason+'; SYS.EXE exports the routine but no SWAPPER context calls it yet'})
 result['files'].append({'original_file':'SYS/SRC/SWAPPER.MAR',
     'original_lines':1683,'sections':swapinit_sections,
-    'unresolved_integration':'Native SYS.EXE includes a callable SWAPINIT hash-table initializer with source power-of-two sizing and SYSTEM/GROUP RSHT allocation. INIT does not invoke it in SWAPPER process context; SYS$DISK name insertion, TT0 process creation, swapper loop, paging and process activation are unresolved.'})
+    'unresolved_integration':'Native SYS.EXE exports the callable SWAPINIT hash initializer and sorted insertion helper, and its wrapper copies/links the two boot SYSTEM records into allocated PAGEDYN storage. INIT still cannot invoke it in SWAPPER process context; TT0 creation, swapper loop, paging and process activation remain unresolved.'})
 assert len({f['original_file'] for f in result['files']})==len(result['files'])
 
 (ROOT / 'source-coverage.json').write_text(json.dumps(result, indent=2) + '\n')

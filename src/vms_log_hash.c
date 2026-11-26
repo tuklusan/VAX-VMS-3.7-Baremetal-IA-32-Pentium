@@ -4,7 +4,7 @@
  * ASHQ obtains high hash_bits of low-32-bit multiplication product. */
 static uint32_t rotate(uint32_t x,unsigned n){return (x<<n)|(x>>(32u-n));}
 uint32_t port_log_hash(const uint8_t *name,size_t length,unsigned bits){
-    if(!name||!length||length>PORT_LOG_MAX_NAME||bits>PORT_LOG_BITS)
+    if(!name||!length||length>PORT_LOG_MAX_NAME||bits>PORT_LOG_MAX_BITS)
         return UINT32_MAX;
     uint32_t value=(uint32_t)length;
     size_t i=0u;

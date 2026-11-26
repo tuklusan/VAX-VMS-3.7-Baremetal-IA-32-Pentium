@@ -37,7 +37,9 @@ static int direct(void){
     CHECK(port_log_hash((const uint8_t *)"SYS$DISK",8u,0u)==0u);
     CHECK(port_log_hash((const uint8_t *)"SYS$DISK",8u,2u)==3u);
     CHECK(port_log_hash((const uint8_t *)"SYS$SYSDEVICE",13u,2u)==3u);
-    CHECK(port_log_hash((const uint8_t *)"SYS$DISK",8u,5u)==UINT32_MAX);
+    CHECK(port_log_hash((const uint8_t *)"SYS$DISK",8u,5u)<32u);
+    CHECK(port_log_hash((const uint8_t *)"SYS$DISK",8u,14u)<16384u);
+    CHECK(port_log_hash((const uint8_t *)"SYS$DISK",8u,15u)==UINT32_MAX);
     CHECK(port_log_hash((const uint8_t *)"SYS$DISK",0u,4u)==UINT32_MAX);
     CHECK(port_log_name_compare((const uint8_t *)"S",1u,(const uint8_t *)"SYS",3u)==0u);
     CHECK(port_log_name_compare((const uint8_t *)"SYS",3u,(const uint8_t *)"S",1u)==2u);

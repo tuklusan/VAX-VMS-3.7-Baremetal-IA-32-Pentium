@@ -10530,7 +10530,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 720,
+          "pc_line": 742,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -22465,7 +22465,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 657,
+          "pc_line": 679,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
@@ -23041,10 +23041,10 @@
             162
           ],
           "status": "partial",
-          "pc_file": "src/vms_log_system_insert.c",
-          "pc_symbol": "port_log_system_insert",
-          "pc_line": 5,
-          "function": "Original LOG$INSLOGN_LCK link sorting for two boot SYSTEM LOG records only; no supersede or runtime insertion"
+          "pc_file": "src/vms_exe_swapinit_hash.c",
+          "pc_symbol": "port_exe_swapinit_insert_system_record",
+          "pc_line": 95,
+          "function": "SWAPINIT links only the original SYS$DISK and SYS$SYSDEVICE records into its SYSTEM table with source hash buckets and sorted back-links; locking, supersession and runtime insertion remain unimplemented"
         },
         {
           "original_lines": [
@@ -23164,7 +23164,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_alopaged",
-          "pc_line": 72,
+          "pc_line": 96,
           "function": "EXE$ALOPAGED entry uses the resident PAGEDYN free list; QEMU verifies a 17-byte request rounds to 32 bytes and is returned; no process I/O or runtime VMS caller, SCH$LOCKW wait, extension or resource wake is wired"
         },
         {
@@ -23213,7 +23213,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_deapaged",
-          "pc_line": 78,
+          "pc_line": 102,
           "function": "EXE$DEAPAGED returns aligned blocks to the SYSBOOT-carved resident PAGEDYN free list; QEMU verifies completion and duplicate-free rejection; IRP header decoding, SCH$LOCKW, PGDYN resource wake and process caller wiring remain unresolved"
         },
         {
@@ -23607,7 +23607,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_hash_init",
-          "pc_line": 30,
+          "pc_line": 39,
           "function": "Round SYSTEM, GROUP and PROCESS hash entry counts up to powers of two and retain each exponent; SYS.EXE exports the routine but no SWAPPER context calls it yet"
         },
         {
@@ -23618,16 +23618,35 @@
           "status": "partial",
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_hash_init",
-          "pc_line": 30,
+          "pc_line": 39,
           "function": "Allocate zeroed SYSTEM and GROUP hash table records from PAGEDYN; PROCESS geometry is retained for per-process tables; SYS.EXE exports the routine but no SWAPPER context calls it yet"
         },
         {
           "original_lines": [
             273,
+            275
+          ],
+          "status": "unresolved",
+          "reason": "Prepare original SYSTEM logical-name insertion arguments"
+        },
+        {
+          "original_lines": [
+            276,
+            283
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_swapinit_hash.c",
+          "pc_symbol": "port_exe_swapinit_insert_system_record",
+          "pc_line": 95,
+          "function": "Hash and sorted-link the two original SYS$DISK and SYS$SYSDEVICE boot records into the SYSTEM RSHT; general LOG$INSLOGN synchronization/supersession and SWAPPER-context call remain absent; SYS.EXE wrapper prepares records, but SWAPPER process context is absent"
+        },
+        {
+          "original_lines": [
+            284,
             316
           ],
           "status": "unresolved",
-          "reason": "Link SYS$DISK/SYS$SYSDISK through LOG$INSLOGN and create TT0 with $CREPRC; neither startup action is integrated"
+          "reason": "Create TT0 with $CREPRC; source process creation remains unported"
         },
         {
           "original_lines": [
@@ -23637,7 +23656,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_swapinit_hash.c",
           "pc_symbol": "port_exe_swapinit_hash_init",
-          "pc_line": 30,
+          "pc_line": 39,
           "function": "Build the source 12-byte RSHT header, size/type fields and cleared bucket array; resource wait semantics remain unresolved; SYS.EXE exports the routine but no SWAPPER context calls it yet"
         },
         {
@@ -23649,7 +23668,7 @@
           "reason": "SWAPPER main loop, balancing, page-file I/O and process swap-in/out remain unported"
         }
       ],
-      "unresolved_integration": "Native SYS.EXE includes a callable SWAPINIT hash-table initializer with source power-of-two sizing and SYSTEM/GROUP RSHT allocation. INIT does not invoke it in SWAPPER process context; SYS$DISK name insertion, TT0 process creation, swapper loop, paging and process activation are unresolved."
+      "unresolved_integration": "Native SYS.EXE exports the callable SWAPINIT hash initializer and sorted insertion helper, and its wrapper copies/links the two boot SYSTEM records into allocated PAGEDYN storage. INIT still cannot invoke it in SWAPPER process context; TT0 creation, swapper loop, paging and process activation remain unresolved."
     }
   ]
 }
