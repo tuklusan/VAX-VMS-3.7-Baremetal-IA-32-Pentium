@@ -1068,7 +1068,7 @@ static int arch_vms_schedule_frame(struct port_trap_frame *f){
         if(wait_queue&&pcb==resident_vms_null_pcb&&
            resident_vms_schedule_message)
             resident_vms_schedule_message(
-                "SCH$WAITK blocked SWAPPER; SCH$SCHED selected NULL.");
+                "SCH$WAITK blocked the active process; SCH$SCHED selected NULL.");
         return ARCH_TRAP_RESTORE_SELECTED_FRAME;
     }
     if(wait_queue&&resident_vms_schedule_message){

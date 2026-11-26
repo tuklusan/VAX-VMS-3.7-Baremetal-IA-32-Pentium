@@ -107,7 +107,7 @@ def main():
         b'SWAPPER: scheduled native context resolved SYS$DISK and SYS$SYSDEVICE.',
         b'SYSINIT: native scheduled context created and verified SYS$SYSTEM, SYS$SHARE and SYS$MESSAGE.',
         b'SYSINIT: SIP_SETTIME set the resident VMS clock from the IA-32 RTC.',
-        b'SCH$WAITK blocked SWAPPER; SCH$SCHED selected NULL.']
+        b'SCH$WAITK blocked the active process; SCH$SCHED selected NULL.']
     failures=[
         b'*** x86 fault:',
         b'SYSBOOT: SYS.EXE retrieval map invalid.',
@@ -158,6 +158,7 @@ def main():
         b'INIT: source SCH$CHSE reschedule request callback did not run.',
         b'INIT: source SCH$CHSE software reschedule interrupt was not delivered.',
         b'INIT: source SCH$CHSE did not reach native SCH$RESCHED.',
+        b'SCH$WAITK scheduling failed with status ',
         b'SYSINIT: source SYSTEM logical creation failed.',
         b'SYSINIT: source logical translation verification failed.',
         b'SYSINIT: SIP_SETTIME could not read valid IA-32 RTC time.',
@@ -189,10 +190,10 @@ def main():
                 positions=[observed.index(x) for x in expected]
                 if positions!=sorted(positions):break
                 if success_deadline is None:
-                    # Keep the sole QEMU runner alive briefly after NULL is
-                    # selected so a bad IRET/process mapping can report a
-                    # real guest fault before the harness declares success.
-                    success_deadline=time.monotonic()+1.0
+                    # Keep the sole QEMU runner alive after NULL is selected
+                    # so a bad IRET/process mapping or repeated SYSINIT wait
+                    # can report a real guest fault before success.
+                    success_deadline=time.monotonic()+3.0
                 if time.monotonic()>=success_deadline:
                     passed=True
                     break

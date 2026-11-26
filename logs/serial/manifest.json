@@ -3844,6 +3844,24 @@
       "path": "logs/serial/qemu-m217-run-local-20261126T210736513975Z.log",
       "bytes": 6736,
       "sha256": "d7fc963eedd06e2ad7ff8fb8f346e6fb278156b55f0f6bea72fe18c069d40768"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261126T210932048111Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m217-run-local-20261126T210932048111Z.log",
+      "bytes": 6650,
+      "sha256": "68387ee3ab4ed8cbefef2763f4b2dc1488212bb6ad0ff5b6221a5f8c8a7b83ff"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261126T211120075030Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m217-run-local-20261126T211120075030Z.log",
+      "bytes": 6661,
+      "sha256": "a1c30e8f1aa138b01969e59130082905cab95c0068cfd08e423092ed74acc6fe"
     }
   ]
 }
