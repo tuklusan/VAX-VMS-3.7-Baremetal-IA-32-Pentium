@@ -2545,3 +2545,4 @@ Added `port_exe_creprc_activate_native`. Under caller-held executive synchroniza
 Verification: `wsl make -j2 all test exeportbatchcheck sourcerangecheck v37ia32ctxcheck v37schedcheck` PASS (exit 0); `wsl make qemu-sysboot-m217` PASS. QEMU capture `logs/serial/qemu-m217-run-local-20261126T154445280710Z.log`, 6,476 bytes, SHA-256 `c752d668595d2b44454523bef3ca889a74e7a29c0075957ff106bf8d793c5cd4`, observed M454 SWAPPER resolution/block and NULL selection after the native image rebuilt. Coverage validation: 2,200 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,764 partial, 59,465 unresolved, 8,032 missing, 26,805 excluded, 917 hardware-excluded. QEMU exited; no runner remains. SYSTEM login/DCL and DECnet/SET HOST acceptance remain unverified and incomplete.
 
 M456 implementation/evidence commit: `58499ec52fd732a1964145298ec5bfe7377602a1`.
+M456 resume record commit: `f8f4d344bb352f1cc5570bde6f6173c7e68ca426`.
