@@ -2346,3 +2346,13 @@ Verification: clean `make clean && make -j2 all test exeportbatchcheck` PASS; `m
 
 Remaining: bind SCH$QAST to real SYS$QIO/IOC completion with process AST delivery and wake semantics; construct/schedule INIT, NULL and SWAPPER contexts; continue public I/O and image activation, then verify the required SYSTEM/DCL and DECnet SET HOST 0 sequence.
 M435 implementation/evidence commit: `2ac91e05c997b323375a663c35cc925f2eee9127`.
+
+## M436 - Validate source AST queue record types, 26 November 2026
+
+Hardened SCH queue insertion to accept only source DYN ACB or IRP records for the candidate and every existing queue node, with a minimum source structure size check. Added a regression proving a wrong DYN tag is refused without changing queue links or AST notification state.
+
+Verification: make v37qastcheck v37schedcheck sourcerangecheck PASS; 2,184 source ranges; 454/4,566 original files indexed; zero coverage errors. No new QEMU run was needed for this host-only validation change. Full native boot remains at the M435 INIT boundary.
+
+M436 implementation commit: `67286f576017227d51e57572480e161df7cb8412`.
+
+Remaining: connect queued IRPs to actual IOC post completion, AST dispatch and process wakeup; create real INIT/NULL/SWAPPER PHD contexts; continue public SYS/ACP/image activation, login, DCL, DECnet and end-to-end SET HOST 0.
