@@ -496,7 +496,7 @@ int main(void){
        port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
         return fail("INIT PHD/native-frame binding and executable CHSE activation");
     const struct port_v37_pcb_seed quota_pcb={.address=start.pcb_va[1],
-        .pid=0x00010009u,.priority=12u,.name="USER",.name_bytes=4u};
+        .pid=0x00010009u,.priority=20u,.name="USER",.name_bytes=4u};
     if(port_v37_pcb_init_genpcb(start.pcbs[1],sizeof start.pcbs[1],
            &quota_pcb)!=PORT_V37_PCB_OK)
         return fail("PROCSTRT quota PCB template");
@@ -506,6 +506,7 @@ int main(void){
                     .user_ss=start.pcb_va[1]}};
     struct port_v37_phd_seed quota_seed=start_phd;
     quota_seed.initial_r4=start.pcb_va[1];
+    quota_seed.native_cr3=0x00e00000u;
     const struct port_v37_phd_process_quotas process_quotas={
         .cpu_limit=0x10203040u,.ast_limit=37u,
         .privileges=UINT64_C(0x0000000000400080),.base_priority=0u};
@@ -528,6 +529,15 @@ int main(void){
        get32(start.pcbs[1]+PORT_V37_PCB_PHD)!=start.phd_va[1]||
        port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
         return fail("PROCSTRT quotas and privilege state precede executable CHSE");
+    if(port_v37_sched_resched_current(&start_scheduler,start.pcb_va[0])!=
+           PORT_V37_SCHED_OK||
+       port_v37_sched_select(&start_scheduler,&selected,&restore_frame)!=
+           PORT_V37_SCHED_OK||selected!=start.pcb_va[1]||
+       restore_frame!=start.frame_va[1]||
+       start_scheduler.current_cr3!=quota_seed.native_cr3||
+       start.cr3_by_pix[9u]!=quota_seed.native_cr3||
+       port_v37_sched_check(&start_scheduler)!=PORT_V37_SCHED_OK)
+        return fail("SCH$SCHED selects process-specific native CR3 by source PIX");
     const struct port_v37_pcb_seed rejected_pcb={.address=start.pcb_va[2],
         .pid=0x0001000au,.priority=8u,.name="BAD",.name_bytes=3u};
     if(port_v37_pcb_init_genpcb(start.pcbs[2],sizeof start.pcbs[2],
