@@ -85,13 +85,21 @@ static uint8_t vms_ring_probe_stack[2][512] __attribute__((aligned(16)));
 static struct port_v37_ia32_restore_frame *vms_ring_probe_frames[3];
 static struct port_v37_scheduler *resident_vms_scheduler;
 static port_v37_sched_interrupt_fn resident_vms_sched_interrupt;
+static uint32_t (*resident_vms_sched_wait)(struct port_v37_scheduler *,
+    uint32_t,uint32_t,uint32_t *,uint32_t *);
 static volatile uint32_t resident_vms_reschedule_pending;
 static volatile uint32_t resident_vms_reschedule_requests;
 static volatile uint32_t resident_vms_reschedule_interrupts;
+static volatile uint32_t resident_vms_wait_queue;
+static uint32_t vms_process_directories[2][1024]
+    __attribute__((aligned(4096)));
+static uint32_t vms_process_directory_count;
 
 int arch_adopt_vms_scheduler(struct port_v37_scheduler *scheduler,
-                             port_v37_sched_interrupt_fn interrupt){
-    if(!scheduler||!interrupt||resident_vms_scheduler||
+                             port_v37_sched_interrupt_fn interrupt,
+                             uint32_t (*wait_current)(struct port_v37_scheduler *,
+                                 uint32_t,uint32_t,uint32_t *,uint32_t *)){
+    if(!scheduler||!interrupt||!wait_current||resident_vms_scheduler||
        resident_vms_sched_interrupt)return 0;
     uint32_t flags;
     __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
@@ -101,6 +109,7 @@ int arch_adopt_vms_scheduler(struct port_v37_scheduler *scheduler,
     }
     resident_vms_scheduler=scheduler;
     resident_vms_sched_interrupt=interrupt;
+    resident_vms_sched_wait=wait_current;
     resident_vms_reschedule_pending=0u;
     __asm__ volatile("":::"memory");
     if(flags&0x200u)__asm__ volatile("sti":::"memory");
@@ -367,6 +376,29 @@ static uint32_t task_page_directory[2][1024] __attribute__((aligned(4096)));
 static uint32_t task_page_table[2][1024] __attribute__((aligned(4096)));
 static uint32_t page_directory[1024] __attribute__((aligned(4096)));
 static uint32_t low_page_table[1024] __attribute__((aligned(4096)));
+
+/* Build the flat supervisor mapping used by the initial VMS system
+ * processes. Their current code/data all live in the identity mapped first
+ * four MiB; independent user P0/P1 image maps are still future work. */
+uint32_t arch_vms_make_process_cr3(uint32_t *p0_table,uint32_t *p1_table,
+                                   uint32_t *cr3_out){
+    if(!p0_table||!p1_table||!cr3_out||
+       ((uintptr_t)p0_table&4095u)||((uintptr_t)p1_table&4095u)||
+       (uintptr_t)p0_table>UINT32_MAX-4095u||
+       (uintptr_t)p1_table>UINT32_MAX-4095u||
+       (uintptr_t)p0_table>=UINT32_C(0x00400000)||
+       (uintptr_t)p1_table>=UINT32_C(0x00400000)||
+       vms_process_directory_count>=2u)return 0u;
+    const uint32_t slot=vms_process_directory_count++;
+    for(unsigned i=0u;i<1024u;i++){
+        p0_table[i]=low_page_table[i];
+        p1_table[i]=low_page_table[i];
+        vms_process_directories[slot][i]=page_directory[i];
+    }
+    vms_process_directories[slot][0]=(uint32_t)(uintptr_t)p0_table|3u;
+    *cr3_out=(uint32_t)(uintptr_t)vms_process_directories[slot];
+    return *cr3_out?1u:0u;
+}
 
 static void map_user_pages(uintptr_t start, uintptr_t end, int writable) {
     port_pmap_user_range(low_page_table,start,end,writable);
@@ -1001,10 +1033,20 @@ static int arch_vms_schedule_frame(struct port_trap_frame *f){
     if(!resident_vms_sched_interrupt)return 0;
     resident_vms_reschedule_pending=0u;
     uint32_t pcb=0u,next=0u;
-    const uint32_t status=resident_vms_sched_interrupt(resident_vms_scheduler,
-        (uint32_t)(uintptr_t)((uint8_t *)f-
-            offsetof(struct port_v37_ia32_restore_frame,registers)),
-        &pcb,&next);
+    uint32_t status;
+    const uint32_t wait_queue=resident_vms_wait_queue;
+    if(wait_queue){
+        resident_vms_wait_queue=0u;
+        status=resident_vms_sched_wait(resident_vms_scheduler,wait_queue,
+            (uint32_t)(uintptr_t)((uint8_t *)f-
+                offsetof(struct port_v37_ia32_restore_frame,registers)),
+            &pcb,&next);
+    }else{
+        status=resident_vms_sched_interrupt(resident_vms_scheduler,
+            (uint32_t)(uintptr_t)((uint8_t *)f-
+                offsetof(struct port_v37_ia32_restore_frame,registers)),
+            &pcb,&next);
+    }
     if(status==PORT_V37_SCHED_NO_CONTEXT||status==PORT_V37_SCHED_EMPTY)
         return 0;
     if(status==PORT_V37_SCHED_OK&&pcb&&next&&
@@ -1015,6 +1057,25 @@ static int arch_vms_schedule_frame(struct port_trap_frame *f){
         return ARCH_TRAP_RESTORE_SELECTED_FRAME;
     arch_report_fault(f->vector,f->error,f->eip);
     for(;;)__asm__ volatile("cli; hlt");
+}
+
+/* SYSWAIT's source queue transition executes on the native software
+ * reschedule gate, so the saved IRET frame is the caller's live stack. */
+uint32_t arch_vms_wait_current(uint32_t wait_queue){
+    if(!wait_queue||!resident_vms_scheduler||
+       !resident_vms_sched_interrupt||!resident_vms_scheduler->current_pcb)
+        return PORT_V37_SCHED_BADPARAM;
+    uint32_t flags;
+    __asm__ volatile("pushfl; popl %0; cli":"=r"(flags)::"memory");
+    if(resident_vms_wait_queue){
+        if(flags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
+        return PORT_V37_SCHED_CORRUPT;
+    }
+    resident_vms_wait_queue=wait_queue;
+    __asm__ volatile("":::"memory");
+    if(flags&UINT32_C(0x200))__asm__ volatile("sti":::"memory");
+    __asm__ volatile("int $0x91":::"memory");
+    return PORT_V37_SCHED_OK;
 }
 
 /* Probe A20 before paging, while the 1-MiB frame allocator is unused.

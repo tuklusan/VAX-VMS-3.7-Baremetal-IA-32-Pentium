@@ -48,6 +48,9 @@ uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
     }
     struct port_v37_ia32_restore_frame *const frame=
         (struct port_v37_ia32_restore_frame *)frame_address;
+    if(seed->access_mode==0u&&
+       frame_address>top-sizeof(*frame)-2u*sizeof(uint32_t))
+        return PORT_V37_IA32_CONTEXT_STACK;
     const struct port_v37_ia32_restore_frame candidate={
         .gs=seed->data_selector,.fs=seed->data_selector,
         .es=seed->data_selector,.ds=seed->data_selector,
@@ -62,6 +65,14 @@ uint32_t port_v37_ia32_context_init(void *kernel_stack,size_t stack_bytes,
         }
     };
     *frame=candidate;
+    if(seed->access_mode==0u){
+        /* Same-CPL IRET consumes only EIP/CS/EFLAGS. The C entry therefore
+         * sees its native call frame immediately above the restore image. */
+        uint32_t *const entry_stack=(uint32_t *)(void *)
+            ((uint8_t *)frame+sizeof(*frame));
+        entry_stack[0]=0u;
+        entry_stack[1]=seed->initial_kernel_argument;
+    }
     *restore_frame=frame;
     return PORT_V37_IA32_CONTEXT_OK;
 }

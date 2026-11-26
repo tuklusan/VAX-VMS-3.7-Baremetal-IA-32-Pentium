@@ -1028,6 +1028,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
         p->result->swapper_vms_pcb=executive_vms_swapper_pcb;
         p->result->vms_scheduler=&executive_vms_scheduler;
         p->result->vms_sched_interrupt=port_v37_sched_interrupt;
+        p->result->vms_sched_wait=port_v37_sched_wait_current;
         p->result->vms_sched_chse=executive_vms_sched_chse;
         p->result->signature=PORT_SYS_EXEC_PV_RESULT_TAG;
         return PORT_SYS_EXEC_NORMAL;

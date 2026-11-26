@@ -42,6 +42,11 @@ int main(void){
             frame->registers.user_ss);
         return fail("initial supervisor IRET frame");
     }
+    const uint32_t *const kernel_entry_stack=(const uint32_t *)(const void *)
+        ((const uint8_t *)frame+sizeof(*frame));
+    if(kernel_entry_stack[0]!=0u||
+       kernel_entry_stack[1]!=kernel.initial_kernel_argument)
+        return fail("supervisor C entry return and argument stack");
     frame->registers.user_esp=0x12345678u;
     frame->registers.user_ss=0x87654321u;
     if(port_v37_ia32_context_validate(frame)!=PORT_V37_IA32_CONTEXT_OK)

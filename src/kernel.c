@@ -78,7 +78,8 @@ extern uint32_t arch_ticks(void);
 extern int arch_adopt_executive_clock(const struct port_exe_systime *,
                                      void (*tick)(void));
 extern int arch_adopt_vms_scheduler(struct port_v37_scheduler *,
-    port_v37_sched_interrupt_fn);
+    port_v37_sched_interrupt_fn,uint32_t (*)(struct port_v37_scheduler *,
+    uint32_t,uint32_t,uint32_t *,uint32_t *));
 extern void arch_request_vms_reschedule(void);
 extern void arch_run_pending_vms_reschedule(void);
 extern uint32_t arch_vms_reschedule_requests(void);
@@ -3535,7 +3536,8 @@ void kmain(void) {
         bootstrap_halt();
     }
     bootstrap_message("INIT: SYS.EXE queued source resident NULL/SWAPPER PCBs; PHD/context activation pending.");
-    if(!proc_result.vms_sched_interrupt||!proc_result.vms_sched_chse||
+    if(!proc_result.vms_sched_interrupt||!proc_result.vms_sched_wait||
+       !proc_result.vms_sched_chse||
        (uintptr_t)proc_result.vms_scheduler<PORT_SYS_ELF_START||
        (uintptr_t)proc_result.vms_scheduler>
            PORT_SYS_ELF_LIMIT-sizeof(*proc_result.vms_scheduler)||
@@ -3544,7 +3546,8 @@ void kmain(void) {
        (uintptr_t)proc_result.vms_sched_chse<PORT_SYS_ELF_START||
        (uintptr_t)proc_result.vms_sched_chse>=PORT_SYS_ELF_LIMIT||
        !arch_adopt_vms_scheduler(proc_result.vms_scheduler,
-                                 proc_result.vms_sched_interrupt)){
+                                 proc_result.vms_sched_interrupt,
+                                 proc_result.vms_sched_wait)){
         bootstrap_message("INIT: IA-32 IRQ0 scheduler binding failed.");
         bootstrap_halt();
     }
