@@ -235,9 +235,14 @@ static struct port_dq_ioc_queue executive_dq_private_ioc;
 static struct port_dq_ioc_queue executive_f11_ioc_queue;
 static struct port_f11_ioc_file executive_f11_ioc_file;
 /* M185-M192 read-only owner-scoped private handle table; DQA0 remains unbound. */
-static struct port_dq_ioc_queue executive_f11_channel_ioc_queue;
 static struct port_f11_chan_table executive_f11_channel_table;
-static uint8_t executive_ioc_private_sectors[3][512] __attribute__((aligned(4)));
+/* The range comparison finishes before the following three-sector IOC
+ * regression begins in this same synchronous INIT call. Reuse its bounded
+ * scratch bytes instead of consuming two live copies in the SYS aperture. */
+static union {
+    uint8_t f11_range_result[1024];
+    uint8_t ioc_private_sectors[3][512];
+} executive_init_io_scratch __attribute__((aligned(4)));
 
 static uint32_t executive_dq_image_ready;
 /* Tenth read checks disk text against bytes already resident in SYS.EXE. */
@@ -257,7 +262,6 @@ static uint32_t executive_dq_aux_count;
  * the registered privileged physical DQ IRP and its real UCB counter. */
 static union {uint32_t align;uint8_t bytes[PORT_V37_IRP_SIZE];} executive_f11_range_irp;
 static union {uint32_t align;uint16_t words[256];} executive_f11_range_sector;
-static uint8_t executive_f11_range_result[1024] __attribute__((aligned(4)));
 static struct port_dq_bootread_result executive_f11_range_io;
 struct executive_f11_context {
     struct port_dq_bootread_request native;
@@ -1567,13 +1571,15 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             executive_devicedb_result.ucb[0]};
         uint32_t range_done=0u;
         if(port_f11_read_range((const uint8_t *)executive_dq_image_header.words,
-            text_offset+123u,1024u,executive_f11_range_result,
-            sizeof executive_f11_range_result,executive_f11_native_sector,
+            text_offset+123u,1024u,
+            executive_init_io_scratch.f11_range_result,
+            sizeof executive_init_io_scratch.f11_range_result,
+            executive_f11_native_sector,
             &range,&range_done)!=PORT_F11_RANGE_OK||
             range_done!=1024u||range.reads!=3u)
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         for(unsigned i=0u;i<1024u;i++)
-            if(executive_f11_range_result[i]!=
+            if(executive_init_io_scratch.f11_range_result[i]!=
                ((const uint8_t *)(uintptr_t)(text_va+123u))[i])
                 return PORT_SYS_EXEC_BAD_PARAMETERS;
         completed+=range.reads;
@@ -1681,7 +1687,8 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             if(port_f11_chain_lbn(&executive_f11_chain,
                  (text_offset>>9)+1u+i,&lbn)!=PORT_F11_CHAIN_OK||
                port_dq_ioc_prepare(&executive_dq_private_ioc,
-                 0xd100u+i,lbn,executive_ioc_private_sectors[i],512u)
+                 0xd100u+i,lbn,
+                 executive_init_io_scratch.ioc_private_sectors[i],512u)
                     !=PORT_DQ_IOC_OK||
                port_dq_ioc_set_retry(&executive_dq_private_ioc,
                    0xd100u+i,2u)!=PORT_DQ_IOC_OK||
@@ -1702,7 +1709,7 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             return PORT_SYS_EXEC_BAD_PARAMETERS;
         for(uint32_t i=0;i<3u;i++){
             for(uint32_t j=0;j<512u;j++)
-                if(executive_ioc_private_sectors[i][j]!=
+                if(executive_init_io_scratch.ioc_private_sectors[i][j]!=
                       ((const uint8_t *)(uintptr_t)(text_va+i*512u))[j])
                     return PORT_SYS_EXEC_BAD_PARAMETERS;
         }
@@ -1745,10 +1752,13 @@ uint32_t port_sys_executive_entry(const struct port_sys_exec_start *p){
             executive_devicedb_result.ucb[0]};
         uint32_t channel_handle=0u,channel_equal=0u;
         struct port_f11_chan_status channel_state={0};
-        if(port_dq_ioc_init(&executive_f11_channel_ioc_queue,
+        /* The bridge queue is quiescent after its completion/validation.
+         * Reinitialize that INIT scratch queue for the subsequent channel
+         * check; no live request or persistent VMS channel state is lost. */
+        if(port_dq_ioc_init(&executive_f11_ioc_queue,
              executive_f11_native_sector,&channel_ctx)!=PORT_DQ_IOC_OK||
            port_f11_chan_init(&executive_f11_channel_table,
-             &executive_f11_chain,&executive_f11_channel_ioc_queue,
+             &executive_f11_chain,&executive_f11_ioc_queue,
              executive_f11_chain.blocks*512u)!=PORT_F11_CHAN_OK||
            port_f11_chan_assign(&executive_f11_channel_table,1u,
              &channel_handle)!=PORT_F11_CHAN_OK||

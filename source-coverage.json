@@ -10613,7 +10613,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_exe_initialize_lookaside",
-          "pc_line": 742,
+          "pc_line": 746,
           "function": "SYSBOOT-carved PAGEDYN interval is initialized as a contiguous resident free pool in SYS.EXE BSS; native PFN/SPT mapping and pool-page residency accounting remain incomplete"
         },
         {
@@ -22567,7 +22567,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "executive_iopost_irq_entry",
-          "pc_line": 679,
+          "pc_line": 683,
           "function": "Native supervisor IDT software INT 0x90 invokes real SYS.EXE queue worker; no process AST"
         },
         {
