@@ -4,6 +4,8 @@ _Static_assert(PORT_V37_PHD_WSL==PORT_V37_PHD_BYTES,
                "SYSDEFMP.MDL PHD fixed length");
 _Static_assert(PORT_V37_PHD_R4==PORT_V37_PHD_KSP+8u*4u,
                "PHD embedded context slot map");
+_Static_assert(PORT_V37_PHD_KSP==PORT_V37_PHD_PCB+4u,
+               "SYSDEFMP.MDL PHD hardware PCB base");
 _Static_assert(PORT_V37_PHD_PC==PORT_V37_PHD_KSP+18u*4u,
                "PHD saved PC slot");
 

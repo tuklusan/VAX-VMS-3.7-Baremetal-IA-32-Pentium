@@ -2103,3 +2103,13 @@ Local M410 implementation commit: d023408c3a99d08c6c927f78e0c49bccf459d3e1.
 Published GitHub main M410 implementation: d023408c3a99d08c6c927f78e0c49bccf459d3e1; resume verification commit 7a31d78 and publication checkpoint 575a45 were pushed.
 
 Remaining work: create real source-mapped hardware PCB and per-process page/PHD contexts for NULL and SWAPPER, activate them in source INIT order, then execute SWAPINIT and build TT0. Public SYS dispatch and process-aware AST/Files-11 ACP path remain incomplete, as do image activation, SYSTEM login, DCL, DECnet Phase IV and end-to-end SET HOST 0/second-session/LOGOUT. Source inventory remains incomplete (8,032 missing and 58,471 unresolved ranges among indexed files).
+
+## M411 - Derive native hardware PCB from SYSDEFMP PHD, 26 November 2026
+
+Added the source-defined PHD base offset (112 bytes) and compile-time assertion that PHD follows it. Scheduler activation fixtures now set PCB to the embedded hardware-PCB address in the PHD, independently of PHD KSP, which names the IA-32 restore frame. This establishes the real source address relationship needed for initial NULL/SWAPPER records. INIT still does not construct or activate those contexts.
+
+Verification: make v37schedcheck v37phdcheck PASS; make -j2 all PASS and rebuilt/installed SYS.EXE (208,820 bytes) into the local Files-11 test image; coverage generation, source-range regression and source validator PASS (2,156 ranges; 452/4,566 original files indexed; 17,230 mapped, 30,396 partial, 58,471 unresolved, 8,032 missing, 26,463 excluded, 917 hardware-excluded; zero validation errors). make qemu-sysboot-m217 PASS; guest still reaches the known INIT stop with NULL/SWAPPER PHD contexts absent. Capture logs/serial/qemu-m217-run-local-20261126T003751288510Z.log, 6,309 bytes, SHA-256 cb40dfb6648fba662a0bd053ead6d3274642b6b09c7cca5b38d27db7e5f0ba53; QEMU exited.
+
+Local M411 changes: pending commit. Published main is M410 checkpoint 753861851fd1c76769292dae785eddd526400aec.
+
+Remaining work: allocate and map original NULL/SWAPPER PHDs and stacks with valid IA-32 contexts, port SWAPINIT continuation including TT0 creation and SWAPPER work loop, integrate public SYS/Files-11 ACP/process ASTs, then image activation, SYSTEM login/DCL, DECnet Phase IV and SET HOST 0/second login/LOGOUT.
