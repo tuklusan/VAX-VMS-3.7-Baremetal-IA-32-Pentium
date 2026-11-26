@@ -1705,6 +1705,89 @@
       "unresolved_integration": "Guest event flag system service, actual PCB scheduler wakeup, and interprocessor CEF request engine remain unresolved."
     },
     {
+      "original_file": "SYS/SRC/SYSCREPRC.MAR",
+      "original_lines": 805,
+      "sections": [
+        {
+          "original_lines": [
+            1,
+            247
+          ],
+          "status": "excluded",
+          "reason": "Source declarations, ABI description, history and comments"
+        },
+        {
+          "original_lines": [
+            248,
+            259
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_preflight",
+          "pc_line": 9,
+          "function": "Model PID output probe, subprocess/detached policy and DETACH authorization"
+        },
+        {
+          "original_lines": [
+            260,
+            324
+          ],
+          "status": "unresolved",
+          "reason": "PCB/PQB/JIB allocation and initialization, quota ownership and rollback are not implemented"
+        },
+        {
+          "original_lines": [
+            325,
+            337
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_preflight",
+          "pc_line": 9,
+          "function": "Requested privilege readability and SETPRV/minimized privilege selection"
+        },
+        {
+          "original_lines": [
+            338,
+            349
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_preflight",
+          "pc_line": 9,
+          "function": "Priority privilege clamp and subprocess UIC/owner inheritance"
+        },
+        {
+          "original_lines": [
+            350,
+            391
+          ],
+          "status": "unresolved",
+          "reason": "Duplicate process names, descriptor copying, PQB setup and creator context are absent"
+        },
+        {
+          "original_lines": [
+            392,
+            409
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_preflight",
+          "pc_line": 9,
+          "function": "Status flag MBZ validation and required-privilege checks"
+        },
+        {
+          "original_lines": [
+            410,
+            805
+          ],
+          "status": "unresolved",
+          "reason": "Quota processing, process construction, swap allocation, activation, PID publication and rollback are absent"
+        }
+      ],
+      "unresolved_integration": "Preflight only: caller memory probes are represented by validated accessibility inputs; no live service dispatch, PCB/PQB allocation, process activation, or PID output store. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout."
+    },
+    {
       "original_file": "DCL/SRC/GOTO.MAR",
       "original_lines": 161,
       "sections": [

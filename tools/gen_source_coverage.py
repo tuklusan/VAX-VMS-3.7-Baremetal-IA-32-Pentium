@@ -536,6 +536,16 @@ append_source_ranges('SYS/SRC/POSTEF.MAR',403,'src/vms_v37_sched.c',[
   (401,'unresolved',None,'EXE$SHM_CEF_REQ VAX MPC/MA$REQUEST transport and interprocessor signaling absent'),
   (403,'excluded',None,'Original assembler END directive and trailing blank')
 ], 'Guest event flag system service, actual PCB scheduler wakeup, and interprocessor CEF request engine remain unresolved.')
+append_source_ranges('SYS/SRC/SYSCREPRC.MAR',805,'src/vms_exe_creprc.c',[
+  (247,'excluded',None,'Source declarations, ABI description, history and comments'),
+  (259,'partial','port_exe_creprc_preflight','Model PID output probe, subprocess/detached policy and DETACH authorization'),
+  (324,'unresolved',None,'PCB/PQB/JIB allocation and initialization, quota ownership and rollback are not implemented'),
+  (337,'partial','port_exe_creprc_preflight','Requested privilege readability and SETPRV/minimized privilege selection'),
+  (349,'partial','port_exe_creprc_preflight','Priority privilege clamp and subprocess UIC/owner inheritance'),
+  (391,'unresolved',None,'Duplicate process names, descriptor copying, PQB setup and creator context are absent'),
+  (409,'partial','port_exe_creprc_preflight','Status flag MBZ validation and required-privilege checks'),
+  (805,'unresolved',None,'Quota processing, process construction, swap allocation, activation, PID publication and rollback are absent')
+], 'Preflight only: caller memory probes are represented by validated accessibility inputs; no live service dispatch, PCB/PQB allocation, process activation, or PID output store. Status privilege bit numbers follow the standard VMS PRVDEF assignments because PRVDEF.MDL is absent from the pinned source checkout.')
 goto_sections=[
     (1, 85, None, None, 'source banner, VAX declarations and calling convention'),
     (86, 94, 'src/vms_dcl_goto.c', 'port_dcl_goto',
