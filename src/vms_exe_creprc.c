@@ -182,6 +182,29 @@ uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
     return PORT_SS_NORMAL;
 }
 
+uint32_t port_exe_creprc_init_pcb_queues(uint8_t *pcb,size_t pcb_bytes,
+    uint32_t pcb_guest_address,uint16_t mailbox_unit,uint16_t shell_pages){
+    if(!pcb||pcb_bytes<160u||!pcb_guest_address||
+       (pcb_guest_address&3u)||pcb_guest_address>UINT32_MAX-160u||
+       read16(pcb+PORT_V37_PCB_SIZE)!=160u||
+       pcb[PORT_V37_PCB_BTYPE]!=PORT_V37_DYN_PCB)
+        return PORT_SS_BADPARAM;
+    write32(pcb+PORT_V37_PCB_ASTQFL,
+        pcb_guest_address+PORT_V37_PCB_ASTQFL);
+    write32(pcb+PORT_V37_PCB_ASTQBL,
+        pcb_guest_address+PORT_V37_PCB_ASTQFL);
+    pcb[PORT_V37_PCB_ASTEN]=0x0fu;
+    write32(pcb+PORT_V37_PCB_LOCKQFL,
+        pcb_guest_address+PORT_V37_PCB_LOCKQFL);
+    write32(pcb+PORT_V37_PCB_LOCKQBL,
+        pcb_guest_address+PORT_V37_PCB_LOCKQFL);
+    write32(pcb+PORT_V37_PCB_ARB,
+        pcb_guest_address+PORT_V37_PCB_PRIV);
+    write16(pcb+PORT_V37_PCB_TMBU,mailbox_unit);
+    write16(pcb+PORT_V37_PCB_PPGCNT,shell_pages);
+    return PORT_SS_NORMAL;
+}
+
 uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *vector,
     uint32_t null_pcb_address,uint32_t new_pcb_address,
     uint16_t *process_count,uint16_t process_limit,uint32_t *pid){

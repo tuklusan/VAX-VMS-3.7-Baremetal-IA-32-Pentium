@@ -7,6 +7,10 @@
 #include <string.h>
 
 static int fail(const char *name){fprintf(stderr,"CREPRC FAIL: %s\n",name);return 1;}
+static uint32_t test_get32(const uint8_t *p){
+    return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|
+        ((uint32_t)p[3]<<24);
+}
 static uint32_t test_raise_ipl(void *opaque){
     uint32_t *ipl=opaque;uint32_t previous=*ipl;*ipl=2u;return previous;
 }
@@ -132,6 +136,28 @@ int main(void){
           pcb_allocation.bytes,&flag_result)!=PORT_SS_IVSTSFLG||
        pcb_bytes[PORT_V37_PCB_STS]!=old_status)
         return fail("reserved source status flag rejection is atomic");
+    if(port_exe_creprc_init_pcb_queues(pcb_allocation.address,
+          pcb_allocation.bytes,0x12345000u,0x0421u,17u)!=PORT_SS_NORMAL||
+       test_get32(pcb_bytes+PORT_V37_PCB_ASTQFL)!=0x12345000u+
+          PORT_V37_PCB_ASTQFL||
+       test_get32(pcb_bytes+PORT_V37_PCB_ASTQBL)!=0x12345000u+
+          PORT_V37_PCB_ASTQFL||pcb_bytes[PORT_V37_PCB_ASTEN]!=0x0fu||
+       test_get32(pcb_bytes+PORT_V37_PCB_LOCKQFL)!=0x12345000u+
+          PORT_V37_PCB_LOCKQFL||
+       test_get32(pcb_bytes+PORT_V37_PCB_LOCKQBL)!=0x12345000u+
+          PORT_V37_PCB_LOCKQFL||
+       test_get32(pcb_bytes+PORT_V37_PCB_ARB)!=0x12345000u+
+          PORT_V37_PCB_PRIV||
+       pcb_bytes[PORT_V37_PCB_TMBU]!=0x21u||
+       pcb_bytes[PORT_V37_PCB_TMBU+1u]!=0x04u||
+       pcb_bytes[PORT_V37_PCB_PPGCNT]!=17u||
+       pcb_bytes[PORT_V37_PCB_PPGCNT+1u])
+        return fail("SYSCREPRC self-linked queues, ARB, mailbox and shell pages");
+    uint8_t pcb_before[160];memcpy(pcb_before,pcb_bytes,sizeof pcb_before);
+    if(port_exe_creprc_init_pcb_queues(pcb_allocation.address,
+          pcb_allocation.bytes,UINT32_MAX-159u,0u,0u)!=PORT_SS_BADPARAM||
+       memcmp(pcb_before,pcb_bytes,sizeof pcb_before))
+        return fail("PCB queue initialization rejects address wrap atomically");
     if(port_exe_creprc_release_pcb(&pcb_allocator,&pcb_allocation)!=
           PORT_EXE_CREPRC_ALLOC_OK||pool_ipl!=0u||
        port_exe_np_pool_check(&pcb_pool)!=PORT_EXE_NP_POOL_OK)

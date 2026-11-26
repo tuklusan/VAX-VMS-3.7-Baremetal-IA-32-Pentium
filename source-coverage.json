@@ -1749,25 +1749,63 @@
         {
           "original_lines": [
             275,
-            282
+            275
           ],
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_allocate_pqb",
           "pc_line": 117,
-          "function": "EXE$ALLOCPQB nonpaged allocation, DYN PQB header and source PQB body clear; conditional resource wait absent"
+          "function": "EXE$ALLOCPQB nonpaged allocation and DYN PQB header; conditional resource wait absent"
         },
         {
           "original_lines": [
-            283,
-            324
+            276,
+            303
           ],
           "status": "unresolved",
-          "reason": "PQB/JIB allocation, PCB queue/default setup, quota ownership and rollback remain absent"
+          "reason": "JIB creation/sharing, subprocess quota charging and rollback remain absent"
         },
         {
           "original_lines": [
-            325,
+            304,
+            311
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_init_pcb_queues",
+          "pc_line": 185,
+          "function": "Initialize source self-linked AST/lock queues, AST enable mask, ARB address, termination mailbox and shell page count"
+        },
+        {
+          "original_lines": [
+            312,
+            314
+          ],
+          "status": "excluded",
+          "reason": "Source comments separating PCB and quota-buffer initialization"
+        },
+        {
+          "original_lines": [
+            315,
+            315
+          ],
+          "status": "partial",
+          "pc_file": "src/vms_exe_creprc.c",
+          "pc_symbol": "port_exe_creprc_allocate_pqb",
+          "pc_line": 117,
+          "function": "Clear the source-defined PQB body after its DYN header"
+        },
+        {
+          "original_lines": [
+            316,
+            323
+          ],
+          "status": "unresolved",
+          "reason": "PQB SYSTEM username, process names and default account/directory/logicals are absent"
+        },
+        {
+          "original_lines": [
+            324,
             337
           ],
           "status": "partial",
@@ -1830,7 +1868,7 @@
           "status": "partial",
           "pc_file": "src/vms_exe_creprc.c",
           "pc_symbol": "port_exe_creprc_activate_slot",
-          "pc_line": 185,
+          "pc_line": 208,
           "function": "Find a free PIX, enforce process limit, advance/wrap sequence, construct PID and publish PCB pointer"
         },
         {

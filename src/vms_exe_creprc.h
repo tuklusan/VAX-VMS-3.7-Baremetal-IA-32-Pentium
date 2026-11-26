@@ -61,6 +61,9 @@ uint32_t port_exe_creprc_release_pqb(struct port_exe_np_allocator *,
 /* SYSCREPRC.MAR status-flag translation after successful privilege checks. */
 uint32_t port_exe_creprc_apply_status_flags(uint8_t *pcb,size_t pcb_bytes,
     const struct port_exe_creprc_result *);
+/* SYSCREPRC.MAR initializes the process AST/lock queue heads and ARB. */
+uint32_t port_exe_creprc_init_pcb_queues(uint8_t *pcb,size_t pcb_bytes,
+    uint32_t pcb_guest_address,uint16_t mailbox_unit,uint16_t shell_pages);
 /* SYSCREPRC.MAR ACTIVATE 660-680: caller invokes only after resource
  * allocation, while holding the source SYNCHIPL exclusion. */
 uint32_t port_exe_creprc_activate_slot(struct port_ini_procvec *,
