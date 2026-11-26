@@ -8,9 +8,14 @@ _Static_assert(PORT_V37_PHD_KSP==PORT_V37_PHD_PCB+4u,
                "SYSDEFMP.MDL PHD hardware PCB base");
 _Static_assert(PORT_V37_PHD_PC==PORT_V37_PHD_KSP+18u*4u,
                "PHD saved PC slot");
+_Static_assert(PORT_V37_PHD_WSLIST==PORT_V37_PHD_PRIVMSK_BYTES,
+               "SYSDEFMP.MDL PHD working-set list offset");
 
 static void put16(uint8_t *p,uint16_t x){
     p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
+}
+static uint16_t get16(const uint8_t *p){
+    return (uint16_t)p[0]|(uint16_t)((uint16_t)p[1]<<8);
 }
 static void put32(uint8_t *p,uint32_t x){
     p[0]=(uint8_t)x;p[1]=(uint8_t)(x>>8);
@@ -45,4 +50,34 @@ uint32_t port_v37_phd_init_genphd(uint8_t *record,size_t capacity,
     candidate[PORT_V37_PHD_AUTHPRI]=(uint8_t)(31u-s->priority);
     for(size_t i=0;i<sizeof candidate;i++)record[i]=candidate[i];
     return PORT_V37_PHD_OK;
+}
+
+uint32_t port_v37_phd_apply_ws_quotas(uint8_t *record,size_t capacity,
+    const struct port_v37_phd_ws_quotas *q){
+    if(!record||!q||capacity<PORT_V37_PHD_BYTES||
+       q->physical_pages<q->free_page_limit||
+       q->max_working_set>UINT16_MAX||
+       get16(record+PORT_V37_PHD_WSLIST)==0u)
+        return PORT_V37_PHD_QUOTA_BADPARAM;
+
+    const uint32_t available=q->physical_pages-q->free_page_limit;
+    uint32_t extent=q->extent&UINT16_MAX;
+    uint32_t quota=q->quota&UINT16_MAX;
+    uint32_t default_size=q->default_size&UINT16_MAX;
+    if(extent<quota)extent=quota;
+    if((int32_t)extent>(int32_t)available)extent=available;
+    if(extent>q->max_working_set)extent=q->max_working_set;
+    if(quota>extent)quota=extent;
+    if(default_size>quota)default_size=quota;
+
+    const uint16_t bias=(uint16_t)(get16(record+PORT_V37_PHD_WSLIST)-1u);
+    const uint16_t phd_extent=(uint16_t)(extent+bias);
+    const uint16_t phd_quota=(uint16_t)(quota+bias);
+    const uint16_t phd_default=(uint16_t)(default_size+bias);
+    put16(record+PORT_V37_PHD_WSEXTENT,phd_extent);
+    put16(record+PORT_V37_PHD_WSAUTHEXT,phd_extent);
+    put16(record+PORT_V37_PHD_WSQUOTA,phd_quota);
+    put16(record+PORT_V37_PHD_WSAUTH,phd_quota);
+    put16(record+PORT_V37_PHD_DFWSCNT,phd_default);
+    return PORT_V37_PHD_QUOTA_OK;
 }

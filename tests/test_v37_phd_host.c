@@ -38,7 +38,26 @@ int main(void){
         return fail("GENPHD source fields or native page-table values");
     for(unsigned i=PORT_V37_PHD_AUTHPRI+1u;i<PORT_V37_PHD_BYTES;i++)
         if(phd[i]!=0u)return fail("GENPHD untouched fixed-area bytes not zero");
+    phd[PORT_V37_PHD_WSLIST]=64u;phd[PORT_V37_PHD_WSLIST+1u]=0u;
+    const struct port_v37_phd_ws_quotas quotas={
+        .physical_pages=300u,.free_page_limit=20u,.max_working_set=256u,
+        .extent=300u,.quota=150u,.default_size=400u};
+    if(port_v37_phd_apply_ws_quotas(phd,sizeof phd,&quotas)!=
+           PORT_V37_PHD_QUOTA_OK||
+       get16(phd+PORT_V37_PHD_WSEXTENT)!=319u||
+       get16(phd+PORT_V37_PHD_WSAUTHEXT)!=319u||
+       get16(phd+PORT_V37_PHD_WSQUOTA)!=213u||
+       get16(phd+PORT_V37_PHD_WSAUTH)!=213u||
+       get16(phd+PORT_V37_PHD_DFWSCNT)!=213u)
+        return fail("PROCSTRT working-set extent/quota/default normalization");
     uint8_t before[sizeof phd];memcpy(before,phd,sizeof phd);
+    struct port_v37_phd_ws_quotas bad_quotas=quotas;
+    bad_quotas.physical_pages=10u;bad_quotas.free_page_limit=20u;
+    if(port_v37_phd_apply_ws_quotas(phd,sizeof phd,&bad_quotas)!=
+           PORT_V37_PHD_QUOTA_BADPARAM||memcmp(before,phd,sizeof phd)||
+       port_v37_phd_apply_ws_quotas(phd,sizeof phd-1u,&quotas)!=
+           PORT_V37_PHD_QUOTA_BADPARAM||memcmp(before,phd,sizeof phd))
+        return fail("invalid PROCSTRT quota input is transactionally rejected");
     struct port_v37_phd_seed bad=seed;bad.p1_page_table|=1u;
     if(port_v37_phd_init_genphd(phd,sizeof phd,&bad)!=PORT_V37_PHD_BADPARAM||
        memcmp(before,phd,sizeof phd))
@@ -50,6 +69,6 @@ int main(void){
     if(port_v37_phd_init_genphd(phd,sizeof phd,&bad)!=PORT_V37_PHD_BADPARAM||
        memcmp(before,phd,sizeof phd))
         return fail("reserved SYSDEFMP ASTLVL rejected transactionally");
-    puts("SYSDEFMP.MDL PHD layout and PDAT.MAR GENPHD initialization PASS");
+    puts("SYSDEFMP.MDL PHD layout, PDAT GENPHD and PROCSTRT WS quotas PASS");
     return 0;
 }

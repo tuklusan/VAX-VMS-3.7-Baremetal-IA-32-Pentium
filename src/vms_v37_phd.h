@@ -10,6 +10,9 @@ enum {
     PORT_V37_PHD_BYTES=376u,
     /* SYSDEFMP.MDL PHD$L_PCB precedes the embedded hardware context. */
     PORT_V37_PHD_PCB=112u,
+    PORT_V37_PHD_WSLIST=8u,PORT_V37_PHD_WSAUTH=10u,
+    PORT_V37_PHD_WSAUTHEXT=20u,PORT_V37_PHD_WSEXTENT=22u,
+    PORT_V37_PHD_WSQUOTA=24u,PORT_V37_PHD_DFWSCNT=26u,
     PORT_V37_PHD_ASTLVL_DISABLED=4u,
     PORT_V37_PHD_PRIVMSK=0u,
     PORT_V37_PHD_PRIVMSK_BYTES=8u,
@@ -42,8 +45,20 @@ struct port_v37_phd_seed {
     uint8_t priority,ast_level;
 };
 
+/* PROCSTRT.MAR SETQUOTAS working-set normalization inputs. Quota values are
+ * longwords in the PQB and are narrowed to the source word-sized PHD fields. */
+struct port_v37_phd_ws_quotas {
+    uint32_t physical_pages,free_page_limit,max_working_set;
+    uint32_t extent,quota,default_size;
+};
+enum {PORT_V37_PHD_QUOTA_OK=1u,PORT_V37_PHD_QUOTA_BADPARAM=2u};
+
 /* Encode only the fields assigned by PDAT.MAR GENPHD.  Remaining fixed PHD
  * bytes start zeroed like the source BLKB followed by explicit stores. */
 uint32_t port_v37_phd_init_genphd(uint8_t *,size_t,
     const struct port_v37_phd_seed *);
+/* PROCSTRT.MAR 261-287 available-page cap, extent/quota/default ordering,
+ * and WSLIST-relative PHD limits. All five stores occur transactionally. */
+uint32_t port_v37_phd_apply_ws_quotas(uint8_t *,size_t,
+    const struct port_v37_phd_ws_quotas *);
 #endif

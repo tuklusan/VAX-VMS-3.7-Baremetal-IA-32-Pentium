@@ -1904,6 +1904,15 @@ result['files'].append({'original_file':'SYS/SRC/PDAT.MAR',
     'original_lines':308,'sections':pdat_sections,
     'unresolved_integration':'Native SYS.EXE has source-layout SYSTEM and NULL PCB records and an INI_PSTATE vector pointing to those records. Their PHD/native hardware contexts remain absent, and the separate scheduler records are not bound to VMS processes.'})
 
+# PROCSTRT.MAR initializes per-process PHD quotas only after the PHD window
+# and mapped process state already exist; the working-set normalization is
+# portable as a bounded record transformation, but process startup is not.
+append_source_ranges('SYS/SRC/PROCSTRT.MAR',626,'src/vms_v37_phd.c',[
+ (260,'unresolved',None,'PHD window establishment, PQB/JIB identity and process startup dispatch remain unported'),
+ (287,'partial','port_v37_phd_apply_ws_quotas','Apply PROCSTRT SETQUOTAS available-page cap and WSLIST-relative extent, quota and default calculations transactionally'),
+ (626,'unresolved',None,'PHD privilege and account setup, process logical names, page-table/channel creation, image activation and startup continuation remain unported')
+], 'Working-set quota normalization helper only; no public process-start service or mapped PHD window is connected.')
+
 # M241: source RSE.MAR executable queue insertion and priority selection.
 rse_lines=735 # pinned original SYS/SRC/RSE.MAR line count at REVISION
 rse_sections=[]
