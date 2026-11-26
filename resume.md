@@ -2495,3 +2495,13 @@ Verification: `make -j2 all` PASS; `make -j2 test exeportbatchcheck sourcerangec
 M451 implementation commit: `5d229fc`.
 
 Remaining: build genuine source-order INIT/NULL/SWAPPER PHDs, address spaces and contexts; run SWAPINIT in SWAPPER and activate SYSINIT; connect public SYS$QIO to IOC, Files-11 ACP, process-aware AST completion and scheduling; continue native INIT, image activation, SYSTEM login/DCL, DECnet Phase IV, and verify the two-session SET HOST 0/LOGOUT sequence end-to-end in QEMU. No acceptance condition is complete.
+
+## M452 — Bind native context to an already queued VMS process, 26 November 2026
+
+Added `port_v37_sched_bind_queued_context` for the INIT/SWAPPER ordering where SCH$CHSE has already committed a resident PCB to a COM queue before its native PHD and IA-32 restore frame are ready. The routine validates the existing queue membership/state and installs PHD, native KSP/PC, PCB PHD/PHYPCB references, and per-PIX CR3 without a second CHSE or queue reordering. Invalid PHD setup leaves the PCB, PHD and queue untouched. A host regression verifies that the queued SWAPPER context is selected after the running process waits, that the waiter wakes through the scheduler, and that selection returns to the original context. This constructor is not yet called by live boot; source VAX VPN-to-SPT/PFN translation and INIT/SWAPPER context creation remain incomplete.
+
+Verification: `make -j2 all test exeportbatchcheck sourcerangecheck` PASS; after source-map adjustment, `make v37schedcheck sourcerangecheck` PASS. Coverage validation: 2,194 ranges; 455/4,566 original files indexed; zero errors; 17,230 mapped, 30,716 partial, 59,540 unresolved, 8,032 missing, 26,778 excluded and 917 hardware-excluded. `make qemu-sysboot-m217` PASS with the unchanged actual boot output and known incomplete INIT stop; this regression does not exercise the new host-only queued-context constructor. Capture `logs/serial/qemu-m217-run-local-20261126T150211214807Z.log`, 6,429 bytes, SHA-256 `f7d632210616a4d0f033036cf84a25a35db3b049049724c889e33e8ed7f1ff6d`; runner exited and no QEMU process remains. No login, DCL, DECnet Phase IV or SET HOST 0 was observed.
+
+M452 implementation commit: `986d30e48c1b32a6eaf9d416f692c7f8c92cbbcf`.
+
+Remaining: use the queued-context transaction in source-ordered native INIT/SWAPPER activation with real IA-32 page mappings; start SWAPPER/SYSINIT and continue process image activation; integrate public SYS$QIO with DQA0 IOC/Files-11 ACP/AST completion; implement SYSTEM login/DCL and DECnet Phase IV, then verify the genuine two-session SET HOST 0/LOGOUT sequence end-to-end in QEMU. No acceptance condition is complete.
