@@ -2590,3 +2590,9 @@ Two real QEMU attempts captured interleaved SWAPPER/SYSINIT lines, and one captu
 M461 implementation commit: `232850bfd8b130a650958dd704122b7c86529453` (pushed to `main`).
 
 Remaining: general volume-derived SYSINIT names and source-order continuation; real SYS$QIO dispatch through DQA0 DDT/ACP with process AST completion; scheduler-backed process creation/image activation; genuine SYSTEM login/DCL; DECnet Phase IV and end-to-end SET HOST 0/second-session/LOGOUT. No acceptance condition is complete.
+
+## M462 — Recheck SYSINIT checkpoint and reject TOPSYS shortcut, 26 November 2026
+
+An experimental attempt to feed the resident SYSBOOT BOO parameter TOPSYS field directly to SYSINIT failed in the QEMU checkpoint: the native scheduler reported source wait-queue corruption (status 4) before returning to NULL. That edit was reverted. Rebuilding `wsl make -j2 all` and rerunning `wsl make qemu-sysboot-m217` then PASSed with the M461 resident SYSINIT name creation and SWAPPER/NULL scheduling result. The failed experiment capture is retained as `logs/serial/qemu-m217-run-local-20261126T162757209904Z.log` (6,655 bytes, SHA-256 `e4b4bf1848bb2ccb58ee4a80c765b8ce45234cad0f0d0cf181bb579c55ed19dd`). The passing post-revert capture is `logs/serial/qemu-m217-run-local-20261126T162821931148Z.log` (6,580 bytes, SHA-256 `8b22d881a73529c4be05be8d1d896a311c9288ddbc6771a154029d797fe31a75`). The earlier clean full host/layout/coverage run and LOGNAMSUB ASan/UBSan check remain from M461; source code did not change in this recheck. QEMU exited.
+
+TOPSYS propagation is still incomplete. The live SYSINIT context uses the empty ASCIC value required by the root-directory test volume; the attempt above does not establish a working general TOPSYS path. All acceptance conditions remain incomplete.

@@ -11078,7 +11078,7 @@
           "status": "partial",
           "pc_file": "src/vms_sys_executive_entry.c",
           "pc_symbol": "port_sys_executive_entry",
-          "pc_line": 995,
+          "pc_line": 997,
           "function": "Allocate source-sized 128-byte NULL and 640-byte SWAPPER kernel stacks plus separate native P0/P1 tables and PHDs in NPAGEDYN; process tables are currently flat supervisor identity maps, not VAX P0/P1 translations"
         },
         {
