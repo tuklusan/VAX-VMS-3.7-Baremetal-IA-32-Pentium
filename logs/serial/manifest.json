@@ -6742,6 +6742,15 @@
       "path": "logs/serial/qemu-m217-run-local-20261126T235537439772Z.log",
       "bytes": 6898,
       "sha256": "ae40ddf02c804546dca14fcc7f29e529df94838eb15a232e1ca21803ba72568e"
+    },
+    {
+      "milestone": "M217",
+      "run_id": "local-20261127T001234668388Z",
+      "run_url": "",
+      "test_result": "harness-pass",
+      "path": "logs/serial/qemu-m217-run-local-20261127T001234668388Z.log",
+      "bytes": 6898,
+      "sha256": "ae40ddf02c804546dca14fcc7f29e529df94838eb15a232e1ca21803ba72568e"
     }
   ]
 }

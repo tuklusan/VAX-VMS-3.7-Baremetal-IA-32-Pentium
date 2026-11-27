@@ -2808,3 +2808,11 @@ Verification: two consecutive python3 tools/gen_source_coverage.py runs PASS and
 M483 implementation/evidence commit: 235c1cf7e5fffd6e432ec26d1a0f682356d00e35.
 
 Remaining: actual SYSINIT page/swap/RMS processing, Files-11 system mount/ACP and SYSMSG, STARTUP creation/image activation, live public SYS with process AST completion, SYSTEM login/DCL, and DECnet Phase IV plus genuine SET HOST 0, second login and LOGOUT. Acceptance remains incomplete.
+
+## M484 — Reverify SYSINIT boot boundary after aperture-limited trial, 27 November 2026
+
+Rebuilt the resident SYS.EXE with the fixed supervisor aperture and reran the complete `wsl make -j2 all test sysexecentrycheck` suite; exit 0. The resident link check reports SYSLOA vector link and fail-closed INIT checks PASS. A real, sequential `wsl make qemu-sysboot-m217` passed. Its raw COM1 capture `logs/serial/qemu-m217-run-local-20261127T001234668388Z.log` is 6,898 bytes, SHA-256 `ae40ddf02c804546dca14fcc7f29e529df94838eb15a232e1ca21803ba72568e`; manifest verification PASS (750 captures). Guest reaches SIP_SETTIME, then blocks SYSINIT in SCH$WAITK and schedules NULL. No PAGEFILE/SWAPFILE/RMS opens, STARTUP process, login, DCL or DECnet result is present. The QEMU runner exited; no QEMU process remains.
+
+A trial to continue SYSINIT with source-ordered PAGEFILE.SYS/SWAPFILE.SYS/RMS.EXE opens over the published DQA0 path did not fit SYS.EXE's fixed `[0x00320000, 0x00380000)` supervisor aperture: the trial ELF memory segment ended at `0x00381600`. Trial code was discarded; no functional progress or coverage change is claimed. The restored baseline image was force-relinked against the original aperture and passed the build/tests and QEMU checkpoint above. Next code must fit the existing resident image or reclaim correctly verified resident storage; INILOA begins at `0x00380000` and must not be overlapped.
+
+No source, binary image, secret, or new dependency was committed. Acceptance remains incomplete: actual continuation beyond the SYSINIT HIB wait, Files-11 mount/ACP and SYSMSG, STARTUP activation, public SYS$QIO with process AST completion, login/DCL, DECnet Phase IV, and SET HOST 0/second login/LOGOUT remain.
