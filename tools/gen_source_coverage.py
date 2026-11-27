@@ -1481,17 +1481,17 @@ for original,length,ranges,note in [
        'Live exception and compatibility-mode trap dispatch not yet installed.'),
     ('SCHED.MAR',108,[(1,57,None,None,'copyright, source setup and scheduling interface'),
        (58,61,'vms_v37_sched','port_v37_sched_save_current','Validate and save the outgoing IA-32 IRET frame through PHD KSP/PC, preserve PCB$L_PHYPCB as the hardware PCB physical address, then requeue through SCH$RESCHED; IRQ0 and deferred software-vector entry bind the native scheduler while source IPL edge cases remain incomplete'),
-       (62,67,'vms_v37_sched','port_v37_sched_resched_current','Requeue current resident PCB at the COM queue tail and set queue summary; invoked by the live IRQ0 scheduler transaction'),
+       (62,67,'vms_v37_sched','port_v37_sched_resched_current','Requeue current resident PCB at the COM queue tail and set queue summary; invoked by live IRQ0 and deferred vector-0x91 scheduler transactions'),
        (68,74,None,None,'source comments and SCH$SCHED entry separator'),
-       (75,96,'vms_v37_sched','port_v37_sched_select','Highest resident COM queue selection resolves the saved IA-32 IRET frame through PHD KSP while retaining PCB$L_PHYPCB for the source hardware PCB; returns its address with selected PCB. IRQ0 invokes this transaction, but contextless NULL/SWAPPER remain unactivated and process page-table construction remains incomplete'),
+       (75,96,'vms_v37_sched','port_v37_sched_select','Highest resident COM queue selection resolves the saved IA-32 IRET frame through PHD KSP while retaining PCB$L_PHYPCB for the source hardware PCB; returns its address with selected PCB. IRQ0 invokes this transaction, but QEMU reaches SYSINIT HIB with NULL selected after native NULL/SWAPPER/SYSINIT context activation; later timer-driven idle wake/preemption and full INIT remain unverified'),
        (97,98,'vms_v37_ia32_context','port_v37_ia32_context_validate','Validate mode-matched selectors; same-CPL kernel IRET ignores unsaved ESP/SS stack words while lower-mode returns validate their user stack; port_v37_ia32_context_stack_top bounds the 32-bit extent before arch_prepare_vms_restore_frame installs TSS ESP0 for access modes 1-3'),
        (99,106,None,None,'source idle wait and fatal empty-queue path lack native scheduler context restoration'),
        (107,108,None,None,'assembler end')],
-       'IRQ0 and source scheduler reschedule callbacks enter resident SCH$RESCHED/SCH$SCHED through IA-32 vector 0x91 after interrupt state restoration; selected access-mode 1-3 frames update TSS ESP0 and IRET. A resident PIX-indexed native CR3 sidecar now follows selected process frames, but INIT/NULL/SWAPPER address spaces and their contexts are not constructed or activated.'),
+       'IRQ0 and source scheduler reschedule callbacks enter resident SCH$RESCHED/SCH$SCHED through IA-32 vector 0x91 after interrupt state restoration; selected access-mode 1-3 frames update TSS ESP0 and IRET. Native NULL/SWAPPER/SYSINIT contexts and PIX-indexed CR3s are constructed and activated, and QEMU reaches SYSINIT HIB with NULL selected. Verify timer-driven idle wake/preemption and continue SYSINIT into process image activation.'),
     ('NULLPROC.MAR',103,[(1,97,None,None,'copyright and idle process description'),
        (98,101,'vms_exe_nullproc','port_exe_nullproc','native unconditional idle branch matching source BRB loop'),
        (102,103,None,None,'assembler end')],
-       'Idle task must be selected by the live process scheduler.')
+       'QEMU confirms the native NULL process is selected when SYSINIT blocks in HIB; recurring idle preemption and return after process wake remain unverified.')
 ]:
     mapped=[]
     for first,last,basename,symbol,reason in ranges:
