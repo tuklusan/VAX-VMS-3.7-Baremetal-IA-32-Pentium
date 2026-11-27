@@ -2797,3 +2797,14 @@ No implementation or source-coverage status changed in this verification checkpo
 M482 raw-evidence commit: 426bbab285d98b5e1e17420d5797aba8e82042ed.
 
 Acceptance remains incomplete. Immediate engineering boundary: continue native SYSINIT beyond SIP_SETTIME, beginning with source-ordered pagefile/swapfile/RMS bootstrap operations through the published DQA0/IOC/Files-11 path; then system ACP mount, SYSMSG, STARTUP process creation and image activation, public process SYS/AST completion, SYSTEM login/DCL, and DECnet Phase IV/SET HOST 0 with second login and LOGOUT.
+
+
+## M483 — Keep scheduler coverage aligned with verified QEMU behavior, 26 November 2026
+
+Updated the source-coverage generator and generated inventory so routine test regeneration retains the M481/M482 verified native scheduler facts instead of reverting them to the pre-context state. The entries now record native NULL/SWAPPER/SYSINIT context and PIX-indexed CR3 activation, the observed SYSINIT HIB-to-NULL selection, and the still-unverified idle wake/preemption boundary. SCHED.MAR coverage remains partial; no new original scheduler lines are marked complete.
+
+Verification: two consecutive python3 tools/gen_source_coverage.py runs PASS and produce a stable manifest; python3 tools/validate_source_ranges.py PASS (2,209 ranges, 456/4,566 originals indexed, zero errors; counts unchanged); python3 tests/test_coverage_ranges.py PASS. The full build/host suite and real QEMU boot were independently rerun in M482 immediately before this coverage-only correction. No new original source, binary image, credential, or dependency was added.
+
+M483 implementation/evidence commit: 235c1cf7e5fffd6e432ec26d1a0f682356d00e35.
+
+Remaining: actual SYSINIT page/swap/RMS processing, Files-11 system mount/ACP and SYSMSG, STARTUP creation/image activation, live public SYS with process AST completion, SYSTEM login/DCL, and DECnet Phase IV plus genuine SET HOST 0, second login and LOGOUT. Acceptance remains incomplete.
